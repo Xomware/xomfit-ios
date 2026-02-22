@@ -5,7 +5,7 @@ class WorkoutViewModel: ObservableObject {
     @Published var recentWorkouts: [Workout] = []
     @Published var activeWorkout: Workout?
     @Published var isWorkoutActive = false
-    @Published var exercises: [Exercise] = Exercise.mockExercises
+    @Published var exercises: [Exercise] = ExerciseDatabase.all
     
     init() {
         loadRecentWorkouts()
