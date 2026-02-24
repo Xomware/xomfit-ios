@@ -16,6 +16,11 @@ struct XomFitApp: App {
                     .preferredColorScheme(.dark)
             }
         }
+        .onOpenURL { url in
+            Task {
+                try? await supabase.auth.session(from: url)
+            }
+        }
     }
 }
 

@@ -64,20 +64,42 @@ struct SignUpView: View {
                         }
                         .padding(.horizontal, Theme.paddingLarge)
                         
+                        // Error Message
+                        if let errorMessage = authService.errorMessage {
+                            Text(errorMessage)
+                                .font(Theme.fontCaption)
+                                .foregroundColor(Theme.destructive)
+                                .padding()
+                                .background(Theme.destructive.opacity(0.1))
+                                .cornerRadius(Theme.cornerRadius)
+                                .padding(.horizontal, Theme.paddingLarge)
+                        }
+                        
                         // Sign Up Button
                         Button(action: {
-                            authService.signUp(username: username, email: email, password: password)
-                            dismiss()
+                            Task {
+                                do {
+                                    try await authService.signUp(username: username, email: email, password: password)
+                                    dismiss()
+                                } catch {
+                                    // Error is already displayed in authService.errorMessage
+                                }
+                            }
                         }) {
-                            Text("Create Account")
-                                .font(.system(size: 18, weight: .bold))
-                                .foregroundColor(.black)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 16)
-                                .background(isValid ? Theme.accent : Theme.accent.opacity(0.3))
-                                .cornerRadius(Theme.cornerRadius)
+                            if authService.isLoading {
+                                ProgressView()
+                                    .tint(.black)
+                            } else {
+                                Text("Create Account")
+                                    .font(.system(size: 18, weight: .bold))
+                                    .foregroundColor(.black)
+                            }
                         }
-                        .disabled(!isValid)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(isValid && !authService.isLoading ? Theme.accent : Theme.accent.opacity(0.3))
+                        .cornerRadius(Theme.cornerRadius)
+                        .disabled(!isValid || authService.isLoading)
                         .padding(.horizontal, Theme.paddingLarge)
                     }
                 }

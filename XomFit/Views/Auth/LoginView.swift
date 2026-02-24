@@ -1,10 +1,15 @@
 import SwiftUI
+import AuthenticationServices
 
 struct LoginView: View {
     @EnvironmentObject var authService: AuthService
     @State private var email = ""
     @State private var password = ""
     @State private var showingSignUp = false
+    
+    var isEmailPasswordValid: Bool {
+        !email.isEmpty && !password.isEmpty
+    }
     
     var body: some View {
         ZStack {
@@ -30,6 +35,17 @@ struct LoginView: View {
                 
                 Spacer()
                 
+                // Error Message
+                if let errorMessage = authService.errorMessage {
+                    Text(errorMessage)
+                        .font(Theme.fontCaption)
+                        .foregroundColor(Theme.destructive)
+                        .padding()
+                        .background(Theme.destructive.opacity(0.1))
+                        .cornerRadius(Theme.cornerRadius)
+                        .padding(.horizontal, Theme.paddingLarge)
+                }
+                
                 // Input Fields
                 VStack(spacing: 16) {
                     TextField("Email", text: $email)
@@ -49,7 +65,11 @@ struct LoginView: View {
                 .padding(.horizontal, Theme.paddingLarge)
                 
                 // Sign In Button
-                Button(action: { authService.signIn(email: email, password: password) }) {
+                Button(action: {
+                    Task {
+                        try? await authService.signIn(email: email, password: password)
+                    }
+                }) {
                     if authService.isLoading {
                         ProgressView()
                             .tint(.black)
@@ -61,15 +81,33 @@ struct LoginView: View {
                 .foregroundColor(.black)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
-                .background(Theme.accent)
+                .background(isEmailPasswordValid && !authService.isLoading ? Theme.accent : Theme.accent.opacity(0.3))
+                .cornerRadius(Theme.cornerRadius)
+                .padding(.horizontal, Theme.paddingLarge)
+                .disabled(!isEmailPasswordValid || authService.isLoading)
+                
+                // Apple Sign In Button
+                SignInWithAppleButton(
+                    onRequest: { request in
+                        request.requestedScopes = [.fullName, .email]
+                    },
+                    onCompletion: { result in
+                        Task {
+                            authService.signInWithApple()
+                        }
+                    }
+                )
+                .frame(height: 50)
                 .cornerRadius(Theme.cornerRadius)
                 .padding(.horizontal, Theme.paddingLarge)
                 
-                // Apple Sign In
-                Button(action: { authService.signInWithApple() }) {
+                // Google Sign In Button (Stub)
+                Button(action: {
+                    authService.errorMessage = "Google Sign In coming soon"
+                }) {
                     HStack {
-                        Image(systemName: "apple.logo")
-                        Text("Sign in with Apple")
+                        Image(systemName: "globe")
+                        Text("Sign in with Google")
                             .font(.system(size: 16, weight: .semibold))
                     }
                     .foregroundColor(Theme.textPrimary)
