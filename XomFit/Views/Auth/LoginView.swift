@@ -101,9 +101,9 @@ struct LoginView: View {
                 .cornerRadius(Theme.cornerRadius)
                 .padding(.horizontal, Theme.paddingLarge)
                 
-                // Google Sign In Button (Stub)
+                // Google Sign In Button
                 Button(action: {
-                    authService.errorMessage = "Google Sign In coming soon"
+                    authService.signInWithGoogle()
                 }) {
                     HStack {
                         Image(systemName: "globe")
