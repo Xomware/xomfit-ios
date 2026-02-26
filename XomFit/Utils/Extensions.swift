@@ -51,6 +51,13 @@ extension Date {
         formatter.dateFormat = "h:mm a"
         return formatter.string(from: self)
     }
+
+    /// "Jan 2025" — used on the profile header
+    var memberSince: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM yyyy"
+        return formatter.string(from: self)
+    }
 }
 
 // MARK: - Double Extensions

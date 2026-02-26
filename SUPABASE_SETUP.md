@@ -118,14 +118,37 @@ In your Supabase dashboard:
 
 ---
 
+## User Profiles Setup (Issue #3)
+
+### Database Migration
+
+Run `supabase/migrations/20240001_profiles.sql` in the Supabase SQL Editor.
+It creates:
+- **`public.profiles`** table with username, display_name, bio, avatar_url, is_private, and lifetime stats columns
+- RLS policies (users read/write their own profile; public profiles readable by all)
+- **`avatars`** Storage bucket (public) with per-user folder upload policies
+
+### Storage Bucket
+
+The migration creates the `avatars` bucket automatically. Verify in:
+**Supabase Dashboard → Storage → Buckets** that `avatars` exists and is set to **Public**.
+
+### How the Profile Flow Works
+
+1. After sign-in, `ProfileView` calls `loadProfile(userId:)`.
+2. If no row exists in `profiles`, the **ProfileSetupView** wizard appears (4 steps: welcome → name → avatar → bio).
+3. On completion, a row is inserted and the avatar (if chosen) is uploaded to `storage/avatars/<userId>/avatar.jpg`.
+4. The **Edit Profile** sheet (pencil icon, top-right) lets users change any field at any time.
+
+---
+
 ## Next Steps
 
 Once authentication is working:
 
-1. **User Profiles**: Create a `users` table in Supabase to store profile data (username, bio, stats, etc.)
-2. **Profile View**: Update the app to fetch and display user profiles from Supabase
-3. **Google Sign In**: Implement Google OAuth if needed
-4. **Email Verification**: Optionally require email verification before sign-in
+1. ✅ **User Profiles**: Implemented in `feature/user-profile` branch
+2. **Google Sign In**: Implement Google OAuth if needed
+3. **Email Verification**: Optionally require email verification before sign-in
 
 ---
 
