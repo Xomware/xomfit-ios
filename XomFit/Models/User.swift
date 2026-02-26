@@ -40,6 +40,24 @@ extension User {
         createdAt: Date().addingTimeInterval(-86400 * 365)
     )
     
+    static let mockUser = User(
+        id: "user-1",
+        username: "domg",
+        displayName: "Dom G",
+        avatarURL: nil,
+        bio: "Building XomFit 💪",
+        stats: UserStats(
+            totalWorkouts: 247,
+            totalVolume: 1_245_680,
+            totalPRs: 42,
+            currentStreak: 5,
+            longestStreak: 30,
+            favoriteExercise: "Bench Press"
+        ),
+        isPrivate: false,
+        createdAt: Date().addingTimeInterval(-86400 * 365)
+    )
+    
     static let mockFriend = User(
         id: "user-2",
         username: "mikej",
