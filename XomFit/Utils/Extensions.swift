@@ -40,6 +40,10 @@ extension Date {
         return formatter.string(from: self)
     }
     
+    var timeAgoDisplay: String {
+        timeAgo
+    }
+    
     var workoutDateString: String {
         let formatter = DateFormatter()
         formatter.dateFormat = "EEEE, MMM d"
