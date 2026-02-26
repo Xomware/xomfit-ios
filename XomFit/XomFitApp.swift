@@ -18,7 +18,7 @@ struct XomFitApp: App {
         }
         .onOpenURL { url in
             Task {
-                try? await supabase.auth.session(from: url)
+                await authService.handleOAuthRedirect(url)
             }
         }
     }

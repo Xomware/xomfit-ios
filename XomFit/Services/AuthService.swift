@@ -7,12 +7,34 @@ class AuthService: NSObject, ObservableObject {
     @Published var currentUser: User?
     @Published var isLoading = false
     @Published var errorMessage: String?
+    @Published var isInitialized = false
     
     private var authStateTask: Task<Void, Never>?
     
     override init() {
         super.init()
         setupAuthStateListener()
+        validateCurrentSession()
+    }
+    
+    /// Validate current session on app launch
+    private func validateCurrentSession() {
+        Task {
+            do {
+                let session = try await supabase.auth.session
+                // Session is valid, auth state listener will handle the rest
+                await MainActor.run {
+                    isInitialized = true
+                }
+            } catch {
+                // No valid session or session expired
+                await MainActor.run {
+                    isAuthenticated = false
+                    currentUser = nil
+                    isInitialized = true
+                }
+            }
+        }
     }
     
     /// Set up listener for auth state changes
@@ -93,6 +115,9 @@ class AuthService: NSObject, ObservableObject {
     
     /// Sign in with Apple using ASAuthorizationController
     func signInWithApple() {
+        isLoading = true
+        errorMessage = nil
+        
         let request = ASAuthorizationAppleIDProvider().createRequest()
         request.requestedScopes = [.fullName, .email]
         
@@ -100,6 +125,25 @@ class AuthService: NSObject, ObservableObject {
         controller.delegate = self
         controller.presentationContextProvider = self
         controller.performRequests()
+    }
+    
+    /// Sign in with Google using web-based OAuth flow
+    func signInWithGoogle() {
+        isLoading = true
+        errorMessage = nil
+        
+        Task {
+            do {
+                // Use Supabase's built-in OAuth flow for Google
+                let session = try await supabase.auth.signInWithOAuth(provider: .google)
+                // Auth state listener will handle updating the UI
+            } catch {
+                await MainActor.run {
+                    errorMessage = error.localizedDescription
+                    isLoading = false
+                }
+            }
+        }
     }
     
     /// Sign out
@@ -115,6 +159,31 @@ class AuthService: NSObject, ObservableObject {
             isLoading = false
             throw error
         }
+    }
+    
+    /// Handle OAuth redirect from deep link
+    func handleOAuthRedirect(_ url: URL) async {
+        do {
+            let session = try await supabase.auth.session(from: url)
+            // Auth state listener will handle updating the UI
+            print("OAuth redirect handled successfully")
+        } catch {
+            await MainActor.run {
+                errorMessage = "Failed to complete sign-in: \(error.localizedDescription)"
+                isLoading = false
+            }
+        }
+    }
+    
+    /// Clear error message
+    func clearError() {
+        errorMessage = nil
+    }
+    
+    /// Force refresh current session
+    func refreshSession() async throws {
+        let session = try await supabase.auth.session
+        // Auth state listener will handle updating the UI
     }
     
     deinit {
@@ -143,30 +212,44 @@ extension AuthService: ASAuthorizationControllerDelegate {
         
         Task {
             do {
-                isLoading = true
-                errorMessage = nil
-                
                 let session = try await supabase.auth.signInWithIdToken(
                     credentials: .init(provider: .apple, idToken: tokenString)
                 )
                 
-                // Update user metadata if we have a name
-                if let fullName = appleIDCredential.fullName {
-                    let displayName = [fullName.givenName, fullName.familyName]
-                        .compactMap { $0 }
-                        .joined(separator: " ")
-                    
+                // Update user metadata if we have a name or email
+                var metadata: [String: Any] = [:]
+                
+                if let fullName = appleIDCredential.fullName,
+                   let givenName = fullName.givenName,
+                   let familyName = fullName.familyName {
+                    let displayName = "\(givenName) \(familyName)"
+                    metadata["display_name"] = displayName
+                    metadata["first_name"] = givenName
+                    metadata["last_name"] = familyName
+                }
+                
+                // Cache email if provided (Apple only provides this once)
+                if let email = appleIDCredential.email {
+                    metadata["email"] = email
+                    UserDefaults.standard.set(email, forKey: "cached_apple_email")
+                }
+                
+                // Update metadata if we have any
+                if !metadata.isEmpty {
                     try? await supabase.auth.update(
-                        user: UserAttributes(data: [
-                            "display_name": displayName
-                        ])
+                        user: UserAttributes(data: metadata)
                     )
                 }
                 
+                await MainActor.run {
+                    isLoading = false
+                }
                 // Auth state listener will handle updating the UI
             } catch {
-                errorMessage = error.localizedDescription
-                isLoading = false
+                await MainActor.run {
+                    errorMessage = error.localizedDescription
+                    isLoading = false
+                }
             }
         }
     }
