@@ -87,7 +87,7 @@ struct ChallengeView: View {
             }
         }
         .sheet(isPresented: $showCreateChallenge) {
-            CreateChallengeView(isPresented: $showCreateChallenge) { challenge in
+            CreateChallengeView(isPresented: $showCreateChallenge, viewModel: viewModel) { challenge in
                 viewModel.challenges.append(challenge)
             }
         }
@@ -258,6 +258,9 @@ struct CreateChallengeView: View {
     @Binding var isPresented: Bool
     @State private var selectedType: ChallengeType = .mostVolume
     @State private var selectedFriends: Set<String> = []
+    @State private var friends: [FriendForChallenge] = []
+    @State private var isLoadingFriends = true
+    @ObservedObject var viewModel: ChallengeViewModel
     var onCreated: (Challenge) -> Void
     
     var body: some View {
@@ -282,33 +285,42 @@ struct CreateChallengeView: View {
                 }
                 
                 Section("Invite Friends") {
-                    VStack(spacing: 8) {
-                        ForEach(["John Doe", "Jane Smith", "Mike Johnson"], id: \.self) { friend in
-                            HStack {
-                                Circle()
-                                    .fill(Color.blue.opacity(0.5))
-                                    .frame(width: 32, height: 32)
-                                    .overlay(
-                                        Text(String(friend.prefix(1)))
-                                            .font(.caption)
-                                            .foregroundColor(.white)
-                                    )
-                                
-                                Text(friend)
-                                    .font(.body)
-                                
-                                Spacer()
-                                
-                                Toggle("", isOn: Binding(
-                                    get: { selectedFriends.contains(friend) },
-                                    set: { isSelected in
-                                        if isSelected {
-                                            selectedFriends.insert(friend)
-                                        } else {
-                                            selectedFriends.remove(friend)
+                    if isLoadingFriends {
+                        ProgressView()
+                    } else if friends.isEmpty {
+                        Text("No friends found. Add friends to create a challenge!")
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                    } else {
+                        VStack(spacing: 8) {
+                            ForEach(friends) { friend in
+                                HStack {
+                                    Circle()
+                                        .fill(Color.blue.opacity(0.5))
+                                        .frame(width: 32, height: 32)
+                                        .overlay(
+                                            Text(friend.initials)
+                                                .font(.caption)
+                                                .fontWeight(.semibold)
+                                                .foregroundColor(.white)
+                                        )
+                                    
+                                    Text(friend.displayName)
+                                        .font(.body)
+                                    
+                                    Spacer()
+                                    
+                                    Toggle("", isOn: Binding(
+                                        get: { selectedFriends.contains(friend.id) },
+                                        set: { isSelected in
+                                            if isSelected {
+                                                selectedFriends.insert(friend.id)
+                                            } else {
+                                                selectedFriends.remove(friend.id)
+                                            }
                                         }
-                                    }
-                                ))
+                                    ))
+                                }
                             }
                         }
                     }
@@ -328,6 +340,10 @@ struct CreateChallengeView: View {
                     }
                     .disabled(selectedFriends.isEmpty)
                 }
+            }
+            .task {
+                friends = await viewModel.fetchFriendsForChallenge()
+                isLoadingFriends = false
             }
         }
     }

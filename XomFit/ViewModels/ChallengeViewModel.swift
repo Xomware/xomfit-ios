@@ -9,15 +9,81 @@ class ChallengeViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var userChallenges: [Challenge] = []
+    @Published var realtimeUpdates: [String: Date] = [:]  // Track last update time per challenge
     
     private var cancellables = Set<AnyCancellable>()
     private let supabaseService: SupabaseService
     private let notificationService: NotificationService
+    private let realtimeService: RealtimeService
+    private let badgeService: BadgeService
+    private let streakService: StreakService
+    private let friendsService: FriendsService
     
     init(supabaseService: SupabaseService = .shared,
-         notificationService: NotificationService = .shared) {
+         notificationService: NotificationService = .shared,
+         realtimeService: RealtimeService = .shared,
+         badgeService: BadgeService = .shared,
+         streakService: StreakService = .shared,
+         friendsService: FriendsService = .shared) {
         self.supabaseService = supabaseService
         self.notificationService = notificationService
+        self.realtimeService = realtimeService
+        self.badgeService = badgeService
+        self.streakService = streakService
+        self.friendsService = friendsService
+        
+        // Setup real-time subscriptions
+        setupRealtimeListeners()
+    }
+    
+    // MARK: - Real-time Setup
+    
+    private func setupRealtimeListeners() {
+        realtimeService.leaderboardChanges
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] event in
+                Task { @MainActor in
+                    await self?.handleLeaderboardChange(event)
+                }
+            }
+            .store(in: &cancellables)
+        
+        realtimeService.streakUpdates
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] update in
+                Task { @MainActor in
+                    await self?.handleStreakUpdate(update)
+                }
+            }
+            .store(in: &cancellables)
+    }
+    
+    private func handleLeaderboardChange(_ event: LeaderboardChangeEvent) async {
+        // Update the selected challenge with new leaderboard data
+        if let selectedChallenge = selectedChallenge, selectedChallenge.challenge.id == event.challengeId {
+            realtimeUpdates[event.challengeId] = Date()
+            await fetchChallengeDetail(challengeId: event.challengeId)
+        }
+    }
+    
+    private func handleStreakUpdate(_ update: StreakUpdate) async {
+        // Notify user of streak changes
+        switch update.changeType {
+        case .updated:
+            await notificationService.sendChallengeUpdate(
+                title: "Streak Updated!",
+                body: "Your \(update.streak.count)-day streak is going strong! 🔥"
+            )
+        case .broken:
+            await notificationService.sendChallengeUpdate(
+                title: "Streak Lost",
+                body: "Your streak was broken. Get back in the gym!"
+            )
+        case .created:
+            break
+        case .resetOnDay:
+            break
+        }
     }
     
     // MARK: - Public Methods
@@ -116,6 +182,22 @@ class ChallengeViewModel: ObservableObject {
         do {
             try await supabaseService.insert(challenge, into: "challenges")
             
+            // Initialize streaks for all participants
+            for participantId in participantIds {
+                let streak = Streak(
+                    id: UUID().uuidString,
+                    userId: participantId,
+                    challengeId: challengeId,
+                    count: 0,
+                    lastWorkoutDate: Date()
+                )
+                try await supabaseService.insert(streak, into: "streaks")
+            }
+            
+            // Subscribe to real-time updates
+            realtimeService.subscribeToChallengeUpdates(challengeId: challengeId)
+            realtimeService.subscribeToLeaderboardUpdates(challengeId: challengeId)
+            
             // Notify participants
             await notifyParticipants(
                 participantIds,
@@ -149,8 +231,29 @@ class ChallengeViewModel: ObservableObject {
             
             try await supabaseService.insert(result, into: "challenge_results")
             
+            // Update streak
+            await streakService.updateStreak(userId: userId, challengeId: challengeId)
+            
             // Recalculate leaderboard
             await fetchChallengeDetail(challengeId: challengeId)
+            
+            // Evaluate and award badges
+            if let detail = selectedChallenge {
+                let earnedBadges = await badgeService.evaluateBadges(
+                    for: userId,
+                    challengeId: challengeId,
+                    leaderboard: detail.leaderboard
+                )
+                
+                // Notify about earned badges
+                if !earnedBadges.isEmpty {
+                    let badgeNames = earnedBadges.map { $0.name }.joined(separator: ", ")
+                    await notificationService.sendChallengeUpdate(
+                        title: "Badges Earned!",
+                        body: "You earned: \(badgeNames)"
+                    )
+                }
+            }
             
             // Notify about rank change
             if let detail = selectedChallenge, let newRank = detail.currentUserRank {
@@ -162,6 +265,14 @@ class ChallengeViewModel: ObservableObject {
         } catch {
             errorMessage = "Failed to update challenge results: \(error.localizedDescription)"
         }
+    }
+    
+    // MARK: - Friends Management
+    
+    func fetchFriendsForChallenge() async -> [FriendForChallenge] {
+        return await friendsService.fetchFriendsForChallenge(
+            for: supabaseService.currentUserId
+        )
     }
     
     // MARK: - Private Methods
