@@ -11,6 +11,7 @@ enum Theme {
     static let destructive = Color(hex: "FF4444")
     static let warning = Color(hex: "FFD700")
     static let prGold = Color(hex: "FFD700")
+    static let divider = Color(hex: "333333")
     
     // MARK: - Spacing
     static let paddingSmall: CGFloat = 8
