@@ -1,5 +1,6 @@
 import Foundation
 import AuthenticationServices
+import CryptoKit
 
 @MainActor
 class AuthService: NSObject, ObservableObject {
@@ -10,6 +11,7 @@ class AuthService: NSObject, ObservableObject {
     @Published var isInitialized = false
     
     private var authStateTask: Task<Void, Never>?
+    private var currentNonce: String? // Store nonce for Apple Sign In validation
     
     override init() {
         super.init()
@@ -113,13 +115,17 @@ class AuthService: NSObject, ObservableObject {
         }
     }
     
-    /// Sign in with Apple using ASAuthorizationController
+    /// Sign in with Apple using ASAuthorizationController with proper nonce
     func signInWithApple() {
         isLoading = true
         errorMessage = nil
         
+        let nonce = generateNonce()
+        let hashedNonce = sha256(nonce)
+        
         let request = ASAuthorizationAppleIDProvider().createRequest()
         request.requestedScopes = [.fullName, .email]
+        request.nonce = hashedNonce // Critical: Apple security requirement
         
         let controller = ASAuthorizationController(authorizationRequests: [request])
         controller.delegate = self
@@ -180,10 +186,40 @@ class AuthService: NSObject, ObservableObject {
         errorMessage = nil
     }
     
+    /// Reset password for a given email
+    func resetPassword(email: String) async throws {
+        isLoading = true
+        errorMessage = nil
+        
+        do {
+            try await supabase.auth.resetPasswordForEmail(email)
+            isLoading = false
+        } catch {
+            errorMessage = error.localizedDescription
+            isLoading = false
+            throw error
+        }
+    }
+    
     /// Force refresh current session
     func refreshSession() async throws {
         let session = try await supabase.auth.session
         // Auth state listener will handle updating the UI
+    }
+    
+    // MARK: - Nonce Generation for Apple Sign In
+    /// Generate a SHA256 hash nonce for Apple Sign In (security requirement)
+    private func generateNonce() -> String {
+        let nonce = UUID().uuidString
+        self.currentNonce = nonce
+        return nonce
+    }
+    
+    /// SHA256 hash a string (required by Apple Sign In)
+    private func sha256(_ input: String) -> String {
+        let data = Data(input.utf8)
+        let digest = SHA256.hash(data: data)
+        return digest.map { String(format: "%02hhx", $0) }.joined()
     }
     
     deinit {

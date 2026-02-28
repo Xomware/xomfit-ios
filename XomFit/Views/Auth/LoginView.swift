@@ -6,9 +6,19 @@ struct LoginView: View {
     @State private var email = ""
     @State private var password = ""
     @State private var showingSignUp = false
+    @State private var showingForgotPassword = false
+    @FocusState private var focusedField: FocusField?
+    
+    enum FocusField {
+        case email
+        case password
+    }
     
     var isEmailPasswordValid: Bool {
-        !email.isEmpty && !password.isEmpty
+        let emailRegex = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+        let predicate = NSPredicate(format: "SELF MATCHES %@", emailRegex)
+        let isEmailValid = predicate.evaluate(with: email)
+        return isEmailValid && password.count >= 8
     }
     
     var body: some View {
@@ -48,19 +58,61 @@ struct LoginView: View {
                 
                 // Input Fields
                 VStack(spacing: 16) {
-                    TextField("Email", text: $email)
-                        .textContentType(.emailAddress)
-                        .autocapitalization(.none)
-                        .padding()
-                        .background(Theme.cardBackground)
-                        .cornerRadius(Theme.cornerRadius)
-                        .foregroundColor(Theme.textPrimary)
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Email")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(Theme.textSecondary)
+                        
+                        TextField("your@email.com", text: $email)
+                            .textContentType(.emailAddress)
+                            .autocapitalization(.none)
+                            .keyboardType(.emailAddress)
+                            .submitLabel(.next)
+                            .focused($focusedField, equals: .email)
+                            .padding()
+                            .background(Theme.cardBackground)
+                            .cornerRadius(Theme.cornerRadius)
+                            .foregroundColor(Theme.textPrimary)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: Theme.cornerRadius)
+                                    .stroke(
+                                        focusedField == .email ? Theme.accent : Color.clear,
+                                        lineWidth: 2
+                                    )
+                            )
+                    }
                     
-                    SecureField("Password", text: $password)
-                        .padding()
-                        .background(Theme.cardBackground)
-                        .cornerRadius(Theme.cornerRadius)
-                        .foregroundColor(Theme.textPrimary)
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Password")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(Theme.textSecondary)
+                        
+                        SecureField("••••••••", text: $password)
+                            .submitLabel(.go)
+                            .focused($focusedField, equals: .password)
+                            .padding()
+                            .background(Theme.cardBackground)
+                            .cornerRadius(Theme.cornerRadius)
+                            .foregroundColor(Theme.textPrimary)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: Theme.cornerRadius)
+                                    .stroke(
+                                        focusedField == .password ? Theme.accent : Color.clear,
+                                        lineWidth: 2
+                                    )
+                            )
+                    }
+                }
+                .padding(.horizontal, Theme.paddingLarge)
+                
+                // Forgot Password Link
+                HStack {
+                    Spacer()
+                    Button(action: { showingForgotPassword = true }) {
+                        Text("Forgot password?")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(Theme.accent)
+                    }
                 }
                 .padding(.horizontal, Theme.paddingLarge)
                 
@@ -86,6 +138,20 @@ struct LoginView: View {
                 .padding(.horizontal, Theme.paddingLarge)
                 .disabled(!isEmailPasswordValid || authService.isLoading)
                 
+                // Divider
+                HStack {
+                    VStack {
+                        Divider()
+                    }
+                    Text("or continue with")
+                        .font(.system(size: 12))
+                        .foregroundColor(Theme.textSecondary)
+                    VStack {
+                        Divider()
+                    }
+                }
+                .padding(.horizontal, Theme.paddingLarge)
+                
                 // Apple Sign In Button
                 SignInWithAppleButton(
                     onRequest: { request in
@@ -102,32 +168,23 @@ struct LoginView: View {
                 .padding(.horizontal, Theme.paddingLarge)
                 
                 // Google Sign In Button
-                Button(action: {
+                GoogleSignInButton(action: {
                     authService.signInWithGoogle()
-                }) {
-                    HStack {
-                        Image(systemName: "globe")
-                        Text("Sign in with Google")
-                            .font(.system(size: 16, weight: .semibold))
-                    }
-                    .foregroundColor(Theme.textPrimary)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(Theme.cardBackground)
-                    .cornerRadius(Theme.cornerRadius)
-                }
+                })
                 .padding(.horizontal, Theme.paddingLarge)
                 
                 // Sign Up Link
-                Button(action: { showingSignUp = true }) {
-                    HStack(spacing: 4) {
-                        Text("Don't have an account?")
-                            .foregroundColor(Theme.textSecondary)
-                        Text("Sign Up")
-                            .foregroundColor(Theme.accent)
-                            .fontWeight(.semibold)
+                VStack(spacing: 12) {
+                    Button(action: { showingSignUp = true }) {
+                        HStack(spacing: 4) {
+                            Text("Don't have an account?")
+                                .foregroundColor(Theme.textSecondary)
+                            Text("Sign Up")
+                                .foregroundColor(Theme.accent)
+                                .fontWeight(.semibold)
+                        }
+                        .font(Theme.fontBody)
                     }
-                    .font(Theme.fontBody)
                 }
                 
                 Spacer()
@@ -136,6 +193,33 @@ struct LoginView: View {
         .sheet(isPresented: $showingSignUp) {
             SignUpView()
                 .environmentObject(authService)
+        }
+        .sheet(isPresented: $showingForgotPassword) {
+            ForgotPasswordView()
+                .environmentObject(authService)
+        }
+    }
+}
+
+// MARK: - Google Sign In Button
+struct GoogleSignInButton: View {
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                Image(systemName: "g.circle.fill")
+                    .font(.system(size: 18))
+                    .foregroundColor(.red)
+                
+                Text("Sign in with Google")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(Theme.textPrimary)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 16)
+            .background(Theme.cardBackground)
+            .cornerRadius(Theme.cornerRadius)
         }
     }
 }
