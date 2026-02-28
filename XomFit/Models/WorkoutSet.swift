@@ -8,6 +8,10 @@ struct WorkoutSet: Codable, Identifiable {
     var rpe: Double? // Rate of Perceived Exertion (1-10)
     var isPersonalRecord: Bool
     var completedAt: Date
+
+    // MARK: - Form Check Video (optional attachment)
+    var videoLocalURL: URL?       // locally saved clip after recording
+    var videoRemoteURL: URL?      // uploaded to Supabase Storage
     
     var volume: Double {
         weight * Double(reps)

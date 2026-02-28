@@ -128,6 +128,17 @@ class WorkoutLoggerViewModel: ObservableObject {
         activeWorkout?.exercises[exerciseIndex].sets.remove(at: setIndex)
     }
     
+    // MARK: - Form Check Video
+
+    /// Attach a form-check video (local and/or remote URL) to a specific set.
+    func attachFormCheckVideo(to exerciseIndex: Int, setId: String, localURL: URL?, remoteURL: URL?) {
+        guard exerciseIndex < (activeWorkout?.exercises.count ?? 0),
+              let setIndex = activeWorkout?.exercises[exerciseIndex].sets.firstIndex(where: { $0.id == setId })
+        else { return }
+        activeWorkout?.exercises[exerciseIndex].sets[setIndex].videoLocalURL = localURL
+        activeWorkout?.exercises[exerciseIndex].sets[setIndex].videoRemoteURL = remoteURL
+    }
+
     func editSet(at exerciseIndex: Int, setIndex: Int, weight: Double, reps: Int, rpe: Double?) {
         guard let workout = activeWorkout else { return }
         guard exerciseIndex < workout.exercises.count else { return }
