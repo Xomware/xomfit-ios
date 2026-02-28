@@ -8,6 +8,7 @@ struct LoginView: View {
     @State private var showingSignUp = false
     @State private var showingForgotPassword = false
     @FocusState private var focusedField: FocusField?
+    @State private var logoAppeared = false
     
     enum FocusField {
         case email
@@ -33,27 +34,38 @@ struct LoginView: View {
                     Image(systemName: "dumbbell.fill")
                         .font(.system(size: 60))
                         .foregroundColor(Theme.accent)
-                    
+                        .scaleEffect(logoAppeared ? 1 : 0.5)
+                        .opacity(logoAppeared ? 1 : 0)
+                        .animation(.spring(response: 0.6, dampingFraction: 0.65), value: logoAppeared)
+                        .accessibilityHidden(true)
+
                     Text("XomFit")
                         .font(.system(size: 42, weight: .bold))
                         .foregroundColor(Theme.textPrimary)
-                    
+                        .opacity(logoAppeared ? 1 : 0)
+                        .offset(y: logoAppeared ? 0 : 10)
+                        .animation(.spring(response: 0.5, dampingFraction: 0.7).delay(0.1), value: logoAppeared)
+                        .accessibilityAddTraits(.isHeader)
+
                     Text("Train Together. Get Stronger.")
                         .font(Theme.fontBody)
                         .foregroundColor(Theme.textSecondary)
+                        .opacity(logoAppeared ? 1 : 0)
+                        .animation(.easeIn(duration: 0.4).delay(0.2), value: logoAppeared)
                 }
+                .onAppear { logoAppeared = true }
                 
                 Spacer()
                 
                 // Error Message
                 if let errorMessage = authService.errorMessage {
-                    Text(errorMessage)
-                        .font(Theme.fontCaption)
-                        .foregroundColor(Theme.destructive)
-                        .padding()
-                        .background(Theme.destructive.opacity(0.1))
-                        .cornerRadius(Theme.cornerRadius)
-                        .padding(.horizontal, Theme.paddingLarge)
+                    AuthErrorBanner(message: errorMessage) {
+                        authService.clearError()
+                    }
+                    .transition(.asymmetric(
+                        insertion: .move(edge: .top).combined(with: .opacity),
+                        removal: .opacity
+                    ))
                 }
                 
                 // Input Fields
@@ -79,7 +91,10 @@ struct LoginView: View {
                                         focusedField == .email ? Theme.accent : Color.clear,
                                         lineWidth: 2
                                     )
+                                    .animation(.easeInOut(duration: 0.2), value: focusedField)
                             )
+                            .accessibilityLabel("Email")
+                            .accessibilityIdentifier("email-field")
                     }
                     
                     VStack(alignment: .leading, spacing: 8) {
@@ -100,7 +115,10 @@ struct LoginView: View {
                                         focusedField == .password ? Theme.accent : Color.clear,
                                         lineWidth: 2
                                     )
+                                    .animation(.easeInOut(duration: 0.2), value: focusedField)
                             )
+                            .accessibilityLabel("Password")
+                            .accessibilityIdentifier("password-field")
                     }
                 }
                 .padding(.horizontal, Theme.paddingLarge)
@@ -122,12 +140,14 @@ struct LoginView: View {
                         try? await authService.signIn(email: email, password: password)
                     }
                 }) {
-                    if authService.isLoading {
-                        ProgressView()
-                            .tint(.black)
-                    } else {
-                        Text("Sign In")
-                            .font(.system(size: 18, weight: .bold))
+                    ZStack {
+                        if authService.isLoading {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .black))
+                        } else {
+                            Text("Sign In")
+                                .font(.system(size: 18, weight: .bold))
+                        }
                     }
                 }
                 .foregroundColor(.black)
@@ -137,6 +157,10 @@ struct LoginView: View {
                 .cornerRadius(Theme.cornerRadius)
                 .padding(.horizontal, Theme.paddingLarge)
                 .disabled(!isEmailPasswordValid || authService.isLoading)
+                .animation(.easeInOut(duration: 0.2), value: isEmailPasswordValid)
+                .accessibilityLabel(authService.isLoading ? "Signing in" : "Sign In")
+                .accessibilityIdentifier("sign-in-button")
+                .accessibilityAddTraits(isEmailPasswordValid && !authService.isLoading ? .isButton : [.isButton, .isNotEnabled])
                 
                 // Divider
                 HStack {
