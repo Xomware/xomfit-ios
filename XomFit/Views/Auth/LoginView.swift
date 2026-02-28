@@ -6,9 +6,20 @@ struct LoginView: View {
     @State private var email = ""
     @State private var password = ""
     @State private var showingSignUp = false
+    @State private var showingForgotPassword = false
+    @FocusState private var focusedField: FocusField?
+    @State private var logoAppeared = false
+    
+    enum FocusField {
+        case email
+        case password
+    }
     
     var isEmailPasswordValid: Bool {
-        !email.isEmpty && !password.isEmpty
+        let emailRegex = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+        let predicate = NSPredicate(format: "SELF MATCHES %@", emailRegex)
+        let isEmailValid = predicate.evaluate(with: email)
+        return isEmailValid && password.count >= 8
     }
     
     var body: some View {
@@ -23,44 +34,103 @@ struct LoginView: View {
                     Image(systemName: "dumbbell.fill")
                         .font(.system(size: 60))
                         .foregroundColor(Theme.accent)
-                    
+                        .scaleEffect(logoAppeared ? 1 : 0.5)
+                        .opacity(logoAppeared ? 1 : 0)
+                        .animation(.spring(response: 0.6, dampingFraction: 0.65), value: logoAppeared)
+                        .accessibilityHidden(true)
+
                     Text("XomFit")
                         .font(.system(size: 42, weight: .bold))
                         .foregroundColor(Theme.textPrimary)
-                    
+                        .opacity(logoAppeared ? 1 : 0)
+                        .offset(y: logoAppeared ? 0 : 10)
+                        .animation(.spring(response: 0.5, dampingFraction: 0.7).delay(0.1), value: logoAppeared)
+                        .accessibilityAddTraits(.isHeader)
+
                     Text("Train Together. Get Stronger.")
                         .font(Theme.fontBody)
                         .foregroundColor(Theme.textSecondary)
+                        .opacity(logoAppeared ? 1 : 0)
+                        .animation(.easeIn(duration: 0.4).delay(0.2), value: logoAppeared)
                 }
+                .onAppear { logoAppeared = true }
                 
                 Spacer()
                 
                 // Error Message
                 if let errorMessage = authService.errorMessage {
-                    Text(errorMessage)
-                        .font(Theme.fontCaption)
-                        .foregroundColor(Theme.destructive)
-                        .padding()
-                        .background(Theme.destructive.opacity(0.1))
-                        .cornerRadius(Theme.cornerRadius)
-                        .padding(.horizontal, Theme.paddingLarge)
+                    AuthErrorBanner(message: errorMessage) {
+                        authService.clearError()
+                    }
+                    .transition(.asymmetric(
+                        insertion: .move(edge: .top).combined(with: .opacity),
+                        removal: .opacity
+                    ))
                 }
                 
                 // Input Fields
                 VStack(spacing: 16) {
-                    TextField("Email", text: $email)
-                        .textContentType(.emailAddress)
-                        .autocapitalization(.none)
-                        .padding()
-                        .background(Theme.cardBackground)
-                        .cornerRadius(Theme.cornerRadius)
-                        .foregroundColor(Theme.textPrimary)
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Email")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(Theme.textSecondary)
+                        
+                        TextField("your@email.com", text: $email)
+                            .textContentType(.emailAddress)
+                            .autocapitalization(.none)
+                            .keyboardType(.emailAddress)
+                            .submitLabel(.next)
+                            .focused($focusedField, equals: .email)
+                            .padding()
+                            .background(Theme.cardBackground)
+                            .cornerRadius(Theme.cornerRadius)
+                            .foregroundColor(Theme.textPrimary)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: Theme.cornerRadius)
+                                    .stroke(
+                                        focusedField == .email ? Theme.accent : Color.clear,
+                                        lineWidth: 2
+                                    )
+                                    .animation(.easeInOut(duration: 0.2), value: focusedField)
+                            )
+                            .accessibilityLabel("Email")
+                            .accessibilityIdentifier("email-field")
+                    }
                     
-                    SecureField("Password", text: $password)
-                        .padding()
-                        .background(Theme.cardBackground)
-                        .cornerRadius(Theme.cornerRadius)
-                        .foregroundColor(Theme.textPrimary)
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Password")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(Theme.textSecondary)
+                        
+                        SecureField("••••••••", text: $password)
+                            .submitLabel(.go)
+                            .focused($focusedField, equals: .password)
+                            .padding()
+                            .background(Theme.cardBackground)
+                            .cornerRadius(Theme.cornerRadius)
+                            .foregroundColor(Theme.textPrimary)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: Theme.cornerRadius)
+                                    .stroke(
+                                        focusedField == .password ? Theme.accent : Color.clear,
+                                        lineWidth: 2
+                                    )
+                                    .animation(.easeInOut(duration: 0.2), value: focusedField)
+                            )
+                            .accessibilityLabel("Password")
+                            .accessibilityIdentifier("password-field")
+                    }
+                }
+                .padding(.horizontal, Theme.paddingLarge)
+                
+                // Forgot Password Link
+                HStack {
+                    Spacer()
+                    Button(action: { showingForgotPassword = true }) {
+                        Text("Forgot password?")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(Theme.accent)
+                    }
                 }
                 .padding(.horizontal, Theme.paddingLarge)
                 
@@ -70,12 +140,14 @@ struct LoginView: View {
                         try? await authService.signIn(email: email, password: password)
                     }
                 }) {
-                    if authService.isLoading {
-                        ProgressView()
-                            .tint(.black)
-                    } else {
-                        Text("Sign In")
-                            .font(.system(size: 18, weight: .bold))
+                    ZStack {
+                        if authService.isLoading {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .black))
+                        } else {
+                            Text("Sign In")
+                                .font(.system(size: 18, weight: .bold))
+                        }
                     }
                 }
                 .foregroundColor(.black)
@@ -85,6 +157,24 @@ struct LoginView: View {
                 .cornerRadius(Theme.cornerRadius)
                 .padding(.horizontal, Theme.paddingLarge)
                 .disabled(!isEmailPasswordValid || authService.isLoading)
+                .animation(.easeInOut(duration: 0.2), value: isEmailPasswordValid)
+                .accessibilityLabel(authService.isLoading ? "Signing in" : "Sign In")
+                .accessibilityIdentifier("sign-in-button")
+                .accessibilityAddTraits(isEmailPasswordValid && !authService.isLoading ? .isButton : [.isButton, .isNotEnabled])
+                
+                // Divider
+                HStack {
+                    VStack {
+                        Divider()
+                    }
+                    Text("or continue with")
+                        .font(.system(size: 12))
+                        .foregroundColor(Theme.textSecondary)
+                    VStack {
+                        Divider()
+                    }
+                }
+                .padding(.horizontal, Theme.paddingLarge)
                 
                 // Apple Sign In Button
                 SignInWithAppleButton(
@@ -102,32 +192,23 @@ struct LoginView: View {
                 .padding(.horizontal, Theme.paddingLarge)
                 
                 // Google Sign In Button
-                Button(action: {
+                GoogleSignInButton(action: {
                     authService.signInWithGoogle()
-                }) {
-                    HStack {
-                        Image(systemName: "globe")
-                        Text("Sign in with Google")
-                            .font(.system(size: 16, weight: .semibold))
-                    }
-                    .foregroundColor(Theme.textPrimary)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(Theme.cardBackground)
-                    .cornerRadius(Theme.cornerRadius)
-                }
+                })
                 .padding(.horizontal, Theme.paddingLarge)
                 
                 // Sign Up Link
-                Button(action: { showingSignUp = true }) {
-                    HStack(spacing: 4) {
-                        Text("Don't have an account?")
-                            .foregroundColor(Theme.textSecondary)
-                        Text("Sign Up")
-                            .foregroundColor(Theme.accent)
-                            .fontWeight(.semibold)
+                VStack(spacing: 12) {
+                    Button(action: { showingSignUp = true }) {
+                        HStack(spacing: 4) {
+                            Text("Don't have an account?")
+                                .foregroundColor(Theme.textSecondary)
+                            Text("Sign Up")
+                                .foregroundColor(Theme.accent)
+                                .fontWeight(.semibold)
+                        }
+                        .font(Theme.fontBody)
                     }
-                    .font(Theme.fontBody)
                 }
                 
                 Spacer()
@@ -136,6 +217,33 @@ struct LoginView: View {
         .sheet(isPresented: $showingSignUp) {
             SignUpView()
                 .environmentObject(authService)
+        }
+        .sheet(isPresented: $showingForgotPassword) {
+            ForgotPasswordView()
+                .environmentObject(authService)
+        }
+    }
+}
+
+// MARK: - Google Sign In Button
+struct GoogleSignInButton: View {
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                Image(systemName: "g.circle.fill")
+                    .font(.system(size: 18))
+                    .foregroundColor(.red)
+                
+                Text("Sign in with Google")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(Theme.textPrimary)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 16)
+            .background(Theme.cardBackground)
+            .cornerRadius(Theme.cornerRadius)
         }
     }
 }

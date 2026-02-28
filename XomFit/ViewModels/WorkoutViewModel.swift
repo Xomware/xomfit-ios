@@ -7,7 +7,10 @@ class WorkoutViewModel: ObservableObject {
     @Published var isWorkoutActive = false
     @Published var exercises: [Exercise] = ExerciseDatabase.all
     
-    init() {
+    weak var prViewModel: PRViewModel?
+    
+    init(prViewModel: PRViewModel? = nil) {
+        self.prViewModel = prViewModel
         loadRecentWorkouts()
     }
     
@@ -55,6 +58,8 @@ class WorkoutViewModel: ObservableObject {
         activeWorkout?.endTime = Date()
         if let workout = activeWorkout {
             recentWorkouts.insert(workout, at: 0)
+            // Trigger PR detection
+            prViewModel?.detectNewPRsInWorkout(workout)
         }
         activeWorkout = nil
         isWorkoutActive = false

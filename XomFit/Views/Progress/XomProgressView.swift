@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct XomProgressView: View {
+    @State private var selectedTab = 0
     @State private var selectedTimeframe = 0
     let timeframes = ["Week", "Month", "3 Months", "Year"]
     
@@ -9,7 +10,30 @@ struct XomProgressView: View {
             ZStack {
                 Theme.background.ignoresSafeArea()
                 
-                ScrollView {
+                VStack(spacing: 0) {
+                    // Top-level tab selector: Workouts / Body Composition
+                    Picker("Progress Tab", selection: $selectedTab) {
+                        Text("Workouts").tag(0)
+                        Text("Body Composition").tag(1)
+                    }
+                    .pickerStyle(.segmented)
+                    .padding(.horizontal, Theme.paddingMedium)
+                    .padding(.top, Theme.paddingSmall)
+                    .padding(.bottom, Theme.paddingSmall)
+                    
+                    if selectedTab == 1 {
+                        BodyCompositionView()
+                    } else {
+                workoutsContent
+                    }
+                }
+            }
+            .navigationTitle("Progress")
+        }
+    }
+    
+    @ViewBuilder private var workoutsContent: some View {
+        ScrollView {
                     VStack(spacing: Theme.paddingLarge) {
                         // Timeframe Picker
                         Picker("Timeframe", selection: $selectedTimeframe) {
@@ -28,27 +52,37 @@ struct XomProgressView: View {
                         }
                         .padding(.horizontal, Theme.paddingMedium)
                         
-                        // Strength Progress (Placeholder Chart)
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("Strength Progress")
-                                .font(Theme.fontHeadline)
-                                .foregroundColor(Theme.textPrimary)
-                            
-                            // Placeholder chart area
-                            ZStack {
-                                RoundedRectangle(cornerRadius: Theme.cornerRadius)
-                                    .fill(Theme.secondaryBackground)
-                                    .frame(height: 200)
+                        // Strength Progress
+                        NavigationLink(destination: AnalyticsView()) {
+                            VStack(alignment: .leading, spacing: 12) {
+                                HStack {
+                                    Text("Analytics")
+                                        .font(Theme.fontHeadline)
+                                        .foregroundColor(Theme.textPrimary)
+                                    
+                                    Spacer()
+                                    
+                                    Image(systemName: "chevron.right")
+                                        .foregroundColor(Theme.accent)
+                                }
                                 
-                                VStack(spacing: 8) {
-                                    Image(systemName: "chart.line.uptrend.xyaxis")
-                                        .font(.system(size: 40))
-                                        .foregroundColor(Theme.accent.opacity(0.5))
-                                    Text("Charts coming soon")
-                                        .font(Theme.fontCaption)
-                                        .foregroundColor(Theme.textSecondary)
+                                // Preview chart area
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: Theme.cornerRadius)
+                                        .fill(Theme.secondaryBackground)
+                                        .frame(height: 100)
+                                    
+                                    VStack(spacing: 8) {
+                                        Image(systemName: "chart.line.uptrend.xyaxis")
+                                            .font(.system(size: 32))
+                                            .foregroundColor(Theme.accent.opacity(0.7))
+                                        Text("View detailed analytics")
+                                            .font(Theme.fontCaption)
+                                            .foregroundColor(Theme.textSecondary)
+                                    }
                                 }
                             }
+                            .cardStyle()
                         }
                         .padding(.horizontal, Theme.paddingMedium)
                         
@@ -107,9 +141,6 @@ struct XomProgressView: View {
                         .padding(.horizontal, Theme.paddingMedium)
                     }
                     .padding(.top, Theme.paddingSmall)
-                }
-            }
-            .navigationTitle("Progress")
         }
     }
 }

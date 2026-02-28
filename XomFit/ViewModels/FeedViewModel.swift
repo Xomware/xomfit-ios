@@ -1,5 +1,4 @@
 import Foundation
-import Supabase
 
 enum FeedFilter: String, CaseIterable {
     case friends = "Friends"
@@ -12,13 +11,9 @@ class FeedViewModel: ObservableObject {
     @Published var posts: [FeedPost] = []
     @Published var isLoading = false
     @Published var selectedFilter: FeedFilter = .friends
-    @Published var newCommentText: [String: String] = [:]
-    @Published var selectedPostForComments: FeedPost?
-    @Published var showingCommentSheet = false
-    @Published var error: String?
+    @Published var errorMessage: String?
     
-    private let apiService = APIService.shared
-    private let supabaseClient = supabase
+    private var allPosts: [FeedPost] = []
     
     init() {
         loadFeed()
@@ -26,150 +21,118 @@ class FeedViewModel: ObservableObject {
     
     func loadFeed() {
         isLoading = true
-        Task {
-            do {
-                switch selectedFilter {
-                case .friends:
-                    posts = try await apiService.fetchFeedByFilter(.friends)
-                case .following:
-                    posts = try await apiService.fetchFeedByFilter(.following)
-                case .discover:
-                    posts = try await apiService.fetchFeedByFilter(.discover)
-                }
-                isLoading = false
-            } catch {
-                self.error = error.localizedDescription
-                // Fall back to mock data if API fails
-                posts = FeedPost.mockFeed
-                isLoading = false
-            }
-        }
+        // Mock data for now - in production this would fetch from API
+        allPosts = generateMockFeed()
+        applyFilter()
+        isLoading = false
     }
     
-    // MARK: - Interaction Methods
+    func applyFilter() {
+        switch selectedFilter {
+        case .friends:
+            // Show only posts from direct friends
+            posts = allPosts.filter { $0.user.id != "user-1" }
+        case .following:
+            // Show posts from all followed accounts
+            posts = allPosts.filter { $0.user.id != "user-1" }
+        case .discover:
+            // Show posts from recommended accounts
+            posts = allPosts.filter { $0.user.id != "user-1" }
+        }
+        // Sort by most recent
+        posts.sort { $0.createdAt > $1.createdAt }
+    }
     
     func toggleLike(post: FeedPost) {
-        guard let index = posts.firstIndex(where: { $0.id == post.id }) else { return }
-        posts[index].isLiked.toggle()
-        posts[index].likes += posts[index].isLiked ? 1 : -1
-        
-        // Update in Supabase
-        Task {
-            try await updateLikeInSupabase(postId: post.id, liked: posts[index].isLiked)
-        }
+        guard let allPostIndex = allPosts.firstIndex(where: { $0.id == post.id }) else { return }
+        allPosts[allPostIndex].isLiked.toggle()
+        allPosts[allPostIndex].likes += allPosts[allPostIndex].isLiked ? 1 : -1
+        applyFilter()
     }
     
-    func addReaction(to post: FeedPost, emoji: String) {
-        guard let index = posts.firstIndex(where: { $0.id == post.id }) else { return }
-        
-        // Update local state
-        if !posts[index].reactions.contains(emoji) {
-            posts[index].reactions.append(emoji)
-        }
-        posts[index].reactionCounts[emoji, default: 0] += 1
-        
-        // Update in Supabase
-        Task {
-            try await addReactionInSupabase(postId: post.id, emoji: emoji)
-        }
-    }
-    
-    func addComment(to post: FeedPost, text: String) {
-        guard !text.isEmpty else { return }
-        guard let index = posts.firstIndex(where: { $0.id == post.id }) else { return }
-        
-        let newComment = FeedPost.Comment(
+    func addComment(to post: FeedPost, text: String, user: User) {
+        guard let index = allPosts.firstIndex(where: { $0.id == post.id }) else { return }
+        let comment = FeedPost.Comment(
             id: UUID().uuidString,
-            user: User.mock, // TODO: Get current user from auth
+            user: user,
             text: text,
             createdAt: Date()
         )
-        
-        posts[index].comments.append(newComment)
-        newCommentText[post.id] = ""
-        
-        // Update in Supabase
-        Task {
-            try await addCommentInSupabase(postId: post.id, comment: newComment)
-        }
+        allPosts[index].comments.append(comment)
+        applyFilter()
     }
     
-    func shareWorkout(_ workout: Workout, toFeed: Bool) {
-        // Update workout to mark as shared to feed
-        Task {
-            do {
-                try await supabaseClient
-                    .from("workouts")
-                    .update(["is_shared_to_feed": toFeed])
-                    .eq("id", value: workout.id)
-                    .execute()
-                
-                // Reload feed if share was successful
-                if toFeed {
-                    await MainActor.run {
-                        self.loadFeed()
-                    }
-                }
-            } catch {
-                self.error = "Failed to share workout: \(error.localizedDescription)"
-            }
-        }
-    }
-    
-    // MARK: - Supabase Updates
-    
-    private func updateLikeInSupabase(postId: String, liked: Bool) async throws {
-        guard let userId = try await getCurrentUserId() else { return }
-        
-        if liked {
-            try await supabaseClient
-                .from("feed_likes")
-                .insert(["post_id": postId, "user_id": userId])
-                .execute()
-        } else {
-            try await supabaseClient
-                .from("feed_likes")
-                .delete()
-                .eq("post_id", value: postId)
-                .eq("user_id", value: userId)
-                .execute()
-        }
-    }
-    
-    private func addReactionInSupabase(postId: String, emoji: String) async throws {
-        guard let userId = try await getCurrentUserId() else { return }
-        
-        try await supabaseClient
-            .from("feed_reactions")
-            .insert(["post_id": postId, "user_id": userId, "emoji": emoji])
-            .execute()
-    }
-    
-    private func addCommentInSupabase(postId: String, comment: FeedPost.Comment) async throws {
-        guard let userId = try await getCurrentUserId() else { return }
-        
-        try await supabaseClient
-            .from("feed_comments")
-            .insert([
-                "post_id": postId,
-                "user_id": userId,
-                "text": comment.text,
-                "created_at": ISO8601DateFormatter().string(from: comment.createdAt)
-            ])
-            .execute()
-    }
-    
-    private func getCurrentUserId() async throws -> String? {
-        guard let session = try await supabaseClient.auth.session else { return nil }
-        return session.user.id.uuidString
-    }
-    
-    func changeFilter(to filter: FeedFilter) {
-        selectedFilter = filter
-        loadFeed()
+    func addReaction(to post: FeedPost, emoji: String) {
+        guard let index = allPosts.firstIndex(where: { $0.id == post.id }) else { return }
+        // In a real app, this would track reactions separately
+        allPosts[index].likes += 1
+        applyFilter()
     }
     
     func refresh() {
         loadFeed()
+    }
+    
+    // MARK: - Mock Data Generation
+    
+    private func generateMockFeed() -> [FeedPost] {
+        let friend1 = User.mockFriend
+        let friend2 = User(
+            id: "user-3",
+            username: "sarahf",
+            displayName: "Sarah F",
+            avatarURL: nil,
+            bio: "CrossFit enthusiast",
+            stats: User.UserStats(
+                totalWorkouts: 156,
+                totalVolume: 756_230,
+                totalPRs: 28,
+                currentStreak: 7,
+                longestStreak: 45,
+                favoriteExercise: "Clean & Jerk"
+            ),
+            isPrivate: false,
+            createdAt: Date().addingTimeInterval(-86400 * 150)
+        )
+        
+        return [
+            // Friend's workout completion
+            FeedPost(
+                id: "fp-1",
+                user: friend1,
+                workout: .mockFriendWorkout,
+                likes: 12,
+                isLiked: false,
+                comments: [
+                    FeedPost.Comment(
+                        id: "c-1",
+                        user: .mock,
+                        text: "Nice volume! 💪",
+                        createdAt: Date().addingTimeInterval(-1800)
+                    )
+                ],
+                createdAt: Date().addingTimeInterval(-3600)
+            ),
+            // Friend's PR
+            FeedPost(
+                id: "fp-2",
+                user: friend1,
+                workout: .mockFriendWorkout,
+                likes: 24,
+                isLiked: true,
+                comments: [],
+                createdAt: Date().addingTimeInterval(-7200)
+            ),
+            // Another friend's workout
+            FeedPost(
+                id: "fp-3",
+                user: friend2,
+                workout: .mock,
+                likes: 8,
+                isLiked: false,
+                comments: [],
+                createdAt: Date().addingTimeInterval(-10800)
+            ),
+        ]
     }
 }
