@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct XomProgressView: View {
+    @State private var selectedTab = 0
     @State private var selectedTimeframe = 0
     let timeframes = ["Week", "Month", "3 Months", "Year"]
     
@@ -9,7 +10,30 @@ struct XomProgressView: View {
             ZStack {
                 Theme.background.ignoresSafeArea()
                 
-                ScrollView {
+                VStack(spacing: 0) {
+                    // Top-level tab selector: Workouts / Body Composition
+                    Picker("Progress Tab", selection: $selectedTab) {
+                        Text("Workouts").tag(0)
+                        Text("Body Composition").tag(1)
+                    }
+                    .pickerStyle(.segmented)
+                    .padding(.horizontal, Theme.paddingMedium)
+                    .padding(.top, Theme.paddingSmall)
+                    .padding(.bottom, Theme.paddingSmall)
+                    
+                    if selectedTab == 1 {
+                        BodyCompositionView()
+                    } else {
+                workoutsContent
+                    }
+                }
+            }
+            .navigationTitle("Progress")
+        }
+    }
+    
+    @ViewBuilder private var workoutsContent: some View {
+        ScrollView {
                     VStack(spacing: Theme.paddingLarge) {
                         // Timeframe Picker
                         Picker("Timeframe", selection: $selectedTimeframe) {
@@ -107,9 +131,6 @@ struct XomProgressView: View {
                         .padding(.horizontal, Theme.paddingMedium)
                     }
                     .padding(.top, Theme.paddingSmall)
-                }
-            }
-            .navigationTitle("Progress")
         }
     }
 }
