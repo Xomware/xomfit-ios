@@ -192,6 +192,10 @@ struct WorkoutLoggerExerciseCard: View {
     @State private var editingSetIndex: Int?
     @State private var showingDeleteAlert = false
     @State private var setToDelete: Int?
+
+    // Form Check Video
+    @State private var selectedSetForVideo: WorkoutSet?
+    @State private var showFormCheckVideo = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.paddingSmall) {
@@ -243,11 +247,21 @@ struct WorkoutLoggerExerciseCard: View {
                             } else {
                                 Text("—").frame(maxWidth: .infinity).font(.system(size: 13)).foregroundColor(Theme.textSecondary)
                             }
-                            if set.isPersonalRecord {
-                                Image(systemName: "trophy.fill").foregroundColor(Theme.prGold).frame(width: 30)
-                            } else {
-                                Text("").frame(width: 30)
+                            // PR + Form Check Camera
+                            HStack(spacing: 4) {
+                                if set.isPersonalRecord {
+                                    Image(systemName: "trophy.fill").foregroundColor(Theme.prGold).font(.system(size: 12))
+                                }
+                                Button(action: {
+                                    selectedSetForVideo = set
+                                    showFormCheckVideo = true
+                                }) {
+                                    Image(systemName: set.hasFormCheckVideo ? "video.fill" : "video")
+                                        .font(.system(size: 13))
+                                        .foregroundColor(set.hasFormCheckVideo ? Theme.accent : .gray.opacity(0.6))
+                                }
                             }
+                            .frame(width: 44)
                         }
                         .padding(.vertical, 8)
                         .background(Theme.secondaryBackground.opacity(0.5))
@@ -328,6 +342,23 @@ struct WorkoutLoggerExerciseCard: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("This action cannot be undone.")
+        }
+        // Form Check Video recorder
+        .fullScreenCover(isPresented: $showFormCheckVideo) {
+            if let set = selectedSetForVideo {
+                FormCheckVideoView(
+                    set: set,
+                    exerciseName: exercise.exercise.name
+                ) { localURL, remoteURL in
+                    // Store URLs back on the set via ViewModel
+                    viewModel.attachFormCheckVideo(
+                        to: exerciseIndex,
+                        setId: set.id,
+                        localURL: localURL,
+                        remoteURL: remoteURL
+                    )
+                }
+            }
         }
     }
 }
