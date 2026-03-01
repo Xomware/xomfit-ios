@@ -23,6 +23,9 @@ struct BodyCompositionView: View {
                             // Metric selector + chart
                             chartSection
                             
+                            // Progress Photos
+                            ProgressPhotoView()
+                            
                             // History log
                             historySection
                         }
