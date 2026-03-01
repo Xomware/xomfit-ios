@@ -199,7 +199,8 @@ struct WorkoutFrequencyDataPoint {
     let count: Int
 }
 
-struct OneRMTrendDataPoint {
+struct OneRMTrendDataPoint: Identifiable {
+    let id = UUID()
     let date: Date
     let estimatedOneRM: Double
 }
