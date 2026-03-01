@@ -12,6 +12,8 @@ class WorkoutLoggerViewModel: ObservableObject {
     @Published var recentExercises: [Exercise] = []
     @Published var previousWorkoutExercises: [Exercise] = []
     @Published var showingRestTimer = false
+    @Published var showingSmartRestTimer = false
+    @Published var smartRestTimerVM = SmartRestTimerViewModel()
     
     // UI State
     @Published var inputWeight = ""
@@ -116,8 +118,12 @@ class WorkoutLoggerViewModel: ObservableObject {
         // Clear inputs
         clearInputs()
         
-        // Start rest timer
-        startRestTimer()
+        // Start smart rest timer if enabled, otherwise legacy
+        if smartRestTimerVM.smartTimerEnabled {
+            startSmartRestTimer(exerciseIndex: exerciseIndex)
+        } else {
+            startRestTimer()
+        }
     }
     
     func deleteSet(from exerciseIndex: Int, setIndex: Int) {
@@ -160,6 +166,14 @@ class WorkoutLoggerViewModel: ObservableObject {
     }
     
     // MARK: - Rest Timer
+    
+    func startSmartRestTimer(exerciseIndex: Int) {
+        guard let workout = activeWorkout, exerciseIndex < workout.exercises.count else { return }
+        let category = workout.exercises[exerciseIndex].exercise.category.rawValue
+        let exerciseType = RestExerciseType.from(category: category)
+        smartRestTimerVM.start(exerciseType: exerciseType)
+        showingSmartRestTimer = true
+    }
     
     func startRestTimer(duration: TimeInterval? = nil) {
         let duration = duration ?? selectedRestDuration

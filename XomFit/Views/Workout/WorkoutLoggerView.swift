@@ -173,11 +173,14 @@ struct WorkoutLoggerView: View {
                 }
             }
             
-            // Rest Timer Overlay
+            // Legacy Rest Timer Overlay
             if viewModel.showingRestTimer && viewModel.isRestTimerRunning {
                 RestTimerOverlay(viewModel: viewModel)
                     .transition(.scale.combined(with: .opacity))
             }
+        }
+        .fullScreenCover(isPresented: $viewModel.showingSmartRestTimer) {
+            SmartRestTimerView(viewModel: viewModel.smartRestTimerVM)
         }
     }
 }
