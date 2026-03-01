@@ -98,9 +98,10 @@ struct TrendLineChartView: View {
             
             // Draw grid lines and average line
             var gridPath = Path()
-            let averageScaled = CGFloat((averageOneRM - (data.min(by: { $0.estimatedOneRM < $1.estimatedOneRM })?.estimatedOneRM ?? 0)) / 
-                                        (data.max(by: { $0.estimatedOneRM < $1.estimatedOneRM })?.estimatedOneRM ?? 0) - 
-                                        (data.min(by: { $0.estimatedOneRM < $1.estimatedOneRM })?.estimatedOneRM ?? 0))
+            let minOneRM = data.min(by: { $0.estimatedOneRM < $1.estimatedOneRM })?.estimatedOneRM ?? 0
+            let maxOneRM = data.max(by: { $0.estimatedOneRM < $1.estimatedOneRM })?.estimatedOneRM ?? 0
+            let oneRMRange = maxOneRM - minOneRM
+            let averageScaled = oneRMRange > 0 ? CGFloat((averageOneRM - minOneRM) / oneRMRange) : 0.5
             
             for i in 0...4 {
                 let y = padding + (CGFloat(i) / 4.0) * chartHeight
