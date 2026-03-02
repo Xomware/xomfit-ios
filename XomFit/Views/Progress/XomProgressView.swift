@@ -52,6 +52,57 @@ struct XomProgressView: View {
                         }
                         .padding(.horizontal, Theme.paddingMedium)
                         
+// Strength Progress
+                        NavigationLink(destination: AnalyticsView()) {
+                            VStack(alignment: .leading, spacing: 12) {
+                                HStack {
+                                    Text("Analytics")
+// Workout Calendar Heat Map
+                        NavigationLink(destination: WorkoutCalendarView()) {
+                            VStack(alignment: .leading, spacing: 12) {
+                                HStack {
+                                    Text("Workout Calendar")
+                                        .font(Theme.fontHeadline)
+                                        .foregroundColor(Theme.textPrimary)
+                                    
+                                    Spacer()
+                                    
+                                    Image(systemName: "chevron.right")
+                                        .foregroundColor(Theme.accent)
+                                }
+                                
+// Preview chart area
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: Theme.cornerRadius)
+                                        .fill(Theme.secondaryBackground)
+                                        .frame(height: 100)
+                                    
+                                    VStack(spacing: 8) {
+                                        Image(systemName: "chart.line.uptrend.xyaxis")
+                                            .font(.system(size: 32))
+                                            .foregroundColor(Theme.accent.opacity(0.7))
+                                        Text("View detailed analytics")
+ZStack {
+                                    RoundedRectangle(cornerRadius: Theme.cornerRadius)
+                                        .fill(Theme.secondaryBackground)
+                                        .frame(height: 60)
+                                    
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "calendar")
+                                            .font(.system(size: 24))
+                                            .foregroundColor(Theme.accent.opacity(0.7))
+                                        Text("GitHub-style training heat map")
+                                            .font(Theme.fontCaption)
+                                            .foregroundColor(Theme.textSecondary)
+                                    }
+                                }
+                            }
+                            .cardStyle()
+<<<<<<< HEAD
+=======
+                        }
+                        .padding(.horizontal, Theme.paddingMedium)
+
                         // Strength Progress
                         NavigationLink(destination: AnalyticsView()) {
                             VStack(alignment: .leading, spacing: 12) {
@@ -83,6 +134,7 @@ struct XomProgressView: View {
                                 }
                             }
                             .cardStyle()
+>>>>>>> origin/main
                         }
                         .padding(.horizontal, Theme.paddingMedium)
                         
