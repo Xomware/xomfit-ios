@@ -52,6 +52,39 @@ struct XomProgressView: View {
                         }
                         .padding(.horizontal, Theme.paddingMedium)
                         
+                        // Workout Calendar Heat Map
+                        NavigationLink(destination: WorkoutCalendarView()) {
+                            VStack(alignment: .leading, spacing: 12) {
+                                HStack {
+                                    Text("Workout Calendar")
+                                        .font(Theme.fontHeadline)
+                                        .foregroundColor(Theme.textPrimary)
+                                    
+                                    Spacer()
+                                    
+                                    Image(systemName: "chevron.right")
+                                        .foregroundColor(Theme.accent)
+                                }
+                                
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: Theme.cornerRadius)
+                                        .fill(Theme.secondaryBackground)
+                                        .frame(height: 60)
+                                    
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "calendar")
+                                            .font(.system(size: 24))
+                                            .foregroundColor(Theme.accent.opacity(0.7))
+                                        Text("GitHub-style training heat map")
+                                            .font(Theme.fontCaption)
+                                            .foregroundColor(Theme.textSecondary)
+                                    }
+                                }
+                            }
+                            .cardStyle()
+                        }
+                        .padding(.horizontal, Theme.paddingMedium)
+
                         // Strength Progress
                         NavigationLink(destination: AnalyticsView()) {
                             VStack(alignment: .leading, spacing: 12) {
