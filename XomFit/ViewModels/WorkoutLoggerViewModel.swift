@@ -13,6 +13,13 @@ class WorkoutLoggerViewModel: ObservableObject {
     @Published var previousWorkoutExercises: [Exercise] = []
     @Published var showingRestTimer = false
     
+    // Progressive Overload
+    @Published var currentSuggestion: OverloadSuggestion?
+    @Published var recentSessions: [ExerciseSession] = []
+    @Published var showOverloadDetail = false
+    @Published var overloadDismissed = false
+    private let overloadService = ProgressiveOverloadService.shared
+    
     // UI State
     @Published var inputWeight = ""
     @Published var inputReps = ""
@@ -89,6 +96,38 @@ class WorkoutLoggerViewModel: ObservableObject {
                 recentExercises.removeLast()
             }
         }
+        
+        // Fetch progressive overload suggestion
+        fetchSuggestion(for: exercise)
+    }
+    
+    // MARK: - Progressive Overload
+    
+    func fetchSuggestion(for exercise: Exercise) {
+        overloadDismissed = false
+        currentSuggestion = nil
+        recentSessions = []
+        
+        Task {
+            do {
+                let sessions = try await overloadService.fetchRecentSessions(exercise: exercise.name)
+                self.recentSessions = sessions
+                self.currentSuggestion = overloadService.engine.suggestion(
+                    for: exercise.name,
+                    history: sessions,
+                    exerciseType: exercise.category
+                )
+            } catch {
+                // Silently fail — suggestion is optional
+                self.currentSuggestion = nil
+            }
+        }
+    }
+    
+    func dismissSuggestion() {
+        overloadDismissed = true
+        // Remember dismissal preference
+        UserDefaults.standard.set(true, forKey: "overload_dismissed_\(currentSuggestion?.exercise ?? "")")
     }
     
     func quickAddExerciseFromPrevious(_ exercise: Exercise) {

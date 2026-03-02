@@ -49,6 +49,15 @@ struct WorkoutLoggerView: View {
                         ScrollViewReader { proxy in
                             ScrollView(.vertical, showsIndicators: true) {
                                 VStack(spacing: Theme.paddingMedium) {
+                                                // Progressive Overload Suggestion Banner
+                                    if let suggestion = viewModel.currentSuggestion, !viewModel.overloadDismissed {
+                                        OverloadSuggestionView(
+                                            suggestion: suggestion,
+                                            onTap: { viewModel.showOverloadDetail = true },
+                                            onDismiss: { viewModel.dismissSuggestion() }
+                                        )
+                                    }
+                                    
                                     if let workout = viewModel.activeWorkout {
                                         if workout.exercises.isEmpty {
                                             // Empty State
@@ -167,6 +176,14 @@ struct WorkoutLoggerView: View {
                 .sheet(isPresented: $showExercisePicker) {
                     WorkoutExercisePickerView { exercise in
                         viewModel.addExercise(exercise)
+                    }
+                }
+                .sheet(isPresented: $viewModel.showOverloadDetail) {
+                    if let suggestion = viewModel.currentSuggestion {
+                        OverloadDetailView(
+                            suggestion: suggestion,
+                            sessions: viewModel.recentSessions
+                        )
                     }
                 }
                 .onAppear {
