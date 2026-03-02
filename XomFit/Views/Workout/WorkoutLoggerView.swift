@@ -5,6 +5,7 @@ struct WorkoutLoggerView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var workoutName = "New Workout"
     @State private var showExercisePicker = false
+    @State private var showWorkoutCompletion = false
     @FocusState private var weightFieldFocused: Bool
     @FocusState private var repsFieldFocused: Bool
     
@@ -138,7 +139,7 @@ struct WorkoutLoggerView: View {
                             
                             Button(action: {
                                 viewModel.finishWorkout()
-                                dismiss()
+                                showWorkoutCompletion = true
                             }) {
                                 Text("Finish")
                                     .font(.system(size: 14, weight: .bold))
@@ -170,6 +171,13 @@ struct WorkoutLoggerView: View {
                 }
                 .onAppear {
                     viewModel.startWorkout(name: workoutName)
+                }
+                .fullScreenCover(isPresented: $showWorkoutCompletion) {
+                    dismiss()
+                } content: {
+                    if let workout = viewModel.activeWorkout {
+                        WorkoutCompletionView(workout: workout, userName: "domgiordano")
+                    }
                 }
             }
             
