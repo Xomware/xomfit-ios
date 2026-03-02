@@ -52,7 +52,12 @@ struct XomProgressView: View {
                         }
                         .padding(.horizontal, Theme.paddingMedium)
                         
-                        // Workout Calendar Heat Map
+// Strength Progress
+                        NavigationLink(destination: AnalyticsView()) {
+                            VStack(alignment: .leading, spacing: 12) {
+                                HStack {
+                                    Text("Analytics")
+// Workout Calendar Heat Map
                         NavigationLink(destination: WorkoutCalendarView()) {
                             VStack(alignment: .leading, spacing: 12) {
                                 HStack {
@@ -66,7 +71,18 @@ struct XomProgressView: View {
                                         .foregroundColor(Theme.accent)
                                 }
                                 
+// Preview chart area
                                 ZStack {
+                                    RoundedRectangle(cornerRadius: Theme.cornerRadius)
+                                        .fill(Theme.secondaryBackground)
+                                        .frame(height: 100)
+                                    
+                                    VStack(spacing: 8) {
+                                        Image(systemName: "chart.line.uptrend.xyaxis")
+                                            .font(.system(size: 32))
+                                            .foregroundColor(Theme.accent.opacity(0.7))
+                                        Text("View detailed analytics")
+ZStack {
                                     RoundedRectangle(cornerRadius: Theme.cornerRadius)
                                         .fill(Theme.secondaryBackground)
                                         .frame(height: 60)
@@ -82,6 +98,8 @@ struct XomProgressView: View {
                                 }
                             }
                             .cardStyle()
+<<<<<<< HEAD
+=======
                         }
                         .padding(.horizontal, Theme.paddingMedium)
 
@@ -116,6 +134,7 @@ struct XomProgressView: View {
                                 }
                             }
                             .cardStyle()
+>>>>>>> origin/main
                         }
                         .padding(.horizontal, Theme.paddingMedium)
                         

@@ -5,7 +5,6 @@ struct WorkoutLoggerView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var workoutName = "New Workout"
     @State private var showExercisePicker = false
-    @State private var showWorkoutCompletion = false
     @FocusState private var weightFieldFocused: Bool
     @FocusState private var repsFieldFocused: Bool
     
@@ -49,15 +48,6 @@ struct WorkoutLoggerView: View {
                         ScrollViewReader { proxy in
                             ScrollView(.vertical, showsIndicators: true) {
                                 VStack(spacing: Theme.paddingMedium) {
-                                                // Progressive Overload Suggestion Banner
-                                    if let suggestion = viewModel.currentSuggestion, !viewModel.overloadDismissed {
-                                        OverloadSuggestionView(
-                                            suggestion: suggestion,
-                                            onTap: { viewModel.showOverloadDetail = true },
-                                            onDismiss: { viewModel.dismissSuggestion() }
-                                        )
-                                    }
-                                    
                                     if let workout = viewModel.activeWorkout {
                                         if workout.exercises.isEmpty {
                                             // Empty State
@@ -148,7 +138,7 @@ struct WorkoutLoggerView: View {
                             
                             Button(action: {
                                 viewModel.finishWorkout()
-                                showWorkoutCompletion = true
+                                dismiss()
                             }) {
                                 Text("Finish")
                                     .font(.system(size: 14, weight: .bold))
@@ -178,34 +168,16 @@ struct WorkoutLoggerView: View {
                         viewModel.addExercise(exercise)
                     }
                 }
-                .sheet(isPresented: $viewModel.showOverloadDetail) {
-                    if let suggestion = viewModel.currentSuggestion {
-                        OverloadDetailView(
-                            suggestion: suggestion,
-                            sessions: viewModel.recentSessions
-                        )
-                    }
-                }
                 .onAppear {
                     viewModel.startWorkout(name: workoutName)
                 }
-                .fullScreenCover(isPresented: $showWorkoutCompletion) {
-                    dismiss()
-                } content: {
-                    if let workout = viewModel.activeWorkout {
-                        WorkoutCompletionView(workout: workout, userName: "domgiordano")
-                    }
-                }
             }
             
-            // Legacy Rest Timer Overlay
+            // Rest Timer Overlay
             if viewModel.showingRestTimer && viewModel.isRestTimerRunning {
                 RestTimerOverlay(viewModel: viewModel)
                     .transition(.scale.combined(with: .opacity))
             }
-        }
-        .fullScreenCover(isPresented: $viewModel.showingSmartRestTimer) {
-            SmartRestTimerView(viewModel: viewModel.smartRestTimerVM)
         }
     }
 }

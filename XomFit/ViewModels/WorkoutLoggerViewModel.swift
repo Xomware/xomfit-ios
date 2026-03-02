@@ -12,15 +12,6 @@ class WorkoutLoggerViewModel: ObservableObject {
     @Published var recentExercises: [Exercise] = []
     @Published var previousWorkoutExercises: [Exercise] = []
     @Published var showingRestTimer = false
-    @Published var showingSmartRestTimer = false
-    @Published var smartRestTimerVM = SmartRestTimerViewModel()
-    
-    // Progressive Overload
-    @Published var currentSuggestion: OverloadSuggestion?
-    @Published var recentSessions: [ExerciseSession] = []
-    @Published var showOverloadDetail = false
-    @Published var overloadDismissed = false
-    private let overloadService = ProgressiveOverloadService.shared
     
     // UI State
     @Published var inputWeight = ""
@@ -98,38 +89,6 @@ class WorkoutLoggerViewModel: ObservableObject {
                 recentExercises.removeLast()
             }
         }
-        
-        // Fetch progressive overload suggestion
-        fetchSuggestion(for: exercise)
-    }
-    
-    // MARK: - Progressive Overload
-    
-    func fetchSuggestion(for exercise: Exercise) {
-        overloadDismissed = false
-        currentSuggestion = nil
-        recentSessions = []
-        
-        Task {
-            do {
-                let sessions = try await overloadService.fetchRecentSessions(exercise: exercise.name)
-                self.recentSessions = sessions
-                self.currentSuggestion = overloadService.engine.suggestion(
-                    for: exercise.name,
-                    history: sessions,
-                    exerciseType: exercise.category
-                )
-            } catch {
-                // Silently fail — suggestion is optional
-                self.currentSuggestion = nil
-            }
-        }
-    }
-    
-    func dismissSuggestion() {
-        overloadDismissed = true
-        // Remember dismissal preference
-        UserDefaults.standard.set(true, forKey: "overload_dismissed_\(currentSuggestion?.exercise ?? "")")
     }
     
     func quickAddExerciseFromPrevious(_ exercise: Exercise) {
@@ -157,12 +116,8 @@ class WorkoutLoggerViewModel: ObservableObject {
         // Clear inputs
         clearInputs()
         
-        // Start smart rest timer if enabled, otherwise legacy
-        if smartRestTimerVM.smartTimerEnabled {
-            startSmartRestTimer(exerciseIndex: exerciseIndex)
-        } else {
-            startRestTimer()
-        }
+        // Start rest timer
+        startRestTimer()
     }
     
     func deleteSet(from exerciseIndex: Int, setIndex: Int) {
@@ -205,14 +160,6 @@ class WorkoutLoggerViewModel: ObservableObject {
     }
     
     // MARK: - Rest Timer
-    
-    func startSmartRestTimer(exerciseIndex: Int) {
-        guard let workout = activeWorkout, exerciseIndex < workout.exercises.count else { return }
-        let category = workout.exercises[exerciseIndex].exercise.category.rawValue
-        let exerciseType = RestExerciseType.from(category: category)
-        smartRestTimerVM.start(exerciseType: exerciseType)
-        showingSmartRestTimer = true
-    }
     
     func startRestTimer(duration: TimeInterval? = nil) {
         let duration = duration ?? selectedRestDuration

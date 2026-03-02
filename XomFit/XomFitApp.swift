@@ -74,6 +74,7 @@ struct MainTabView: View {
                 }
                 .tag(2)
             
+=======
             NutritionDashboardView()
                 .tabItem {
                     Image(systemName: "fork.knife")
@@ -81,19 +82,23 @@ struct MainTabView: View {
                 }
                 .tag(3)
             
+>>>>>>> origin/main
             MarketplaceView()
                 .tabItem {
                     Image(systemName: "storefront.fill")
                     Text("Marketplace")
                 }
-                .tag(4)
+<<<<<<< HEAD
+                .tag(3)
+.tag(4)
 
             ProfileView()
                 .tabItem {
                     Image(systemName: "person.fill")
                     Text("Profile")
                 }
-                .tag(5)
+.tag(4)
+.tag(5)
         }
         .tint(Theme.accent)
     }
