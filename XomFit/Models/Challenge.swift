@@ -8,7 +8,9 @@ enum ChallengeType: String, Codable, CaseIterable {
     case mostWorkouts = "most_workouts"       // Most workouts completed in a month
     case fastestMile = "fastest_mile"         // Fastest mile or 5K time
     case strengthGain = "strength_gain"       // Greatest strength improvement
-    
+    case longestStreak = "longest_streak"     // Longest consecutive workout streak
+    case weeklyStreak = "weekly_streak"       // Maintain a 7-day workout streak
+
     var displayName: String {
         switch self {
         case .mostVolume:
@@ -21,9 +23,13 @@ enum ChallengeType: String, Codable, CaseIterable {
             return "Fastest Mile"
         case .strengthGain:
             return "Strength Gain"
+        case .longestStreak:
+            return "Longest Streak"
+        case .weeklyStreak:
+            return "Weekly Streak"
         }
     }
-    
+
     var description: String {
         switch self {
         case .mostVolume:
@@ -36,17 +42,62 @@ enum ChallengeType: String, Codable, CaseIterable {
             return "Record the fastest mile time"
         case .strengthGain:
             return "Gain the most strength on a lift"
+        case .longestStreak:
+            return "Build the longest consecutive workout streak"
+        case .weeklyStreak:
+            return "Maintain a 7-day workout streak"
         }
     }
-    
+
+    var icon: String {
+        switch self {
+        case .mostVolume: return "scalemass.fill"
+        case .heaviestBench: return "dumbbell.fill"
+        case .mostWorkouts: return "figure.run"
+        case .fastestMile: return "stopwatch.fill"
+        case .strengthGain: return "arrow.up.right"
+        case .longestStreak: return "flame.fill"
+        case .weeklyStreak: return "calendar.badge.checkmark"
+        }
+    }
+
+    var unit: String {
+        switch self {
+        case .mostVolume, .heaviestBench, .strengthGain:
+            return "lbs"
+        case .mostWorkouts:
+            return "workouts"
+        case .fastestMile:
+            return "min"
+        case .longestStreak, .weeklyStreak:
+            return "days"
+        }
+    }
+
     var durationDays: Int {
         switch self {
-        case .mostVolume, .heaviestBench:
+        case .mostVolume, .heaviestBench, .weeklyStreak:
             return 7  // 1 week
-        case .mostWorkouts, .fastestMile, .strengthGain:
+        case .mostWorkouts, .fastestMile, .strengthGain, .longestStreak:
             return 30 // 1 month
         }
     }
+}
+
+/// Join status for a challenge invitation
+enum ChallengeJoinStatus: String, Codable {
+    case pending
+    case accepted
+    case declined
+}
+
+/// Represents a participant's membership in a challenge
+struct ChallengeParticipant: Identifiable, Codable, Equatable {
+    let id: String
+    let challengeId: String
+    let userId: String
+    let joinStatus: ChallengeJoinStatus
+    let joinedAt: Date
 }
 
 /// Status of a challenge
@@ -116,7 +167,7 @@ struct Streak: Identifiable, Codable {
     let id: String
     let userId: String
     let challengeId: String
-    let count: Int
+    var count: Int
     let lastWorkoutDate: Date
     
     var isActive: Bool {
@@ -140,7 +191,7 @@ struct ChallengeDetail: Identifiable, Codable {
 }
 
 /// Single leaderboard entry for display
-struct LeaderboardEntry: Identifiable, Codable {
+struct LeaderboardEntry: Identifiable, Codable, Equatable {
     let id: String
     let userId: String
     let userName: String
@@ -163,7 +214,7 @@ struct LeaderboardEntry: Identifiable, Codable {
 }
 
 /// Badge achievement
-struct Badge: Identifiable, Codable {
+struct Badge: Identifiable, Codable, Equatable {
     let id: String
     let name: String
     let description: String
