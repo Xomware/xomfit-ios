@@ -332,9 +332,9 @@ struct ImbalanceCard: View {
     
     private var severityBackground: Color {
         switch imbalance.severity {
-        case .minor: return Color(.systemYellow).opacity(0.1)
-        case .moderate: return Color(.systemOrange).opacity(0.1)
-        case .severe: return Color(.systemRed).opacity(0.1)
+        case .minor: return Color.yellow.opacity(0.1)
+        case .moderate: return Color.orange.opacity(0.1)
+        case .severe: return Color.red.opacity(0.1)
         }
     }
 }
