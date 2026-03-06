@@ -110,7 +110,7 @@ struct ChallengeView: View {
                     .foregroundColor(.gray)
                 Button(action: { showCreateChallenge = true }) {
                     Text("Create Challenge")
-                        .font(.semibold)
+                        .font(.body.weight(.semibold))
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding()

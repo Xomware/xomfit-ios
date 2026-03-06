@@ -12,7 +12,7 @@ class ChallengeViewModel: ObservableObject {
     @Published var realtimeUpdates: [String: Date] = [:]  // Track last update time per challenge
     
     private var cancellables = Set<AnyCancellable>()
-    private let supabaseService: SupabaseService
+    let supabaseService: SupabaseService
     private let notificationService: NotificationService
     private let realtimeService: RealtimeService
     private let badgeService: BadgeService
@@ -213,6 +213,52 @@ class ChallengeViewModel: ObservableObject {
         }
     }
     
+    func joinChallenge(challengeId: String) async -> Bool {
+        isLoading = true
+        errorMessage = nil
+
+        do {
+            let userId = supabaseService.currentUserId
+            let participant = ChallengeParticipant(
+                id: UUID().uuidString,
+                challengeId: challengeId,
+                userId: userId,
+                joinStatus: .accepted,
+                joinedAt: Date()
+            )
+            try await supabaseService.insert(participant, into: "challenge_participants")
+
+            // Subscribe to real-time updates
+            realtimeService.subscribeToChallengeUpdates(challengeId: challengeId)
+            realtimeService.subscribeToLeaderboardUpdates(challengeId: challengeId)
+
+            // Refresh challenge data
+            await fetchChallengeDetail(challengeId: challengeId)
+
+            isLoading = false
+            return true
+        } catch {
+            errorMessage = "Failed to join challenge: \(error.localizedDescription)"
+            isLoading = false
+            return false
+        }
+    }
+
+    func declineChallenge(challengeId: String) async {
+        do {
+            let participant = ChallengeParticipant(
+                id: UUID().uuidString,
+                challengeId: challengeId,
+                userId: supabaseService.currentUserId,
+                joinStatus: .declined,
+                joinedAt: Date()
+            )
+            try await supabaseService.insert(participant, into: "challenge_participants")
+        } catch {
+            errorMessage = "Failed to decline challenge: \(error.localizedDescription)"
+        }
+    }
+
     func updateChallengeResults(
         challengeId: String,
         userId: String,
@@ -409,6 +455,10 @@ class SupabaseService {
     }
     
     func insert<T: Encodable>(_ object: T, into table: String) async throws {
+        // Mock implementation
+    }
+
+    func update<T: Encodable>(_ object: T, in table: String, where column: String, equals value: String) async throws {
         // Mock implementation
     }
 }
