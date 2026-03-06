@@ -3,14 +3,13 @@ import SwiftUI
 struct AICoachSettingsView: View {
     @Environment(\.dismiss) var dismiss
     @ObservedObject var viewModel: AICoachViewModel
-    
+
     var body: some View {
         NavigationStack {
             ZStack {
                 Color(.systemBackground).ignoresSafeArea()
-                
+
                 Form {
-                    // Training Split
                     Section(header: Text("Training Program")) {
                         Picker("Preferred Split", selection: $viewModel.userPreferences.preferredSplit) {
                             ForEach([
@@ -25,8 +24,7 @@ struct AICoachSettingsView: View {
                         }
                         .pickerStyle(.menu)
                     }
-                    
-                    // Frequency
+
                     Section(header: Text("Training Frequency")) {
                         Stepper(
                             "Days Per Week: \(viewModel.userPreferences.targetDaysPerWeek)",
@@ -34,8 +32,7 @@ struct AICoachSettingsView: View {
                             in: 1...7
                         )
                     }
-                    
-                    // Rep Range
+
                     Section(header: Text("Preferred Rep Range")) {
                         VStack(alignment: .leading, spacing: 8) {
                             HStack {
@@ -44,43 +41,28 @@ struct AICoachSettingsView: View {
                                 Text("\(viewModel.userPreferences.repRangePreference.min)")
                                     .foregroundColor(.secondary)
                             }
-                            
+
                             Slider(
-                                value: Double(viewModel.userPreferences.repRangePreference.min),
+                                value: $viewModel.userPreferences.minRepsDouble,
                                 in: 1...20,
                                 step: 1
-                            ) { _ in
-                                // Update handler
-                            }
-                            onEditingChanged: { _ in
-                                if viewModel.userPreferences.repRangePreference.min >= viewModel.userPreferences.repRangePreference.max {
-                                    viewModel.userPreferences.repRangePreference.max = viewModel.userPreferences.repRangePreference.min + 1
-                                }
-                            }
-                            
+                            )
+
                             HStack {
                                 Text("Maximum Reps")
                                 Spacer()
                                 Text("\(viewModel.userPreferences.repRangePreference.max)")
                                     .foregroundColor(.secondary)
                             }
-                            
+
                             Slider(
-                                value: Double(viewModel.userPreferences.repRangePreference.max),
+                                value: $viewModel.userPreferences.maxRepsDouble,
                                 in: 1...30,
                                 step: 1
-                            ) { _ in
-                                // Update handler
-                            }
-                            onEditingChanged: { _ in
-                                if viewModel.userPreferences.repRangePreference.max <= viewModel.userPreferences.repRangePreference.min {
-                                    viewModel.userPreferences.repRangePreference.min = viewModel.userPreferences.repRangePreference.max - 1
-                                }
-                            }
+                            )
                         }
                     }
-                    
-                    // Rest Period
+
                     Section(header: Text("Rest Period Between Sets")) {
                         Picker("Rest Seconds", selection: $viewModel.userPreferences.restPeriodSeconds) {
                             ForEach([45, 60, 75, 90, 120, 150, 180], id: \.self) { seconds in
@@ -89,11 +71,10 @@ struct AICoachSettingsView: View {
                         }
                         .pickerStyle(.menu)
                     }
-                    
-                    // Deload Settings
+
                     Section(header: Text("Recovery & Deload")) {
                         Toggle("Auto Deload Suggestions", isOn: $viewModel.userPreferences.enableAutoDeload)
-                        
+
                         if viewModel.userPreferences.enableAutoDeload {
                             Stepper(
                                 "Deload Every \(viewModel.userPreferences.deloadFrequencyWeeks) Weeks",
@@ -102,8 +83,7 @@ struct AICoachSettingsView: View {
                             )
                         }
                     }
-                    
-                    // Equipment Preferences
+
                     Section(header: Text("Equipment Preferences")) {
                         ForEach(Equipment.allCases, id: \.self) { equipment in
                             Toggle(equipment.displayName, isOn: Binding(
@@ -118,8 +98,7 @@ struct AICoachSettingsView: View {
                             ))
                         }
                     }
-                    
-                    // Info Section
+
                     Section(header: Text("About AI Coach")) {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("🤖 Powered by machine learning")

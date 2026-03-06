@@ -323,7 +323,7 @@ struct AICoachView: View {
                     }
                 }
                 .padding(8)
-                .background(Color(.systemOrange).opacity(0.1))
+                .background(Color.orange.opacity(0.1))
                 .cornerRadius(6)
             }
             
@@ -340,7 +340,7 @@ struct AICoachView: View {
                     }
                 }
                 .padding(8)
-                .background(Color(.systemYellow).opacity(0.1))
+                .background(Color.yellow.opacity(0.1))
                 .cornerRadius(6)
             }
         }
@@ -412,7 +412,7 @@ struct AICoachView: View {
                 }
             }
             .padding(12)
-            .background(Color(.systemRed).opacity(0.1))
+            .background(Color.red.opacity(0.1))
             .cornerRadius(8)
             .padding(16)
             
@@ -441,7 +441,7 @@ struct StatBadge: View {
         }
         .frame(maxWidth: .infinity)
         .padding(8)
-        .background(Color(.systemWhite))
+        .background(Color(.systemBackground))
         .cornerRadius(6)
     }
 }
@@ -460,7 +460,7 @@ struct DetailBadge: View {
         }
         .frame(maxWidth: .infinity)
         .padding(8)
-        .background(Color(.systemWhite))
+        .background(Color(.systemBackground))
         .cornerRadius(6)
     }
 }

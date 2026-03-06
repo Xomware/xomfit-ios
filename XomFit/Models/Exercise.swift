@@ -92,3 +92,13 @@ extension Exercise {
     static let squat = mockExercises[1]
     static let deadlift = mockExercises[2]
 }
+
+// MARK: - 1RM Estimation
+extension Exercise {
+    /// Epley formula for estimated 1RM
+    static func estimateMax(weight: Double, reps: Int, rpe: Double? = nil) -> Double {
+        guard reps > 0 else { return weight }
+        if reps == 1 { return weight }
+        return weight * (1.0 + Double(reps) / 30.0)
+    }
+}
