@@ -20,7 +20,6 @@
 		F29F23672F5F635F00683551 /* postcss.config.mjs in Resources */ = {isa = PBXBuildFile; fileRef = F29F23382F5F635F00683551 /* postcss.config.mjs */; };
 		F29F23682F5F635F00683551 /* CHALLENGES_SCHEMA.sql in Resources */ = {isa = PBXBuildFile; fileRef = F29F22FD2F5F635F00683551 /* CHALLENGES_SCHEMA.sql */; };
 		F29F23692F5F635F00683551 /* 20260228_workout_marketplace.sql in Resources */ = {isa = PBXBuildFile; fileRef = F29F23092F5F635F00683551 /* 20260228_workout_marketplace.sql */; };
-		F29F236A2F5F635F00683551 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = F29F23042F5F635F00683551 /* README.md */; };
 		F29F236B2F5F635F00683551 /* 20260228_push_notifications.sql in Resources */ = {isa = PBXBuildFile; fileRef = F29F23082F5F635F00683551 /* 20260228_push_notifications.sql */; };
 		F29F236C2F5F635F00683551 /* 20260301_add_nutrition.sql in Resources */ = {isa = PBXBuildFile; fileRef = F29F230A2F5F635F00683551 /* 20260301_add_nutrition.sql */; };
 		F29F236D2F5F635F00683551 /* globe.svg in Resources */ = {isa = PBXBuildFile; fileRef = F29F232E2F5F635F00683551 /* globe.svg */; };
@@ -35,7 +34,6 @@
 		F29F23762F5F635F00683551 /* window.svg in Resources */ = {isa = PBXBuildFile; fileRef = F29F23312F5F635F00683551 /* window.svg */; };
 		F29F23772F5F635F00683551 /* SETUP.md in Resources */ = {isa = PBXBuildFile; fileRef = F29F23002F5F635F00683551 /* SETUP.md */; };
 		F29F23782F5F635F00683551 /* Info.plist.example in Resources */ = {isa = PBXBuildFile; fileRef = F29F23032F5F635F00683551 /* Info.plist.example */; };
-		F29F23792F5F635F00683551 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = F29F23392F5F635F00683551 /* README.md */; };
 		F29F237A2F5F635F00683551 /* 20260306_social_feed.sql in Resources */ = {isa = PBXBuildFile; fileRef = F29F230B2F5F635F00683551 /* 20260306_social_feed.sql */; };
 		F29F237B2F5F635F00683551 /* eslint.config.mjs in Resources */ = {isa = PBXBuildFile; fileRef = F29F23342F5F635F00683551 /* eslint.config.mjs */; };
 		F29F237C2F5F635F00683551 /* package-lock.json in Resources */ = {isa = PBXBuildFile; fileRef = F29F23372F5F635F00683551 /* package-lock.json */; };
@@ -535,7 +533,6 @@
 				F29F23672F5F635F00683551 /* postcss.config.mjs in Resources */,
 				F29F23682F5F635F00683551 /* CHALLENGES_SCHEMA.sql in Resources */,
 				F29F23692F5F635F00683551 /* 20260228_workout_marketplace.sql in Resources */,
-				F29F236A2F5F635F00683551 /* README.md in Resources */,
 				F29F236B2F5F635F00683551 /* 20260228_push_notifications.sql in Resources */,
 				F29F236C2F5F635F00683551 /* 20260301_add_nutrition.sql in Resources */,
 				F29F236D2F5F635F00683551 /* globe.svg in Resources */,
@@ -550,7 +547,6 @@
 				F29F23762F5F635F00683551 /* window.svg in Resources */,
 				F29F23772F5F635F00683551 /* SETUP.md in Resources */,
 				F29F23782F5F635F00683551 /* Info.plist.example in Resources */,
-				F29F23792F5F635F00683551 /* README.md in Resources */,
 				F29F237A2F5F635F00683551 /* 20260306_social_feed.sql in Resources */,
 				F29F237B2F5F635F00683551 /* eslint.config.mjs in Resources */,
 				F29F237C2F5F635F00683551 /* package-lock.json in Resources */,
