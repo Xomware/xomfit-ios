@@ -66,9 +66,9 @@ XomFit/
 
 ## Getting Started
 
-1. Clone the repo
-2. Open in Xcode 15+
-3. Build and run on iOS 17+ simulator or device
+See **[docs/SETUP.md](docs/SETUP.md)** for the full setup guide (Xcode project, SPM packages, Supabase, Apple Sign In, Google Sign In, CI).
+
+For a feature-by-feature reference, see **[docs/FEATURES.md](docs/FEATURES.md)**.
 
 ## Tech Stack
 
