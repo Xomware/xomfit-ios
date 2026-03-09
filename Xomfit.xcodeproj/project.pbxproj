@@ -12,7 +12,7 @@
 		F29F21452F5F620700683551 /* PostgREST in Frameworks */ = {isa = PBXBuildFile; productRef = F29F21442F5F620700683551 /* PostgREST */; };
 		F29F21472F5F620700683551 /* Realtime in Frameworks */ = {isa = PBXBuildFile; productRef = F29F21462F5F620700683551 /* Realtime */; };
 		F29F21492F5F620700683551 /* Storage in Frameworks */ = {isa = PBXBuildFile; productRef = F29F21482F5F620700683551 /* Storage */; };
-		F29F23622F5F635F00683551 /* tsconfig.json in Resources */ = {isa = PBXBuildFile; fileRef = F29F233A2F5F635F00683551 /* tsconfig.json */; };
+		F29F214B2F5F620700683551 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = F29F214A2F5F620700683551 /* Supabase */; };
 		F29F23882F5F635F00683551 /* LogSetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F235A2F5F635F00683551 /* LogSetView.swift */; };
 		F29F238A2F5F635F00683551 /* XomFitWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F23602F5F635F00683551 /* XomFitWatchApp.swift */; };
 		F29F238B2F5F635F00683551 /* WorkoutControlView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F235E2F5F635F00683551 /* WorkoutControlView.swift */; };
@@ -121,6 +121,7 @@
 				F29F21412F5F620700683551 /* Auth in Frameworks */,
 				F29F21492F5F620700683551 /* Storage in Frameworks */,
 				F29F21472F5F620700683551 /* Realtime in Frameworks */,
+				F29F214B2F5F620700683551 /* Supabase in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -421,6 +422,7 @@
 				F29F21442F5F620700683551 /* PostgREST */,
 				F29F21462F5F620700683551 /* Realtime */,
 				F29F21482F5F620700683551 /* Storage */,
+				F29F214A2F5F620700683551 /* Supabase */,
 			);
 			productName = Xomfit;
 			productReference = F29F21312F5F61DC00683551 /* Xomfit.app */;
@@ -468,7 +470,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F29F23622F5F635F00683551 /* tsconfig.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -736,6 +737,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = F29F213F2F5F620700683551 /* XCRemoteSwiftPackageReference "supabase-swift" */;
 			productName = Storage;
+		};
+		F29F214A2F5F620700683551 /* Supabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F29F213F2F5F620700683551 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Supabase;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
