@@ -13,8 +13,6 @@
 		F29F21472F5F620700683551 /* Realtime in Frameworks */ = {isa = PBXBuildFile; productRef = F29F21462F5F620700683551 /* Realtime */; };
 		F29F21492F5F620700683551 /* Storage in Frameworks */ = {isa = PBXBuildFile; productRef = F29F21482F5F620700683551 /* Storage */; };
 		F29F23622F5F635F00683551 /* tsconfig.json in Resources */ = {isa = PBXBuildFile; fileRef = F29F233A2F5F635F00683551 /* tsconfig.json */; };
-		F29F23722F5F635F00683551 /* package.json in Resources */ = {isa = PBXBuildFile; fileRef = F29F23362F5F635F00683551 /* package.json */; };
-		F29F237C2F5F635F00683551 /* package-lock.json in Resources */ = {isa = PBXBuildFile; fileRef = F29F23372F5F635F00683551 /* package-lock.json */; };
 		F29F23882F5F635F00683551 /* LogSetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F235A2F5F635F00683551 /* LogSetView.swift */; };
 		F29F238A2F5F635F00683551 /* XomFitWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F23602F5F635F00683551 /* XomFitWatchApp.swift */; };
 		F29F238B2F5F635F00683551 /* WorkoutControlView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F235E2F5F635F00683551 /* WorkoutControlView.swift */; };
@@ -471,8 +469,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				F29F23622F5F635F00683551 /* tsconfig.json in Resources */,
-				F29F23722F5F635F00683551 /* package.json in Resources */,
-				F29F237C2F5F635F00683551 /* package-lock.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
