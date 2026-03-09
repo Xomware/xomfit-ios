@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct LeaderboardView: View {
+struct ChallengeLeaderboardView: View {
     let challengeDetail: ChallengeDetail
     @Environment(\.dismiss) var dismiss
     

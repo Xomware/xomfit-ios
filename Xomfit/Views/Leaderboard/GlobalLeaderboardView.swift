@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct LeaderboardView: View {
+struct GlobalLeaderboardView: View {
     @StateObject private var viewModel = LeaderboardViewModel()
     
     var body: some View {

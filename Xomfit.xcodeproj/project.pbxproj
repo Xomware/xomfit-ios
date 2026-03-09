@@ -13,31 +13,8 @@
 		F29F21472F5F620700683551 /* Realtime in Frameworks */ = {isa = PBXBuildFile; productRef = F29F21462F5F620700683551 /* Realtime */; };
 		F29F21492F5F620700683551 /* Storage in Frameworks */ = {isa = PBXBuildFile; productRef = F29F21482F5F620700683551 /* Storage */; };
 		F29F23622F5F635F00683551 /* tsconfig.json in Resources */ = {isa = PBXBuildFile; fileRef = F29F233A2F5F635F00683551 /* tsconfig.json */; };
-		F29F23632F5F635F00683551 /* favicon.ico in Resources */ = {isa = PBXBuildFile; fileRef = F29F23202F5F635F00683551 /* favicon.ico */; };
-		F29F23642F5F635F00683551 /* FEATURES.md in Resources */ = {isa = PBXBuildFile; fileRef = F29F22FF2F5F635F00683551 /* FEATURES.md */; };
-		F29F23652F5F635F00683551 /* CHANGELOG.md in Resources */ = {isa = PBXBuildFile; fileRef = F29F22FE2F5F635F00683551 /* CHANGELOG.md */; };
-		F29F23662F5F635F00683551 /* globals.css in Resources */ = {isa = PBXBuildFile; fileRef = F29F23212F5F635F00683551 /* globals.css */; };
-		F29F23672F5F635F00683551 /* postcss.config.mjs in Resources */ = {isa = PBXBuildFile; fileRef = F29F23382F5F635F00683551 /* postcss.config.mjs */; };
-		F29F23682F5F635F00683551 /* CHALLENGES_SCHEMA.sql in Resources */ = {isa = PBXBuildFile; fileRef = F29F22FD2F5F635F00683551 /* CHALLENGES_SCHEMA.sql */; };
-		F29F23692F5F635F00683551 /* 20260228_workout_marketplace.sql in Resources */ = {isa = PBXBuildFile; fileRef = F29F23092F5F635F00683551 /* 20260228_workout_marketplace.sql */; };
-		F29F236B2F5F635F00683551 /* 20260228_push_notifications.sql in Resources */ = {isa = PBXBuildFile; fileRef = F29F23082F5F635F00683551 /* 20260228_push_notifications.sql */; };
-		F29F236C2F5F635F00683551 /* 20260301_add_nutrition.sql in Resources */ = {isa = PBXBuildFile; fileRef = F29F230A2F5F635F00683551 /* 20260301_add_nutrition.sql */; };
-		F29F236D2F5F635F00683551 /* globe.svg in Resources */ = {isa = PBXBuildFile; fileRef = F29F232E2F5F635F00683551 /* globe.svg */; };
-		F29F236E2F5F635F00683551 /* 20260228_body_composition.sql in Resources */ = {isa = PBXBuildFile; fileRef = F29F23052F5F635F00683551 /* 20260228_body_composition.sql */; };
-		F29F236F2F5F635F00683551 /* file.svg in Resources */ = {isa = PBXBuildFile; fileRef = F29F232D2F5F635F00683551 /* file.svg */; };
-		F29F23702F5F635F00683551 /* 20260228_form_check_videos.sql in Resources */ = {isa = PBXBuildFile; fileRef = F29F23062F5F635F00683551 /* 20260228_form_check_videos.sql */; };
-		F29F23712F5F635F00683551 /* SETUP_GUIDE.md in Resources */ = {isa = PBXBuildFile; fileRef = F29F23012F5F635F00683551 /* SETUP_GUIDE.md */; };
 		F29F23722F5F635F00683551 /* package.json in Resources */ = {isa = PBXBuildFile; fileRef = F29F23362F5F635F00683551 /* package.json */; };
-		F29F23732F5F635F00683551 /* next.svg in Resources */ = {isa = PBXBuildFile; fileRef = F29F232F2F5F635F00683551 /* next.svg */; };
-		F29F23742F5F635F00683551 /* 20260228_gym_checkins.sql in Resources */ = {isa = PBXBuildFile; fileRef = F29F23072F5F635F00683551 /* 20260228_gym_checkins.sql */; };
-		F29F23752F5F635F00683551 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = F29F23332F5F635F00683551 /* .gitignore */; };
-		F29F23762F5F635F00683551 /* window.svg in Resources */ = {isa = PBXBuildFile; fileRef = F29F23312F5F635F00683551 /* window.svg */; };
-		F29F23772F5F635F00683551 /* SETUP.md in Resources */ = {isa = PBXBuildFile; fileRef = F29F23002F5F635F00683551 /* SETUP.md */; };
-		F29F23782F5F635F00683551 /* Info.plist.example in Resources */ = {isa = PBXBuildFile; fileRef = F29F23032F5F635F00683551 /* Info.plist.example */; };
-		F29F237A2F5F635F00683551 /* 20260306_social_feed.sql in Resources */ = {isa = PBXBuildFile; fileRef = F29F230B2F5F635F00683551 /* 20260306_social_feed.sql */; };
-		F29F237B2F5F635F00683551 /* eslint.config.mjs in Resources */ = {isa = PBXBuildFile; fileRef = F29F23342F5F635F00683551 /* eslint.config.mjs */; };
 		F29F237C2F5F635F00683551 /* package-lock.json in Resources */ = {isa = PBXBuildFile; fileRef = F29F23372F5F635F00683551 /* package-lock.json */; };
-		F29F237D2F5F635F00683551 /* vercel.svg in Resources */ = {isa = PBXBuildFile; fileRef = F29F23302F5F635F00683551 /* vercel.svg */; };
 		F29F237E2F5F635F00683551 /* FeedViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F23482F5F635F00683551 /* FeedViewModelTests.swift */; };
 		F29F237F2F5F635F00683551 /* VideoAnalysisTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F23542F5F635F00683551 /* VideoAnalysisTests.swift */; };
 		F29F23802F5F635F00683551 /* PRViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F234F2F5F635F00683551 /* PRViewModelTests.swift */; };
@@ -83,7 +60,6 @@
 		F29F23002F5F635F00683551 /* SETUP.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = SETUP.md; sourceTree = "<group>"; };
 		F29F23012F5F635F00683551 /* SETUP_GUIDE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = SETUP_GUIDE.md; sourceTree = "<group>"; };
 		F29F23032F5F635F00683551 /* Info.plist.example */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = Info.plist.example; sourceTree = "<group>"; };
-		F29F23042F5F635F00683551 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		F29F23052F5F635F00683551 /* 20260228_body_composition.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = 20260228_body_composition.sql; sourceTree = "<group>"; };
 		F29F23062F5F635F00683551 /* 20260228_form_check_videos.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = 20260228_form_check_videos.sql; sourceTree = "<group>"; };
 		F29F23072F5F635F00683551 /* 20260228_gym_checkins.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = 20260228_gym_checkins.sql; sourceTree = "<group>"; };
@@ -120,7 +96,6 @@
 		F29F23362F5F635F00683551 /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
 		F29F23372F5F635F00683551 /* package-lock.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "package-lock.json"; sourceTree = "<group>"; };
 		F29F23382F5F635F00683551 /* postcss.config.mjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = postcss.config.mjs; sourceTree = "<group>"; };
-		F29F23392F5F635F00683551 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		F29F233A2F5F635F00683551 /* tsconfig.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = tsconfig.json; sourceTree = "<group>"; };
 		F29F233C2F5F635F00683551 /* WatchConnectivityManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchConnectivityManagerTests.swift; sourceTree = "<group>"; };
 		F29F233E2F5F635F00683551 /* AdvancedStatsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdvancedStatsTests.swift; sourceTree = "<group>"; };
@@ -189,7 +164,6 @@
 				F29F22FE2F5F635F00683551 /* CHANGELOG.md */,
 				F29F23022F5F635F00683551 /* docs */,
 				F29F23032F5F635F00683551 /* Info.plist.example */,
-				F29F23042F5F635F00683551 /* README.md */,
 				F29F230D2F5F635F00683551 /* supabase */,
 				F29F23102F5F635F00683551 /* Tests */,
 				F29F233B2F5F635F00683551 /* web */,
@@ -384,7 +358,6 @@
 				F29F23362F5F635F00683551 /* package.json */,
 				F29F23372F5F635F00683551 /* package-lock.json */,
 				F29F23382F5F635F00683551 /* postcss.config.mjs */,
-				F29F23392F5F635F00683551 /* README.md */,
 				F29F233A2F5F635F00683551 /* tsconfig.json */,
 			);
 			path = web;
@@ -526,31 +499,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				F29F23622F5F635F00683551 /* tsconfig.json in Resources */,
-				F29F23632F5F635F00683551 /* favicon.ico in Resources */,
-				F29F23642F5F635F00683551 /* FEATURES.md in Resources */,
-				F29F23652F5F635F00683551 /* CHANGELOG.md in Resources */,
-				F29F23662F5F635F00683551 /* globals.css in Resources */,
-				F29F23672F5F635F00683551 /* postcss.config.mjs in Resources */,
-				F29F23682F5F635F00683551 /* CHALLENGES_SCHEMA.sql in Resources */,
-				F29F23692F5F635F00683551 /* 20260228_workout_marketplace.sql in Resources */,
-				F29F236B2F5F635F00683551 /* 20260228_push_notifications.sql in Resources */,
-				F29F236C2F5F635F00683551 /* 20260301_add_nutrition.sql in Resources */,
-				F29F236D2F5F635F00683551 /* globe.svg in Resources */,
-				F29F236E2F5F635F00683551 /* 20260228_body_composition.sql in Resources */,
-				F29F236F2F5F635F00683551 /* file.svg in Resources */,
-				F29F23702F5F635F00683551 /* 20260228_form_check_videos.sql in Resources */,
-				F29F23712F5F635F00683551 /* SETUP_GUIDE.md in Resources */,
 				F29F23722F5F635F00683551 /* package.json in Resources */,
-				F29F23732F5F635F00683551 /* next.svg in Resources */,
-				F29F23742F5F635F00683551 /* 20260228_gym_checkins.sql in Resources */,
-				F29F23752F5F635F00683551 /* .gitignore in Resources */,
-				F29F23762F5F635F00683551 /* window.svg in Resources */,
-				F29F23772F5F635F00683551 /* SETUP.md in Resources */,
-				F29F23782F5F635F00683551 /* Info.plist.example in Resources */,
-				F29F237A2F5F635F00683551 /* 20260306_social_feed.sql in Resources */,
-				F29F237B2F5F635F00683551 /* eslint.config.mjs in Resources */,
 				F29F237C2F5F635F00683551 /* package-lock.json in Resources */,
-				F29F237D2F5F635F00683551 /* vercel.svg in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
