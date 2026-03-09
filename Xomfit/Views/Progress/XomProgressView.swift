@@ -4,12 +4,12 @@ struct XomProgressView: View {
     @State private var selectedTab = 0
     @State private var selectedTimeframe = 0
     let timeframes = ["Week", "Month", "3 Months", "Year"]
-    
+
     var body: some View {
         NavigationStack {
             ZStack {
                 Theme.background.ignoresSafeArea()
-                
+
                 VStack(spacing: 0) {
                     // Top-level tab selector: Workouts / Body Composition
                     Picker("Progress Tab", selection: $selectedTab) {
@@ -20,179 +20,160 @@ struct XomProgressView: View {
                     .padding(.horizontal, Theme.paddingMedium)
                     .padding(.top, Theme.paddingSmall)
                     .padding(.bottom, Theme.paddingSmall)
-                    
+
                     if selectedTab == 1 {
                         BodyCompositionView()
                     } else {
-                workoutsContent
+                        workoutsContent
                     }
                 }
             }
             .navigationTitle("Progress")
         }
     }
-    
+
     @ViewBuilder private var workoutsContent: some View {
         ScrollView {
-                    VStack(spacing: Theme.paddingLarge) {
-                        // Timeframe Picker
-                        Picker("Timeframe", selection: $selectedTimeframe) {
-                            ForEach(0..<timeframes.count, id: \.self) { i in
-                                Text(timeframes[i]).tag(i)
-                            }
-                        }
-                        .pickerStyle(.segmented)
-                        .padding(.horizontal, Theme.paddingMedium)
-                        
-                        // Summary Cards
-                        HStack(spacing: 12) {
-                            ProgressStatCard(title: "Workouts", value: "12", change: "+3", isPositive: true)
-                            ProgressStatCard(title: "Volume", value: "48.2k", change: "+12%", isPositive: true)
-                            ProgressStatCard(title: "PRs", value: "4", change: "+2", isPositive: true)
-                        }
-                        .padding(.horizontal, Theme.paddingMedium)
-                        
-// Strength Progress
-                        NavigationLink(destination: AnalyticsView()) {
-                            VStack(alignment: .leading, spacing: 12) {
-                                HStack {
-                                    Text("Analytics")
-// Workout Calendar Heat Map
-                        NavigationLink(destination: WorkoutCalendarView()) {
-                            VStack(alignment: .leading, spacing: 12) {
-                                HStack {
-                                    Text("Workout Calendar")
-                                        .font(Theme.fontHeadline)
-                                        .foregroundColor(Theme.textPrimary)
-                                    
-                                    Spacer()
-                                    
-                                    Image(systemName: "chevron.right")
-                                        .foregroundColor(Theme.accent)
-                                }
-                                
-// Preview chart area
-                                ZStack {
-                                    RoundedRectangle(cornerRadius: Theme.cornerRadius)
-                                        .fill(Theme.secondaryBackground)
-                                        .frame(height: 100)
-                                    
-                                    VStack(spacing: 8) {
-                                        Image(systemName: "chart.line.uptrend.xyaxis")
-                                            .font(.system(size: 32))
-                                            .foregroundColor(Theme.accent.opacity(0.7))
-                                        Text("View detailed analytics")
-ZStack {
-                                    RoundedRectangle(cornerRadius: Theme.cornerRadius)
-                                        .fill(Theme.secondaryBackground)
-                                        .frame(height: 60)
-                                    
-                                    HStack(spacing: 8) {
-                                        Image(systemName: "calendar")
-                                            .font(.system(size: 24))
-                                            .foregroundColor(Theme.accent.opacity(0.7))
-                                        Text("GitHub-style training heat map")
-                                            .font(Theme.fontCaption)
-                                            .foregroundColor(Theme.textSecondary)
-                                    }
-                                }
-                            }
-                            .cardStyle()
-<<<<<<< HEAD
-=======
-                        }
-                        .padding(.horizontal, Theme.paddingMedium)
-
-                        // Strength Progress
-                        NavigationLink(destination: AnalyticsView()) {
-                            VStack(alignment: .leading, spacing: 12) {
-                                HStack {
-                                    Text("Analytics")
-                                        .font(Theme.fontHeadline)
-                                        .foregroundColor(Theme.textPrimary)
-                                    
-                                    Spacer()
-                                    
-                                    Image(systemName: "chevron.right")
-                                        .foregroundColor(Theme.accent)
-                                }
-                                
-                                // Preview chart area
-                                ZStack {
-                                    RoundedRectangle(cornerRadius: Theme.cornerRadius)
-                                        .fill(Theme.secondaryBackground)
-                                        .frame(height: 100)
-                                    
-                                    VStack(spacing: 8) {
-                                        Image(systemName: "chart.line.uptrend.xyaxis")
-                                            .font(.system(size: 32))
-                                            .foregroundColor(Theme.accent.opacity(0.7))
-                                        Text("View detailed analytics")
-                                            .font(Theme.fontCaption)
-                                            .foregroundColor(Theme.textSecondary)
-                                    }
-                                }
-                            }
-                            .cardStyle()
->>>>>>> origin/main
-                        }
-                        .padding(.horizontal, Theme.paddingMedium)
-                        
-                        // Volume by Muscle Group
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("Volume by Muscle Group")
-                                .font(Theme.fontHeadline)
-                                .foregroundColor(Theme.textPrimary)
-                            
-                            VStack(spacing: 8) {
-                                MuscleVolumeBar(muscle: "Chest", percentage: 0.85, volume: "12,450")
-                                MuscleVolumeBar(muscle: "Back", percentage: 0.75, volume: "10,800")
-                                MuscleVolumeBar(muscle: "Legs", percentage: 0.65, volume: "9,200")
-                                MuscleVolumeBar(muscle: "Shoulders", percentage: 0.45, volume: "6,100")
-                                MuscleVolumeBar(muscle: "Arms", percentage: 0.40, volume: "5,500")
-                            }
-                        }
-                        .padding(.horizontal, Theme.paddingMedium)
-                        
-                        // Recent PRs
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("Recent PRs")
-                                .font(Theme.fontHeadline)
-                                .foregroundColor(Theme.textPrimary)
-                            
-                            ForEach(PersonalRecord.mockPRs) { pr in
-                                HStack {
-                                    Image(systemName: "trophy.fill")
-                                        .foregroundColor(Theme.prGold)
-                                    
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text(pr.exerciseName)
-                                            .font(.system(size: 15, weight: .semibold))
-                                            .foregroundColor(Theme.textPrimary)
-                                        Text(pr.date.timeAgo)
-                                            .font(Theme.fontCaption)
-                                            .foregroundColor(Theme.textSecondary)
-                                    }
-                                    
-                                    Spacer()
-                                    
-                                    VStack(alignment: .trailing, spacing: 2) {
-                                        Text("\(pr.weight.formattedWeight) × \(pr.reps)")
-                                            .font(.system(size: 15, weight: .bold))
-                                            .foregroundColor(Theme.accent)
-                                        if let imp = pr.improvementString {
-                                            Text(imp)
-                                                .font(.system(size: 12, weight: .medium))
-                                                .foregroundColor(Theme.prGold)
-                                        }
-                                    }
-                                }
-                                .cardStyle()
-                            }
-                        }
-                        .padding(.horizontal, Theme.paddingMedium)
+            VStack(spacing: Theme.paddingLarge) {
+                // Timeframe Picker
+                Picker("Timeframe", selection: $selectedTimeframe) {
+                    ForEach(0..<timeframes.count, id: \.self) { i in
+                        Text(timeframes[i]).tag(i)
                     }
-                    .padding(.top, Theme.paddingSmall)
+                }
+                .pickerStyle(.segmented)
+                .padding(.horizontal, Theme.paddingMedium)
+
+                // Summary Cards
+                HStack(spacing: 12) {
+                    ProgressStatCard(title: "Workouts", value: "12", change: "+3", isPositive: true)
+                    ProgressStatCard(title: "Volume", value: "48.2k", change: "+12%", isPositive: true)
+                    ProgressStatCard(title: "PRs", value: "4", change: "+2", isPositive: true)
+                }
+                .padding(.horizontal, Theme.paddingMedium)
+
+                // Workout Calendar Heat Map
+                NavigationLink(destination: WorkoutCalendarView()) {
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            Text("Workout Calendar")
+                                .font(Theme.fontHeadline)
+                                .foregroundColor(Theme.textPrimary)
+
+                            Spacer()
+
+                            Image(systemName: "chevron.right")
+                                .foregroundColor(Theme.accent)
+                        }
+
+                        ZStack {
+                            RoundedRectangle(cornerRadius: Theme.cornerRadius)
+                                .fill(Theme.secondaryBackground)
+                                .frame(height: 60)
+
+                            HStack(spacing: 8) {
+                                Image(systemName: "calendar")
+                                    .font(.system(size: 24))
+                                    .foregroundColor(Theme.accent.opacity(0.7))
+                                Text("GitHub-style training heat map")
+                                    .font(Theme.fontCaption)
+                                    .foregroundColor(Theme.textSecondary)
+                            }
+                        }
+                    }
+                    .cardStyle()
+                }
+                .padding(.horizontal, Theme.paddingMedium)
+
+                // Strength Progress
+                NavigationLink(destination: AnalyticsView()) {
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            Text("Analytics")
+                                .font(Theme.fontHeadline)
+                                .foregroundColor(Theme.textPrimary)
+
+                            Spacer()
+
+                            Image(systemName: "chevron.right")
+                                .foregroundColor(Theme.accent)
+                        }
+
+                        // Preview chart area
+                        ZStack {
+                            RoundedRectangle(cornerRadius: Theme.cornerRadius)
+                                .fill(Theme.secondaryBackground)
+                                .frame(height: 100)
+
+                            VStack(spacing: 8) {
+                                Image(systemName: "chart.line.uptrend.xyaxis")
+                                    .font(.system(size: 32))
+                                    .foregroundColor(Theme.accent.opacity(0.7))
+                                Text("View detailed analytics")
+                                    .font(Theme.fontCaption)
+                                    .foregroundColor(Theme.textSecondary)
+                            }
+                        }
+                    }
+                    .cardStyle()
+                }
+                .padding(.horizontal, Theme.paddingMedium)
+
+                // Volume by Muscle Group
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Volume by Muscle Group")
+                        .font(Theme.fontHeadline)
+                        .foregroundColor(Theme.textPrimary)
+
+                    VStack(spacing: 8) {
+                        MuscleVolumeBar(muscle: "Chest", percentage: 0.85, volume: "12,450")
+                        MuscleVolumeBar(muscle: "Back", percentage: 0.75, volume: "10,800")
+                        MuscleVolumeBar(muscle: "Legs", percentage: 0.65, volume: "9,200")
+                        MuscleVolumeBar(muscle: "Shoulders", percentage: 0.45, volume: "6,100")
+                        MuscleVolumeBar(muscle: "Arms", percentage: 0.40, volume: "5,500")
+                    }
+                }
+                .padding(.horizontal, Theme.paddingMedium)
+
+                // Recent PRs
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Recent PRs")
+                        .font(Theme.fontHeadline)
+                        .foregroundColor(Theme.textPrimary)
+
+                    ForEach(PersonalRecord.mockPRs) { pr in
+                        HStack {
+                            Image(systemName: "trophy.fill")
+                                .foregroundColor(Theme.prGold)
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(pr.exerciseName)
+                                    .font(.system(size: 15, weight: .semibold))
+                                    .foregroundColor(Theme.textPrimary)
+                                Text(pr.date.timeAgo)
+                                    .font(Theme.fontCaption)
+                                    .foregroundColor(Theme.textSecondary)
+                            }
+
+                            Spacer()
+
+                            VStack(alignment: .trailing, spacing: 2) {
+                                Text("\(pr.weight.formattedWeight) × \(pr.reps)")
+                                    .font(.system(size: 15, weight: .bold))
+                                    .foregroundColor(Theme.accent)
+                                if let imp = pr.improvementString {
+                                    Text(imp)
+                                        .font(.system(size: 12, weight: .medium))
+                                        .foregroundColor(Theme.prGold)
+                                }
+                            }
+                        }
+                        .cardStyle()
+                    }
+                }
+                .padding(.horizontal, Theme.paddingMedium)
+            }
+            .padding(.top, Theme.paddingSmall)
         }
     }
 }
@@ -202,7 +183,7 @@ struct ProgressStatCard: View {
     let value: String
     let change: String
     let isPositive: Bool
-    
+
     var body: some View {
         VStack(spacing: 6) {
             Text(title)
@@ -224,7 +205,7 @@ struct MuscleVolumeBar: View {
     let muscle: String
     let percentage: CGFloat
     let volume: String
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
@@ -236,13 +217,13 @@ struct MuscleVolumeBar: View {
                     .font(.system(size: 12))
                     .foregroundColor(Theme.textSecondary)
             }
-            
+
             GeometryReader { geometry in
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 4)
                         .fill(Theme.secondaryBackground)
                         .frame(height: 8)
-                    
+
                     RoundedRectangle(cornerRadius: 4)
                         .fill(Theme.accent)
                         .frame(width: geometry.size.width * percentage, height: 8)

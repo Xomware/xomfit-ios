@@ -125,7 +125,7 @@ struct GymCheckInView: View {
                 
                 if let note = checkIn.note {
                     HStack {
-                        Text(""\(note)"")
+                        Text("\"\(note)\"")
                             .font(Theme.fontCaption)
                             .foregroundStyle(Theme.textSecondary)
                             .italic()

@@ -47,7 +47,7 @@ struct ProfileDisplayView: View {
                             case .loading:
                                 ProgressView()
                                     .frame(width: 80, height: 80)
-                            case .empty, @unknown default:
+                            case .empty:
                                 Circle()
                                     .fill(Theme.accent.opacity(0.2))
                                     .frame(width: 80, height: 80)
@@ -56,6 +56,10 @@ struct ProfileDisplayView: View {
                                             .font(.system(size: 36, weight: .bold))
                                             .foregroundColor(Theme.accent)
                                     )
+                            @unknown default:
+                                Circle()
+                                    .fill(Theme.accent.opacity(0.2))
+                                    .frame(width: 80, height: 80)
                             }
                         }
                     } else {
@@ -232,7 +236,7 @@ struct EditProfileView: View {
                             case .loading:
                                 ProgressView()
                                     .frame(width: 100, height: 100)
-                            case .empty, @unknown default:
+                            case .empty:
                                 Circle()
                                     .fill(Theme.accent.opacity(0.2))
                                     .frame(width: 100, height: 100)
@@ -241,6 +245,10 @@ struct EditProfileView: View {
                                             .font(.system(size: 44, weight: .bold))
                                             .foregroundColor(Theme.accent)
                                     )
+                            @unknown default:
+                                Circle()
+                                    .fill(Theme.accent.opacity(0.2))
+                                    .frame(width: 100, height: 100)
                             }
                         }
                     } else {

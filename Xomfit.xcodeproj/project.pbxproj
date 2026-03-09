@@ -15,40 +15,12 @@
 		F29F23622F5F635F00683551 /* tsconfig.json in Resources */ = {isa = PBXBuildFile; fileRef = F29F233A2F5F635F00683551 /* tsconfig.json */; };
 		F29F23722F5F635F00683551 /* package.json in Resources */ = {isa = PBXBuildFile; fileRef = F29F23362F5F635F00683551 /* package.json */; };
 		F29F237C2F5F635F00683551 /* package-lock.json in Resources */ = {isa = PBXBuildFile; fileRef = F29F23372F5F635F00683551 /* package-lock.json */; };
-		F29F237E2F5F635F00683551 /* FeedViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F23482F5F635F00683551 /* FeedViewModelTests.swift */; };
-		F29F237F2F5F635F00683551 /* VideoAnalysisTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F23542F5F635F00683551 /* VideoAnalysisTests.swift */; };
-		F29F23802F5F635F00683551 /* PRViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F234F2F5F635F00683551 /* PRViewModelTests.swift */; };
-		F29F23812F5F635F00683551 /* ProgramTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F234D2F5F635F00683551 /* ProgramTests.swift */; };
-		F29F23822F5F635F00683551 /* HealthKitTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F23492F5F635F00683551 /* HealthKitTests.swift */; };
-		F29F23832F5F635F00683551 /* ExportTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F23472F5F635F00683551 /* ExportTests.swift */; };
-		F29F23842F5F635F00683551 /* SmartRestTimerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F23522F5F635F00683551 /* SmartRestTimerTests.swift */; };
-		F29F23852F5F635F00683551 /* WatchConnectivityManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F233C2F5F635F00683551 /* WatchConnectivityManagerTests.swift */; };
-		F29F23862F5F635F00683551 /* LeaderboardTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F234A2F5F635F00683551 /* LeaderboardTests.swift */; };
-		F29F23872F5F635F00683551 /* WorkoutCardViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F23552F5F635F00683551 /* WorkoutCardViewModelTests.swift */; };
 		F29F23882F5F635F00683551 /* LogSetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F235A2F5F635F00683551 /* LogSetView.swift */; };
-		F29F23892F5F635F00683551 /* ProfileViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F234C2F5F635F00683551 /* ProfileViewModelTests.swift */; };
 		F29F238A2F5F635F00683551 /* XomFitWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F23602F5F635F00683551 /* XomFitWatchApp.swift */; };
 		F29F238B2F5F635F00683551 /* WorkoutControlView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F235E2F5F635F00683551 /* WorkoutControlView.swift */; };
-		F29F238C2F5F635F00683551 /* UserProfileServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F23532F5F635F00683551 /* UserProfileServiceTests.swift */; };
-		F29F238D2F5F635F00683551 /* AICoachViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F23402F5F635F00683551 /* AICoachViewModelTests.swift */; };
-		F29F238E2F5F635F00683551 /* AnalyticsViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F230E2F5F635F00683551 /* AnalyticsViewModelTests.swift */; };
 		F29F238F2F5F635F00683551 /* WatchWorkoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F235D2F5F635F00683551 /* WatchWorkoutManager.swift */; };
-		F29F23902F5F635F00683551 /* SessionManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F23512F5F635F00683551 /* SessionManagerTests.swift */; };
-		F29F23912F5F635F00683551 /* AuthValidationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F23432F5F635F00683551 /* AuthValidationTests.swift */; };
-		F29F23922F5F635F00683551 /* BodyCompositionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F23442F5F635F00683551 /* BodyCompositionTests.swift */; };
-		F29F23932F5F635F00683551 /* ChallengeViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F23462F5F635F00683551 /* ChallengeViewModelTests.swift */; };
-		F29F23942F5F635F00683551 /* AICoachTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F233F2F5F635F00683551 /* AICoachTests.swift */; };
-		F29F23952F5F635F00683551 /* ProgressiveOverloadEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F234E2F5F635F00683551 /* ProgressiveOverloadEngineTests.swift */; };
-		F29F23962F5F635F00683551 /* AnimationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F23412F5F635F00683551 /* AnimationTests.swift */; };
-		F29F23972F5F635F00683551 /* PRCalculatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F234B2F5F635F00683551 /* PRCalculatorTests.swift */; };
-		F29F23982F5F635F00683551 /* ChallengeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F23452F5F635F00683551 /* ChallengeTests.swift */; };
-		F29F23992F5F635F00683551 /* RecoveryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F23502F5F635F00683551 /* RecoveryTests.swift */; };
-		F29F239A2F5F635F00683551 /* AuthUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F23582F5F635F00683551 /* AuthUITests.swift */; };
 		F29F239B2F5F635F00683551 /* RestTimerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F235B2F5F635F00683551 /* RestTimerView.swift */; };
-		F29F239C2F5F635F00683551 /* WorkoutLoggerViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F23562F5F635F00683551 /* WorkoutLoggerViewModelTests.swift */; };
 		F29F239D2F5F635F00683551 /* XomFitComplication.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F235F2F5F635F00683551 /* XomFitComplication.swift */; };
-		F29F239E2F5F635F00683551 /* AdvancedStatsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F233E2F5F635F00683551 /* AdvancedStatsTests.swift */; };
-		F29F239F2F5F635F00683551 /* AuthServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F23422F5F635F00683551 /* AuthServiceTests.swift */; };
 		F29F23A02F5F635F00683551 /* WatchConnectivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F235C2F5F635F00683551 /* WatchConnectivityManager.swift */; };
 /* End PBXBuildFile section */
 
@@ -511,40 +483,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F29F237E2F5F635F00683551 /* FeedViewModelTests.swift in Sources */,
-				F29F237F2F5F635F00683551 /* VideoAnalysisTests.swift in Sources */,
-				F29F23802F5F635F00683551 /* PRViewModelTests.swift in Sources */,
-				F29F23812F5F635F00683551 /* ProgramTests.swift in Sources */,
-				F29F23822F5F635F00683551 /* HealthKitTests.swift in Sources */,
-				F29F23832F5F635F00683551 /* ExportTests.swift in Sources */,
-				F29F23842F5F635F00683551 /* SmartRestTimerTests.swift in Sources */,
-				F29F23852F5F635F00683551 /* WatchConnectivityManagerTests.swift in Sources */,
-				F29F23862F5F635F00683551 /* LeaderboardTests.swift in Sources */,
-				F29F23872F5F635F00683551 /* WorkoutCardViewModelTests.swift in Sources */,
 				F29F23882F5F635F00683551 /* LogSetView.swift in Sources */,
-				F29F23892F5F635F00683551 /* ProfileViewModelTests.swift in Sources */,
 				F29F238A2F5F635F00683551 /* XomFitWatchApp.swift in Sources */,
 				F29F238B2F5F635F00683551 /* WorkoutControlView.swift in Sources */,
-				F29F238C2F5F635F00683551 /* UserProfileServiceTests.swift in Sources */,
-				F29F238D2F5F635F00683551 /* AICoachViewModelTests.swift in Sources */,
-				F29F238E2F5F635F00683551 /* AnalyticsViewModelTests.swift in Sources */,
 				F29F238F2F5F635F00683551 /* WatchWorkoutManager.swift in Sources */,
-				F29F23902F5F635F00683551 /* SessionManagerTests.swift in Sources */,
-				F29F23912F5F635F00683551 /* AuthValidationTests.swift in Sources */,
-				F29F23922F5F635F00683551 /* BodyCompositionTests.swift in Sources */,
-				F29F23932F5F635F00683551 /* ChallengeViewModelTests.swift in Sources */,
-				F29F23942F5F635F00683551 /* AICoachTests.swift in Sources */,
-				F29F23952F5F635F00683551 /* ProgressiveOverloadEngineTests.swift in Sources */,
-				F29F23962F5F635F00683551 /* AnimationTests.swift in Sources */,
-				F29F23972F5F635F00683551 /* PRCalculatorTests.swift in Sources */,
-				F29F23982F5F635F00683551 /* ChallengeTests.swift in Sources */,
-				F29F23992F5F635F00683551 /* RecoveryTests.swift in Sources */,
-				F29F239A2F5F635F00683551 /* AuthUITests.swift in Sources */,
 				F29F239B2F5F635F00683551 /* RestTimerView.swift in Sources */,
-				F29F239C2F5F635F00683551 /* WorkoutLoggerViewModelTests.swift in Sources */,
 				F29F239D2F5F635F00683551 /* XomFitComplication.swift in Sources */,
-				F29F239E2F5F635F00683551 /* AdvancedStatsTests.swift in Sources */,
-				F29F239F2F5F635F00683551 /* AuthServiceTests.swift in Sources */,
 				F29F23A02F5F635F00683551 /* WatchConnectivityManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
