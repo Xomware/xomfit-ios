@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleName</key>
+    <string>XomFit</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.xomware.xomfit</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    
+    <!-- URL Scheme for OAuth Redirects (Google Sign-In and other OAuth providers) -->
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+            <key>CFBundleURLName</key>
+            <string>XomFit OAuth</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <!-- This URL scheme is used for OAuth redirects from Supabase -->
+                <!-- Google Sign-In will redirect to: xomfit://login-callback -->
+                <string>xomfit</string>
+            </array>
+        </dict>
+    </array>
+    
+    <!-- Required for Apple Sign In -->
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>XomFit uses your local network for authentication</string>
+    
+    <!-- Google Sign-In Configuration -->
+    <!-- Add your Google OAuth Client ID in Xcode build settings or here -->
+    <!-- GOOGLE_CLIENT_ID should be set to your Google OAuth Client ID -->
+    
+    <!-- Theme Configuration -->
+    <key>UIAppFonts</key>
+    <array>
+        <!-- Add custom fonts here if needed -->
+    </array>
+    
+    <!-- App Appearance -->
+    <key>UIUserInterfaceStyle</key>
+    <string>Dark</string>
+    
+    <!-- Status Bar -->
+    <key>UIStatusBarStyle</key>
+    <string>UIStatusBarStyleLightContent</string>
+    
+    <!-- Supported Orientations -->
+    <key>UISupportedInterfaceOrientations</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationPortraitUpsideDown</string>
+    </array>
+    
+    <!-- iPad Orientations -->
+    <key>UISupportedInterfaceOrientations~ipad</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationPortraitUpsideDown</string>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
+</dict>
+</plist>

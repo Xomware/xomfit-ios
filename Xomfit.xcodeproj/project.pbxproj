@@ -1,0 +1,857 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		F29F21412F5F620700683551 /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = F29F21402F5F620700683551 /* Auth */; };
+		F29F21432F5F620700683551 /* Functions in Frameworks */ = {isa = PBXBuildFile; productRef = F29F21422F5F620700683551 /* Functions */; };
+		F29F21452F5F620700683551 /* PostgREST in Frameworks */ = {isa = PBXBuildFile; productRef = F29F21442F5F620700683551 /* PostgREST */; };
+		F29F21472F5F620700683551 /* Realtime in Frameworks */ = {isa = PBXBuildFile; productRef = F29F21462F5F620700683551 /* Realtime */; };
+		F29F21492F5F620700683551 /* Storage in Frameworks */ = {isa = PBXBuildFile; productRef = F29F21482F5F620700683551 /* Storage */; };
+		F29F23622F5F635F00683551 /* tsconfig.json in Resources */ = {isa = PBXBuildFile; fileRef = F29F233A2F5F635F00683551 /* tsconfig.json */; };
+		F29F23632F5F635F00683551 /* favicon.ico in Resources */ = {isa = PBXBuildFile; fileRef = F29F23202F5F635F00683551 /* favicon.ico */; };
+		F29F23642F5F635F00683551 /* FEATURES.md in Resources */ = {isa = PBXBuildFile; fileRef = F29F22FF2F5F635F00683551 /* FEATURES.md */; };
+		F29F23652F5F635F00683551 /* CHANGELOG.md in Resources */ = {isa = PBXBuildFile; fileRef = F29F22FE2F5F635F00683551 /* CHANGELOG.md */; };
+		F29F23662F5F635F00683551 /* globals.css in Resources */ = {isa = PBXBuildFile; fileRef = F29F23212F5F635F00683551 /* globals.css */; };
+		F29F23672F5F635F00683551 /* postcss.config.mjs in Resources */ = {isa = PBXBuildFile; fileRef = F29F23382F5F635F00683551 /* postcss.config.mjs */; };
+		F29F23682F5F635F00683551 /* CHALLENGES_SCHEMA.sql in Resources */ = {isa = PBXBuildFile; fileRef = F29F22FD2F5F635F00683551 /* CHALLENGES_SCHEMA.sql */; };
+		F29F23692F5F635F00683551 /* 20260228_workout_marketplace.sql in Resources */ = {isa = PBXBuildFile; fileRef = F29F23092F5F635F00683551 /* 20260228_workout_marketplace.sql */; };
+		F29F236A2F5F635F00683551 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = F29F23042F5F635F00683551 /* README.md */; };
+		F29F236B2F5F635F00683551 /* 20260228_push_notifications.sql in Resources */ = {isa = PBXBuildFile; fileRef = F29F23082F5F635F00683551 /* 20260228_push_notifications.sql */; };
+		F29F236C2F5F635F00683551 /* 20260301_add_nutrition.sql in Resources */ = {isa = PBXBuildFile; fileRef = F29F230A2F5F635F00683551 /* 20260301_add_nutrition.sql */; };
+		F29F236D2F5F635F00683551 /* globe.svg in Resources */ = {isa = PBXBuildFile; fileRef = F29F232E2F5F635F00683551 /* globe.svg */; };
+		F29F236E2F5F635F00683551 /* 20260228_body_composition.sql in Resources */ = {isa = PBXBuildFile; fileRef = F29F23052F5F635F00683551 /* 20260228_body_composition.sql */; };
+		F29F236F2F5F635F00683551 /* file.svg in Resources */ = {isa = PBXBuildFile; fileRef = F29F232D2F5F635F00683551 /* file.svg */; };
+		F29F23702F5F635F00683551 /* 20260228_form_check_videos.sql in Resources */ = {isa = PBXBuildFile; fileRef = F29F23062F5F635F00683551 /* 20260228_form_check_videos.sql */; };
+		F29F23712F5F635F00683551 /* SETUP_GUIDE.md in Resources */ = {isa = PBXBuildFile; fileRef = F29F23012F5F635F00683551 /* SETUP_GUIDE.md */; };
+		F29F23722F5F635F00683551 /* package.json in Resources */ = {isa = PBXBuildFile; fileRef = F29F23362F5F635F00683551 /* package.json */; };
+		F29F23732F5F635F00683551 /* next.svg in Resources */ = {isa = PBXBuildFile; fileRef = F29F232F2F5F635F00683551 /* next.svg */; };
+		F29F23742F5F635F00683551 /* 20260228_gym_checkins.sql in Resources */ = {isa = PBXBuildFile; fileRef = F29F23072F5F635F00683551 /* 20260228_gym_checkins.sql */; };
+		F29F23752F5F635F00683551 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = F29F23332F5F635F00683551 /* .gitignore */; };
+		F29F23762F5F635F00683551 /* window.svg in Resources */ = {isa = PBXBuildFile; fileRef = F29F23312F5F635F00683551 /* window.svg */; };
+		F29F23772F5F635F00683551 /* SETUP.md in Resources */ = {isa = PBXBuildFile; fileRef = F29F23002F5F635F00683551 /* SETUP.md */; };
+		F29F23782F5F635F00683551 /* Info.plist.example in Resources */ = {isa = PBXBuildFile; fileRef = F29F23032F5F635F00683551 /* Info.plist.example */; };
+		F29F23792F5F635F00683551 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = F29F23392F5F635F00683551 /* README.md */; };
+		F29F237A2F5F635F00683551 /* 20260306_social_feed.sql in Resources */ = {isa = PBXBuildFile; fileRef = F29F230B2F5F635F00683551 /* 20260306_social_feed.sql */; };
+		F29F237B2F5F635F00683551 /* eslint.config.mjs in Resources */ = {isa = PBXBuildFile; fileRef = F29F23342F5F635F00683551 /* eslint.config.mjs */; };
+		F29F237C2F5F635F00683551 /* package-lock.json in Resources */ = {isa = PBXBuildFile; fileRef = F29F23372F5F635F00683551 /* package-lock.json */; };
+		F29F237D2F5F635F00683551 /* vercel.svg in Resources */ = {isa = PBXBuildFile; fileRef = F29F23302F5F635F00683551 /* vercel.svg */; };
+		F29F237E2F5F635F00683551 /* FeedViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F23482F5F635F00683551 /* FeedViewModelTests.swift */; };
+		F29F237F2F5F635F00683551 /* VideoAnalysisTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F23542F5F635F00683551 /* VideoAnalysisTests.swift */; };
+		F29F23802F5F635F00683551 /* PRViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F234F2F5F635F00683551 /* PRViewModelTests.swift */; };
+		F29F23812F5F635F00683551 /* ProgramTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F234D2F5F635F00683551 /* ProgramTests.swift */; };
+		F29F23822F5F635F00683551 /* HealthKitTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F23492F5F635F00683551 /* HealthKitTests.swift */; };
+		F29F23832F5F635F00683551 /* ExportTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F23472F5F635F00683551 /* ExportTests.swift */; };
+		F29F23842F5F635F00683551 /* SmartRestTimerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F23522F5F635F00683551 /* SmartRestTimerTests.swift */; };
+		F29F23852F5F635F00683551 /* WatchConnectivityManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F233C2F5F635F00683551 /* WatchConnectivityManagerTests.swift */; };
+		F29F23862F5F635F00683551 /* LeaderboardTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F234A2F5F635F00683551 /* LeaderboardTests.swift */; };
+		F29F23872F5F635F00683551 /* WorkoutCardViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F23552F5F635F00683551 /* WorkoutCardViewModelTests.swift */; };
+		F29F23882F5F635F00683551 /* LogSetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F235A2F5F635F00683551 /* LogSetView.swift */; };
+		F29F23892F5F635F00683551 /* ProfileViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F234C2F5F635F00683551 /* ProfileViewModelTests.swift */; };
+		F29F238A2F5F635F00683551 /* XomFitWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F23602F5F635F00683551 /* XomFitWatchApp.swift */; };
+		F29F238B2F5F635F00683551 /* WorkoutControlView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F235E2F5F635F00683551 /* WorkoutControlView.swift */; };
+		F29F238C2F5F635F00683551 /* UserProfileServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F23532F5F635F00683551 /* UserProfileServiceTests.swift */; };
+		F29F238D2F5F635F00683551 /* AICoachViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F23402F5F635F00683551 /* AICoachViewModelTests.swift */; };
+		F29F238E2F5F635F00683551 /* AnalyticsViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F230E2F5F635F00683551 /* AnalyticsViewModelTests.swift */; };
+		F29F238F2F5F635F00683551 /* WatchWorkoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F235D2F5F635F00683551 /* WatchWorkoutManager.swift */; };
+		F29F23902F5F635F00683551 /* SessionManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F23512F5F635F00683551 /* SessionManagerTests.swift */; };
+		F29F23912F5F635F00683551 /* AuthValidationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F23432F5F635F00683551 /* AuthValidationTests.swift */; };
+		F29F23922F5F635F00683551 /* BodyCompositionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F23442F5F635F00683551 /* BodyCompositionTests.swift */; };
+		F29F23932F5F635F00683551 /* ChallengeViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F23462F5F635F00683551 /* ChallengeViewModelTests.swift */; };
+		F29F23942F5F635F00683551 /* AICoachTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F233F2F5F635F00683551 /* AICoachTests.swift */; };
+		F29F23952F5F635F00683551 /* ProgressiveOverloadEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F234E2F5F635F00683551 /* ProgressiveOverloadEngineTests.swift */; };
+		F29F23962F5F635F00683551 /* AnimationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F23412F5F635F00683551 /* AnimationTests.swift */; };
+		F29F23972F5F635F00683551 /* PRCalculatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F234B2F5F635F00683551 /* PRCalculatorTests.swift */; };
+		F29F23982F5F635F00683551 /* ChallengeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F23452F5F635F00683551 /* ChallengeTests.swift */; };
+		F29F23992F5F635F00683551 /* RecoveryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F23502F5F635F00683551 /* RecoveryTests.swift */; };
+		F29F239A2F5F635F00683551 /* AuthUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F23582F5F635F00683551 /* AuthUITests.swift */; };
+		F29F239B2F5F635F00683551 /* RestTimerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F235B2F5F635F00683551 /* RestTimerView.swift */; };
+		F29F239C2F5F635F00683551 /* WorkoutLoggerViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F23562F5F635F00683551 /* WorkoutLoggerViewModelTests.swift */; };
+		F29F239D2F5F635F00683551 /* XomFitComplication.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F235F2F5F635F00683551 /* XomFitComplication.swift */; };
+		F29F239E2F5F635F00683551 /* AdvancedStatsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F233E2F5F635F00683551 /* AdvancedStatsTests.swift */; };
+		F29F239F2F5F635F00683551 /* AuthServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F23422F5F635F00683551 /* AuthServiceTests.swift */; };
+		F29F23A02F5F635F00683551 /* WatchConnectivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F235C2F5F635F00683551 /* WatchConnectivityManager.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		F29F21312F5F61DC00683551 /* Xomfit.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Xomfit.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F29F22FD2F5F635F00683551 /* CHALLENGES_SCHEMA.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = CHALLENGES_SCHEMA.sql; sourceTree = "<group>"; };
+		F29F22FE2F5F635F00683551 /* CHANGELOG.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CHANGELOG.md; sourceTree = "<group>"; };
+		F29F22FF2F5F635F00683551 /* FEATURES.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = FEATURES.md; sourceTree = "<group>"; };
+		F29F23002F5F635F00683551 /* SETUP.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = SETUP.md; sourceTree = "<group>"; };
+		F29F23012F5F635F00683551 /* SETUP_GUIDE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = SETUP_GUIDE.md; sourceTree = "<group>"; };
+		F29F23032F5F635F00683551 /* Info.plist.example */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = Info.plist.example; sourceTree = "<group>"; };
+		F29F23042F5F635F00683551 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		F29F23052F5F635F00683551 /* 20260228_body_composition.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = 20260228_body_composition.sql; sourceTree = "<group>"; };
+		F29F23062F5F635F00683551 /* 20260228_form_check_videos.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = 20260228_form_check_videos.sql; sourceTree = "<group>"; };
+		F29F23072F5F635F00683551 /* 20260228_gym_checkins.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = 20260228_gym_checkins.sql; sourceTree = "<group>"; };
+		F29F23082F5F635F00683551 /* 20260228_push_notifications.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = 20260228_push_notifications.sql; sourceTree = "<group>"; };
+		F29F23092F5F635F00683551 /* 20260228_workout_marketplace.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = 20260228_workout_marketplace.sql; sourceTree = "<group>"; };
+		F29F230A2F5F635F00683551 /* 20260301_add_nutrition.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = 20260301_add_nutrition.sql; sourceTree = "<group>"; };
+		F29F230B2F5F635F00683551 /* 20260306_social_feed.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = 20260306_social_feed.sql; sourceTree = "<group>"; };
+		F29F230E2F5F635F00683551 /* AnalyticsViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsViewModelTests.swift; sourceTree = "<group>"; };
+		F29F23112F5F635F00683551 /* page.tsx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = page.tsx; sourceTree = "<group>"; };
+		F29F23132F5F635F00683551 /* page.tsx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = page.tsx; sourceTree = "<group>"; };
+		F29F23152F5F635F00683551 /* page.tsx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = page.tsx; sourceTree = "<group>"; };
+		F29F23172F5F635F00683551 /* page.tsx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = page.tsx; sourceTree = "<group>"; };
+		F29F23192F5F635F00683551 /* page.tsx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = page.tsx; sourceTree = "<group>"; };
+		F29F231C2F5F635F00683551 /* page.tsx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = page.tsx; sourceTree = "<group>"; };
+		F29F231E2F5F635F00683551 /* page.tsx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = page.tsx; sourceTree = "<group>"; };
+		F29F23202F5F635F00683551 /* favicon.ico */ = {isa = PBXFileReference; lastKnownFileType = image.ico; path = favicon.ico; sourceTree = "<group>"; };
+		F29F23212F5F635F00683551 /* globals.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = globals.css; sourceTree = "<group>"; };
+		F29F23222F5F635F00683551 /* layout.tsx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = layout.tsx; sourceTree = "<group>"; };
+		F29F23232F5F635F00683551 /* page.tsx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = page.tsx; sourceTree = "<group>"; };
+		F29F23252F5F635F00683551 /* ExerciseChart.tsx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = ExerciseChart.tsx; sourceTree = "<group>"; };
+		F29F23262F5F635F00683551 /* Navigation.tsx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = Navigation.tsx; sourceTree = "<group>"; };
+		F29F23272F5F635F00683551 /* PRBadge.tsx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = PRBadge.tsx; sourceTree = "<group>"; };
+		F29F23282F5F635F00683551 /* StatCard.tsx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = StatCard.tsx; sourceTree = "<group>"; };
+		F29F23292F5F635F00683551 /* WorkoutCard.tsx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = WorkoutCard.tsx; sourceTree = "<group>"; };
+		F29F232B2F5F635F00683551 /* supabase.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = supabase.ts; sourceTree = "<group>"; };
+		F29F232D2F5F635F00683551 /* file.svg */ = {isa = PBXFileReference; lastKnownFileType = text; path = file.svg; sourceTree = "<group>"; };
+		F29F232E2F5F635F00683551 /* globe.svg */ = {isa = PBXFileReference; lastKnownFileType = text; path = globe.svg; sourceTree = "<group>"; };
+		F29F232F2F5F635F00683551 /* next.svg */ = {isa = PBXFileReference; lastKnownFileType = text; path = next.svg; sourceTree = "<group>"; };
+		F29F23302F5F635F00683551 /* vercel.svg */ = {isa = PBXFileReference; lastKnownFileType = text; path = vercel.svg; sourceTree = "<group>"; };
+		F29F23312F5F635F00683551 /* window.svg */ = {isa = PBXFileReference; lastKnownFileType = text; path = window.svg; sourceTree = "<group>"; };
+		F29F23332F5F635F00683551 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
+		F29F23342F5F635F00683551 /* eslint.config.mjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = eslint.config.mjs; sourceTree = "<group>"; };
+		F29F23352F5F635F00683551 /* next.config.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = next.config.ts; sourceTree = "<group>"; };
+		F29F23362F5F635F00683551 /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		F29F23372F5F635F00683551 /* package-lock.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "package-lock.json"; sourceTree = "<group>"; };
+		F29F23382F5F635F00683551 /* postcss.config.mjs */ = {isa = PBXFileReference; lastKnownFileType = text; path = postcss.config.mjs; sourceTree = "<group>"; };
+		F29F23392F5F635F00683551 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		F29F233A2F5F635F00683551 /* tsconfig.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = tsconfig.json; sourceTree = "<group>"; };
+		F29F233C2F5F635F00683551 /* WatchConnectivityManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchConnectivityManagerTests.swift; sourceTree = "<group>"; };
+		F29F233E2F5F635F00683551 /* AdvancedStatsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdvancedStatsTests.swift; sourceTree = "<group>"; };
+		F29F233F2F5F635F00683551 /* AICoachTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AICoachTests.swift; sourceTree = "<group>"; };
+		F29F23402F5F635F00683551 /* AICoachViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AICoachViewModelTests.swift; sourceTree = "<group>"; };
+		F29F23412F5F635F00683551 /* AnimationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimationTests.swift; sourceTree = "<group>"; };
+		F29F23422F5F635F00683551 /* AuthServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthServiceTests.swift; sourceTree = "<group>"; };
+		F29F23432F5F635F00683551 /* AuthValidationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthValidationTests.swift; sourceTree = "<group>"; };
+		F29F23442F5F635F00683551 /* BodyCompositionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BodyCompositionTests.swift; sourceTree = "<group>"; };
+		F29F23452F5F635F00683551 /* ChallengeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChallengeTests.swift; sourceTree = "<group>"; };
+		F29F23462F5F635F00683551 /* ChallengeViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChallengeViewModelTests.swift; sourceTree = "<group>"; };
+		F29F23472F5F635F00683551 /* ExportTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportTests.swift; sourceTree = "<group>"; };
+		F29F23482F5F635F00683551 /* FeedViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedViewModelTests.swift; sourceTree = "<group>"; };
+		F29F23492F5F635F00683551 /* HealthKitTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitTests.swift; sourceTree = "<group>"; };
+		F29F234A2F5F635F00683551 /* LeaderboardTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeaderboardTests.swift; sourceTree = "<group>"; };
+		F29F234B2F5F635F00683551 /* PRCalculatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PRCalculatorTests.swift; sourceTree = "<group>"; };
+		F29F234C2F5F635F00683551 /* ProfileViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileViewModelTests.swift; sourceTree = "<group>"; };
+		F29F234D2F5F635F00683551 /* ProgramTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgramTests.swift; sourceTree = "<group>"; };
+		F29F234E2F5F635F00683551 /* ProgressiveOverloadEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressiveOverloadEngineTests.swift; sourceTree = "<group>"; };
+		F29F234F2F5F635F00683551 /* PRViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PRViewModelTests.swift; sourceTree = "<group>"; };
+		F29F23502F5F635F00683551 /* RecoveryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecoveryTests.swift; sourceTree = "<group>"; };
+		F29F23512F5F635F00683551 /* SessionManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionManagerTests.swift; sourceTree = "<group>"; };
+		F29F23522F5F635F00683551 /* SmartRestTimerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartRestTimerTests.swift; sourceTree = "<group>"; };
+		F29F23532F5F635F00683551 /* UserProfileServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileServiceTests.swift; sourceTree = "<group>"; };
+		F29F23542F5F635F00683551 /* VideoAnalysisTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoAnalysisTests.swift; sourceTree = "<group>"; };
+		F29F23552F5F635F00683551 /* WorkoutCardViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutCardViewModelTests.swift; sourceTree = "<group>"; };
+		F29F23562F5F635F00683551 /* WorkoutLoggerViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutLoggerViewModelTests.swift; sourceTree = "<group>"; };
+		F29F23582F5F635F00683551 /* AuthUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthUITests.swift; sourceTree = "<group>"; };
+		F29F235A2F5F635F00683551 /* LogSetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogSetView.swift; sourceTree = "<group>"; };
+		F29F235B2F5F635F00683551 /* RestTimerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestTimerView.swift; sourceTree = "<group>"; };
+		F29F235C2F5F635F00683551 /* WatchConnectivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchConnectivityManager.swift; sourceTree = "<group>"; };
+		F29F235D2F5F635F00683551 /* WatchWorkoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchWorkoutManager.swift; sourceTree = "<group>"; };
+		F29F235E2F5F635F00683551 /* WorkoutControlView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutControlView.swift; sourceTree = "<group>"; };
+		F29F235F2F5F635F00683551 /* XomFitComplication.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XomFitComplication.swift; sourceTree = "<group>"; };
+		F29F23602F5F635F00683551 /* XomFitWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XomFitWatchApp.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		F29F21332F5F61DC00683551 /* Xomfit */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Xomfit;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		F29F212E2F5F61DC00683551 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F29F21452F5F620700683551 /* PostgREST in Frameworks */,
+				F29F21432F5F620700683551 /* Functions in Frameworks */,
+				F29F21412F5F620700683551 /* Auth in Frameworks */,
+				F29F21492F5F620700683551 /* Storage in Frameworks */,
+				F29F21472F5F620700683551 /* Realtime in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		F29F21282F5F61DC00683551 = {
+			isa = PBXGroup;
+			children = (
+				F29F22FD2F5F635F00683551 /* CHALLENGES_SCHEMA.sql */,
+				F29F22FE2F5F635F00683551 /* CHANGELOG.md */,
+				F29F23022F5F635F00683551 /* docs */,
+				F29F23032F5F635F00683551 /* Info.plist.example */,
+				F29F23042F5F635F00683551 /* README.md */,
+				F29F230D2F5F635F00683551 /* supabase */,
+				F29F23102F5F635F00683551 /* Tests */,
+				F29F233B2F5F635F00683551 /* web */,
+				F29F23572F5F635F00683551 /* XomFitTests */,
+				F29F23592F5F635F00683551 /* XomFitUITests */,
+				F29F23612F5F635F00683551 /* XomFitWatch */,
+				F29F21332F5F61DC00683551 /* Xomfit */,
+				F29F21322F5F61DC00683551 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		F29F21322F5F61DC00683551 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				F29F21312F5F61DC00683551 /* Xomfit.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		F29F23022F5F635F00683551 /* docs */ = {
+			isa = PBXGroup;
+			children = (
+				F29F22FF2F5F635F00683551 /* FEATURES.md */,
+				F29F23002F5F635F00683551 /* SETUP.md */,
+				F29F23012F5F635F00683551 /* SETUP_GUIDE.md */,
+			);
+			path = docs;
+			sourceTree = "<group>";
+		};
+		F29F230C2F5F635F00683551 /* migrations */ = {
+			isa = PBXGroup;
+			children = (
+				F29F23052F5F635F00683551 /* 20260228_body_composition.sql */,
+				F29F23062F5F635F00683551 /* 20260228_form_check_videos.sql */,
+				F29F23072F5F635F00683551 /* 20260228_gym_checkins.sql */,
+				F29F23082F5F635F00683551 /* 20260228_push_notifications.sql */,
+				F29F23092F5F635F00683551 /* 20260228_workout_marketplace.sql */,
+				F29F230A2F5F635F00683551 /* 20260301_add_nutrition.sql */,
+				F29F230B2F5F635F00683551 /* 20260306_social_feed.sql */,
+			);
+			path = migrations;
+			sourceTree = "<group>";
+		};
+		F29F230D2F5F635F00683551 /* supabase */ = {
+			isa = PBXGroup;
+			children = (
+				F29F230C2F5F635F00683551 /* migrations */,
+			);
+			path = supabase;
+			sourceTree = "<group>";
+		};
+		F29F230F2F5F635F00683551 /* AnalyticsTests */ = {
+			isa = PBXGroup;
+			children = (
+				F29F230E2F5F635F00683551 /* AnalyticsViewModelTests.swift */,
+			);
+			path = AnalyticsTests;
+			sourceTree = "<group>";
+		};
+		F29F23102F5F635F00683551 /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				F29F230F2F5F635F00683551 /* AnalyticsTests */,
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
+		F29F23122F5F635F00683551 /* analytics */ = {
+			isa = PBXGroup;
+			children = (
+				F29F23112F5F635F00683551 /* page.tsx */,
+			);
+			path = analytics;
+			sourceTree = "<group>";
+		};
+		F29F23142F5F635F00683551 /* dashboard */ = {
+			isa = PBXGroup;
+			children = (
+				F29F23132F5F635F00683551 /* page.tsx */,
+			);
+			path = dashboard;
+			sourceTree = "<group>";
+		};
+		F29F23162F5F635F00683551 /* feed */ = {
+			isa = PBXGroup;
+			children = (
+				F29F23152F5F635F00683551 /* page.tsx */,
+			);
+			path = feed;
+			sourceTree = "<group>";
+		};
+		F29F23182F5F635F00683551 /* login */ = {
+			isa = PBXGroup;
+			children = (
+				F29F23172F5F635F00683551 /* page.tsx */,
+			);
+			path = login;
+			sourceTree = "<group>";
+		};
+		F29F231A2F5F635F00683551 /* [username] */ = {
+			isa = PBXGroup;
+			children = (
+				F29F23192F5F635F00683551 /* page.tsx */,
+			);
+			path = "[username]";
+			sourceTree = "<group>";
+		};
+		F29F231B2F5F635F00683551 /* profile */ = {
+			isa = PBXGroup;
+			children = (
+				F29F231A2F5F635F00683551 /* [username] */,
+			);
+			path = profile;
+			sourceTree = "<group>";
+		};
+		F29F231D2F5F635F00683551 /* [id] */ = {
+			isa = PBXGroup;
+			children = (
+				F29F231C2F5F635F00683551 /* page.tsx */,
+			);
+			path = "[id]";
+			sourceTree = "<group>";
+		};
+		F29F231F2F5F635F00683551 /* workouts */ = {
+			isa = PBXGroup;
+			children = (
+				F29F231D2F5F635F00683551 /* [id] */,
+				F29F231E2F5F635F00683551 /* page.tsx */,
+			);
+			path = workouts;
+			sourceTree = "<group>";
+		};
+		F29F23242F5F635F00683551 /* app */ = {
+			isa = PBXGroup;
+			children = (
+				F29F23122F5F635F00683551 /* analytics */,
+				F29F23142F5F635F00683551 /* dashboard */,
+				F29F23162F5F635F00683551 /* feed */,
+				F29F23182F5F635F00683551 /* login */,
+				F29F231B2F5F635F00683551 /* profile */,
+				F29F231F2F5F635F00683551 /* workouts */,
+				F29F23202F5F635F00683551 /* favicon.ico */,
+				F29F23212F5F635F00683551 /* globals.css */,
+				F29F23222F5F635F00683551 /* layout.tsx */,
+				F29F23232F5F635F00683551 /* page.tsx */,
+			);
+			path = app;
+			sourceTree = "<group>";
+		};
+		F29F232A2F5F635F00683551 /* components */ = {
+			isa = PBXGroup;
+			children = (
+				F29F23252F5F635F00683551 /* ExerciseChart.tsx */,
+				F29F23262F5F635F00683551 /* Navigation.tsx */,
+				F29F23272F5F635F00683551 /* PRBadge.tsx */,
+				F29F23282F5F635F00683551 /* StatCard.tsx */,
+				F29F23292F5F635F00683551 /* WorkoutCard.tsx */,
+			);
+			path = components;
+			sourceTree = "<group>";
+		};
+		F29F232C2F5F635F00683551 /* lib */ = {
+			isa = PBXGroup;
+			children = (
+				F29F232B2F5F635F00683551 /* supabase.ts */,
+			);
+			path = lib;
+			sourceTree = "<group>";
+		};
+		F29F23322F5F635F00683551 /* public */ = {
+			isa = PBXGroup;
+			children = (
+				F29F232D2F5F635F00683551 /* file.svg */,
+				F29F232E2F5F635F00683551 /* globe.svg */,
+				F29F232F2F5F635F00683551 /* next.svg */,
+				F29F23302F5F635F00683551 /* vercel.svg */,
+				F29F23312F5F635F00683551 /* window.svg */,
+			);
+			path = public;
+			sourceTree = "<group>";
+		};
+		F29F233B2F5F635F00683551 /* web */ = {
+			isa = PBXGroup;
+			children = (
+				F29F23242F5F635F00683551 /* app */,
+				F29F232A2F5F635F00683551 /* components */,
+				F29F232C2F5F635F00683551 /* lib */,
+				F29F23322F5F635F00683551 /* public */,
+				F29F23332F5F635F00683551 /* .gitignore */,
+				F29F23342F5F635F00683551 /* eslint.config.mjs */,
+				F29F23352F5F635F00683551 /* next.config.ts */,
+				F29F23362F5F635F00683551 /* package.json */,
+				F29F23372F5F635F00683551 /* package-lock.json */,
+				F29F23382F5F635F00683551 /* postcss.config.mjs */,
+				F29F23392F5F635F00683551 /* README.md */,
+				F29F233A2F5F635F00683551 /* tsconfig.json */,
+			);
+			path = web;
+			sourceTree = "<group>";
+		};
+		F29F233D2F5F635F00683551 /* WatchConnectivity */ = {
+			isa = PBXGroup;
+			children = (
+				F29F233C2F5F635F00683551 /* WatchConnectivityManagerTests.swift */,
+			);
+			path = WatchConnectivity;
+			sourceTree = "<group>";
+		};
+		F29F23572F5F635F00683551 /* XomFitTests */ = {
+			isa = PBXGroup;
+			children = (
+				F29F233D2F5F635F00683551 /* WatchConnectivity */,
+				F29F233E2F5F635F00683551 /* AdvancedStatsTests.swift */,
+				F29F233F2F5F635F00683551 /* AICoachTests.swift */,
+				F29F23402F5F635F00683551 /* AICoachViewModelTests.swift */,
+				F29F23412F5F635F00683551 /* AnimationTests.swift */,
+				F29F23422F5F635F00683551 /* AuthServiceTests.swift */,
+				F29F23432F5F635F00683551 /* AuthValidationTests.swift */,
+				F29F23442F5F635F00683551 /* BodyCompositionTests.swift */,
+				F29F23452F5F635F00683551 /* ChallengeTests.swift */,
+				F29F23462F5F635F00683551 /* ChallengeViewModelTests.swift */,
+				F29F23472F5F635F00683551 /* ExportTests.swift */,
+				F29F23482F5F635F00683551 /* FeedViewModelTests.swift */,
+				F29F23492F5F635F00683551 /* HealthKitTests.swift */,
+				F29F234A2F5F635F00683551 /* LeaderboardTests.swift */,
+				F29F234B2F5F635F00683551 /* PRCalculatorTests.swift */,
+				F29F234C2F5F635F00683551 /* ProfileViewModelTests.swift */,
+				F29F234D2F5F635F00683551 /* ProgramTests.swift */,
+				F29F234E2F5F635F00683551 /* ProgressiveOverloadEngineTests.swift */,
+				F29F234F2F5F635F00683551 /* PRViewModelTests.swift */,
+				F29F23502F5F635F00683551 /* RecoveryTests.swift */,
+				F29F23512F5F635F00683551 /* SessionManagerTests.swift */,
+				F29F23522F5F635F00683551 /* SmartRestTimerTests.swift */,
+				F29F23532F5F635F00683551 /* UserProfileServiceTests.swift */,
+				F29F23542F5F635F00683551 /* VideoAnalysisTests.swift */,
+				F29F23552F5F635F00683551 /* WorkoutCardViewModelTests.swift */,
+				F29F23562F5F635F00683551 /* WorkoutLoggerViewModelTests.swift */,
+			);
+			path = XomFitTests;
+			sourceTree = "<group>";
+		};
+		F29F23592F5F635F00683551 /* XomFitUITests */ = {
+			isa = PBXGroup;
+			children = (
+				F29F23582F5F635F00683551 /* AuthUITests.swift */,
+			);
+			path = XomFitUITests;
+			sourceTree = "<group>";
+		};
+		F29F23612F5F635F00683551 /* XomFitWatch */ = {
+			isa = PBXGroup;
+			children = (
+				F29F235A2F5F635F00683551 /* LogSetView.swift */,
+				F29F235B2F5F635F00683551 /* RestTimerView.swift */,
+				F29F235C2F5F635F00683551 /* WatchConnectivityManager.swift */,
+				F29F235D2F5F635F00683551 /* WatchWorkoutManager.swift */,
+				F29F235E2F5F635F00683551 /* WorkoutControlView.swift */,
+				F29F235F2F5F635F00683551 /* XomFitComplication.swift */,
+				F29F23602F5F635F00683551 /* XomFitWatchApp.swift */,
+			);
+			path = XomFitWatch;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		F29F21302F5F61DC00683551 /* Xomfit */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F29F213C2F5F61DD00683551 /* Build configuration list for PBXNativeTarget "Xomfit" */;
+			buildPhases = (
+				F29F212D2F5F61DC00683551 /* Sources */,
+				F29F212E2F5F61DC00683551 /* Frameworks */,
+				F29F212F2F5F61DC00683551 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				F29F21332F5F61DC00683551 /* Xomfit */,
+			);
+			name = Xomfit;
+			packageProductDependencies = (
+				F29F21402F5F620700683551 /* Auth */,
+				F29F21422F5F620700683551 /* Functions */,
+				F29F21442F5F620700683551 /* PostgREST */,
+				F29F21462F5F620700683551 /* Realtime */,
+				F29F21482F5F620700683551 /* Storage */,
+			);
+			productName = Xomfit;
+			productReference = F29F21312F5F61DC00683551 /* Xomfit.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		F29F21292F5F61DC00683551 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2620;
+				LastUpgradeCheck = 2620;
+				TargetAttributes = {
+					F29F21302F5F61DC00683551 = {
+						CreatedOnToolsVersion = 26.2;
+					};
+				};
+			};
+			buildConfigurationList = F29F212C2F5F61DC00683551 /* Build configuration list for PBXProject "Xomfit" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = F29F21282F5F61DC00683551;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				F29F213F2F5F620700683551 /* XCRemoteSwiftPackageReference "supabase-swift" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = F29F21322F5F61DC00683551 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				F29F21302F5F61DC00683551 /* Xomfit */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		F29F212F2F5F61DC00683551 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F29F23622F5F635F00683551 /* tsconfig.json in Resources */,
+				F29F23632F5F635F00683551 /* favicon.ico in Resources */,
+				F29F23642F5F635F00683551 /* FEATURES.md in Resources */,
+				F29F23652F5F635F00683551 /* CHANGELOG.md in Resources */,
+				F29F23662F5F635F00683551 /* globals.css in Resources */,
+				F29F23672F5F635F00683551 /* postcss.config.mjs in Resources */,
+				F29F23682F5F635F00683551 /* CHALLENGES_SCHEMA.sql in Resources */,
+				F29F23692F5F635F00683551 /* 20260228_workout_marketplace.sql in Resources */,
+				F29F236A2F5F635F00683551 /* README.md in Resources */,
+				F29F236B2F5F635F00683551 /* 20260228_push_notifications.sql in Resources */,
+				F29F236C2F5F635F00683551 /* 20260301_add_nutrition.sql in Resources */,
+				F29F236D2F5F635F00683551 /* globe.svg in Resources */,
+				F29F236E2F5F635F00683551 /* 20260228_body_composition.sql in Resources */,
+				F29F236F2F5F635F00683551 /* file.svg in Resources */,
+				F29F23702F5F635F00683551 /* 20260228_form_check_videos.sql in Resources */,
+				F29F23712F5F635F00683551 /* SETUP_GUIDE.md in Resources */,
+				F29F23722F5F635F00683551 /* package.json in Resources */,
+				F29F23732F5F635F00683551 /* next.svg in Resources */,
+				F29F23742F5F635F00683551 /* 20260228_gym_checkins.sql in Resources */,
+				F29F23752F5F635F00683551 /* .gitignore in Resources */,
+				F29F23762F5F635F00683551 /* window.svg in Resources */,
+				F29F23772F5F635F00683551 /* SETUP.md in Resources */,
+				F29F23782F5F635F00683551 /* Info.plist.example in Resources */,
+				F29F23792F5F635F00683551 /* README.md in Resources */,
+				F29F237A2F5F635F00683551 /* 20260306_social_feed.sql in Resources */,
+				F29F237B2F5F635F00683551 /* eslint.config.mjs in Resources */,
+				F29F237C2F5F635F00683551 /* package-lock.json in Resources */,
+				F29F237D2F5F635F00683551 /* vercel.svg in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		F29F212D2F5F61DC00683551 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F29F237E2F5F635F00683551 /* FeedViewModelTests.swift in Sources */,
+				F29F237F2F5F635F00683551 /* VideoAnalysisTests.swift in Sources */,
+				F29F23802F5F635F00683551 /* PRViewModelTests.swift in Sources */,
+				F29F23812F5F635F00683551 /* ProgramTests.swift in Sources */,
+				F29F23822F5F635F00683551 /* HealthKitTests.swift in Sources */,
+				F29F23832F5F635F00683551 /* ExportTests.swift in Sources */,
+				F29F23842F5F635F00683551 /* SmartRestTimerTests.swift in Sources */,
+				F29F23852F5F635F00683551 /* WatchConnectivityManagerTests.swift in Sources */,
+				F29F23862F5F635F00683551 /* LeaderboardTests.swift in Sources */,
+				F29F23872F5F635F00683551 /* WorkoutCardViewModelTests.swift in Sources */,
+				F29F23882F5F635F00683551 /* LogSetView.swift in Sources */,
+				F29F23892F5F635F00683551 /* ProfileViewModelTests.swift in Sources */,
+				F29F238A2F5F635F00683551 /* XomFitWatchApp.swift in Sources */,
+				F29F238B2F5F635F00683551 /* WorkoutControlView.swift in Sources */,
+				F29F238C2F5F635F00683551 /* UserProfileServiceTests.swift in Sources */,
+				F29F238D2F5F635F00683551 /* AICoachViewModelTests.swift in Sources */,
+				F29F238E2F5F635F00683551 /* AnalyticsViewModelTests.swift in Sources */,
+				F29F238F2F5F635F00683551 /* WatchWorkoutManager.swift in Sources */,
+				F29F23902F5F635F00683551 /* SessionManagerTests.swift in Sources */,
+				F29F23912F5F635F00683551 /* AuthValidationTests.swift in Sources */,
+				F29F23922F5F635F00683551 /* BodyCompositionTests.swift in Sources */,
+				F29F23932F5F635F00683551 /* ChallengeViewModelTests.swift in Sources */,
+				F29F23942F5F635F00683551 /* AICoachTests.swift in Sources */,
+				F29F23952F5F635F00683551 /* ProgressiveOverloadEngineTests.swift in Sources */,
+				F29F23962F5F635F00683551 /* AnimationTests.swift in Sources */,
+				F29F23972F5F635F00683551 /* PRCalculatorTests.swift in Sources */,
+				F29F23982F5F635F00683551 /* ChallengeTests.swift in Sources */,
+				F29F23992F5F635F00683551 /* RecoveryTests.swift in Sources */,
+				F29F239A2F5F635F00683551 /* AuthUITests.swift in Sources */,
+				F29F239B2F5F635F00683551 /* RestTimerView.swift in Sources */,
+				F29F239C2F5F635F00683551 /* WorkoutLoggerViewModelTests.swift in Sources */,
+				F29F239D2F5F635F00683551 /* XomFitComplication.swift in Sources */,
+				F29F239E2F5F635F00683551 /* AdvancedStatsTests.swift in Sources */,
+				F29F239F2F5F635F00683551 /* AuthServiceTests.swift in Sources */,
+				F29F23A02F5F635F00683551 /* WatchConnectivityManager.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		F29F213A2F5F61DD00683551 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = A3HMLDS2AL;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		F29F213B2F5F61DD00683551 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = A3HMLDS2AL;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		F29F213D2F5F61DD00683551 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = A3HMLDS2AL;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Xomware.Xomfit;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		F29F213E2F5F61DD00683551 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = A3HMLDS2AL;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Xomware.Xomfit;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		F29F212C2F5F61DC00683551 /* Build configuration list for PBXProject "Xomfit" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F29F213A2F5F61DD00683551 /* Debug */,
+				F29F213B2F5F61DD00683551 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F29F213C2F5F61DD00683551 /* Build configuration list for PBXNativeTarget "Xomfit" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F29F213D2F5F61DD00683551 /* Debug */,
+				F29F213E2F5F61DD00683551 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		F29F213F2F5F620700683551 /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/supabase/supabase-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.5.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		F29F21402F5F620700683551 /* Auth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F29F213F2F5F620700683551 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Auth;
+		};
+		F29F21422F5F620700683551 /* Functions */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F29F213F2F5F620700683551 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Functions;
+		};
+		F29F21442F5F620700683551 /* PostgREST */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F29F213F2F5F620700683551 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = PostgREST;
+		};
+		F29F21462F5F620700683551 /* Realtime */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F29F213F2F5F620700683551 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Realtime;
+		};
+		F29F21482F5F620700683551 /* Storage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F29F213F2F5F620700683551 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Storage;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = F29F21292F5F61DC00683551 /* Project object */;
+}

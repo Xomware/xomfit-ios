@@ -1,0 +1,37 @@
+import Foundation
+
+enum Config {
+    // MARK: - Supabase Configuration
+    // Get these values from your Supabase project dashboard:
+    // Settings > API > Project URL and Anon Key
+    static let supabaseURL = "YOUR_SUPABASE_URL"
+    static let supabaseAnonKey = "YOUR_SUPABASE_ANON_KEY"
+    
+    // MARK: - OAuth Configuration
+    // Custom URL scheme for OAuth redirects
+    static let oauthScheme = "xomfit"
+    static let oauthCallbackURL = "xomfit://login-callback"
+    
+    // MARK: - App Configuration
+    static let appName = "XomFit"
+    static let bundleIdentifier = "com.xomware.xomfit"
+    
+    // MARK: - Validation Patterns
+    enum Validation {
+        // Email validation regex (RFC 5322 simplified)
+        static let emailPattern = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+        
+        // Password requirements:
+        // - Minimum 8 characters
+        // - At least one number
+        // - Optional: special characters for stronger validation
+        static let passwordMinLength = 8
+        static let passwordRequiresNumber = true
+        static let passwordRequiresSpecialChar = false
+    }
+    
+    // MARK: - Configuration Status
+    static var isConfigured: Bool {
+        return !supabaseURL.contains("YOUR_") && !supabaseAnonKey.contains("YOUR_")
+    }
+}
