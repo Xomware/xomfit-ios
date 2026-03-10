@@ -9,7 +9,7 @@ class AnalyticsViewModel: ObservableObject {
     
     // Analytics data
     @Published var weightProgressionData: [WeightProgressionDataPoint] = []
-    @Published var volumeByMuscleGroup: [MuscleGroupVolume] = []
+    @Published var volumeByMuscleGroup: [AnalyticsMuscleGroupVolume] = []
     @Published var workoutFrequency: [WorkoutFrequencyDataPoint] = []
     @Published var estimatedOneRMTrends: [OneRMTrendDataPoint] = []
     
@@ -81,7 +81,7 @@ class AnalyticsViewModel: ObservableObject {
     }
     
     // MARK: - Volume by Muscle Group Calculation
-    func calculateVolumeByMuscleGroup(workouts: [Workout]) -> [MuscleGroupVolume] {
+    func calculateVolumeByMuscleGroup(workouts: [Workout]) -> [AnalyticsMuscleGroupVolume] {
         var volumeMap: [MuscleGroup: Double] = [:]
         
         for workout in workouts {
@@ -94,7 +94,7 @@ class AnalyticsViewModel: ObservableObject {
         }
         
         return MuscleGroup.allCases.map { group in
-            MuscleGroupVolume(muscleGroup: group, volume: volumeMap[group] ?? 0)
+            AnalyticsMuscleGroupVolume(muscleGroup: group, volume: volumeMap[group] ?? 0)
         }.sorted(by: { $0.volume > $1.volume })
     }
     
@@ -189,7 +189,7 @@ struct WeightProgressionDataPoint {
     let weight: Double
 }
 
-struct MuscleGroupVolume {
+struct AnalyticsAnalyticsMuscleGroupVolume {
     let muscleGroup: MuscleGroup
     let volume: Double
 }

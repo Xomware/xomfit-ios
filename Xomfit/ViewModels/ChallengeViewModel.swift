@@ -463,15 +463,4 @@ class SupabaseService {
     }
 }
 
-// MARK: - Mock Notification Service
-class NotificationService {
-    static let shared = NotificationService()
-    
-    func sendChallengeUpdate(title: String, body: String) async {
-        // Implementation for sending notifications
-    }
-    
-    func sendChallengeInvitation(title: String, body: String) async {
-        // Implementation for sending invitations
-    }
-}
+// NotificationService is defined in Services/NotificationService.swift

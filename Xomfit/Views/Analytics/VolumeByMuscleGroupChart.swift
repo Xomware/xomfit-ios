@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct VolumeByMuscleGroupChart: View {
-    let data: [MuscleGroupVolume]
+    let data: [AnalyticsMuscleGroupVolume]
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -40,7 +40,7 @@ struct VolumeByMuscleGroupChart: View {
 
 // MARK: - Bar Chart View
 struct BarChartView: View {
-    let data: [MuscleGroupVolume]
+    let data: [AnalyticsMuscleGroupVolume]
     
     var maxVolume: Double {
         data.max(by: { $0.volume < $1.volume })?.volume ?? 0
@@ -116,12 +116,12 @@ struct BarChartView: View {
 
 #Preview {
     let mockData = [
-        MuscleGroupVolume(muscleGroup: .chest, volume: 12500),
-        MuscleGroupVolume(muscleGroup: .back, volume: 14200),
-        MuscleGroupVolume(muscleGroup: .shoulders, volume: 8900),
-        MuscleGroupVolume(muscleGroup: .triceps, volume: 7500),
-        MuscleGroupVolume(muscleGroup: .biceps, volume: 6800),
-        MuscleGroupVolume(muscleGroup: .quads, volume: 15000),
+        AnalyticsMuscleGroupVolume(muscleGroup: .chest, volume: 12500),
+        AnalyticsMuscleGroupVolume(muscleGroup: .back, volume: 14200),
+        AnalyticsMuscleGroupVolume(muscleGroup: .shoulders, volume: 8900),
+        AnalyticsMuscleGroupVolume(muscleGroup: .triceps, volume: 7500),
+        AnalyticsMuscleGroupVolume(muscleGroup: .biceps, volume: 6800),
+        AnalyticsMuscleGroupVolume(muscleGroup: .quads, volume: 15000),
     ]
     
     VolumeByMuscleGroupChart(data: mockData)
