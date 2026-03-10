@@ -1,6 +1,7 @@
 import Foundation
 
 /// Manages loading and caching of animation assets
+@MainActor
 class AnimationAssetManager: ObservableObject {
     static let shared = AnimationAssetManager()
     
