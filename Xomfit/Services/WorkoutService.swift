@@ -9,7 +9,7 @@ class WorkoutService: ObservableObject {
     @Published var isLoading = false
     @Published var error: String?
     
-    private let supabaseClient = SupabaseClient.shared
+    private let supabaseClient = supabase
     private let userDefaults = UserDefaults.standard
     private let workoutsKey = "saved_workouts"
     
@@ -103,15 +103,18 @@ class WorkoutService: ObservableObject {
         }
     }
     
-    private func loadWorkoutsFromLocalStorage() {
+    @discardableResult
+    private func loadWorkoutsFromLocalStorage() -> [Workout] {
         do {
             if let data = userDefaults.data(forKey: workoutsKey) {
                 let decoded = try JSONDecoder().decode([Workout].self, from: data)
                 self.workouts = decoded.sorted { $0.startTime > $1.startTime }
+                return self.workouts
             }
         } catch {
             self.error = "Failed to load workouts from local storage: \(error.localizedDescription)"
         }
+        return []
     }
     
     // MARK: - Supabase Sync
@@ -146,10 +149,10 @@ class WorkoutService: ObservableObject {
     // MARK: - Statistics
     
     func getTotalVolume(for muscleGroup: MuscleGroup) -> Double {
-        workouts.flatMap { workout in
-            workout.exercises.flatMap { exercise in
-                guard exercise.exercise.muscleGroups.contains(muscleGroup) else { return 0.0 }
-                return exercise.sets.reduce(0) { $0 + $1.volume }
+        workouts.reduce(0.0) { total, workout in
+            total + workout.exercises.reduce(0.0) { subtotal, exercise in
+                guard exercise.exercise.muscleGroups.contains(muscleGroup) else { return subtotal }
+                return subtotal + exercise.sets.reduce(0) { $0 + $1.volume }
             }
         }
     }

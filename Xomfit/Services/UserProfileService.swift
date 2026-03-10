@@ -21,7 +21,7 @@ class UserProfileService: ObservableObject {
                 .upload(fileName, data: imageData)
             
             // Get public URL
-            let publicURL = supabase.storage
+            let publicURL = try supabase.storage
                 .from("avatars")
                 .getPublicURL(path: fileName)
             
@@ -56,7 +56,8 @@ class UserProfileService: ObservableObject {
                 metadata["avatar_url"] = avatarURL
             }
             
-            try await supabase.auth.update(user: UserAttributes(data: metadata))
+            let jsonMetadata = metadata.mapValues { AnyJSON.string("\($0)") }
+            try await supabase.auth.update(user: UserAttributes(data: jsonMetadata))
             
             // Return updated user (in a real app, fetch from database)
             return AppUser(
@@ -91,7 +92,7 @@ class UserProfileService: ObservableObject {
         do {
             try await supabase.storage
                 .from("avatars")
-                .remove([avatarPath])
+                .remove(paths: [avatarPath])
         } catch {
             errorMessage = "Failed to delete avatar: \(error.localizedDescription)"
             throw error

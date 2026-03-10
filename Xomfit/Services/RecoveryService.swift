@@ -1,5 +1,6 @@
 import Foundation
 
+@MainActor
 class RecoveryService: ObservableObject {
     static let shared = RecoveryService()
     
