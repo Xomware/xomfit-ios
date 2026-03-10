@@ -419,5 +419,5 @@ struct ChallengeDetailWithLeaderboard: View {
         streaks: []
     )
     
-    return LeaderboardView(challengeDetail: mockDetail)
+    ChallengeLeaderboardView(challengeDetail: mockDetail)
 }

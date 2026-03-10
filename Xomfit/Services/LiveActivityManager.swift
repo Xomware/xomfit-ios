@@ -106,36 +106,31 @@ class LiveActivityManager: NSObject {
 
 /// Attributes for the live workout live activity
 struct LiveWorkoutActivityAttributes: ActivityAttributes {
-    public typealias ContentState = LiveWorkoutContentState
-    
-    struct LiveWorkoutActivityMetadata: Codable {}
-    
+    struct ContentState: Codable, Hashable {
+        let currentExercise: String
+        let completedSets: Int
+        let totalSets: Int
+        let currentWeight: Double
+        let currentReps: Int
+        let duration: TimeInterval
+        let viewerCount: Int
+
+        var formattedDuration: String {
+            let minutes = Int(duration / 60)
+            if minutes < 60 {
+                return "\(minutes)m"
+            }
+            return "\(minutes / 60)h \(minutes % 60)m"
+        }
+
+        var progressPercentage: Double {
+            totalSets > 0 ? Double(completedSets) / Double(totalSets) : 0
+        }
+    }
+
     let userId: String
     let userName: String
     let workoutName: String
-}
-
-/// Content state for live activity updates
-struct LiveWorkoutContentState: Codable {
-    let currentExercise: String
-    let completedSets: Int
-    let totalSets: Int
-    let currentWeight: Double
-    let currentReps: Int
-    let duration: TimeInterval
-    let viewerCount: Int
-    
-    var formattedDuration: String {
-        let minutes = Int(duration / 60)
-        if minutes < 60 {
-            return "\(minutes)m"
-        }
-        return "\(minutes / 60)h \(minutes % 60)m"
-    }
-    
-    var progressPercentage: Double {
-        totalSets > 0 ? Double(completedSets) / Double(totalSets) : 0
-    }
 }
 
 // MARK: - Lock Screen UI Component (SwiftUI)

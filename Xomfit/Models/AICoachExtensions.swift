@@ -113,12 +113,12 @@ extension AIRecommendation: Hashable {
 // MARK: - UserTrainingPreferences Slider Binding Helpers
 extension UserTrainingPreferences {
     var minRepsDouble: Double {
-        get { Double(repRangePreference.min) }
-        set { repRangePreference = (min: Int(newValue), max: repRangePreference.max) }
+        get { Double(repRangeMin) }
+        set { repRangeMin = Int(newValue) }
     }
 
     var maxRepsDouble: Double {
-        get { Double(repRangePreference.max) }
-        set { repRangePreference = (min: repRangePreference.min, max: Int(newValue)) }
+        get { Double(repRangeMax) }
+        set { repRangeMax = Int(newValue) }
     }
 }
