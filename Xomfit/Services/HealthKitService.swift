@@ -1,6 +1,7 @@
 import Foundation
 import HealthKit
 
+@MainActor
 class HealthKitService: ObservableObject {
     static let shared = HealthKitService()
     

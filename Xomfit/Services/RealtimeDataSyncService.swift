@@ -4,6 +4,7 @@ import Combine
 /// Service for real-time data synchronization using Supabase Realtime
 /// This is a placeholder implementation - replace with actual Supabase Realtime
 /// when the Supabase SDK is integrated
+@MainActor
 class RealtimeDataSyncService: ObservableObject {
     @Published var connectionStatus: LiveWorkoutViewModel.ConnectionStatus = .disconnected
     @Published var liveWorkoutUpdate: LiveWorkoutUpdate?

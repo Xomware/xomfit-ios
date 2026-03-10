@@ -3,6 +3,7 @@ import AVFoundation
 import Vision
 import CoreGraphics
 
+@MainActor
 class VideoAnalysisService: ObservableObject {
     static let shared = VideoAnalysisService()
     

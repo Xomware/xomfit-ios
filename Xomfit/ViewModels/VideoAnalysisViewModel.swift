@@ -1,6 +1,7 @@
 import Foundation
 import SwiftUI
 
+@MainActor
 class VideoAnalysisViewModel: ObservableObject {
     @Published var analysisResult: FormAnalysisResult?
     @Published var sessions: [VideoSession] = []

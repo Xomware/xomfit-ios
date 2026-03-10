@@ -1,5 +1,6 @@
 import Foundation
 
+@MainActor
 class ProgramService: ObservableObject {
     static let shared = ProgramService()
     

@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 
+@MainActor
 class RecoveryViewModel: ObservableObject {
     @Published var readiness: DailyReadiness?
     @Published var soreness: [MuscleSoreness] = []

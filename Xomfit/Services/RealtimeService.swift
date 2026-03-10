@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 
+@MainActor
 class RealtimeService: NSObject, ObservableObject {
     static let shared = RealtimeService()
     

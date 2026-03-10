@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 
+@MainActor
 class LeaderboardViewModel: ObservableObject {
     @Published var entries: [LeaderboardEntry] = []
     @Published var trophies: [Trophy] = []

@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 
+@MainActor
 class IntegrationViewModel: ObservableObject {
     @Published var healthKitAuthorized = false
     @Published var healthKitAvailable = false

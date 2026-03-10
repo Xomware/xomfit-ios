@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 
+@MainActor
 class AdvancedStatsViewModel: ObservableObject {
     @Published var heatmapData: [MuscleHeatmapData] = []
     @Published var balanceRatios: [MusclePairBalance] = []
