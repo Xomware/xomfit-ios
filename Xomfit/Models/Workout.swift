@@ -9,6 +9,8 @@ struct Workout: Codable, Identifiable {
     var endTime: Date?
     var notes: String?
     
+    var startDate: Date { startTime }
+
     var duration: TimeInterval {
         (endTime ?? Date()).timeIntervalSince(startTime)
     }

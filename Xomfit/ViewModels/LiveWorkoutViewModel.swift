@@ -131,7 +131,8 @@ class LiveWorkoutViewModel: ObservableObject {
             // Update current exercise in display
             break
         case .reactionAdded:
-            if let reaction = try? JSONDecoder().decode(LiveReaction.self, from: JSONEncoder().encode(update.data.value)) {
+            if let data = try? JSONSerialization.data(withJSONObject: update.data.value),
+               let reaction = try? JSONDecoder().decode(LiveReaction.self, from: data) {
                 recentReactions.insert(reaction, at: 0)
                 if recentReactions.count > 50 {
                     recentReactions = Array(recentReactions.prefix(50))

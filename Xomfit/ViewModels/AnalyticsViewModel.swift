@@ -189,7 +189,7 @@ struct WeightProgressionDataPoint {
     let weight: Double
 }
 
-struct AnalyticsAnalyticsMuscleGroupVolume {
+struct AnalyticsMuscleGroupVolume {
     let muscleGroup: MuscleGroup
     let volume: Double
 }

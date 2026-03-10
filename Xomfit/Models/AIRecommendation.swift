@@ -205,7 +205,8 @@ struct UserTrainingPreferences: Codable {
     var targetDaysPerWeek: Int = 4
     var avoidExercises: [String] = [] // Exercise IDs to avoid
     var preferredEquipment: [Equipment] = [.barbell, .dumbbell]
-    var repRangePreference: (min: Int, max: Int) = (5, 12)
+    var repRangeMin: Int = 5
+    var repRangeMax: Int = 12
     var restPeriodSeconds: Int = 90
     var enableAutoDeload: Bool = true
     var deloadFrequencyWeeks: Int = 8

@@ -186,6 +186,21 @@ final class NotificationService: NSObject, ObservableObject {
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ids)
     }
     
+    // MARK: - Challenge Notifications
+
+    func sendChallengeUpdate(title: String, body: String) async {
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.body = body
+        content.sound = .default
+        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
+        try? await UNUserNotificationCenter.current().add(request)
+    }
+
+    func sendChallengeInvitation(title: String, body: String) async {
+        await sendChallengeUpdate(title: title, body: body)
+    }
+
     // MARK: - Deep Link Handling
     
     /// Parse a push notification payload into a deep link destination
