@@ -45,7 +45,7 @@ class LiveWorkoutViewModel: ObservableObject {
     }
     
     /// Start broadcasting your workout as live
-    func startLiveWorkout(from workout: Workout, user: User) {
+    func startLiveWorkout(from workout: Workout, user: AppUser) {
         let liveWorkout = LiveWorkout(
             id: UUID().uuidString,
             userId: userId,

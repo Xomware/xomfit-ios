@@ -5,7 +5,7 @@ struct AICoachView: View {
     @State private var showAnalysis = false
     @State private var showSettings = false
     
-    var user: User
+    var user: AppUser
     var workouts: [Workout]
     
     var body: some View {

@@ -81,7 +81,7 @@ class ProgramService: ObservableObject {
             makeProgram("GZCLP Linear", desc: "GZCLP — tiered progression. 3 days/week.", weeks: 16, days: 3, difficulty: .beginner, goal: .strength, author: "Cody Lefever"),
             makeProgram("PPL 6-Day Push Pull Legs", desc: "Push Pull Legs split. 6 days/week for advanced lifters.", weeks: 12, days: 6, difficulty: .advanced, goal: .hypertrophy, author: "Jeff Nippard"),
             makeProgram("531 Boring But Big", desc: "Jim Wendler's 5/3/1 with BBB accessories.", weeks: 16, days: 4, difficulty: .intermediate, goal: .strength, author: "Jim Wendler"),
-            makeProgram("Beginner Full Body", desc: "Simple 3-day full body for complete beginners.", weeks: 8, days: 3, difficulty: .beginner, goal: .generalFitness, author: "XomFit")
+            makeProgram("Beginner Full Body", desc: "Simple 3-day full body for complete beginners.", weeks: 8, days: 3, difficulty: .beginner, goal: .strength, author: "XomFit")
         ]
     }
     

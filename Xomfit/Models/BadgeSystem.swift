@@ -49,7 +49,7 @@ class BadgeSystem {
     }
     
     /// Check and award badges based on challenge results
-    func checkAndAwardBadges(for results: [LeaderboardEntry], challengeType: ChallengeType) -> [String: [Badge]] {
+    func checkAndAwardBadges(for results: [ChallengeLeaderboardEntry], challengeType: ChallengeType) -> [String: [Badge]] {
         var awardedBadges: [String: [Badge]] = [:]
         
         guard let topPerformer = results.first else { return awardedBadges }

@@ -4,7 +4,7 @@ import Foundation
 protocol AICoachServiceProtocol {
     func calculateReadiness(from workouts: [Workout]) -> ReadinessScore
     func generateInsights(from workouts: [Workout]) -> [CoachInsight]
-    func generateRecommendations(userId: String, workouts: [Workout], userStats: User.UserStats?) -> [AIRecommendation]
+    func generateRecommendations(userId: String, workouts: [Workout], userStats: AppUser.UserStats?) -> [AIRecommendation]
     func analyzePerformance(userId: String, workouts: [Workout]) -> PerformanceAnalysis
     func generatePeriodizationPlan(currentPhase: PeriodizationPhase) -> [PeriodizationBlock]
     func calculateTrainingLoad(from workouts: [Workout]) -> TrainingLoad
@@ -153,7 +153,7 @@ class AICoachService: ObservableObject, AICoachServiceProtocol {
     }
 
     // MARK: - Generate Recommendations
-    func generateRecommendations(userId: String, workouts: [Workout], userStats: User.UserStats? = nil) -> [AIRecommendation] {
+    func generateRecommendations(userId: String, workouts: [Workout], userStats: AppUser.UserStats? = nil) -> [AIRecommendation] {
         guard !workouts.isEmpty else { return [] }
 
         var recommendations: [AIRecommendation] = []

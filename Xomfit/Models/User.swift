@@ -1,6 +1,14 @@
 import Foundation
 
-struct User: Codable, Identifiable {
+struct AppUser: Codable, Identifiable, Hashable {
+    static func == (lhs: AppUser, rhs: AppUser) -> Bool {
+        lhs.id == rhs.id
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+
     let id: String
     var username: String
     var displayName: String
@@ -21,8 +29,8 @@ struct User: Codable, Identifiable {
 }
 
 // MARK: - Mock Data
-extension User {
-    static let mock = User(
+extension AppUser {
+    static let mock = AppUser(
         id: "user-1",
         username: "domg",
         displayName: "Dom G",
@@ -40,7 +48,7 @@ extension User {
         createdAt: Date().addingTimeInterval(-86400 * 365)
     )
     
-    static let mockUser = User(
+    static let mockUser = AppUser(
         id: "user-1",
         username: "domg",
         displayName: "Dom G",
@@ -58,7 +66,7 @@ extension User {
         createdAt: Date().addingTimeInterval(-86400 * 365)
     )
     
-    static let mockFriend = User(
+    static let mockFriend = AppUser(
         id: "user-2",
         username: "mikej",
         displayName: "Mike J",

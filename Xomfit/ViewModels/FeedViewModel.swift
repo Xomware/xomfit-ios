@@ -50,7 +50,7 @@ class FeedViewModel: ObservableObject {
         applyFilter()
     }
     
-    func addComment(to post: FeedPost, text: String, user: User) {
+    func addComment(to post: FeedPost, text: String, user: AppUser) {
         guard let index = allPosts.firstIndex(where: { $0.id == post.id }) else { return }
         let comment = FeedPost.Comment(
             id: UUID().uuidString,
@@ -76,14 +76,14 @@ class FeedViewModel: ObservableObject {
     // MARK: - Mock Data Generation
     
     private func generateMockFeed() -> [FeedPost] {
-        let friend1 = User.mockFriend
-        let friend2 = User(
+        let friend1 = AppUser.mockFriend
+        let friend2 = AppUser(
             id: "user-3",
             username: "sarahf",
             displayName: "Sarah F",
             avatarURL: nil,
             bio: "CrossFit enthusiast",
-            stats: User.UserStats(
+            stats: AppUser.UserStats(
                 totalWorkouts: 156,
                 totalVolume: 756_230,
                 totalPRs: 28,

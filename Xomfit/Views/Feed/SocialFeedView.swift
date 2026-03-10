@@ -165,7 +165,7 @@ struct SocialFeedCard: View {
 // MARK: - Shared Card Header
 
 struct FeedCardHeader: View {
-    let user: User
+    let user: AppUser
     let subtitle: String
     let timeAgo: String
 

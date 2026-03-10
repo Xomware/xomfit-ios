@@ -206,7 +206,7 @@ struct StreakRowView: View {
 
 #Preview {
     let mockLeaderboard = [
-        LeaderboardEntry(
+        ChallengeLeaderboardEntry(
             id: "1",
             userId: "user1",
             userName: "John Doe",

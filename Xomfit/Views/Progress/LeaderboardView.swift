@@ -63,7 +63,7 @@ struct LeaderboardView: View {
     
     // MARK: - Subviews
     
-    private func leaderboardRowView(rank: Int, user: User, pr: PersonalRecord) -> some View {
+    private func leaderboardRowView(rank: Int, user: AppUser, pr: PersonalRecord) -> some View {
         HStack(spacing: 12) {
             // Rank badge
             VStack {

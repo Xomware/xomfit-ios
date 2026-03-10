@@ -54,7 +54,7 @@ struct ChallengeLeaderboardView: View {
 
 // MARK: - Top Podium View
 struct TopPodiumView: View {
-    let leaderboard: [LeaderboardEntry]
+    let leaderboard: [ChallengeLeaderboardEntry]
     
     var body: some View {
         VStack(spacing: 16) {
@@ -103,7 +103,7 @@ struct TopPodiumView: View {
 
 // MARK: - Podium Place View
 struct PodiumPlaceView: View {
-    let entry: LeaderboardEntry
+    let entry: ChallengeLeaderboardEntry
     let place: Int
     let height: CGFloat
     
@@ -173,7 +173,7 @@ struct PodiumPlaceView: View {
 
 // MARK: - Leaderboard Row View
 struct LeaderboardRowView: View {
-    let entry: LeaderboardEntry
+    let entry: ChallengeLeaderboardEntry
     let isCurrentUser: Bool
     
     var body: some View {
@@ -360,7 +360,7 @@ struct ChallengeDetailWithLeaderboard: View {
 
 #Preview {
     let mockLeaderboard = [
-        LeaderboardEntry(
+        ChallengeLeaderboardEntry(
             id: "1",
             userId: "user1",
             userName: "John Doe",
@@ -373,7 +373,7 @@ struct ChallengeDetailWithLeaderboard: View {
                 Badge(id: "1", name: "First Place", description: "Won a challenge", icon: "crown.fill", earnedDate: Date())
             ]
         ),
-        LeaderboardEntry(
+        ChallengeLeaderboardEntry(
             id: "2",
             userId: "user2",
             userName: "Jane Smith",
@@ -384,7 +384,7 @@ struct ChallengeDetailWithLeaderboard: View {
             streak: 3,
             badges: []
         ),
-        LeaderboardEntry(
+        ChallengeLeaderboardEntry(
             id: "3",
             userId: "user3",
             userName: "Mike Johnson",

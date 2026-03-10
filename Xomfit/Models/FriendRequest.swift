@@ -15,8 +15,8 @@ struct FriendRequest: Codable, Identifiable {
     let updatedAt: Date
     
     // For UI display
-    var fromUser: User?
-    var toUser: User?
+    var fromUser: AppUser?
+    var toUser: AppUser?
 }
 
 // MARK: - Mock Data

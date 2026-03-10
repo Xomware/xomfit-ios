@@ -14,7 +14,7 @@ struct SocialFeedItem: Codable, Identifiable {
     let userId: String
     let activityType: ActivityType
     let createdAt: Date
-    var user: User
+    var user: AppUser
     var likes: Int
     var isLiked: Bool
     var comments: [FeedComment]
@@ -95,7 +95,7 @@ struct StreakActivity: Codable {
 struct FeedComment: Codable, Identifiable {
     let id: String
     var userId: String
-    var user: User?
+    var user: AppUser?
     var text: String
     var createdAt: Date
 }

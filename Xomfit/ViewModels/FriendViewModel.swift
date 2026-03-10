@@ -2,12 +2,12 @@ import Foundation
 
 @MainActor
 class FriendViewModel: ObservableObject {
-    @Published var friends: [User] = []
-    @Published var following: [User] = []
-    @Published var followers: [User] = []
+    @Published var friends: [AppUser] = []
+    @Published var following: [AppUser] = []
+    @Published var followers: [AppUser] = []
     @Published var pendingRequests: [FriendRequest] = []
     @Published var suggestedFriends: [FriendSuggestion] = []
-    @Published var searchResults: [User] = []
+    @Published var searchResults: [AppUser] = []
     
     @Published var isLoading = false
     @Published var error: String?

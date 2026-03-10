@@ -9,11 +9,11 @@ protocol FriendshipServiceProtocol {
     
     // Fetch Operations
     func fetchPendingRequests(userId: String) async throws -> [FriendRequest]
-    func fetchFriends(userId: String) async throws -> [User]
-    func fetchFollowing(userId: String) async throws -> [User]
-    func fetchFollowers(userId: String) async throws -> [User]
-    func searchUsers(query: String) async throws -> [User]
-    func getMutualFriends(userId: String, otherUserId: String) async throws -> [User]
+    func fetchFriends(userId: String) async throws -> [AppUser]
+    func fetchFollowing(userId: String) async throws -> [AppUser]
+    func fetchFollowers(userId: String) async throws -> [AppUser]
+    func searchUsers(query: String) async throws -> [AppUser]
+    func getMutualFriends(userId: String, otherUserId: String) async throws -> [AppUser]
     func getSuggestedFriends(userId: String) async throws -> [FriendSuggestion]
     
     // Status Operations
@@ -80,32 +80,32 @@ class FriendshipService: FriendshipServiceProtocol {
         return [.mockPending]
     }
     
-    func fetchFriends(userId: String) async throws -> [User] {
+    func fetchFriends(userId: String) async throws -> [AppUser] {
         // TODO: Replace with real API call
         // Returns users with mutual friendships
         return [.mockFriend]
     }
     
-    func fetchFollowing(userId: String) async throws -> [User] {
+    func fetchFollowing(userId: String) async throws -> [AppUser] {
         // TODO: Replace with real API call
         // Returns users that userId is following
         return [.mockFriend]
     }
     
-    func fetchFollowers(userId: String) async throws -> [User] {
+    func fetchFollowers(userId: String) async throws -> [AppUser] {
         // TODO: Replace with real API call
         // Returns users following userId
         return [.mockFriend]
     }
     
-    func searchUsers(query: String) async throws -> [User] {
+    func searchUsers(query: String) async throws -> [AppUser] {
         // TODO: Replace with real API call
         // Search by username, displayName, or bio
         guard !query.isEmpty else { return [] }
         return [.mockFriend, .mock]
     }
     
-    func getMutualFriends(userId: String, otherUserId: String) async throws -> [User] {
+    func getMutualFriends(userId: String, otherUserId: String) async throws -> [AppUser] {
         // TODO: Replace with real API call
         // Returns users that are friends with both userId and otherUserId
         return [.mockFriend]

@@ -323,7 +323,7 @@ class ChallengeViewModel: ObservableObject {
     
     // MARK: - Private Methods
     
-    private func fetchLeaderboard(for challengeId: String) async throws -> [LeaderboardEntry] {
+    private func fetchLeaderboard(for challengeId: String) async throws -> [ChallengeLeaderboardEntry] {
         let results = try await supabaseService.fetch(
             ChallengeResult.self,
             from: "challenge_results",
@@ -339,10 +339,10 @@ class ChallengeViewModel: ObservableObject {
                 return updated
             }
         
-        var entries: [LeaderboardEntry] = []
+        var entries: [ChallengeLeaderboardEntry] = []
         for (index, result) in ranked.enumerated() {
             let user = try? await supabaseService.fetch(
-                User.self,
+                AppUser.self,
                 from: "users",
                 where: "id", equals: result.userId
             ).first
@@ -350,11 +350,11 @@ class ChallengeViewModel: ObservableObject {
             let badges = try await fetchBadges(for: result.userId, challengeId: challengeId)
             let streak = try await fetchStreak(for: result.userId, challengeId: challengeId)
             
-            entries.append(LeaderboardEntry(
+            entries.append(ChallengeLeaderboardEntry(
                 id: result.id,
                 userId: result.userId,
-                userName: user?.name ?? "Unknown",
-                userAvatar: user?.profileImageUrl,
+                userName: user?.displayName ?? "Unknown",
+                userAvatar: user?.avatarURL,
                 rank: index + 1,
                 value: result.value,
                 unit: result.unit,

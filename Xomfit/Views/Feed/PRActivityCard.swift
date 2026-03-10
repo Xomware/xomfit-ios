@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct PRActivityCard: View {
-    let user: User
+    let user: AppUser
     let pr: PersonalRecord
     let onLikeTap: () -> Void
     @State private var isLiked = false

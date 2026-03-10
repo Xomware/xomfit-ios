@@ -2,7 +2,7 @@ import Foundation
 
 struct FeedPost: Codable, Identifiable {
     let id: String
-    var user: User
+    var user: AppUser
     var workout: Workout
     var likes: Int
     var isLiked: Bool
@@ -11,7 +11,7 @@ struct FeedPost: Codable, Identifiable {
     
     struct Comment: Codable, Identifiable {
         let id: String
-        var user: User
+        var user: AppUser
         var text: String
         var createdAt: Date
     }

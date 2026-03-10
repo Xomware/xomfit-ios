@@ -5,7 +5,7 @@ import CryptoKit
 @MainActor
 class AuthService: NSObject, ObservableObject {
     @Published var isAuthenticated = false
-    @Published var currentUser: User?
+    @Published var currentUser: AppUser?
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var isInitialized = false
@@ -47,14 +47,14 @@ class AuthService: NSObject, ObservableObject {
                     switch state {
                     case .signedIn(let session):
                         self.isAuthenticated = true
-                        // Create User from session metadata
-                        self.currentUser = User(
+                        // Create AppUser from session metadata
+                        self.currentUser = AppUser(
                             id: session.user.id.uuidString,
                             username: session.user.userMetadata?["username"] as? String ?? "",
                             displayName: session.user.userMetadata?["display_name"] as? String ?? session.user.email ?? "",
                             avatarURL: session.user.userMetadata?["avatar_url"] as? String,
                             bio: session.user.userMetadata?["bio"] as? String ?? "",
-                            stats: User.UserStats(
+                            stats: AppUser.UserStats(
                                 totalWorkouts: 0,
                                 totalVolume: 0,
                                 totalPRs: 0,

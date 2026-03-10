@@ -4,7 +4,7 @@ import Foundation
 struct LiveWorkout: Codable, Identifiable {
     let id: String
     let userId: String
-    var user: User?
+    var user: AppUser?
     var currentExercise: WorkoutExercise?
     var currentSet: WorkoutSet?
     var reactions: [LiveReaction] = []
@@ -32,7 +32,7 @@ struct LiveWorkout: Codable, Identifiable {
 struct LiveReaction: Codable, Identifiable {
     let id: String
     let userId: String
-    var user: User?
+    var user: AppUser?
     let emoji: String // 💪, 🔥, 👏, etc.
     let timestamp: Date
     
@@ -45,7 +45,7 @@ struct LiveReaction: Codable, Identifiable {
 struct LiveWorkoutViewer: Codable, Identifiable {
     let id: String
     let userId: String
-    var user: User?
+    var user: AppUser?
     let joinedAt: Date
     let allowedReactions: [String] = ["💪", "🔥", "👏", "🎯", "😤"]
 }

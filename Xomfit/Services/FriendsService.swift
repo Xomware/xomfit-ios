@@ -11,7 +11,7 @@ class FriendsService {
     
     // MARK: - Friend Management
     
-    func fetchFriends(for userId: String) async -> [User] {
+    func fetchFriends(for userId: String) async -> [AppUser] {
         do {
             // Fetch friend relationships
             let relationships = try await supabaseService.fetch(
@@ -20,10 +20,10 @@ class FriendsService {
                 where: "userId1", equals: userId
             )
             
-            var friends: [User] = []
+            var friends: [AppUser] = []
             for relationship in relationships {
                 if let friend = try? await supabaseService.fetch(
-                    User.self,
+                    AppUser.self,
                     from: "users",
                     where: "id", equals: relationship.userId2
                 ).first {
@@ -40,7 +40,7 @@ class FriendsService {
             
             for relationship in reverseRelationships {
                 if let friend = try? await supabaseService.fetch(
-                    User.self,
+                    AppUser.self,
                     from: "users",
                     where: "id", equals: relationship.userId1
                 ).first {
@@ -68,8 +68,8 @@ class FriendsService {
             .compactMap { friend -> FriendForChallenge? in
                 FriendForChallenge(
                     id: friend.id,
-                    name: friend.name,
-                    profileImageUrl: friend.profileImageUrl,
+                    name: friend.displayName,
+                    profileImageUrl: friend.avatarURL,
                     recentChallenges: 0  // Could fetch this too
                 )
             }
@@ -103,7 +103,7 @@ class FriendsService {
         }
     }
     
-    func searchUsers(query: String) async -> [User] {
+    func searchUsers(query: String) async -> [AppUser] {
         do {
             // Search users by name or email
             // This would require a full-text search capability in Supabase
@@ -114,7 +114,7 @@ class FriendsService {
         }
     }
     
-    func getCommonFriends(userId: String, otherUserId: String) async -> [User] {
+    func getCommonFriends(userId: String, otherUserId: String) async -> [AppUser] {
         let userFriends = await fetchFriends(for: userId)
         let otherFriends = await fetchFriends(for: otherUserId)
         
@@ -152,22 +152,3 @@ struct FriendForChallenge: Identifiable, Codable {
     }
 }
 
-// MARK: - User Model (Basic)
-// This should be imported from your main models, but including here for reference
-struct User: Identifiable, Codable {
-    let id: String
-    let name: String
-    let email: String
-    let profileImageUrl: String?
-    let bio: String?
-    let createdAt: Date
-    
-    static let mock = User(
-        id: "user_1",
-        name: "John Doe",
-        email: "john@example.com",
-        profileImageUrl: nil,
-        bio: "Fitness enthusiast",
-        createdAt: Date()
-    )
-}

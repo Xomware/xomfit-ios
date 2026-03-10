@@ -31,7 +31,7 @@ class ActivityNotificationService: NSObject, UNUserNotificationCenterDelegate {
     // MARK: - Live Workout Notifications
     
     /// Notify when a friend starts a live workout
-    func notifyFriendStartedLiveWorkout(_ user: User, workoutName: String) {
+    func notifyFriendStartedLiveWorkout(_ user: AppUser, workoutName: String) {
         let content = UNMutableNotificationContent()
         content.title = "\(user.displayName) is lifting! 💪"
         content.body = workoutName
@@ -67,7 +67,7 @@ class ActivityNotificationService: NSObject, UNUserNotificationCenterDelegate {
     }
     
     /// Notify when someone reacts to your live workout
-    func notifyReactionReceived(_ reactor: User, emoji: String, onYourWorkout: Bool = true) {
+    func notifyReactionReceived(_ reactor: AppUser, emoji: String, onYourWorkout: Bool = true) {
         let content = UNMutableNotificationContent()
         content.title = "\(reactor.displayName) \(emoji)"
         content.body = "reacted to your workout"
@@ -94,7 +94,7 @@ class ActivityNotificationService: NSObject, UNUserNotificationCenterDelegate {
     }
     
     /// Notify when someone joins to watch your live workout
-    func notifyViewerJoined(_ user: User) {
+    func notifyViewerJoined(_ user: AppUser) {
         let content = UNMutableNotificationContent()
         content.title = "\(user.displayName) is watching"
         content.body = "Joined your live workout"
@@ -120,7 +120,7 @@ class ActivityNotificationService: NSObject, UNUserNotificationCenterDelegate {
     }
     
     /// Notify about a friend's personal record during live workout
-    func notifyFriendPersonalRecord(_ user: User, exercise: Exercise, weight: Double) {
+    func notifyFriendPersonalRecord(_ user: AppUser, exercise: Exercise, weight: Double) {
         let content = UNMutableNotificationContent()
         content.title = "🔥 \(user.displayName) just hit a PR!"
         content.body = "\(exercise.name) - \(weight) lbs"
@@ -148,7 +148,7 @@ class ActivityNotificationService: NSObject, UNUserNotificationCenterDelegate {
     }
     
     /// Notify when a friend finishes their live workout
-    func notifyFriendFinishedWorkout(_ user: User, workoutStats: WorkoutStats) {
+    func notifyFriendFinishedWorkout(_ user: AppUser, workoutStats: WorkoutStats) {
         let content = UNMutableNotificationContent()
         content.title = "\(user.displayName) finished their workout"
         content.body = "\(workoutStats.totalSets) sets • \(workoutStats.durationString)"

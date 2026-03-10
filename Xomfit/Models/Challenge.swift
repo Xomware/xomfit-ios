@@ -180,18 +180,18 @@ struct Streak: Identifiable, Codable {
 struct ChallengeDetail: Identifiable, Codable {
     let id: String
     let challenge: Challenge
-    let leaderboard: [LeaderboardEntry]
+    let leaderboard: [ChallengeLeaderboardEntry]
     let currentUserRank: Int?
     let currentUserValue: Double?
     let streaks: [Streak]
     
-    var topPerformer: LeaderboardEntry? {
+    var topPerformer: ChallengeLeaderboardEntry? {
         leaderboard.first(where: { $0.rank == 1 })
     }
 }
 
 /// Single leaderboard entry for display
-struct LeaderboardEntry: Identifiable, Codable, Equatable {
+struct ChallengeLeaderboardEntry: Identifiable, Codable, Equatable {
     let id: String
     let userId: String
     let userName: String

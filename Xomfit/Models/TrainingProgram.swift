@@ -1,20 +1,5 @@
 import Foundation
 
-enum ProgramDifficulty: String, Codable, CaseIterable {
-    case beginner = "Beginner"
-    case intermediate = "Intermediate"
-    case advanced = "Advanced"
-}
-
-enum ProgramGoal: String, Codable, CaseIterable {
-    case strength = "Strength"
-    case hypertrophy = "Hypertrophy"
-    case endurance = "Endurance"
-    case fatLoss = "Fat Loss"
-    case powerlifting = "Powerlifting"
-    case generalFitness = "General Fitness"
-}
-
 struct ProgramDay: Identifiable, Codable {
     var id: UUID
     var dayOfWeek: Int // 0 = Sunday, 6 = Saturday

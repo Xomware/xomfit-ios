@@ -8,7 +8,7 @@ class PRViewModel: ObservableObject {
     @Published var newPRNotification: PersonalRecord?
     @Published var isShowingCelebration = false
     @Published var prsByExercise: [String: [PersonalRecord]] = [:]
-    @Published var prLeaderboard: [User: [PersonalRecord]] = [:]
+    @Published var prLeaderboard: [AppUser: [PersonalRecord]] = [:]
     @Published var currentUserStats: (oneRM: Int, threeRM: Int, fiveRM: Int)?
     
     private let calculator = PRCalculator.self
@@ -29,7 +29,7 @@ class PRViewModel: ObservableObject {
     
     func loadLeaderboard() {
         // In production, this would fetch friends' PRs from API
-        let mockUser = User.mockUser
+        let mockUser = AppUser.mockUser
         prLeaderboard = [mockUser: PersonalRecord.mockPRs]
     }
     
@@ -111,8 +111,8 @@ class PRViewModel: ObservableObject {
         (prsByExercise[exerciseName] ?? []).max { $0.weight < $1.weight }
     }
     
-    func getLeaderboardForExercise(_ exerciseName: String) -> [(user: User, pr: PersonalRecord)] {
-        var leaderboard: [(user: User, pr: PersonalRecord)] = []
+    func getLeaderboardForExercise(_ exerciseName: String) -> [(user: AppUser, pr: PersonalRecord)] {
+        var leaderboard: [(user: AppUser, pr: PersonalRecord)] = []
         
         for (user, prs) in prLeaderboard {
             if let topPR = prs.filter({ $0.exerciseName == exerciseName }).max(by: { $0.weight < $1.weight }) {
@@ -123,7 +123,7 @@ class PRViewModel: ObservableObject {
         return leaderboard.sorted { $0.pr.weight > $1.pr.weight }
     }
     
-    func updateLeaderboard(with friends: [User], completionHandler: @escaping () -> Void) {
+    func updateLeaderboard(with friends: [AppUser], completionHandler: @escaping () -> Void) {
         // In production, fetch PRs for all friends from API
         DispatchQueue.main.async {
             // Simulate API call

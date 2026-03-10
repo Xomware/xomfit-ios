@@ -57,7 +57,7 @@ class AICoachViewModel: ObservableObject {
     }
 
     // MARK: - AI Coach Tab Loading
-    func loadRecommendations(userId: String, workouts: [Workout], userStats: User.UserStats? = nil) {
+    func loadRecommendations(userId: String, workouts: [Workout], userStats: AppUser.UserStats? = nil) {
         isLoading = true
         errorMessage = nil
         Task.detached { [weak self] in

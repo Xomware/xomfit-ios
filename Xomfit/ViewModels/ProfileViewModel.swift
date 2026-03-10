@@ -3,7 +3,7 @@ import SwiftUI
 
 @MainActor
 class ProfileViewModel: ObservableObject {
-    @Published var user: User = .mock
+    @Published var user: AppUser = .mock
     @Published var recentPRs: [PersonalRecord] = PersonalRecord.mockPRs
     @Published var workoutCount: Int = 247
     @Published var isLoading = false

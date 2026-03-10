@@ -5,7 +5,7 @@ protocol APIServiceProtocol {
     func fetchWorkouts(userId: String) async throws -> [Workout]
     func fetchExercises() async throws -> [Exercise]
     func saveWorkout(_ workout: Workout) async throws -> Workout
-    func fetchUser(id: String) async throws -> User
+    func fetchUser(id: String) async throws -> AppUser
     func fetchPRs(userId: String) async throws -> [PersonalRecord]
 }
 
@@ -30,7 +30,7 @@ class APIService: APIServiceProtocol {
         return workout
     }
     
-    func fetchUser(id: String) async throws -> User {
+    func fetchUser(id: String) async throws -> AppUser {
         return .mock
     }
     

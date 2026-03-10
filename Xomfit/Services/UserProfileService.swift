@@ -39,7 +39,7 @@ class UserProfileService: ObservableObject {
         bio: String,
         avatarURL: String?,
         isPrivate: Bool
-    ) async throws -> User {
+    ) async throws -> AppUser {
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
@@ -59,13 +59,13 @@ class UserProfileService: ObservableObject {
             try await supabase.auth.update(user: UserAttributes(data: metadata))
             
             // Return updated user (in a real app, fetch from database)
-            return User(
+            return AppUser(
                 id: userId,
                 username: "", // Would be fetched from auth
                 displayName: displayName,
                 avatarURL: avatarURL,
                 bio: bio,
-                stats: User.UserStats(
+                stats: AppUser.UserStats(
                     totalWorkouts: 0,
                     totalVolume: 0,
                     totalPRs: 0,

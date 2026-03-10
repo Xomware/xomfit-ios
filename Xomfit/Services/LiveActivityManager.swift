@@ -12,7 +12,7 @@ class LiveActivityManager: NSObject {
     // MARK: - Live Activity Management
     
     /// Start a new live activity for the current workout
-    func startLiveActivity(for workout: Workout, user: User) {
+    func startLiveActivity(for workout: Workout, user: AppUser) {
         guard ActivityAuthorizationInfo().areActivitiesEnabled else {
             print("Live Activities are not enabled")
             return

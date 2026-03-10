@@ -1,12 +1,12 @@
 import SwiftUI
 
 struct MilestoneActivityCard: View {
-    let user: User
+    let user: AppUser
     let milestone: Milestone
     @State private var isLiked = false
     @State private var likes: Int
     
-    init(user: User, milestone: Milestone, initialLikes: Int = 0) {
+    init(user: AppUser, milestone: Milestone, initialLikes: Int = 0) {
         self.user = user
         self.milestone = milestone
         self._likes = State(initialValue: initialLikes)

@@ -3,7 +3,7 @@ import SwiftUI
 struct SearchUsersView: View {
     @ObservedObject var viewModel: FriendViewModel
     @State private var searchText = ""
-    @State private var selectedUser: User?
+    @State private var selectedUser: AppUser?
     @Environment(\.dismiss) var dismiss
     
     var body: some View {
@@ -92,7 +92,7 @@ struct SearchUsersView: View {
 // MARK: - Search Result Row
 
 struct SearchResultRowView: View {
-    let user: User
+    let user: AppUser
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -141,7 +141,7 @@ struct SearchResultRowView: View {
 // MARK: - Search Result Detail
 
 struct SearchResultDetailView: View {
-    let user: User
+    let user: AppUser
     let viewModel: FriendViewModel
     @State private var requestSent = false
     @State private var isLoading = false

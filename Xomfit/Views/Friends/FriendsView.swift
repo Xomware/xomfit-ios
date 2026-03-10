@@ -81,7 +81,7 @@ struct FriendsView: View {
         }
     }
     
-    private func friendListView(_ users: [User]) -> some View {
+    private func friendListView(_ users: [AppUser]) -> some View {
         List(users) { user in
             NavigationLink(destination: FriendDetailView(user: user, viewModel: viewModel)) {
                 FriendRowView(user: user)
@@ -90,7 +90,7 @@ struct FriendsView: View {
         .listStyle(.plain)
     }
     
-    private func followingListView(_ users: [User]) -> some View {
+    private func followingListView(_ users: [AppUser]) -> some View {
         List(users) { user in
             HStack(spacing: 12) {
                 // Avatar placeholder
@@ -285,7 +285,7 @@ struct TabSelectorView: View {
 // MARK: - Friend Row
 
 struct FriendRowView: View {
-    let user: User
+    let user: AppUser
     
     var body: some View {
         HStack(spacing: 12) {
@@ -325,7 +325,7 @@ struct FriendRowView: View {
 // MARK: - Friend Detail
 
 struct FriendDetailView: View {
-    let user: User
+    let user: AppUser
     let viewModel: FriendViewModel
     @State private var mutualFriendsCount = 0
     

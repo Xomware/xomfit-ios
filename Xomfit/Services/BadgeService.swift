@@ -16,7 +16,7 @@ class BadgeService {
     func evaluateBadges(
         for userId: String,
         challengeId: String,
-        leaderboard: [LeaderboardEntry]
+        leaderboard: [ChallengeLeaderboardEntry]
     ) async -> [Badge] {
         var earnedBadges: [Badge] = []
         

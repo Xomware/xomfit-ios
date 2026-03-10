@@ -2,7 +2,7 @@ import Foundation
 
 struct FriendSuggestion: Codable, Identifiable {
     let id: String
-    let user: User
+    let user: AppUser
     let reason: SuggestionReason
     let matchPercentage: Int // 0-100
     
@@ -18,13 +18,13 @@ struct FriendSuggestion: Codable, Identifiable {
 extension FriendSuggestion {
     static let mockSameGym = FriendSuggestion(
         id: "fs-1",
-        user: User(
+        user: AppUser(
             id: "user-5",
             username: "alexm",
             displayName: "Alex M",
             avatarURL: nil,
             bio: "Training for strength 🏋️",
-            stats: User.UserStats(
+            stats: AppUser.UserStats(
                 totalWorkouts: 156,
                 totalVolume: 876_320,
                 totalPRs: 28,
@@ -41,13 +41,13 @@ extension FriendSuggestion {
     
     static let mockMutualFriends = FriendSuggestion(
         id: "fs-2",
-        user: User(
+        user: AppUser(
             id: "user-6",
             username: "jessi",
             displayName: "Jessi L",
             avatarURL: nil,
             bio: "Running & lifting 🏃",
-            stats: User.UserStats(
+            stats: AppUser.UserStats(
                 totalWorkouts: 203,
                 totalVolume: 654_890,
                 totalPRs: 35,

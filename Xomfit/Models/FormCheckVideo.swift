@@ -8,7 +8,7 @@ struct FormCheckVideo: Codable, Identifiable {
     var exerciseId: String
     var exerciseName: String
     var userId: String
-    var user: User?
+    var user: AppUser?
     var videoLocalURL: URL?
     var videoRemoteURL: URL?
     var thumbnailURL: URL?
@@ -30,7 +30,7 @@ struct FormCheckVideo: Codable, Identifiable {
 
     struct VideoComment: Codable, Identifiable {
         let id: String
-        var user: User
+        var user: AppUser
         var text: String
         var createdAt: Date
     }
