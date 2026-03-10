@@ -1,6 +1,7 @@
 import Foundation
 import SwiftUI
 
+@MainActor
 class ExportViewModel: ObservableObject {
     @Published var summary = WorkoutSummaryData(totalWorkouts: 0, totalVolumeLbs: 0, weeklyWorkouts: 0, topExercise: "—")
     @Published var streak = 0
