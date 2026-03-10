@@ -39,7 +39,7 @@ struct ChallengeLeaderboardView: View {
                 ScrollView {
                     VStack(spacing: 8) {
                         ForEach(challengeDetail.leaderboard) { entry in
-                            LeaderboardRowView(
+                            ChallengeLeaderboardRowView(
                                 entry: entry,
                                 isCurrentUser: challengeDetail.leaderboard.first { $0.rank == challengeDetail.currentUserRank } == entry
                             )
@@ -172,7 +172,7 @@ struct PodiumPlaceView: View {
 }
 
 // MARK: - Leaderboard Row View
-struct LeaderboardRowView: View {
+struct ChallengeLeaderboardRowView: View {
     let entry: ChallengeLeaderboardEntry
     let isCurrentUser: Bool
     
@@ -339,7 +339,7 @@ struct ChallengeDetailWithLeaderboard: View {
                     ScrollView {
                         VStack(spacing: 8) {
                             ForEach(detail.leaderboard) { entry in
-                                LeaderboardRowView(
+                                ChallengeLeaderboardRowView(
                                     entry: entry,
                                     isCurrentUser: entry.userId == viewModel.supabaseService.currentUserId
                                 )

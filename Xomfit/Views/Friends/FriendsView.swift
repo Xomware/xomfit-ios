@@ -262,7 +262,7 @@ struct TabSelectorView: View {
         }
         .frame(height: 44)
         .background(Color(.systemBackground))
-        .borderBottom(color: .separator)
+        .borderBottom(color: Color.gray.opacity(0.3))
     }
     
     private func tabButton(_ title: String, for tab: FriendsView.FriendsTab) -> some View {
@@ -360,9 +360,9 @@ struct FriendDetailView: View {
             
             // Stats
             HStack(spacing: 16) {
-                StatCard(title: "Workouts", value: "\(user.stats.totalWorkouts)")
-                StatCard(title: "Volume", value: "\(user.stats.totalVolume.formatted())")
-                StatCard(title: "PRs", value: "\(user.stats.totalPRs)")
+                FriendStatCard(title: "Workouts", value: "\(user.stats.totalWorkouts)")
+                FriendStatCard(title: "Volume", value: "\(user.stats.totalVolume.formatted())")
+                FriendStatCard(title: "PRs", value: "\(user.stats.totalPRs)")
             }
             
             if mutualFriendsCount > 0 {
@@ -381,10 +381,10 @@ struct FriendDetailView: View {
     }
 }
 
-struct StatCard: View {
+struct FriendStatCard: View {
     let title: String
     let value: String
-    
+
     var body: some View {
         VStack(spacing: 4) {
             Text(value)
@@ -404,7 +404,7 @@ struct StatCard: View {
 // MARK: - View Extensions
 
 extension View {
-    func borderBottom(color: Color = .separator) -> some View {
+    func borderBottom(color: Color = Color.gray.opacity(0.3)) -> some View {
         VStack {
             self
             Divider()

@@ -139,17 +139,18 @@ struct HeatmapView: View {
 }
 
 #Preview {
-    var mockData: [WorkoutFrequencyDataPoint] = []
-    let calendar = Calendar.current
-    var currentDate = calendar.startOfDay(for: Date().addingTimeInterval(-30 * 24 * 3600))
-    
-    while currentDate <= Date() {
-        let randomCount = Int.random(in: 0...3)
-        mockData.append(WorkoutFrequencyDataPoint(date: currentDate, count: randomCount))
-        currentDate = calendar.date(byAdding: .day, value: 1, to: currentDate) ?? currentDate
-    }
-    
-    WorkoutFrequencyChart(data: mockData)
-        .background(Theme.background)
-        .padding()
+    WorkoutFrequencyChart(data: {
+        var data: [WorkoutFrequencyDataPoint] = []
+        let calendar = Calendar.current
+        var currentDate = calendar.startOfDay(for: Date().addingTimeInterval(-30 * 24 * 3600))
+
+        while currentDate <= Date() {
+            let randomCount = Int.random(in: 0...3)
+            data.append(WorkoutFrequencyDataPoint(date: currentDate, count: randomCount))
+            currentDate = calendar.date(byAdding: .day, value: 1, to: currentDate) ?? currentDate
+        }
+        return data
+    }())
+    .background(Theme.background)
+    .padding()
 }

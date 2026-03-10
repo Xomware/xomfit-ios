@@ -1,5 +1,6 @@
 import Foundation
 import ActivityKit
+import SwiftUI
 
 /// Manages Live Activities for real-time workout display on Lock Screen
 /// Requires iOS 16.1+ and the app to be configured for Live Activities

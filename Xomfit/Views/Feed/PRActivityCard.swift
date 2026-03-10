@@ -104,9 +104,9 @@ struct PRActivityCard: View {
             
             // Stats
             HStack(spacing: Theme.paddingMedium) {
-                StatBadge(label: "Total PRs", value: "\(user.stats.totalPRs)")
-                StatBadge(label: "Streak", value: "\(user.stats.currentStreak)d")
-                StatBadge(label: "Workouts", value: "\(user.stats.totalWorkouts)")
+                PRStatBadge(label: "Total PRs", value: "\(user.stats.totalPRs)")
+                PRStatBadge(label: "Streak", value: "\(user.stats.currentStreak)d")
+                PRStatBadge(label: "Workouts", value: "\(user.stats.totalWorkouts)")
                 Spacer()
             }
             
@@ -158,15 +158,15 @@ struct PRActivityCard: View {
 
 // MARK: - Support Views
 
-struct StatBadge: View {
+struct PRStatBadge: View {
     let label: String
     let value: String
-    
+
     var body: some View {
         VStack(spacing: 4) {
             Text(value)
                 .font(.system(size: 14, weight: .bold))
-                .foregroundColor(Theme.accentColor)
+                .foregroundColor(Theme.accent)
             Text(label)
                 .font(.system(size: 10))
                 .foregroundColor(.gray)

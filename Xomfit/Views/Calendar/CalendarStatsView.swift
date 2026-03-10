@@ -12,11 +12,11 @@ struct CalendarStatsView: View {
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
-                    StatCard(emoji: "🔥", title: "Current Streak", value: "\(viewModel.currentStreak) days")
-                    StatCard(emoji: "🏆", title: "Longest Streak", value: "\(viewModel.longestStreak) days")
-                    StatCard(emoji: "📅", title: "Total This Year", value: "\(viewModel.totalWorkoutsThisYear) workouts")
-                    StatCard(emoji: "📆", title: "Most Active Day", value: viewModel.mostActiveDayOfWeek.isEmpty ? "—" : viewModel.mostActiveDayOfWeek)
-                    StatCard(emoji: "🗓", title: "Best Month", value: viewModel.mostActiveMonth.isEmpty ? "—" : viewModel.mostActiveMonth)
+                    CalendarStatCard(emoji: "🔥", title: "Current Streak", value: "\(viewModel.currentStreak) days")
+                    CalendarStatCard(emoji: "🏆", title: "Longest Streak", value: "\(viewModel.longestStreak) days")
+                    CalendarStatCard(emoji: "📅", title: "Total This Year", value: "\(viewModel.totalWorkoutsThisYear) workouts")
+                    CalendarStatCard(emoji: "📆", title: "Most Active Day", value: viewModel.mostActiveDayOfWeek.isEmpty ? "—" : viewModel.mostActiveDayOfWeek)
+                    CalendarStatCard(emoji: "🗓", title: "Best Month", value: viewModel.mostActiveMonth.isEmpty ? "—" : viewModel.mostActiveMonth)
                 }
                 .padding(.horizontal, Theme.paddingMedium)
             }
@@ -26,7 +26,7 @@ struct CalendarStatsView: View {
 
 // MARK: - Stat Card
 
-private struct StatCard: View {
+private struct CalendarStatCard: View {
     let emoji: String
     let title: String
     let value: String

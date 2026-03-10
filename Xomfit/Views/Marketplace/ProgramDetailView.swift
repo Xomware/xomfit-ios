@@ -235,7 +235,7 @@ struct ProgramDetailView: View {
                             .font(.system(size: 15, weight: .bold))
                             .foregroundColor(Theme.accent)
                         ForEach(grouped[day] ?? []) { ex in
-                            ExerciseRow(exercise: ex)
+                            ProgramExerciseRow(exercise: ex)
                         }
                     }
                 }
@@ -419,7 +419,7 @@ struct DetailStatBox: View {
 
 // MARK: - Exercise Row
 
-struct ExerciseRow: View {
+struct ProgramExerciseRow: View {
     let exercise: ProgramExercise
 
     var body: some View {
@@ -509,7 +509,7 @@ struct ReviewSheet: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var rating: Int = 5
-    @State private var body: String = ""
+    @State private var reviewBody: String = ""
     @State private var isSubmitting = false
 
     var body: some View {
@@ -538,7 +538,7 @@ struct ReviewSheet: View {
                         Text("Review")
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundColor(Theme.textPrimary)
-                        TextEditor(text: $body)
+                        TextEditor(text: $reviewBody)
                             .frame(minHeight: 120)
                             .padding(10)
                             .background(Theme.cardBackground)
@@ -552,7 +552,7 @@ struct ReviewSheet: View {
                     Button {
                         Task {
                             isSubmitting = true
-                            await onSubmit(rating, body)
+                            await onSubmit(rating, reviewBody)
                             isSubmitting = false
                             dismiss()
                         }
@@ -565,10 +565,10 @@ struct ReviewSheet: View {
                         .foregroundColor(.black)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
-                        .background(body.isEmpty ? Theme.accent.opacity(0.4) : Theme.accent)
+                        .background(reviewBody.isEmpty ? Theme.accent.opacity(0.4) : Theme.accent)
                         .cornerRadius(Theme.cornerRadius)
                     }
-                    .disabled(body.isEmpty || isSubmitting)
+                    .disabled(reviewBody.isEmpty || isSubmitting)
                 }
                 .padding(Theme.paddingMedium)
             }

@@ -59,9 +59,9 @@ struct PRView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             
             HStack(spacing: 16) {
-                StatBadge(title: "1RM", value: "\(stats.oneRM)", unit: "lbs")
-                StatBadge(title: "3RM", value: "\(stats.threeRM)", unit: "lbs")
-                StatBadge(title: "5RM", value: "\(stats.fiveRM)", unit: "lbs")
+                PRViewStatBadge(title: "1RM", value: "\(stats.oneRM)", unit: "lbs")
+                PRViewStatBadge(title: "3RM", value: "\(stats.threeRM)", unit: "lbs")
+                PRViewStatBadge(title: "5RM", value: "\(stats.fiveRM)", unit: "lbs")
             }
         }
         .padding(16)
@@ -238,7 +238,7 @@ struct PRView: View {
 
 // MARK: - Helper Views
 
-struct StatBadge: View {
+struct PRViewStatBadge: View {
     let title: String
     let value: String
     let unit: String

@@ -24,11 +24,11 @@ struct ExerciseLibraryView: View {
                 // Muscle Group Filter
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
-                        FilterChip(title: "All", isSelected: selectedMuscleGroup == nil) {
+                        ExerciseFilterChip(title: "All", isSelected: selectedMuscleGroup == nil) {
                             selectedMuscleGroup = nil
                         }
                         ForEach(MuscleGroup.allCases, id: \.self) { group in
-                            FilterChip(title: group.displayName, isSelected: selectedMuscleGroup == group) {
+                            ExerciseFilterChip(title: group.displayName, isSelected: selectedMuscleGroup == group) {
                                 selectedMuscleGroup = selectedMuscleGroup == group ? nil : group
                             }
                         }
@@ -97,7 +97,7 @@ struct ExerciseRow: View {
     }
 }
 
-struct FilterChip: View {
+struct ExerciseFilterChip: View {
     let title: String
     let isSelected: Bool
     let action: () -> Void

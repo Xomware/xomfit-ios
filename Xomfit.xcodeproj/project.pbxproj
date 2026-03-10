@@ -13,13 +13,6 @@
 		F29F21472F5F620700683551 /* Realtime in Frameworks */ = {isa = PBXBuildFile; productRef = F29F21462F5F620700683551 /* Realtime */; };
 		F29F21492F5F620700683551 /* Storage in Frameworks */ = {isa = PBXBuildFile; productRef = F29F21482F5F620700683551 /* Storage */; };
 		F29F214B2F5F620700683551 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = F29F214A2F5F620700683551 /* Supabase */; };
-		F29F23882F5F635F00683551 /* LogSetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F235A2F5F635F00683551 /* LogSetView.swift */; };
-		F29F238A2F5F635F00683551 /* XomFitWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F23602F5F635F00683551 /* XomFitWatchApp.swift */; };
-		F29F238B2F5F635F00683551 /* WorkoutControlView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F235E2F5F635F00683551 /* WorkoutControlView.swift */; };
-		F29F238F2F5F635F00683551 /* WatchWorkoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F235D2F5F635F00683551 /* WatchWorkoutManager.swift */; };
-		F29F239B2F5F635F00683551 /* RestTimerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F235B2F5F635F00683551 /* RestTimerView.swift */; };
-		F29F239D2F5F635F00683551 /* XomFitComplication.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F235F2F5F635F00683551 /* XomFitComplication.swift */; };
-		F29F23A02F5F635F00683551 /* WatchConnectivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F235C2F5F635F00683551 /* WatchConnectivityManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -480,13 +473,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F29F23882F5F635F00683551 /* LogSetView.swift in Sources */,
-				F29F238A2F5F635F00683551 /* XomFitWatchApp.swift in Sources */,
-				F29F238B2F5F635F00683551 /* WorkoutControlView.swift in Sources */,
-				F29F238F2F5F635F00683551 /* WatchWorkoutManager.swift in Sources */,
-				F29F239B2F5F635F00683551 /* RestTimerView.swift in Sources */,
-				F29F239D2F5F635F00683551 /* XomFitComplication.swift in Sources */,
-				F29F23A02F5F635F00683551 /* WatchConnectivityManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

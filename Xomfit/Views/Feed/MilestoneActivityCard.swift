@@ -173,7 +173,7 @@ struct Milestone: Identifiable {
         description: "hit 250k total volume!",
         icon: "scalemass.fill",
         badge: "📊 Beast",
-        color: Theme.accentColor,
+        color: Theme.accent,
         details: [
             "Incredible volume accumulation",
             "That's 125 tons of total weight!",

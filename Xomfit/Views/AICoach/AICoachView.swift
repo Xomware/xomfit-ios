@@ -142,19 +142,19 @@ struct AICoachView: View {
                 .tint(.green)
             
             HStack(spacing: 12) {
-                StatBadge(
+                AICoachStatBadge(
                     title: "Volume",
                     value: analysis.volumeProgression.trend.rawValue.uppercased(),
                     icon: "📈"
                 )
-                
-                StatBadge(
+
+                AICoachStatBadge(
                     title: "Strength",
                     value: String(analysis.strengthProgression.prsSinceDate),
                     icon: "💪"
                 )
-                
-                StatBadge(
+
+                AICoachStatBadge(
                     title: "Imbalances",
                     value: String(analysis.imbalanceCount),
                     icon: "⚖️"
@@ -423,11 +423,11 @@ struct AICoachView: View {
 
 // MARK: - Supporting Views
 
-struct StatBadge: View {
+struct AICoachStatBadge: View {
     let title: String
     let value: String
     let icon: String
-    
+
     var body: some View {
         VStack(spacing: 4) {
             Text(icon)

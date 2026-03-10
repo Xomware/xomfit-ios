@@ -75,7 +75,7 @@ struct AddBodyCompositionView: View {
     
     private var dateSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            SectionHeader("Date")
+            BodyCompSectionHeader("Date")
             DatePicker(
                 "Check-in Date",
                 selection: $viewModel.formDate,
@@ -95,7 +95,7 @@ struct AddBodyCompositionView: View {
     
     private var photoSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            SectionHeader("Progress Photo")
+            BodyCompSectionHeader("Progress Photo")
             
             PhotosPicker(selection: $viewModel.selectedPhoto, matching: .images) {
                 HStack(spacing: 12) {
@@ -144,7 +144,7 @@ struct AddBodyCompositionView: View {
     
     private var primarySection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            SectionHeader("Weight & Body Fat")
+            BodyCompSectionHeader("Weight & Body Fat")
             
             VStack(spacing: 1) {
                 MeasurementField(
@@ -175,7 +175,7 @@ struct AddBodyCompositionView: View {
     
     private var measurementsSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            SectionHeader("Circumference Measurements (inches)")
+            BodyCompSectionHeader("Circumference Measurements (inches)")
             
             VStack(spacing: 1) {
                 let measurements: [(String, Binding<String>)] = [
@@ -215,7 +215,7 @@ struct AddBodyCompositionView: View {
     
     private var notesSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            SectionHeader("Notes & Privacy")
+            BodyCompSectionHeader("Notes & Privacy")
             
             VStack(spacing: 1) {
                 VStack(alignment: .leading, spacing: 4) {
@@ -255,7 +255,7 @@ struct AddBodyCompositionView: View {
 
 // MARK: - Helper Views
 
-private struct SectionHeader: View {
+private struct BodyCompSectionHeader: View {
     let title: String
     init(_ title: String) { self.title = title }
     

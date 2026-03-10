@@ -411,24 +411,6 @@ struct EditProfileView: View {
     }
 }
 
-struct ProfileStatCard: View {
-    let value: String
-    let label: String
-    
-    var body: some View {
-        VStack(spacing: 6) {
-            Text(value)
-                .font(.system(size: 24, weight: .bold))
-                .foregroundColor(Theme.textPrimary)
-            Text(label)
-                .font(.system(size: 12))
-                .foregroundColor(Theme.textSecondary)
-        }
-        .frame(maxWidth: .infinity)
-        .cardStyle()
-    }
-}
-
 // MARK: - Image Picker
 struct ImagePicker: UIViewControllerRepresentable {
     @Binding var selectedImage: UIImage?
