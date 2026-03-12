@@ -4,11 +4,19 @@ struct SignUpView: View {
     @Environment(AuthService.self) private var authService
     @Environment(\.dismiss) private var dismiss
 
+    @State private var firstName = ""
+    @State private var lastName = ""
+    @State private var username = ""
     @State private var email = ""
     @State private var password = ""
     @State private var confirmPassword = ""
     @State private var isLoading = false
-    @State private var validationError: String?
+    @State private var toast: Toast?
+
+    private var formValid: Bool {
+        !firstName.isEmpty && !lastName.isEmpty && !username.isEmpty &&
+        !email.isEmpty && !password.isEmpty && !confirmPassword.isEmpty
+    }
 
     var body: some View {
         ZStack {
@@ -29,20 +37,16 @@ struct SignUpView: View {
                     .padding(.bottom, Theme.paddingMedium)
 
                     // Form
-                    VStack(spacing: Theme.paddingMedium) {
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text("Email")
-                                .font(Theme.fontCaption)
-                                .foregroundColor(Theme.textSecondary)
-                            TextField("you@example.com", text: $email)
-                                .keyboardType(.emailAddress)
-                                .autocapitalization(.none)
-                                .autocorrectionDisabled()
-                                .padding(Theme.paddingMedium)
-                                .background(Theme.cardBackground)
-                                .cornerRadius(Theme.cornerRadius)
-                                .foregroundColor(Theme.textPrimary)
+                    VStack(spacing: 14) {
+                        // Name row
+                        HStack(spacing: 12) {
+                            formField("First Name", text: $firstName)
+                            formField("Last Name", text: $lastName)
                         }
+
+                        formField("Username", text: $username, keyboard: .default, autocap: false)
+
+                        formField("Email", text: $email, keyboard: .emailAddress, autocap: false)
 
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Password")
@@ -66,16 +70,6 @@ struct SignUpView: View {
                                 .foregroundColor(Theme.textPrimary)
                         }
 
-                        // Validation / auth error
-                        let displayError = validationError ?? authService.errorMessage
-                        if let error = displayError {
-                            Text(error)
-                                .font(Theme.fontCaption)
-                                .foregroundColor(Theme.destructive)
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal, Theme.paddingSmall)
-                        }
-
                         Button {
                             signUp()
                         } label: {
@@ -93,8 +87,8 @@ struct SignUpView: View {
                             }
                             .frame(height: 52)
                         }
-                        .disabled(isLoading || email.isEmpty || password.isEmpty || confirmPassword.isEmpty)
-                        .opacity((isLoading || email.isEmpty || password.isEmpty || confirmPassword.isEmpty) ? 0.6 : 1)
+                        .disabled(isLoading || !formValid)
+                        .opacity((isLoading || !formValid) ? 0.6 : 1)
                         .padding(.top, Theme.paddingSmall)
                     }
                     .padding(.horizontal, Theme.paddingLarge)
@@ -120,29 +114,75 @@ struct SignUpView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbarColorScheme(.dark, for: .navigationBar)
+        .toast($toast)
     }
 
-    private func signUp() {
-        validationError = nil
-        authService.errorMessage = nil
+    // MARK: - Reusable Field
 
+    private func formField(
+        _ label: String,
+        text: Binding<String>,
+        keyboard: UIKeyboardType = .default,
+        autocap: Bool = true
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(label)
+                .font(Theme.fontCaption)
+                .foregroundColor(Theme.textSecondary)
+            TextField(label, text: text)
+                .keyboardType(keyboard)
+                .autocapitalization(autocap ? .words : .none)
+                .autocorrectionDisabled()
+                .padding(Theme.paddingMedium)
+                .background(Theme.cardBackground)
+                .cornerRadius(Theme.cornerRadius)
+                .foregroundColor(Theme.textPrimary)
+        }
+    }
+
+    // MARK: - Sign Up
+
+    private func signUp() {
+        let trimmedUsername = username.trimmingCharacters(in: .whitespaces).lowercased()
+
+        guard trimmedUsername.count >= 3 else {
+            showToast(.error, "Username must be at least 3 characters.")
+            return
+        }
+        guard trimmedUsername.allSatisfy({ $0.isLetter || $0.isNumber || $0 == "_" }) else {
+            showToast(.error, "Username can only contain letters, numbers, and underscores.")
+            return
+        }
         guard password.count >= Config.Validation.passwordMinLength else {
-            validationError = "Password must be at least \(Config.Validation.passwordMinLength) characters."
+            showToast(.error, "Password must be at least \(Config.Validation.passwordMinLength) characters.")
             return
         }
         guard password == confirmPassword else {
-            validationError = "Passwords do not match."
+            showToast(.error, "Passwords do not match.")
             return
         }
 
         isLoading = true
         Task {
             do {
-                try await authService.signUp(email: email, password: password)
+                try await authService.signUp(
+                    email: email.trimmingCharacters(in: .whitespaces),
+                    password: password,
+                    firstName: firstName.trimmingCharacters(in: .whitespaces),
+                    lastName: lastName.trimmingCharacters(in: .whitespaces),
+                    username: trimmedUsername
+                )
+                showToast(.success, "Account created! Check your email to confirm.")
             } catch {
-                authService.errorMessage = error.localizedDescription
+                showToast(.error, error.localizedDescription)
             }
             isLoading = false
+        }
+    }
+
+    private func showToast(_ style: Toast.Style, _ message: String) {
+        withAnimation {
+            toast = Toast(style: style, message: message)
         }
     }
 }

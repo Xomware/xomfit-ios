@@ -62,11 +62,23 @@ struct ActiveWorkoutView: View {
                     }
                     .padding(.bottom, Theme.paddingLarge)
                 }
+
+                // PR Celebration Banner
+                if viewModel.showPRCelebration, let pr = viewModel.newPR {
+                    VStack {
+                        PRCelebrationBanner(pr: pr) {
+                            withAnimation { viewModel.showPRCelebration = false }
+                        }
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                        Spacer()
+                    }
+                }
             }
             .navigationBarHidden(true)
         }
         .onAppear {
-            viewModel.startWorkout(name: workoutName)
+            let userId = authService.currentUser?.id.uuidString ?? ""
+            viewModel.startWorkout(name: workoutName, userId: userId)
         }
         .onReceive(timer) { _ in
             // Trigger a view refresh every second to update the timer label
@@ -173,6 +185,47 @@ struct ActiveWorkoutView: View {
     }
 }
 
+// MARK: - PR Celebration Banner
+
+private struct PRCelebrationBanner: View {
+    let pr: PersonalRecord
+    let onDismiss: () -> Void
+
+    var body: some View {
+        HStack(spacing: Theme.paddingMedium) {
+            Image(systemName: "trophy.fill")
+                .font(.system(size: 22))
+                .foregroundColor(.black)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("New Personal Record!")
+                    .font(.system(size: 14, weight: .black))
+                    .foregroundColor(.black)
+                Text("\(pr.exerciseName) — \(pr.weight.formattedWeight) lbs × \(pr.reps)")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(.black.opacity(0.75))
+            }
+
+            Spacer()
+
+            Button {
+                onDismiss()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundColor(.black.opacity(0.6))
+            }
+        }
+        .padding(.horizontal, Theme.paddingMedium)
+        .padding(.vertical, Theme.paddingMedium)
+        .background(Theme.prGold)
+        .cornerRadius(Theme.cornerRadius)
+        .padding(.horizontal, Theme.paddingMedium)
+        .padding(.top, Theme.paddingSmall)
+        .shadow(color: Theme.prGold.opacity(0.5), radius: 8, x: 0, y: 4)
+    }
+}
+
 // MARK: - Exercise Card
 
 private struct ExerciseCard: View {
@@ -236,10 +289,20 @@ private struct ExerciseCard: View {
                     setNumber: setIdx + 1,
                     workoutSet: exercise.sets[setIdx],
                     onWeightChange: { w in
-                        viewModel.updateSet(exerciseIndex: exerciseIndex, setIndex: setIdx, weight: w, reps: viewModel.exercises[exerciseIndex].sets[setIdx].reps)
+                        viewModel.updateSet(
+                            exerciseIndex: exerciseIndex,
+                            setIndex: setIdx,
+                            weight: w,
+                            reps: viewModel.exercises[exerciseIndex].sets[setIdx].reps
+                        )
                     },
                     onRepsChange: { r in
-                        viewModel.updateSet(exerciseIndex: exerciseIndex, setIndex: setIdx, weight: viewModel.exercises[exerciseIndex].sets[setIdx].weight, reps: r)
+                        viewModel.updateSet(
+                            exerciseIndex: exerciseIndex,
+                            setIndex: setIdx,
+                            weight: viewModel.exercises[exerciseIndex].sets[setIdx].weight,
+                            reps: r
+                        )
                     },
                     onComplete: {
                         viewModel.completeSet(exerciseIndex: exerciseIndex, setIndex: setIdx)
