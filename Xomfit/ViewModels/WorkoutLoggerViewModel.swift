@@ -10,6 +10,13 @@ final class WorkoutLoggerViewModel {
     var isSaving = false
     var errorMessage: String?
 
+    // PR celebration — set when a completed set beats the user's record
+    var newPR: PersonalRecord? = nil
+    var showPRCelebration: Bool = false
+
+    // Stored so completeSet can fire PR checks without needing the caller to pass it
+    private(set) var activeUserId: String = ""
+
     // MARK: - Computed
 
     var duration: TimeInterval {
@@ -38,12 +45,15 @@ final class WorkoutLoggerViewModel {
 
     // MARK: - Workout Lifecycle
 
-    func startWorkout(name: String) {
+    func startWorkout(name: String, userId: String = "") {
         workoutName = name.isEmpty ? "Workout" : name
         exercises = []
         startTime = Date()
         isActive = true
         errorMessage = nil
+        activeUserId = userId
+        newPR = nil
+        showPRCelebration = false
     }
 
     func discardWorkout() {
@@ -52,6 +62,8 @@ final class WorkoutLoggerViewModel {
         isActive = false
         isSaving = false
         errorMessage = nil
+        newPR = nil
+        showPRCelebration = false
     }
 
     // MARK: - Exercise Management
@@ -105,8 +117,20 @@ final class WorkoutLoggerViewModel {
         if isCurrentlyCompleted {
             // Toggle off
             exercises[exerciseIndex].sets[setIndex].completedAt = Date.distantPast
+            exercises[exerciseIndex].sets[setIndex].isPersonalRecord = false
         } else {
             exercises[exerciseIndex].sets[setIndex].completedAt = Date()
+            // Fire PR check asynchronously — non-blocking
+            let set = exercises[exerciseIndex].sets[setIndex]
+            let exercise = exercises[exerciseIndex].exercise
+            Task {
+                await checkForPR(
+                    set: set,
+                    exercise: exercise,
+                    exerciseIndex: exerciseIndex,
+                    setIndex: setIndex
+                )
+            }
         }
     }
 
@@ -114,6 +138,37 @@ final class WorkoutLoggerViewModel {
         guard exercises.indices.contains(exerciseIndex),
               exercises[exerciseIndex].sets.indices.contains(setIndex) else { return }
         exercises[exerciseIndex].sets.remove(at: setIndex)
+    }
+
+    // MARK: - PR Detection
+
+    private func checkForPR(
+        set: WorkoutSet,
+        exercise: Exercise,
+        exerciseIndex: Int,
+        setIndex: Int
+    ) async {
+        guard !activeUserId.isEmpty, set.reps > 0, set.weight > 0 else { return }
+
+        let pr = await PRService.shared.checkForPR(
+            exerciseId: exercise.id,
+            exerciseName: exercise.name,
+            weight: set.weight,
+            reps: set.reps,
+            userId: activeUserId
+        )
+
+        guard let pr else { return }
+
+        // Mark the set as a PR in the local state
+        if exercises.indices.contains(exerciseIndex),
+           exercises[exerciseIndex].sets.indices.contains(setIndex) {
+            exercises[exerciseIndex].sets[setIndex].isPersonalRecord = true
+        }
+
+        // Trigger the celebration banner
+        newPR = pr
+        showPRCelebration = true
     }
 
     // MARK: - Finish Workout
@@ -147,6 +202,8 @@ final class WorkoutLoggerViewModel {
 
         do {
             try await WorkoutService.shared.saveWorkout(workout)
+            // Auto-post to feed after saving
+            try await FeedService.shared.postWorkoutToFeed(workout: workout, userId: userId)
         } catch {
             errorMessage = error.localizedDescription
         }
