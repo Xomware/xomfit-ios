@@ -43,11 +43,18 @@ final class AuthService {
         self.isAuthenticated = true
     }
 
-    func signUp(email: String, password: String) async throws {
+    func signUp(email: String, password: String, firstName: String, lastName: String, username: String) async throws {
         errorMessage = nil
+        let displayName = "\(firstName) \(lastName)".trimmingCharacters(in: .whitespaces)
         let response = try await supabase.auth.signUp(
             email: email,
-            password: password
+            password: password,
+            data: [
+                "display_name": .string(displayName),
+                "first_name": .string(firstName),
+                "last_name": .string(lastName),
+                "username": .string(username)
+            ]
         )
         if let session = response.session {
             self.currentSession = session
