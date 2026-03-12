@@ -7,6 +7,7 @@ struct LoginView: View {
     @State private var email = ""
     @State private var password = ""
     @State private var isLoading = false
+    @State private var toast: Toast?
 
     var body: some View {
         NavigationStack {
@@ -36,7 +37,12 @@ struct LoginView: View {
                                 request.requestedScopes = appleRequest.requestedScopes
                                 request.nonce = appleRequest.nonce
                             } onCompletion: { result in
-                                Task { await authService.handleAppleSignIn(result) }
+                                Task {
+                                    await authService.handleAppleSignIn(result)
+                                    if let error = authService.errorMessage {
+                                        showToast(.error, error)
+                                    }
+                                }
                             }
                             .signInWithAppleButtonStyle(.white)
                             .frame(height: 52)
@@ -44,7 +50,12 @@ struct LoginView: View {
 
                             // Google Sign In
                             Button {
-                                Task { await authService.signInWithGoogle() }
+                                Task {
+                                    await authService.signInWithGoogle()
+                                    if let error = authService.errorMessage {
+                                        showToast(.error, error)
+                                    }
+                                }
                             } label: {
                                 HStack(spacing: 8) {
                                     Image(systemName: "g.circle.fill")
@@ -98,14 +109,6 @@ struct LoginView: View {
                                     .foregroundColor(Theme.textPrimary)
                             }
 
-                            if let error = authService.errorMessage {
-                                Text(error)
-                                    .font(Theme.fontCaption)
-                                    .foregroundColor(Theme.destructive)
-                                    .multilineTextAlignment(.center)
-                                    .padding(.horizontal, Theme.paddingSmall)
-                            }
-
                             Button {
                                 signIn()
                             } label: {
@@ -147,6 +150,7 @@ struct LoginView: View {
             }
             .navigationBarHidden(true)
         }
+        .toast($toast)
     }
 
     private func signIn() {
@@ -154,10 +158,17 @@ struct LoginView: View {
         Task {
             do {
                 try await authService.signIn(email: email, password: password)
+                showToast(.success, "Welcome back!")
             } catch {
-                authService.errorMessage = error.localizedDescription
+                showToast(.error, error.localizedDescription)
             }
             isLoading = false
+        }
+    }
+
+    private func showToast(_ style: Toast.Style, _ message: String) {
+        withAnimation {
+            toast = Toast(style: style, message: message)
         }
     }
 }

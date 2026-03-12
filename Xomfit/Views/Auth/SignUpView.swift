@@ -8,7 +8,7 @@ struct SignUpView: View {
     @State private var password = ""
     @State private var confirmPassword = ""
     @State private var isLoading = false
-    @State private var validationError: String?
+    @State private var toast: Toast?
 
     var body: some View {
         ZStack {
@@ -66,16 +66,6 @@ struct SignUpView: View {
                                 .foregroundColor(Theme.textPrimary)
                         }
 
-                        // Validation / auth error
-                        let displayError = validationError ?? authService.errorMessage
-                        if let error = displayError {
-                            Text(error)
-                                .font(Theme.fontCaption)
-                                .foregroundColor(Theme.destructive)
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal, Theme.paddingSmall)
-                        }
-
                         Button {
                             signUp()
                         } label: {
@@ -120,18 +110,16 @@ struct SignUpView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbarColorScheme(.dark, for: .navigationBar)
+        .toast($toast)
     }
 
     private func signUp() {
-        validationError = nil
-        authService.errorMessage = nil
-
         guard password.count >= Config.Validation.passwordMinLength else {
-            validationError = "Password must be at least \(Config.Validation.passwordMinLength) characters."
+            showToast(.error, "Password must be at least \(Config.Validation.passwordMinLength) characters.")
             return
         }
         guard password == confirmPassword else {
-            validationError = "Passwords do not match."
+            showToast(.error, "Passwords do not match.")
             return
         }
 
@@ -139,10 +127,17 @@ struct SignUpView: View {
         Task {
             do {
                 try await authService.signUp(email: email, password: password)
+                showToast(.success, "Account created!")
             } catch {
-                authService.errorMessage = error.localizedDescription
+                showToast(.error, error.localizedDescription)
             }
             isLoading = false
+        }
+    }
+
+    private func showToast(_ style: Toast.Style, _ message: String) {
+        withAnimation {
+            toast = Toast(style: style, message: message)
         }
     }
 }
