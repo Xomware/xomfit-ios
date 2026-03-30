@@ -150,8 +150,10 @@ enum BodyMeasurement: String, CaseIterable, Identifiable {
 extension BodyCompositionEntry {
     static func mockHistory(userId: String) -> [BodyCompositionEntry] {
         let now = Date()
-        return (0..<12).map { weeksAgo in
-            let date = Calendar.current.date(byAdding: .weekOfYear, value: -weeksAgo, to: now)!
+        return (0..<12).compactMap { weeksAgo in
+            guard let date = Calendar.current.date(byAdding: .weekOfYear, value: -weeksAgo, to: now) else {
+                return nil
+            }
             let baseWeight = 185.0
             let variation = Double.random(in: -3...3)
             let trend = Double(weeksAgo) * 0.5  // trending down over time
