@@ -73,6 +73,38 @@ final class WorkoutLoggerViewModel {
         skipRestTimer()
     }
 
+    func startFromTemplate(_ template: WorkoutTemplate, userId: String) {
+        startWorkout(name: template.name, userId: userId)
+
+        var builtExercises: [WorkoutExercise] = []
+        for templateExercise in template.exercises {
+            let lastSet = lastSetForExercise(templateExercise.exercise.id)
+            let prefillWeight = lastSet?.weight ?? 0
+            let prefillReps = lastSet?.reps ?? 0
+
+            var sets: [WorkoutSet] = []
+            for _ in 0..<templateExercise.targetSets {
+                sets.append(WorkoutSet(
+                    id: UUID().uuidString,
+                    exerciseId: templateExercise.exercise.id,
+                    weight: prefillWeight,
+                    reps: prefillReps,
+                    rpe: nil,
+                    isPersonalRecord: false,
+                    completedAt: Date.distantPast
+                ))
+            }
+
+            builtExercises.append(WorkoutExercise(
+                id: UUID().uuidString,
+                exercise: templateExercise.exercise,
+                sets: sets,
+                notes: templateExercise.notes
+            ))
+        }
+        exercises = builtExercises
+    }
+
     // MARK: - Exercise Management
 
     func addExercise(_ exercise: Exercise) {

@@ -11,6 +11,7 @@ struct ActiveWorkoutView: View {
 
     // Passed in from WorkoutView
     let workoutName: String
+    var template: WorkoutTemplate? = nil
 
     var body: some View {
         NavigationStack {
@@ -92,7 +93,11 @@ struct ActiveWorkoutView: View {
         }
         .onAppear {
             let userId = authService.currentUser?.id.uuidString ?? ""
-            viewModel.startWorkout(name: workoutName, userId: userId)
+            if let template {
+                viewModel.startFromTemplate(template, userId: userId)
+            } else {
+                viewModel.startWorkout(name: workoutName, userId: userId)
+            }
         }
         .onReceive(timer) { _ in
             viewModel.tickRestTimer()
