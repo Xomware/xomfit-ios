@@ -11,10 +11,10 @@ struct XomFitApp: App {
                     ZStack {
                         Theme.background.ignoresSafeArea()
                         VStack(spacing: Theme.paddingMedium) {
-                            Text("XOMFIT")
-                                .font(.system(size: 42, weight: .black))
-                                .foregroundColor(Theme.accent)
-                                .tracking(4)
+                            Image("XomFitBanner")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(height: 80)
                             ProgressView()
                                 .tint(Theme.accent)
                         }
@@ -22,6 +22,11 @@ struct XomFitApp: App {
                 } else if authService.isAuthenticated {
                     MainTabView()
                         .environment(authService)
+                        .sheet(isPresented: Bindable(authService).needsProfileCompletion) {
+                            ProfileCompletionView()
+                                .environment(authService)
+                                .interactiveDismissDisabled()
+                        }
                 } else {
                     LoginView()
                         .environment(authService)
