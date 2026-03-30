@@ -257,9 +257,11 @@ private struct ExerciseCard: View {
     let exerciseIndex: Int
     let viewModel: WorkoutLoggerViewModel
 
+    @ViewBuilder
     var body: some View {
-        let exercise = viewModel.exercises[exerciseIndex]
-        VStack(alignment: .leading, spacing: Theme.paddingSmall) {
+        if viewModel.exercises.indices.contains(exerciseIndex) {
+            let exercise = viewModel.exercises[exerciseIndex]
+            VStack(alignment: .leading, spacing: Theme.paddingSmall) {
             // Exercise header
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
@@ -358,5 +360,6 @@ private struct ExerciseCard: View {
         .padding(Theme.paddingMedium)
         .background(Theme.cardBackground)
         .cornerRadius(Theme.cornerRadius)
+        }
     }
 }
