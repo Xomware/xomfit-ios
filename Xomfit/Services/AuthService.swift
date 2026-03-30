@@ -7,6 +7,7 @@ import Supabase
 @Observable
 final class AuthService {
     var isAuthenticated = false
+    var needsProfileCompletion = false
     var currentSession: Session?
     var currentUser: User?
     var isLoading = true
@@ -24,10 +25,34 @@ final class AuthService {
             self.currentSession = session
             self.currentUser = session?.user
             self.isAuthenticated = session != nil
+            if session != nil {
+                await checkProfileCompleteness()
+            }
             if event == .initialSession {
                 self.isLoading = false
             }
         }
+    }
+
+    // MARK: - Profile Completion
+
+    func checkProfileCompleteness() async {
+        guard let userId = currentUser?.id.uuidString else { return }
+        do {
+            let profile = try await ProfileService.shared.fetchProfile(userId: userId)
+            let email = currentUser?.email ?? ""
+            let emailPrefix = email.components(separatedBy: "@").first ?? ""
+            needsProfileCompletion = profile.username.isEmpty
+                || profile.username == profile.id
+                || profile.username == emailPrefix
+        } catch {
+            // Profile doesn't exist or fetch failed — needs completion
+            needsProfileCompletion = true
+        }
+    }
+
+    func profileCompleted() {
+        needsProfileCompletion = false
     }
 
     // MARK: - Email Auth
