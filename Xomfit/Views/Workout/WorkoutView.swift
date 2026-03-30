@@ -42,9 +42,11 @@ struct WorkoutView: View {
                     if workouts.isEmpty {
                         Spacer()
                         VStack(spacing: Theme.paddingMedium) {
-                            Image(systemName: "dumbbell")
-                                .font(.system(size: 48))
-                                .foregroundColor(Theme.textSecondary)
+                            Image("XomFitLogo")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 80, height: 80)
+                                .opacity(0.6)
                             Text("No workouts yet")
                                 .font(Theme.fontHeadline)
                                 .foregroundColor(Theme.textPrimary)
@@ -62,35 +64,38 @@ struct WorkoutView: View {
                                     .listRowInsets(EdgeInsets(top: 6, leading: Theme.paddingMedium, bottom: 6, trailing: Theme.paddingMedium))
                             }
                             .onDelete { indexSet in
-                                for index in indexSet {
-                                    WorkoutService.shared.deleteWorkout(id: workouts[index].id)
+                                let idsToDelete = indexSet.map { workouts[$0].id }
+                                Task {
+                                    for id in idsToDelete {
+                                        await WorkoutService.shared.deleteWorkout(id: id)
+                                    }
+                                    await loadWorkouts()
                                 }
-                                loadWorkouts()
                             }
                         }
                         .listStyle(.plain)
                         .scrollContentBackground(.hidden)
-                        .refreshable { loadWorkouts() }
+                        .refreshable { await loadWorkouts() }
                     }
                 }
             }
             .navigationTitle("Workout")
             .toolbarColorScheme(.dark, for: .navigationBar)
         }
-        .onAppear { loadWorkouts() }
+        .task { await loadWorkouts() }
         .alert("Name Your Workout", isPresented: $showNameEntry) {
             TextField("e.g. Push Day", text: $pendingWorkoutName)
             Button("Start") { showActiveWorkout = true }
             Button("Cancel", role: .cancel) {}
         }
-        .fullScreenCover(isPresented: $showActiveWorkout, onDismiss: loadWorkouts) {
+        .fullScreenCover(isPresented: $showActiveWorkout, onDismiss: { Task { await loadWorkouts() } }) {
             ActiveWorkoutView(workoutName: pendingWorkoutName.isEmpty ? "Workout" : pendingWorkoutName)
                 .environment(authService)
         }
     }
 
-    private func loadWorkouts() {
-        workouts = WorkoutService.shared.fetchWorkouts(userId: userId)
+    private func loadWorkouts() async {
+        workouts = await WorkoutService.shared.fetchWorkouts(userId: userId)
     }
 }
 

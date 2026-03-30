@@ -35,9 +35,11 @@ struct XomProgressView: View {
 
     private var emptyState: some View {
         VStack(spacing: Theme.paddingMedium) {
-            Image(systemName: "chart.line.uptrend.xyaxis")
-                .font(.system(size: 48))
-                .foregroundStyle(Theme.textSecondary)
+            Image("XomFitLogo")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 80, height: 80)
+                .opacity(0.6)
 
             Text("Log your first workout to see progress here")
                 .font(Theme.fontBody)

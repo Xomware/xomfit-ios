@@ -49,7 +49,7 @@ final class ProgressViewModel {
         isLoading = true
         errorMessage = nil
 
-        let workouts = WorkoutService.shared.fetchWorkouts(userId: userId)
+        let workouts = await WorkoutService.shared.fetchWorkouts(userId: userId)
 
         var prs: [PersonalRecord] = []
         do {

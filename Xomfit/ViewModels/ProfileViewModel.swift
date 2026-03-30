@@ -46,7 +46,7 @@ final class ProfileViewModel {
         }
 
         // Workout stats from local WorkoutService
-        let workouts = WorkoutService.shared.fetchWorkouts(userId: userId)
+        let workouts = await WorkoutService.shared.fetchWorkouts(userId: userId)
         totalWorkouts = workouts.count
         totalVolume = workouts.reduce(0) { $0 + $1.totalVolume }
 
