@@ -18,10 +18,11 @@ struct LoginView: View {
                     VStack(spacing: Theme.paddingLarge) {
                         // Logo / Header
                         VStack(spacing: Theme.paddingSmall) {
-                            Text("XOMFIT")
-                                .font(.system(size: 42, weight: .black))
-                                .foregroundColor(Theme.accent)
-                                .tracking(4)
+                            Image("XomFitBanner")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(height: 100)
+
                             Text("Track. Lift. Grow.")
                                 .font(Theme.fontCaption)
                                 .foregroundColor(Theme.textSecondary)
