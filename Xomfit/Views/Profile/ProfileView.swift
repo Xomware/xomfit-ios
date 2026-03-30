@@ -266,36 +266,6 @@ struct ProfileView: View {
     }
 }
 
-// MARK: - PR Badge Row
-
-private struct PRBadgeRow: View {
-    let pr: PersonalRecord
-
-    var body: some View {
-        HStack {
-            Image(systemName: "trophy.fill")
-                .foregroundColor(Theme.prGold)
-                .font(.system(size: 14))
-
-            Text(pr.exerciseName)
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(Theme.textPrimary)
-
-            Spacer()
-
-            Text("\(pr.weight.formattedWeight) × \(pr.reps)")
-                .font(.system(size: 14, weight: .bold))
-                .foregroundColor(Theme.accent)
-
-            if let imp = pr.improvementString {
-                Text(imp)
-                    .font(Theme.fontSmall)
-                    .foregroundColor(Theme.prGold)
-            }
-        }
-    }
-}
-
 // MARK: - Edit Profile Sheet
 
 private struct EditProfileSheet: View {
