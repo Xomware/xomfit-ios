@@ -10,6 +10,11 @@ final class WorkoutLoggerViewModel {
     var isSaving = false
     var errorMessage: String?
 
+    // Rest timer
+    var restTimeRemaining: Double = 0
+    var restDuration: Double = 0
+    var isRestTimerActive: Bool = false
+
     // PR celebration — set when a completed set beats the user's record
     var newPR: PersonalRecord? = nil
     var showPRCelebration: Bool = false
@@ -54,6 +59,7 @@ final class WorkoutLoggerViewModel {
         activeUserId = userId
         newPR = nil
         showPRCelebration = false
+        skipRestTimer()
     }
 
     func discardWorkout() {
@@ -64,6 +70,7 @@ final class WorkoutLoggerViewModel {
         errorMessage = nil
         newPR = nil
         showPRCelebration = false
+        skipRestTimer()
     }
 
     // MARK: - Exercise Management
@@ -120,6 +127,9 @@ final class WorkoutLoggerViewModel {
             exercises[exerciseIndex].sets[setIndex].isPersonalRecord = false
         } else {
             exercises[exerciseIndex].sets[setIndex].completedAt = Date()
+            // Start rest timer
+            let exerciseCategory = exercises[exerciseIndex].exercise.category
+            startRestTimer(for: exerciseCategory)
             // Fire PR check asynchronously — non-blocking
             let set = exercises[exerciseIndex].sets[setIndex]
             let exercise = exercises[exerciseIndex].exercise
@@ -138,6 +148,38 @@ final class WorkoutLoggerViewModel {
         guard exercises.indices.contains(exerciseIndex),
               exercises[exerciseIndex].sets.indices.contains(setIndex) else { return }
         exercises[exerciseIndex].sets.remove(at: setIndex)
+    }
+
+    // MARK: - Rest Timer
+
+    func startRestTimer(for category: ExerciseCategory) {
+        let duration: Double = switch category {
+        case .compound: 90
+        case .isolation: 60
+        case .cardio, .stretching: 30
+        }
+        restDuration = duration
+        restTimeRemaining = duration
+        isRestTimerActive = true
+    }
+
+    func tickRestTimer() {
+        guard isRestTimerActive, restTimeRemaining > 0 else { return }
+        restTimeRemaining -= 1
+        if restTimeRemaining <= 0 {
+            restTimeRemaining = 0
+            isRestTimerActive = false
+        }
+    }
+
+    func skipRestTimer() {
+        restTimeRemaining = 0
+        isRestTimerActive = false
+    }
+
+    func extendRestTimer(_ seconds: Double = 30) {
+        restTimeRemaining += seconds
+        restDuration += seconds
     }
 
     // MARK: - PR Detection

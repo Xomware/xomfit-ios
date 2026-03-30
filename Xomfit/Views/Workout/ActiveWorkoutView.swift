@@ -21,6 +21,19 @@ struct ActiveWorkoutView: View {
                     // Header bar
                     headerBar
 
+                    // Rest timer
+                    if viewModel.isRestTimerActive {
+                        RestTimerView(
+                            restTimeRemaining: viewModel.restTimeRemaining,
+                            restDuration: viewModel.restDuration,
+                            onSkip: { viewModel.skipRestTimer() },
+                            onExtend: { viewModel.extendRestTimer() }
+                        )
+                        .padding(.horizontal, Theme.paddingMedium)
+                        .padding(.vertical, Theme.paddingSmall)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                    }
+
                     // Exercise list
                     if viewModel.exercises.isEmpty {
                         emptyState
@@ -40,6 +53,7 @@ struct ActiveWorkoutView: View {
                         }
                     }
                 }
+                .animation(.easeInOut(duration: 0.3), value: viewModel.isRestTimerActive)
 
                 // Floating Add Exercise button
                 VStack {
@@ -81,7 +95,13 @@ struct ActiveWorkoutView: View {
             viewModel.startWorkout(name: workoutName, userId: userId)
         }
         .onReceive(timer) { _ in
-            // Trigger a view refresh every second to update the timer label
+            viewModel.tickRestTimer()
+            // Haptic when rest timer completes
+            if !viewModel.isRestTimerActive && viewModel.restDuration > 0 && viewModel.restTimeRemaining <= 0 {
+                viewModel.restDuration = 0
+                let generator = UINotificationFeedbackGenerator()
+                generator.notificationOccurred(.success)
+            }
         }
         .sheet(isPresented: $showExercisePicker) {
             ExercisePickerView { exercise in
