@@ -76,13 +76,39 @@ final class WorkoutLoggerViewModel {
     // MARK: - Exercise Management
 
     func addExercise(_ exercise: Exercise) {
+        // Look up last workout's weight/reps for this exercise
+        let lastSet = lastSetForExercise(exercise.id)
+
+        let firstSet = WorkoutSet(
+            id: UUID().uuidString,
+            exerciseId: exercise.id,
+            weight: lastSet?.weight ?? 0,
+            reps: lastSet?.reps ?? 0,
+            rpe: nil,
+            isPersonalRecord: false,
+            completedAt: Date.distantPast
+        )
+
         let workoutExercise = WorkoutExercise(
             id: UUID().uuidString,
             exercise: exercise,
-            sets: [],
+            sets: [firstSet],
             notes: nil
         )
         exercises.append(workoutExercise)
+    }
+
+    /// Find the most recent set for an exercise from workout history.
+    private func lastSetForExercise(_ exerciseId: String) -> WorkoutSet? {
+        guard !activeUserId.isEmpty else { return nil }
+        let workouts = WorkoutService.shared.fetchWorkoutsFromCache(userId: activeUserId)
+        for workout in workouts {
+            if let workoutExercise = workout.exercises.first(where: { $0.exercise.id == exerciseId }),
+               let bestSet = workoutExercise.sets.last {
+                return bestSet
+            }
+        }
+        return nil
     }
 
     func removeExercise(at index: Int) {
