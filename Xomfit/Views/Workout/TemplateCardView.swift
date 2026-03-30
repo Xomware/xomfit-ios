@@ -6,33 +6,32 @@ struct TemplateCardView: View {
 
     var body: some View {
         Button(action: onSelect) {
-            VStack(alignment: .leading, spacing: Theme.paddingSmall) {
+            HStack(spacing: 10) {
                 // Category icon
                 Image(systemName: template.category.icon)
-                    .font(.system(size: 22))
+                    .font(.system(size: 18))
                     .foregroundStyle(Theme.accent)
-                    .frame(width: 36, height: 36)
+                    .frame(width: 32, height: 32)
                     .background(Theme.accent.opacity(0.15))
-                    .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
+                    .clipShape(.rect(cornerRadius: 6))
 
-                Spacer(minLength: 4)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(template.name)
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundStyle(Theme.textPrimary)
+                        .lineLimit(1)
 
-                // Name
-                Text(template.name)
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(Theme.textPrimary)
-                    .lineLimit(1)
-
-                // Details
-                HStack(spacing: 4) {
-                    Text("\(template.exercises.count) exercises")
-                    Text("~\(template.estimatedDuration)m")
-                        .foregroundStyle(Theme.accent)
+                    HStack(spacing: 4) {
+                        Text("\(template.exercises.count) ex")
+                        Text("~\(template.estimatedDuration)m")
+                            .foregroundStyle(Theme.accent)
+                    }
+                    .font(Theme.fontSmall)
+                    .foregroundStyle(Theme.textSecondary)
                 }
-                .font(Theme.fontSmall)
-                .foregroundStyle(Theme.textSecondary)
             }
-            .padding(Theme.paddingMedium)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
             .frame(width: 160, alignment: .leading)
             .background(Theme.cardBackground)
             .clipShape(.rect(cornerRadius: Theme.cornerRadius))
