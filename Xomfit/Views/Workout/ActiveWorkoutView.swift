@@ -74,7 +74,7 @@ struct ActiveWorkoutView: View {
                     }
                 }
             }
-            .navigationBarHidden(true)
+            .toolbar(.hidden, for: .navigationBar)
         }
         .onAppear {
             let userId = authService.currentUser?.id.uuidString ?? ""

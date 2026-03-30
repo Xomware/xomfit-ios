@@ -1,14 +1,14 @@
 import Foundation
 import WatchConnectivity
-import Combine
 
 /// Watch-side WCSession manager — receives workout context from iPhone, sends logged sets back.
 @MainActor
-class WatchConnectivityManager: NSObject, ObservableObject {
+@Observable
+class WatchConnectivityManager: NSObject {
     static let shared = WatchConnectivityManager()
 
-    @Published var isReachable = false
-    @Published var lastReceivedContext: [String: Any] = [:]
+    var isReachable = false
+    var lastReceivedContext: [String: Any] = [:]
 
     private let session: WCSession
 

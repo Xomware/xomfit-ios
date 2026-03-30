@@ -1,37 +1,27 @@
-# Org Conventions — Xomware
+# Org Conventions — Xomware (Personal Projects)
+
+## Secrets
+- **Local dev:** `.env` files (gitignored)
+- **Production:** environment variables via hosting platform (Vercel, Railway, Fly.io, etc.)
+- Never commit `.env` files -- use `.env.example` with placeholder values
+
+## Auth
+<!-- Fill in your preferred auth: Clerk, Supabase Auth, Firebase Auth, NextAuth, etc. -->
 
 ## GitHub
 - **Org:** `Xomware`
 - **User:** `domgiordano`
 
-## Project Management
-- **Tool:** GitHub Issues + XomBoard (GitHub Projects #2)
-- **Board URL:** https://github.com/orgs/Xomware/projects/2
-- **Board fields:** Status, App, Category, Priority
-- All repos have `add-to-board.yml` workflow — new issues auto-add to XomBoard
-- Update board item status as work progresses — don't just close issues
-- Post completion comments on issues with summary of changes
-
-## Branch Protection
-- All repos: PRs required, no direct pushes to main/master
-- No force pushes, no branch deletions on default branch
-- Enforced for admins
-
-## Secrets
-- **Local dev:** `.env` files (gitignored)
-- **Production:** environment variables via hosting platform
-- Never commit `.env` files — use `.env.example` with placeholder values
-- `BOARD_TOKEN` org secret for GitHub Projects API access
-
 ## Cloud / Infra
-- **Hosting:** AWS (S3 + CloudFront) for frontends
-- **IaC:** Terraform with remote state
-- Keep infra simple — managed services over self-hosted
+- **Hosting:** project-dependent (Vercel, Railway, Fly.io, AWS, etc.)
+- **IaC:** Terraform with remote state where applicable
+- Keep infra simple -- managed services over self-hosted where possible
 
 ## CI/CD
 - GitHub Actions for CI
-- Deploy on merge to main/master (platform-specific)
+- Deploy on merge to main (platform-specific)
 
-## Deprecated
-- OpenClaw multi-agent framework is deprecated — use Claude Code native workflows
-- Do not create or reference OpenClaw patterns, dispatcher configs, or agent orchestrators
+## Common Mistakes
+- Committing `.env` files
+- Over-engineering infra for personal projects -- start simple, scale when needed
+- Forgetting to update `.env.example` when adding new env vars
