@@ -7,6 +7,8 @@ struct WorkoutView: View {
     @State private var showActiveWorkout = false
     @State private var showNameEntry = false
     @State private var pendingWorkoutName = ""
+    @State private var selectedTemplate: WorkoutTemplate?
+    @State private var showTemplateList = false
 
     private var userId: String {
         authService.currentUser?.id.uuidString ?? ""
@@ -37,6 +39,9 @@ struct WorkoutView: View {
                     .padding(.horizontal, Theme.paddingMedium)
                     .padding(.top, Theme.paddingMedium)
                     .padding(.bottom, Theme.paddingSmall)
+
+                    // Quick Start templates
+                    templateSection
 
                     // Workout history
                     if workouts.isEmpty {
@@ -88,10 +93,56 @@ struct WorkoutView: View {
             Button("Start") { showActiveWorkout = true }
             Button("Cancel", role: .cancel) {}
         }
-        .fullScreenCover(isPresented: $showActiveWorkout, onDismiss: { Task { await loadWorkouts() } }) {
-            ActiveWorkoutView(workoutName: pendingWorkoutName.isEmpty ? "Workout" : pendingWorkoutName)
-                .environment(authService)
+        .fullScreenCover(isPresented: $showActiveWorkout, onDismiss: {
+            selectedTemplate = nil
+            Task { await loadWorkouts() }
+        }) {
+            ActiveWorkoutView(
+                workoutName: selectedTemplate?.name ?? (pendingWorkoutName.isEmpty ? "Workout" : pendingWorkoutName),
+                template: selectedTemplate
+            )
+            .environment(authService)
         }
+        .sheet(isPresented: $showTemplateList) {
+            TemplateListView { template in
+                selectedTemplate = template
+                showActiveWorkout = true
+            }
+        }
+    }
+
+    // MARK: - Templates
+
+    private var templateSection: some View {
+        VStack(alignment: .leading, spacing: Theme.paddingSmall) {
+            HStack {
+                Text("Quick Start")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundStyle(Theme.textPrimary)
+                Spacer()
+                Button {
+                    showTemplateList = true
+                } label: {
+                    Text("See All")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(Theme.accent)
+                }
+            }
+            .padding(.horizontal, Theme.paddingMedium)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: Theme.paddingSmall) {
+                    ForEach(TemplateService.shared.allTemplates().prefix(6)) { template in
+                        TemplateCardView(template: template) {
+                            selectedTemplate = template
+                            showActiveWorkout = true
+                        }
+                    }
+                }
+                .padding(.horizontal, Theme.paddingMedium)
+            }
+        }
+        .padding(.vertical, Theme.paddingSmall)
     }
 
     private func loadWorkouts() async {
