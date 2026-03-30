@@ -1,6 +1,6 @@
 # XomFit iOS — Setup Guide
 
-> **Last Updated:** March 9, 2026
+> **Last Updated:** March 30, 2026
 > **Repo:** `Xomware/xomfit-ios`
 
 ---
@@ -9,7 +9,7 @@
 
 Use this to track your progress. Every step links to details below.
 
-- [ ] [Prerequisites installed](#1-prerequisites) (Xcode 16.2+, Apple Dev account, Supabase account)
+- [ ] [Prerequisites installed](#1-prerequisites) (Xcode 26+, Apple Dev account, Supabase account)
 - [ ] [Repo cloned, Xcode project open](#2-clone--open-the-project)
 - [ ] [Swift packages added](#3-add-swift-package-dependencies)
 - [ ] [Xcode capabilities configured](#4-configure-xcode-project)
@@ -28,7 +28,7 @@ Use this to track your progress. Every step links to details below.
 | Tool | Version | How to Check | How to Install |
 |------|---------|-------------|----------------|
 | **macOS** | 14.0+ (Sonoma) | Apple menu > About This Mac | System Settings |
-| **Xcode** | 16.2+ | `xcodebuild -version` | Mac App Store |
+| **Xcode** | 26+ | `xcodebuild -version` | Mac App Store |
 | **Apple Developer Account** | Paid ($99/yr) | [developer.apple.com/account](https://developer.apple.com/account) | Required for Sign In with Apple |
 | **Supabase Account** | Free tier works | [supabase.com](https://supabase.com) | Sign up with GitHub |
 | **Supabase CLI** (optional) | 1.x+ | `supabase --version` | `brew install supabase/tap/supabase` |
@@ -40,24 +40,26 @@ Use this to track your progress. Every step links to details below.
 ```bash
 git clone https://github.com/Xomware/xomfit-ios.git
 cd xomfit-ios
-open XomFit.xcodeproj
+open Xomfit.xcodeproj
 ```
 
 ### Project Structure
 
 ```
 xomfit-ios/
-├── XomFit/
-│   ├── XomFitApp.swift          # App entry point
-│   ├── Config.swift             # YOUR CREDENTIALS GO HERE
+├── Xomfit/
+│   ├── XomfitApp.swift          # App entry point
+│   ├── Config.swift             # YOUR CREDENTIALS GO HERE (gitignored)
+│   ├── Config.swift.template    # Template — copy to Config.swift
 │   ├── Models/                  # Data models (Codable structs)
 │   ├── Views/                   # SwiftUI views (Auth, Feed, Workout, etc.)
-│   ├── ViewModels/              # 20+ ViewModels (MVVM)
+│   ├── ViewModels/              # ViewModels (MVVM)
 │   ├── Services/                # Supabase, Auth, API services
-│   └── Utils/                   # Theme, extensions
+│   ├── Utils/                   # Theme, extensions
+│   └── Assets.xcassets/         # App icon, branding assets
+├── Xomfit.xcodeproj/            # Xcode project
 ├── XomFitWatch/                 # Apple Watch companion app
-├── supabase/migrations/         # 7 SQL migration files
-├── .github/workflows/ci.yml     # GitHub Actions CI
+├── supabase/migrations/         # SQL migration files
 └── docs/
     ├── SETUP.md                 # This file
     └── FEATURES.md              # Feature reference
@@ -126,7 +128,7 @@ Make sure **Bundle Identifier** is `com.xomware.xomfit` (or your own — just ke
 
 ### 4.4 — Deployment Target
 
-Minimum iOS **17.0**.
+iOS **26.0+** (set in project settings).
 
 ---
 
@@ -144,21 +146,13 @@ Minimum iOS **17.0**.
 
 ## 6. Run Database Migrations
 
-All migrations are in `supabase/migrations/`. Run them **in filename order**.
+The main migration file creates all core tables. Run this one:
 
 ### Option A — Dashboard (easiest)
 
-Go to **SQL Editor** > **New Query** > paste each file > **Run**:
+Go to **SQL Editor** > **New Query** > paste the contents of `supabase/migrations/20260312_all_tables.sql` > **Run**.
 
-```
-1. 20260228_body_composition.sql
-2. 20260228_form_check_videos.sql
-3. 20260228_gym_checkins.sql
-4. 20260228_push_notifications.sql
-5. 20260228_workout_marketplace.sql
-6. 20260301_add_nutrition.sql
-7. 20260306_social_feed.sql
-```
+This single file creates: profiles, friendships, workouts, workout_exercises, workout_sets, personal_records, feed_items, feed_likes, feed_comments — plus all RLS policies and indexes.
 
 ### Option B — Supabase CLI
 
@@ -169,13 +163,28 @@ supabase db push
 
 ### Verify
 
-**Table Editor** should show: `body_compositions`, `form_check_videos`, `gym_checkins`, `daily_nutrition`, `social_feed_items`, `social_feed_comments`, `social_feed_likes`, etc.
+**Table Editor** should show these tables:
+- `profiles` — user profiles (auto-created on signup via trigger)
+- `friendships` — friend requests and connections
+- `workouts` — workout sessions
+- `workout_exercises` — exercises within workouts
+- `workout_sets` — individual sets
+- `personal_records` — PR tracking
+- `feed_items` — social feed posts
+- `feed_likes` — likes on feed items
+- `feed_comments` — comments on feed items
 
 ---
 
 ## 7. Configure the App
 
-Open `XomFit/Config.swift` and replace placeholders:
+Copy the template and fill in your credentials:
+
+```bash
+cp Xomfit/Config.swift.template Xomfit/Config.swift
+```
+
+Open `Xomfit/Config.swift` and replace placeholders:
 
 ```swift
 enum Config {
@@ -188,11 +197,7 @@ enum Config {
 }
 ```
 
-**Do not commit real keys.** Make sure `XomFit/Config.swift` is in `.gitignore`:
-
-```bash
-echo "XomFit/Config.swift" >> .gitignore
-```
+**Do not commit real keys.** `Xomfit/Config.swift` is already in `.gitignore`.
 
 ---
 
@@ -279,7 +284,7 @@ Should be ON by default. Recommended: **Confirm Email** ON, **Min password:** 8.
 
 ## 11. Build & Run
 
-1. **Device selector:** iPhone 15 Pro (or any iOS 17+ simulator)
+1. **Device selector:** iPhone 16 (or any iOS 26+ simulator, or your real device)
 2. **Cmd + B** to build (first build resolves SPM packages, ~2-5 min)
 3. **Cmd + R** to run
 
@@ -348,8 +353,6 @@ xcodebuild test \
 
 ## CI/CD
 
-CI runs automatically on push to `main` and PRs targeting `main` (`.github/workflows/ci.yml`).
+CI runs automatically on push to `master` and PRs targeting `master`.
 
-Steps: checkout > Xcode 16.2 > resolve packages > build > test.
-
-Gates: compile, tests pass, SwiftLint, no hardcoded secrets.
+Steps: checkout > resolve packages > build > test.
