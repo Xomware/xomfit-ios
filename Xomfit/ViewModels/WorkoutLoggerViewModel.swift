@@ -19,6 +19,16 @@ final class WorkoutLoggerViewModel {
     var newPR: PersonalRecord? = nil
     var showPRCelebration: Bool = false
 
+    // Next exercise prompt — shown when all sets of an exercise are complete
+    var nextExerciseSuggestion: String? = nil
+    var completedExerciseName: String? = nil
+    var showNextExercisePrompt: Bool = false
+
+    // Focus mode — large gym-floor view
+    var focusMode: Bool = false
+    var focusExerciseIndex: Int = 0
+    var focusSetIndex: Int = 0
+
     // Stored so completeSet can fire PR checks without needing the caller to pass it
     private(set) var activeUserId: String = ""
 
@@ -59,6 +69,12 @@ final class WorkoutLoggerViewModel {
         activeUserId = userId
         newPR = nil
         showPRCelebration = false
+        nextExerciseSuggestion = nil
+        completedExerciseName = nil
+        showNextExercisePrompt = false
+        focusMode = false
+        focusExerciseIndex = 0
+        focusSetIndex = 0
         skipRestTimer()
     }
 
@@ -70,6 +86,12 @@ final class WorkoutLoggerViewModel {
         errorMessage = nil
         newPR = nil
         showPRCelebration = false
+        nextExerciseSuggestion = nil
+        completedExerciseName = nil
+        showNextExercisePrompt = false
+        focusMode = false
+        focusExerciseIndex = 0
+        focusSetIndex = 0
         skipRestTimer()
     }
 
@@ -110,21 +132,27 @@ final class WorkoutLoggerViewModel {
     func addExercise(_ exercise: Exercise) {
         // Look up last workout's weight/reps for this exercise
         let lastSet = lastSetForExercise(exercise.id)
+        let prefillWeight = lastSet?.weight ?? 0
+        let prefillReps = lastSet?.reps ?? 0
 
-        let firstSet = WorkoutSet(
-            id: UUID().uuidString,
-            exerciseId: exercise.id,
-            weight: lastSet?.weight ?? 0,
-            reps: lastSet?.reps ?? 0,
-            rpe: nil,
-            isPersonalRecord: false,
-            completedAt: Date.distantPast
-        )
+        let defaultSetCount = 3
+        var sets: [WorkoutSet] = []
+        for _ in 0..<defaultSetCount {
+            sets.append(WorkoutSet(
+                id: UUID().uuidString,
+                exerciseId: exercise.id,
+                weight: prefillWeight,
+                reps: prefillReps,
+                rpe: nil,
+                isPersonalRecord: false,
+                completedAt: Date.distantPast
+            ))
+        }
 
         let workoutExercise = WorkoutExercise(
             id: UUID().uuidString,
             exercise: exercise,
-            sets: [firstSet],
+            sets: sets,
             notes: nil
         )
         exercises.append(workoutExercise)
@@ -146,6 +174,13 @@ final class WorkoutLoggerViewModel {
     func removeExercise(at index: Int) {
         guard exercises.indices.contains(index) else { return }
         exercises.remove(at: index)
+    }
+
+    func moveExercise(from source: Int, direction: Int) {
+        let destination = source + direction
+        guard exercises.indices.contains(source),
+              exercises.indices.contains(destination) else { return }
+        exercises.swapAt(source, destination)
     }
 
     // MARK: - Set Management
@@ -199,6 +234,21 @@ final class WorkoutLoggerViewModel {
                     setIndex: setIndex
                 )
             }
+
+            // Check if all sets in this exercise are now complete
+            let allDone = exercises[exerciseIndex].sets.allSatisfy { $0.completedAt != Date.distantPast }
+            if allDone {
+                completedExerciseName = exercises[exerciseIndex].exercise.name
+                let nextIndex = exercises.indices.first { idx in
+                    idx > exerciseIndex && exercises[idx].sets.contains { $0.completedAt == Date.distantPast }
+                }
+                if let nextIdx = nextIndex {
+                    nextExerciseSuggestion = exercises[nextIdx].exercise.name
+                } else {
+                    nextExerciseSuggestion = nil
+                }
+                showNextExercisePrompt = true
+            }
         }
     }
 
@@ -206,6 +256,63 @@ final class WorkoutLoggerViewModel {
         guard exercises.indices.contains(exerciseIndex),
               exercises[exerciseIndex].sets.indices.contains(setIndex) else { return }
         exercises[exerciseIndex].sets.remove(at: setIndex)
+    }
+
+    func toggleWeightMode(exerciseIndex: Int, setIndex: Int) {
+        guard exercises.indices.contains(exerciseIndex),
+              exercises[exerciseIndex].sets.indices.contains(setIndex) else { return }
+        exercises[exerciseIndex].sets[setIndex].weightMode =
+            exercises[exerciseIndex].sets[setIndex].weightMode == .total ? .perSide : .total
+    }
+
+    // MARK: - Focus Mode Navigation
+
+    /// The exercise currently in focus, if valid.
+    var focusExercise: WorkoutExercise? {
+        exercises.indices.contains(focusExerciseIndex) ? exercises[focusExerciseIndex] : nil
+    }
+
+    /// The set currently in focus, if valid.
+    var focusSet: WorkoutSet? {
+        guard let ex = focusExercise,
+              ex.sets.indices.contains(focusSetIndex) else { return nil }
+        return ex.sets[focusSetIndex]
+    }
+
+    /// Advance to the next incomplete set. If the current exercise is done, move to the next exercise.
+    func focusAdvance() {
+        guard exercises.indices.contains(focusExerciseIndex) else { return }
+        let ex = exercises[focusExerciseIndex]
+
+        // Try next set in the same exercise
+        if focusSetIndex + 1 < ex.sets.count {
+            focusSetIndex += 1
+            return
+        }
+
+        // Move to next exercise, first set
+        if focusExerciseIndex + 1 < exercises.count {
+            focusExerciseIndex += 1
+            focusSetIndex = 0
+        }
+    }
+
+    func focusPreviousExercise() {
+        guard focusExerciseIndex > 0 else { return }
+        focusExerciseIndex -= 1
+        focusSetIndex = 0
+    }
+
+    func focusNextExercise() {
+        guard focusExerciseIndex + 1 < exercises.count else { return }
+        focusExerciseIndex += 1
+        focusSetIndex = 0
+    }
+
+    /// Complete the focused set and auto-advance.
+    func completeFocusedSet() {
+        completeSet(exerciseIndex: focusExerciseIndex, setIndex: focusSetIndex)
+        focusAdvance()
     }
 
     // MARK: - Rest Timer
@@ -222,12 +329,8 @@ final class WorkoutLoggerViewModel {
     }
 
     func tickRestTimer() {
-        guard isRestTimerActive, restTimeRemaining > 0 else { return }
+        guard isRestTimerActive else { return }
         restTimeRemaining -= 1
-        if restTimeRemaining <= 0 {
-            restTimeRemaining = 0
-            isRestTimerActive = false
-        }
     }
 
     func skipRestTimer() {
@@ -304,11 +407,12 @@ final class WorkoutLoggerViewModel {
             try await WorkoutService.shared.saveWorkout(workout)
             // Auto-post to feed after saving
             try await FeedService.shared.postWorkoutToFeed(workout: workout, userId: userId)
+            // Only discard local state after successful save
+            isSaving = false
+            discardWorkout()
         } catch {
             errorMessage = error.localizedDescription
+            isSaving = false
         }
-
-        isSaving = false
-        discardWorkout()
     }
 }

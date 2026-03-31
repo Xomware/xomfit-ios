@@ -20,8 +20,7 @@ struct PRListView: View {
             Theme.background.ignoresSafeArea()
 
             if isLoading {
-                ProgressView()
-                    .tint(Theme.accent)
+                XomFitLoaderPulse()
             } else if prs.isEmpty {
                 emptyState
             } else {

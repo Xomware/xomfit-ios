@@ -11,6 +11,8 @@ struct FriendsView: View {
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var searchTask: Task<Void, Never>?
+    @State private var requesterProfiles: [String: ProfileRow] = [:]
+    @State private var friendProfiles: [String: ProfileRow] = [:]
 
     private var userId: String {
         authService.currentUser?.id.uuidString ?? ""
@@ -26,7 +28,7 @@ struct FriendsView: View {
 
                 if isLoading {
                     Spacer()
-                    ProgressView().tint(Theme.accent)
+                    XomFitLoaderPulse()
                     Spacer()
                 } else {
                     List {
@@ -112,16 +114,16 @@ struct FriendsView: View {
                     Spacer()
                 }
                 .listRowBackground(Theme.cardBackground)
-            } else if searchResults.isEmpty {
+            } else if searchResults.filter({ $0.id != userId }).isEmpty {
                 Text("No users found for \"\(searchQuery)\"")
                     .foregroundColor(Theme.textSecondary)
                     .font(Theme.fontBody)
                     .listRowBackground(Theme.cardBackground)
             } else {
-                ForEach(searchResults, id: \.id) { profile in
+                ForEach(searchResults.filter { $0.id != userId }, id: \.id) { profile in
                     SearchResultRow(
                         profile: profile,
-                        isCurrentUser: profile.id == userId
+                        isCurrentUser: false
                     ) {
                         sendRequest(toUserId: profile.id)
                     }
@@ -142,6 +144,7 @@ struct FriendsView: View {
             ForEach(pendingRequests, id: \.id) { request in
                 PendingRequestRow(
                     request: request,
+                    requesterProfile: requesterProfiles[request.requesterId],
                     onAccept: { acceptRequest(request) },
                     onDecline: { declineRequest(request) }
                 )
@@ -165,7 +168,12 @@ struct FriendsView: View {
                     .listRowBackground(Theme.cardBackground)
             } else {
                 ForEach(friends, id: \.id) { friend in
-                    FriendListRow(friend: friend, currentUserId: userId) {
+                    let friendId = friend.requesterId == userId ? friend.addresseeId : friend.requesterId
+                    FriendListRow(
+                        friend: friend,
+                        currentUserId: userId,
+                        friendProfile: friendProfiles[friendId]
+                    ) {
                         removeFriend(friend)
                     }
                     .listRowBackground(Theme.cardBackground)
@@ -189,6 +197,25 @@ struct FriendsView: View {
                 async let friendsResult = FriendsService.shared.fetchFriends(userId: userId)
                 async let pendingResult = FriendsService.shared.fetchPendingRequests(userId: userId)
                 (friends, pendingRequests) = try await (friendsResult, pendingResult)
+
+                // Fetch profiles for pending request senders
+                for request in pendingRequests {
+                    if requesterProfiles[request.requesterId] == nil {
+                        if let profile = try? await ProfileService.shared.fetchProfile(userId: request.requesterId) {
+                            requesterProfiles[request.requesterId] = profile
+                        }
+                    }
+                }
+
+                // Fetch profiles for friends
+                for friend in friends {
+                    let friendId = friend.requesterId == userId ? friend.addresseeId : friend.requesterId
+                    if friendProfiles[friendId] == nil {
+                        if let profile = try? await ProfileService.shared.fetchProfile(userId: friendId) {
+                            friendProfiles[friendId] = profile
+                        }
+                    }
+                }
             } catch {
                 errorMessage = error.localizedDescription
             }
@@ -310,8 +337,25 @@ private struct SearchResultRow: View {
 
 private struct PendingRequestRow: View {
     let request: FriendRow
+    let requesterProfile: ProfileRow?
     let onAccept: () -> Void
     let onDecline: () -> Void
+
+    private var requesterName: String {
+        if let profile = requesterProfile {
+            return profile.displayName.isEmpty ? profile.username : profile.displayName
+        }
+        return String(request.requesterId.prefix(8))
+    }
+
+    private var requesterInitials: String {
+        let name = requesterName
+        let parts = name.split(separator: " ")
+        if parts.count >= 2 {
+            return String(parts[0].prefix(1) + parts[1].prefix(1)).uppercased()
+        }
+        return String(name.prefix(2)).uppercased()
+    }
 
     var body: some View {
         HStack(spacing: Theme.paddingMedium) {
@@ -319,18 +363,21 @@ private struct PendingRequestRow: View {
                 Circle()
                     .fill(Theme.accent.opacity(0.2))
                     .frame(width: 40, height: 40)
-                Image(systemName: "person.fill")
+                Text(requesterInitials)
+                    .font(.system(size: 14, weight: .bold))
                     .foregroundColor(Theme.accent)
             }
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("Friend Request")
+                Text(requesterName)
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(Theme.textPrimary)
-                Text("from \(request.requesterId)")
-                    .font(Theme.fontCaption)
-                    .foregroundColor(Theme.textSecondary)
-                    .lineLimit(1)
+                if let profile = requesterProfile {
+                    Text("@\(profile.username)")
+                        .font(Theme.fontCaption)
+                        .foregroundColor(Theme.textSecondary)
+                        .lineLimit(1)
+                }
             }
 
             Spacer()
@@ -368,7 +415,25 @@ private struct PendingRequestRow: View {
 private struct FriendListRow: View {
     let friend: FriendRow
     let currentUserId: String
+    let friendProfile: ProfileRow?
     let onRemove: () -> Void
+
+    private var friendName: String {
+        if let profile = friendProfile {
+            return profile.displayName.isEmpty ? profile.username : profile.displayName
+        }
+        let friendId = friend.requesterId == currentUserId ? friend.addresseeId : friend.requesterId
+        return String(friendId.prefix(8))
+    }
+
+    private var friendInitials: String {
+        let name = friendName
+        let parts = name.split(separator: " ")
+        if parts.count >= 2 {
+            return String(parts[0].prefix(1) + parts[1].prefix(1)).uppercased()
+        }
+        return String(name.prefix(2)).uppercased()
+    }
 
     var body: some View {
         HStack(spacing: Theme.paddingMedium) {
@@ -376,18 +441,25 @@ private struct FriendListRow: View {
                 Circle()
                     .fill(Theme.accent.opacity(0.2))
                     .frame(width: 40, height: 40)
-                Image(systemName: "person.fill")
+                Text(friendInitials)
+                    .font(.system(size: 14, weight: .bold))
                     .foregroundColor(Theme.accent)
             }
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(friend.requesterId == currentUserId ? friend.addresseeId : friend.requesterId)
+                Text(friendName)
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(Theme.textPrimary)
                     .lineLimit(1)
-                Text(friend.status == "accepted" ? "Friends" : "Pending")
-                    .font(Theme.fontCaption)
-                    .foregroundColor(Theme.textSecondary)
+                if let profile = friendProfile {
+                    Text("@\(profile.username)")
+                        .font(Theme.fontCaption)
+                        .foregroundColor(Theme.textSecondary)
+                } else {
+                    Text(friend.status == "accepted" ? "Friends" : "Pending")
+                        .font(Theme.fontCaption)
+                        .foregroundColor(Theme.textSecondary)
+                }
             }
 
             Spacer()

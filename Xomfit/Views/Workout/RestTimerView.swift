@@ -8,13 +8,28 @@ struct RestTimerView: View {
     let onSkip: () -> Void
     let onExtend: () -> Void
 
+    private var isOvertime: Bool {
+        restTimeRemaining <= 0
+    }
+
     private var progress: Double {
         guard restDuration > 0 else { return 0 }
+        if isOvertime { return 1.0 }
         return 1 - (restTimeRemaining / restDuration)
     }
 
+    private var ringColor: Color {
+        isOvertime ? Theme.destructive : Theme.accent
+    }
+
     private var timeString: String {
-        let total = max(0, Int(restTimeRemaining))
+        if isOvertime {
+            let total = Int(abs(restTimeRemaining))
+            let mins = total / 60
+            let secs = total % 60
+            return String(format: "-%d:%02d", mins, secs)
+        }
+        let total = Int(restTimeRemaining)
         let mins = total / 60
         let secs = total % 60
         return String(format: "%d:%02d", mins, secs)
@@ -33,7 +48,7 @@ struct RestTimerView: View {
                 Circle()
                     .trim(from: 0, to: progress)
                     .stroke(
-                        Theme.accent,
+                        ringColor,
                         style: StrokeStyle(lineWidth: 5, lineCap: .round)
                     )
                     .rotationEffect(.degrees(-90))
@@ -42,11 +57,11 @@ struct RestTimerView: View {
                 Text(timeString)
                     .font(.system(size: 16, weight: .bold, design: .monospaced))
                     .monospacedDigit()
-                    .foregroundStyle(Theme.accent)
+                    .foregroundStyle(isOvertime ? Theme.destructive : Theme.accent)
             }
             .frame(width: 64, height: 64)
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel("Rest timer, \(timeString) remaining")
+            .accessibilityLabel(isOvertime ? "Rest timer, \(timeString) overtime" : "Rest timer, \(timeString) remaining")
 
             // Label + controls
             VStack(alignment: .leading, spacing: 8) {

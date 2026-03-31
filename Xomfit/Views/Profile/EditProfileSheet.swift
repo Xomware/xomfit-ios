@@ -11,6 +11,14 @@ struct EditProfileSheet: View {
                 Theme.background.ignoresSafeArea()
 
                 Form {
+                    Section("Username") {
+                        TextField("username", text: Bindable(viewModel).editUsername)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                            .listRowBackground(Theme.cardBackground)
+                            .foregroundStyle(Theme.textPrimary)
+                    }
+
                     Section("Display Name") {
                         TextField("Your name", text: Bindable(viewModel).editDisplayName)
                             .listRowBackground(Theme.cardBackground)

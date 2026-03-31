@@ -11,6 +11,7 @@ struct FeedItemRow: Codable {
     let payload: String       // JSON-encoded payload blob stored as text
     let visibility: String
     let createdAt: String
+    let profiles: ProfileRow?
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -20,6 +21,7 @@ struct FeedItemRow: Codable {
         case payload
         case visibility
         case createdAt = "created_at"
+        case profiles
     }
 }
 
@@ -101,7 +103,7 @@ final class FeedService {
     func fetchFeed(userId: String, limit: Int = 20, offset: Int = 0) async throws -> [SocialFeedItem] {
         let rows: [FeedItemRow] = try await supabase
             .from("feed_items")
-            .select()
+            .select("*, profiles!feed_items_user_id_fkey(*)")
             .order("created_at", ascending: false)
             .range(from: offset, to: offset + limit - 1)
             .execute()
@@ -117,7 +119,7 @@ final class FeedService {
     func fetchUserFeed(userId: String, limit: Int = 20, offset: Int = 0) async throws -> [SocialFeedItem] {
         let rows: [FeedItemRow] = try await supabase
             .from("feed_items")
-            .select()
+            .select("*, profiles!feed_items_user_id_fkey(*)")
             .eq("user_id", value: userId)
             .order("created_at", ascending: false)
             .range(from: offset, to: offset + limit - 1)
@@ -257,6 +259,40 @@ final class FeedService {
             .execute()
     }
 
+    // MARK: - Delete Feed Items for Workout
+
+    /// Deletes feed items associated with a workout.
+    /// Finds workout-type feed items for the given user and checks the payload for a matching workoutId.
+    func deleteFeedItemsForWorkout(workoutId: String, userId: String) async throws {
+        // Fetch all workout-type feed items for this user (no profile join needed)
+        let rows: [FeedItemRow] = try await supabase
+            .from("feed_items")
+            .select("*, profiles!feed_items_user_id_fkey(*)")
+            .eq("user_id", value: userId)
+            .eq("activity_type", value: ActivityType.workout.rawValue)
+            .execute()
+            .value
+
+        // Find rows whose payload contains the matching workoutId
+        let matchingIds = rows.compactMap { row -> String? in
+            guard let data = row.payload.data(using: .utf8),
+                  let activity = try? jsonDecoder.decode(WorkoutActivity.self, from: data),
+                  activity.workoutId == workoutId else {
+                return nil
+            }
+            return row.id
+        }
+
+        // Delete matching feed items
+        for feedItemId in matchingIds {
+            try await supabase
+                .from("feed_items")
+                .delete()
+                .eq("id", value: feedItemId)
+                .execute()
+        }
+    }
+
     // MARK: - Private Helpers
 
     private func buildSocialFeedItem(from row: FeedItemRow) -> SocialFeedItem? {
@@ -282,31 +318,52 @@ final class FeedService {
             streakActivity = try? jsonDecoder.decode(StreakActivity.self, from: payloadData)
         }
 
-        // Build a placeholder AppUser — full profile join is a future enhancement
-        let placeholderUser = AppUser(
-            id: row.userId,
-            username: "",
-            displayName: "User",
-            avatarURL: nil,
-            bio: "",
-            stats: AppUser.UserStats(
-                totalWorkouts: 0,
-                totalVolume: 0,
-                totalPRs: 0,
-                currentStreak: 0,
-                longestStreak: 0,
-                favoriteExercise: nil
-            ),
-            isPrivate: false,
-            createdAt: Date()
-        )
+        // Build AppUser from joined profile data, falling back to placeholder
+        let user: AppUser
+        if let profile = row.profiles {
+            user = AppUser(
+                id: profile.id,
+                username: profile.username,
+                displayName: profile.displayName,
+                avatarURL: profile.avatarURL,
+                bio: profile.bio,
+                stats: AppUser.UserStats(
+                    totalWorkouts: 0,
+                    totalVolume: 0,
+                    totalPRs: 0,
+                    currentStreak: 0,
+                    longestStreak: 0,
+                    favoriteExercise: nil
+                ),
+                isPrivate: profile.isPrivate,
+                createdAt: Date()
+            )
+        } else {
+            user = AppUser(
+                id: row.userId,
+                username: "",
+                displayName: "User",
+                avatarURL: nil,
+                bio: "",
+                stats: AppUser.UserStats(
+                    totalWorkouts: 0,
+                    totalVolume: 0,
+                    totalPRs: 0,
+                    currentStreak: 0,
+                    longestStreak: 0,
+                    favoriteExercise: nil
+                ),
+                isPrivate: false,
+                createdAt: Date()
+            )
+        }
 
         return SocialFeedItem(
             id: row.id,
             userId: row.userId,
             activityType: activityType,
             createdAt: createdAt,
-            user: placeholderUser,
+            user: user,
             likes: 0,          // Like counts fetched separately / via DB view
             isLiked: false,
             comments: [],

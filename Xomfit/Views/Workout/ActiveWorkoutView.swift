@@ -8,6 +8,7 @@ struct ActiveWorkoutView: View {
     @State private var showExercisePicker = false
     @State private var showDiscardAlert = false
     @State private var timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+    @State private var restTimerHapticFired = false
 
     // Passed in from WorkoutView
     let workoutName: String
@@ -22,60 +23,72 @@ struct ActiveWorkoutView: View {
                     // Header bar
                     headerBar
 
-                    // Rest timer
-                    if viewModel.isRestTimerActive {
-                        RestTimerView(
-                            restTimeRemaining: viewModel.restTimeRemaining,
-                            restDuration: viewModel.restDuration,
-                            onSkip: { viewModel.skipRestTimer() },
-                            onExtend: { viewModel.extendRestTimer() }
-                        )
-                        .padding(.horizontal, Theme.paddingMedium)
-                        .padding(.vertical, Theme.paddingSmall)
-                        .transition(.move(edge: .top).combined(with: .opacity))
-                    }
-
-                    // Exercise list
-                    if viewModel.exercises.isEmpty {
-                        emptyState
+                    if viewModel.focusMode {
+                        // Focus mode — large gym-floor view
+                        WorkoutFocusView(viewModel: viewModel)
                     } else {
-                        ScrollView {
-                            LazyVStack(spacing: Theme.paddingMedium) {
-                                ForEach(viewModel.exercises.indices, id: \.self) { exIdx in
-                                    ExerciseCard(
-                                        exerciseIndex: exIdx,
-                                        viewModel: viewModel
-                                    )
+                        // Rest timer
+                        if viewModel.isRestTimerActive {
+                            RestTimerView(
+                                restTimeRemaining: viewModel.restTimeRemaining,
+                                restDuration: viewModel.restDuration,
+                                onSkip: {
+                                    viewModel.skipRestTimer()
+                                    restTimerHapticFired = false
+                                },
+                                onExtend: { viewModel.extendRestTimer() }
+                            )
+                            .padding(.horizontal, Theme.paddingMedium)
+                            .padding(.vertical, Theme.paddingSmall)
+                            .transition(.move(edge: .top).combined(with: .opacity))
+                        }
+
+                        // Exercise list
+                        if viewModel.exercises.isEmpty {
+                            emptyState
+                        } else {
+                            ScrollView {
+                                LazyVStack(spacing: Theme.paddingMedium) {
+                                    ForEach(viewModel.exercises.indices, id: \.self) { exIdx in
+                                        ExerciseCard(
+                                            exerciseIndex: exIdx,
+                                            viewModel: viewModel
+                                        )
+                                    }
                                 }
+                                .padding(Theme.paddingMedium)
+                                // Bottom padding so FAB doesn't overlap last card
+                                .padding(.bottom, 80)
                             }
-                            .padding(Theme.paddingMedium)
-                            // Bottom padding so FAB doesn't overlap last card
-                            .padding(.bottom, 80)
                         }
                     }
                 }
                 .animation(.easeInOut(duration: 0.3), value: viewModel.isRestTimerActive)
+                .animation(.easeInOut(duration: 0.3), value: viewModel.showNextExercisePrompt)
+                .animation(.easeInOut(duration: 0.3), value: viewModel.focusMode)
 
-                // Floating Add Exercise button
-                VStack {
-                    Spacer()
-                    Button {
-                        showExercisePicker = true
-                    } label: {
-                        HStack(spacing: 8) {
-                            Image(systemName: "plus")
-                                .font(.system(size: 16, weight: .bold))
-                            Text("Add Exercise")
-                                .font(.system(size: 15, weight: .bold))
+                // Floating Add Exercise button (hidden in focus mode)
+                if !viewModel.focusMode {
+                    VStack {
+                        Spacer()
+                        Button {
+                            showExercisePicker = true
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "plus")
+                                    .font(.system(size: 16, weight: .bold))
+                                Text("Add Exercise")
+                                    .font(.system(size: 15, weight: .bold))
+                            }
+                            .foregroundColor(.black)
+                            .padding(.horizontal, Theme.paddingLarge)
+                            .padding(.vertical, 14)
+                            .background(Theme.accent)
+                            .cornerRadius(28)
+                            .shadow(color: Theme.accent.opacity(0.4), radius: 8, x: 0, y: 4)
                         }
-                        .foregroundColor(.black)
-                        .padding(.horizontal, Theme.paddingLarge)
-                        .padding(.vertical, 14)
-                        .background(Theme.accent)
-                        .cornerRadius(28)
-                        .shadow(color: Theme.accent.opacity(0.4), radius: 8, x: 0, y: 4)
+                        .padding(.bottom, Theme.paddingLarge)
                     }
-                    .padding(.bottom, Theme.paddingLarge)
                 }
 
                 // PR Celebration Banner
@@ -85,6 +98,26 @@ struct ActiveWorkoutView: View {
                             withAnimation { viewModel.showPRCelebration = false }
                         }
                         .transition(.move(edge: .top).combined(with: .opacity))
+                        Spacer()
+                    }
+                }
+
+                // Next Exercise Toast
+                if viewModel.showNextExercisePrompt {
+                    VStack {
+                        NextExerciseBanner(
+                            completedName: viewModel.completedExerciseName ?? "",
+                            nextName: viewModel.nextExerciseSuggestion
+                        ) {
+                            withAnimation { viewModel.showNextExercisePrompt = false }
+                        }
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                        .onAppear {
+                            Task {
+                                try? await Task.sleep(for: .seconds(3))
+                                withAnimation { viewModel.showNextExercisePrompt = false }
+                            }
+                        }
                         Spacer()
                     }
                 }
@@ -101,11 +134,16 @@ struct ActiveWorkoutView: View {
         }
         .onReceive(timer) { _ in
             viewModel.tickRestTimer()
-            // Haptic when rest timer completes
-            if !viewModel.isRestTimerActive && viewModel.restDuration > 0 && viewModel.restTimeRemaining <= 0 {
-                viewModel.restDuration = 0
+            // Haptic fires once when rest timer crosses zero
+            if viewModel.isRestTimerActive && viewModel.restTimeRemaining <= 0 && !restTimerHapticFired {
+                restTimerHapticFired = true
                 let generator = UINotificationFeedbackGenerator()
                 generator.notificationOccurred(.success)
+            }
+        }
+        .onChange(of: viewModel.isRestTimerActive) { _, isActive in
+            if isActive {
+                restTimerHapticFired = false
             }
         }
         .sheet(isPresented: $showExercisePicker) {
@@ -150,6 +188,19 @@ struct ActiveWorkoutView: View {
             }
 
             Spacer()
+
+            // Focus mode toggle
+            Button {
+                withAnimation { viewModel.focusMode.toggle() }
+            } label: {
+                Image(systemName: viewModel.focusMode ? "list.bullet" : "eye")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(viewModel.focusMode ? Theme.accent : Theme.textSecondary)
+                    .frame(width: 36, height: 36)
+                    .background(viewModel.focusMode ? Theme.accent.opacity(0.15) : Theme.textSecondary.opacity(0.15))
+                    .clipShape(Circle())
+            }
+            .accessibilityLabel(viewModel.focusMode ? "Switch to list view" : "Switch to focus view")
 
             // Finish button
             Button {
@@ -281,12 +332,46 @@ private struct ExerciseCard: View {
                     }
                 }
                 Spacer()
+
+                // Reorder buttons
+                if exerciseIndex > 0 {
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            viewModel.moveExercise(from: exerciseIndex, direction: -1)
+                        }
+                    } label: {
+                        Image(systemName: "chevron.up")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(Theme.textSecondary)
+                            .frame(width: 44, height: 44)
+                            .contentShape(Rectangle())
+                    }
+                    .accessibilityLabel("Move \(exercise.exercise.name) up")
+                }
+
+                if exerciseIndex < viewModel.exercises.count - 1 {
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            viewModel.moveExercise(from: exerciseIndex, direction: 1)
+                        }
+                    } label: {
+                        Image(systemName: "chevron.down")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(Theme.textSecondary)
+                            .frame(width: 44, height: 44)
+                            .contentShape(Rectangle())
+                    }
+                    .accessibilityLabel("Move \(exercise.exercise.name) down")
+                }
+
                 Button {
                     viewModel.removeExercise(at: exerciseIndex)
                 } label: {
                     Image(systemName: "xmark")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(Theme.textSecondary)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
                 }
             }
 
@@ -336,6 +421,9 @@ private struct ExerciseCard: View {
                     },
                     onDelete: {
                         viewModel.removeSet(exerciseIndex: exerciseIndex, setIndex: setIdx)
+                    },
+                    onToggleWeightMode: {
+                        viewModel.toggleWeightMode(exerciseIndex: exerciseIndex, setIndex: setIdx)
                     }
                 )
             }
@@ -361,5 +449,54 @@ private struct ExerciseCard: View {
         .background(Theme.cardBackground)
         .cornerRadius(Theme.cornerRadius)
         }
+    }
+}
+
+// MARK: - Next Exercise Banner
+
+private struct NextExerciseBanner: View {
+    let completedName: String
+    let nextName: String?
+    let onDismiss: () -> Void
+
+    var body: some View {
+        HStack(spacing: Theme.paddingSmall) {
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 20))
+                .foregroundStyle(Theme.accent)
+
+            VStack(alignment: .leading, spacing: 2) {
+                if let nextName {
+                    Text("\(completedName) complete")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(Theme.textPrimary)
+                    Text("Up next: \(nextName)")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundStyle(Theme.accent)
+                } else {
+                    Text("\(completedName) complete")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(Theme.textPrimary)
+                }
+            }
+
+            Spacer()
+
+            Button(action: onDismiss) {
+                Image(systemName: "xmark")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundStyle(Theme.textSecondary)
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, Theme.paddingMedium)
+        .padding(.vertical, Theme.paddingSmall)
+        .background(Theme.cardBackground)
+        .cornerRadius(Theme.cornerRadius)
+        .padding(.horizontal, Theme.paddingMedium)
+        .padding(.top, Theme.paddingSmall)
+        .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
     }
 }
