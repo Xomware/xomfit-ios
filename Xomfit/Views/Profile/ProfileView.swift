@@ -36,7 +36,7 @@ struct ProfileView: View {
             Theme.background.ignoresSafeArea()
 
             if viewModel.isLoading {
-                XomFitLoaderPulse()
+                profileSkeleton
             } else if !viewModel.isOwnProfile && viewModel.isPrivate && viewModel.friendshipStatus != .friends {
                 PrivateProfileView(
                     displayName: viewModel.displayName,
@@ -70,6 +70,40 @@ struct ProfileView: View {
         }
     }
 
+    // MARK: - Skeleton Loading
+
+    private var profileSkeleton: some View {
+        VStack(spacing: Theme.paddingMedium) {
+            // Avatar placeholder
+            Circle()
+                .fill(Theme.cardBackground)
+                .frame(width: 80, height: 80)
+                .shimmer()
+
+            // Name placeholder
+            SkeletonCard(height: 20)
+                .frame(width: 160)
+
+            // Stats row placeholder
+            HStack(spacing: Theme.paddingMedium) {
+                ForEach(0..<3, id: \.self) { _ in
+                    SkeletonCard(height: 50)
+                }
+            }
+            .padding(.horizontal, Theme.paddingMedium)
+
+            // Content placeholders
+            ForEach(0..<3, id: \.self) { index in
+                SkeletonCard(height: 80)
+                    .staggeredAppear(index: index)
+            }
+            .padding(.horizontal, Theme.paddingMedium)
+
+            Spacer()
+        }
+        .padding(.top, Theme.paddingLarge)
+    }
+
     // MARK: - Main Scroll Content
 
     private var mainScrollContent: some View {
@@ -87,6 +121,9 @@ struct ProfileView: View {
                     friendCount: viewModel.friendCount,
                     prCount: viewModel.totalPRs,
                     friendshipStatus: viewModel.friendshipStatus,
+                    friends: viewModel.friends,
+                    friendProfiles: viewModel.friendProfiles,
+                    currentUserId: resolvedUserId,
                     onStatTapped: { tab in
                         withAnimation(.easeInOut(duration: 0.25)) {
                             viewModel.selectedTab = tab
@@ -136,12 +173,6 @@ struct ProfileView: View {
                 recentPRs: viewModel.recentPRs,
                 muscleGroupSetsThisWeek: viewModel.muscleGroupSetsThisWeek,
                 muscleGroupSetsThisMonth: viewModel.muscleGroupSetsThisMonth
-            )
-        case .friends:
-            ProfileFriendsView(
-                friends: viewModel.friends,
-                friendProfiles: viewModel.friendProfiles,
-                currentUserId: resolvedUserId
             )
         }
     }

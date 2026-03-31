@@ -5,7 +5,10 @@ struct TemplateCardView: View {
     let onSelect: () -> Void
 
     var body: some View {
-        Button(action: onSelect) {
+        Button(action: {
+            Haptics.light()
+            onSelect()
+        }) {
             HStack(spacing: 10) {
                 // Category icon
                 Image(systemName: template.category.icon)
@@ -36,7 +39,7 @@ struct TemplateCardView: View {
             .background(Theme.cardBackground)
             .clipShape(.rect(cornerRadius: Theme.cornerRadius))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PressableCardStyle())
         .accessibilityLabel("\(template.name) template, \(template.exercises.count) exercises, about \(template.estimatedDuration) minutes")
         .accessibilityAddTraits(.isButton)
     }

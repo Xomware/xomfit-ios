@@ -171,13 +171,19 @@ final class WorkoutService {
     func fetchWorkouts(userId: String) async -> [Workout] {
         do {
             let workouts = try await fetchFromSupabase(userId: userId)
-            // Update local cache on success
+            // Update local cache on success — replace entirely for this user
             overwriteCache(workouts, userId: userId)
-            return workouts
+            return deduplicateWorkouts(workouts)
         } catch {
             print("[WorkoutService] Supabase fetch failed, using cache: \(error.localizedDescription)")
-            return fetchWorkoutsFromCache(userId: userId)
+            return deduplicateWorkouts(fetchWorkoutsFromCache(userId: userId))
         }
+    }
+
+    /// Remove duplicate workouts by ID, keeping the first occurrence (most recent by sort order).
+    private func deduplicateWorkouts(_ workouts: [Workout]) -> [Workout] {
+        var seen = Set<String>()
+        return workouts.filter { seen.insert($0.id).inserted }
     }
 
     func fetchWorkoutsFromCache(userId: String) -> [Workout] {
@@ -231,7 +237,7 @@ final class WorkoutService {
 
         try await supabase
             .from("workouts")
-            .insert(workoutPayload)
+            .upsert(workoutPayload)
             .execute()
 
         for (sortIndex, workoutExercise) in workout.exercises.enumerated() {
@@ -245,7 +251,7 @@ final class WorkoutService {
 
             try await supabase
                 .from("workout_exercises")
-                .insert(exercisePayload)
+                .upsert(exercisePayload)
                 .execute()
 
             for (setIndex, workoutSet) in workoutExercise.sets.enumerated() {
@@ -263,7 +269,7 @@ final class WorkoutService {
 
                 try await supabase
                     .from("workout_sets")
-                    .insert(setPayload)
+                    .upsert(setPayload)
                     .execute()
             }
         }
