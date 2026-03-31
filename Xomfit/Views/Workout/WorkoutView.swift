@@ -31,14 +31,9 @@ struct WorkoutView: View {
                         HStack(spacing: 10) {
                             Image(systemName: "play.fill")
                             Text("Start Workout")
-                                .font(.system(size: 17, weight: .bold))
                         }
-                        .foregroundColor(.black)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(Theme.accent)
-                        .cornerRadius(Theme.cornerRadius)
                     }
+                    .buttonStyle(AccentButtonStyle())
                     .padding(.horizontal, Theme.paddingMedium)
                     .padding(.top, Theme.paddingMedium)
                     .padding(.bottom, Theme.paddingSmall)
@@ -50,18 +45,9 @@ struct WorkoutView: View {
                         HStack(spacing: 10) {
                             Image(systemName: "hammer.fill")
                             Text("Build Workout")
-                                .font(.system(size: 17, weight: .bold))
                         }
-                        .foregroundColor(Theme.accent)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(Color.clear)
-                        .cornerRadius(Theme.cornerRadius)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: Theme.cornerRadius)
-                                .strokeBorder(Theme.accent, lineWidth: 1.5)
-                        )
                     }
+                    .buttonStyle(GhostButtonStyle())
                     .padding(.horizontal, Theme.paddingMedium)
                     .padding(.bottom, Theme.paddingSmall)
 
