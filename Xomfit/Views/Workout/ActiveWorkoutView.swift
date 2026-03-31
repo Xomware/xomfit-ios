@@ -64,7 +64,7 @@ struct ActiveWorkoutView: View {
                     }
                 }
                 .animation(.easeInOut(duration: 0.3), value: viewModel.isRestTimerActive)
-                .animation(.easeInOut(duration: 0.3), value: viewModel.showNextExercisePrompt)
+                .animation(.easeInOut(duration: 0.3), value: viewModel.showExerciseTransition)
                 .animation(.easeInOut(duration: 0.3), value: viewModel.focusMode)
 
                 // Floating Add Exercise button (hidden in focus mode)
@@ -102,24 +102,19 @@ struct ActiveWorkoutView: View {
                     }
                 }
 
-                // Next Exercise Toast
-                if viewModel.showNextExercisePrompt {
+                // Exercise Transition Overlay
+                if viewModel.showExerciseTransition {
+                    Color.black.opacity(0.4)
+                        .ignoresSafeArea()
+                        .onTapGesture { withAnimation { viewModel.dismissTransition() } }
+
                     VStack {
-                        NextExerciseBanner(
-                            completedName: viewModel.completedExerciseName ?? "",
-                            nextName: viewModel.nextExerciseSuggestion
-                        ) {
-                            withAnimation { viewModel.showNextExercisePrompt = false }
-                        }
-                        .transition(.move(edge: .top).combined(with: .opacity))
-                        .onAppear {
-                            Task {
-                                try? await Task.sleep(for: .seconds(3))
-                                withAnimation { viewModel.showNextExercisePrompt = false }
-                            }
-                        }
                         Spacer()
+                        ExerciseTransitionCard(viewModel: viewModel)
+                            .padding(Theme.paddingMedium)
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
                     }
+                    .animation(.easeOut(duration: 0.3), value: viewModel.showExerciseTransition)
                 }
             }
             .toolbar(.hidden, for: .navigationBar)
@@ -535,51 +530,165 @@ private struct ExerciseConfigRow: View {
     }
 }
 
-// MARK: - Next Exercise Banner
+// MARK: - Exercise Transition Card
 
-private struct NextExerciseBanner: View {
-    let completedName: String
-    let nextName: String?
-    let onDismiss: () -> Void
+private struct ExerciseTransitionCard: View {
+    let viewModel: WorkoutLoggerViewModel
+    @State private var showRemainingList = false
 
     var body: some View {
-        HStack(spacing: Theme.paddingSmall) {
-            Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 20))
-                .foregroundStyle(Theme.accent)
-
-            VStack(alignment: .leading, spacing: 2) {
-                if let nextName {
-                    Text("\(completedName) complete")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(Theme.textPrimary)
-                    Text("Up next: \(nextName)")
+        VStack(spacing: Theme.paddingMedium) {
+            // Header: completed exercise name
+            HStack(spacing: Theme.paddingSmall) {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 24))
+                    .foregroundStyle(Theme.accent)
+                Text("\(viewModel.completedExerciseName) Complete")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundStyle(Theme.textPrimary)
+                Spacer()
+                Button {
+                    withAnimation { viewModel.dismissTransition() }
+                } label: {
+                    Image(systemName: "xmark")
                         .font(.system(size: 13, weight: .bold))
-                        .foregroundStyle(Theme.accent)
-                } else {
-                    Text("\(completedName) complete")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundStyle(Theme.textPrimary)
+                        .foregroundStyle(Theme.textSecondary)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Dismiss")
             }
 
-            Spacer()
-
-            Button(action: onDismiss) {
-                Image(systemName: "xmark")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(Theme.textSecondary)
-                    .frame(width: 44, height: 44)
-                    .contentShape(Rectangle())
+            // Option 1: Do Another Set
+            Button {
+                withAnimation { viewModel.addAnotherSet() }
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "plus")
+                        .font(.system(size: 15, weight: .bold))
+                    Text("Do Another Set")
+                        .font(.system(size: 15, weight: .bold))
+                }
+                .foregroundStyle(Theme.accent)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(
+                    RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall)
+                        .stroke(Theme.accent, lineWidth: 1.5)
+                )
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("Add another set to \(viewModel.completedExerciseName)")
+
+            // Option 2: Move to Next Exercise
+            if let nextIdx = viewModel.nextExerciseIndex, let nextEx = viewModel.nextExercise {
+                Button {
+                    withAnimation { viewModel.moveToExercise(index: nextIdx) }
+                } label: {
+                    VStack(spacing: 4) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "arrow.right")
+                                .font(.system(size: 15, weight: .bold))
+                            Text("Move to \(nextEx.exercise.name)")
+                                .font(.system(size: 15, weight: .bold))
+                        }
+                        .foregroundStyle(.black)
+
+                        // Show config hints (grips, attachments, positions)
+                        configHints(for: nextEx.exercise)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(Theme.accent)
+                    .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Move to \(nextEx.exercise.name)")
+            }
+
+            // Option 3: Choose Different
+            if !viewModel.remainingExercises.isEmpty {
+                VStack(spacing: 0) {
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            showRemainingList.toggle()
+                        }
+                    } label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: "list.bullet")
+                                .font(.system(size: 15, weight: .bold))
+                            Text("Choose Different")
+                                .font(.system(size: 15, weight: .bold))
+                            Spacer()
+                            Image(systemName: showRemainingList ? "chevron.up" : "chevron.down")
+                                .font(.system(size: 12, weight: .semibold))
+                        }
+                        .foregroundStyle(Theme.textSecondary)
+                        .padding(.vertical, 12)
+                        .padding(.horizontal, Theme.paddingMedium)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Choose a different exercise")
+
+                    if showRemainingList {
+                        VStack(spacing: 0) {
+                            ForEach(viewModel.remainingExercises) { item in
+                                Button {
+                                    withAnimation { viewModel.moveToExercise(index: item.index) }
+                                } label: {
+                                    HStack(spacing: Theme.paddingSmall) {
+                                        Circle()
+                                            .fill(Theme.accent.opacity(0.3))
+                                            .frame(width: 6, height: 6)
+                                        Text(item.name)
+                                            .font(.system(size: 14, weight: .medium))
+                                            .foregroundStyle(Theme.textPrimary)
+                                        Spacer()
+                                    }
+                                    .padding(.vertical, 10)
+                                    .padding(.horizontal, Theme.paddingMedium)
+                                    .contentShape(Rectangle())
+                                }
+                                .buttonStyle(.plain)
+                                .accessibilityLabel("Switch to \(item.name)")
+                            }
+                        }
+                        .transition(.opacity.combined(with: .move(edge: .top)))
+                    }
+                }
+                .background(Theme.secondaryBackground)
+                .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall))
+            }
         }
-        .padding(.horizontal, Theme.paddingMedium)
-        .padding(.vertical, Theme.paddingSmall)
+        .padding(Theme.paddingMedium)
         .background(Theme.cardBackground)
-        .cornerRadius(Theme.cornerRadius)
-        .padding(.horizontal, Theme.paddingMedium)
-        .padding(.top, Theme.paddingSmall)
-        .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
+        .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
+        .shadow(color: .black.opacity(0.5), radius: 16, x: 0, y: -4)
+    }
+
+    @ViewBuilder
+    private func configHints(for exercise: Exercise) -> some View {
+        let hints = buildConfigHints(for: exercise)
+        if !hints.isEmpty {
+            Text(hints.joined(separator: " \u{2022} "))
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(.black.opacity(0.6))
+        }
+    }
+
+    private func buildConfigHints(for exercise: Exercise) -> [String] {
+        var hints: [String] = []
+        if let attachments = exercise.supportedAttachments {
+            hints.append(contentsOf: attachments.prefix(2).map(\.displayName))
+        }
+        if let grips = exercise.supportedGrips {
+            hints.append(contentsOf: grips.prefix(2).map(\.displayName))
+        }
+        if let positions = exercise.supportedPositions {
+            hints.append(contentsOf: positions.prefix(2).map(\.displayName))
+        }
+        return hints
     }
 }

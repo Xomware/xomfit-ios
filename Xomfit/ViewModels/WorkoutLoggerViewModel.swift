@@ -1,5 +1,11 @@
 import SwiftUI
 
+struct RemainingExercise: Identifiable {
+    let index: Int
+    let name: String
+    var id: Int { index }
+}
+
 @MainActor
 @Observable
 final class WorkoutLoggerViewModel {
@@ -19,10 +25,23 @@ final class WorkoutLoggerViewModel {
     var newPR: PersonalRecord? = nil
     var showPRCelebration: Bool = false
 
-    // Next exercise prompt — shown when all sets of an exercise are complete
-    var nextExerciseSuggestion: String? = nil
-    var completedExerciseName: String? = nil
-    var showNextExercisePrompt: Bool = false
+    // Exercise transition — shown when all sets of an exercise are complete
+    var showExerciseTransition: Bool = false
+    var completedExerciseIndex: Int = 0
+    var nextExerciseIndex: Int? = nil
+    var remainingExercises: [RemainingExercise] = []
+
+    /// Name of the exercise that was just completed (for the transition card header).
+    var completedExerciseName: String {
+        guard exercises.indices.contains(completedExerciseIndex) else { return "" }
+        return exercises[completedExerciseIndex].exercise.name
+    }
+
+    /// The next exercise to suggest, if one exists.
+    var nextExercise: WorkoutExercise? {
+        guard let idx = nextExerciseIndex, exercises.indices.contains(idx) else { return nil }
+        return exercises[idx]
+    }
 
     // Focus mode — large gym-floor view
     var focusMode: Bool = false
@@ -69,9 +88,10 @@ final class WorkoutLoggerViewModel {
         activeUserId = userId
         newPR = nil
         showPRCelebration = false
-        nextExerciseSuggestion = nil
-        completedExerciseName = nil
-        showNextExercisePrompt = false
+        showExerciseTransition = false
+        completedExerciseIndex = 0
+        nextExerciseIndex = nil
+        remainingExercises = []
         focusMode = false
         focusExerciseIndex = 0
         focusSetIndex = 0
@@ -86,9 +106,10 @@ final class WorkoutLoggerViewModel {
         errorMessage = nil
         newPR = nil
         showPRCelebration = false
-        nextExerciseSuggestion = nil
-        completedExerciseName = nil
-        showNextExercisePrompt = false
+        showExerciseTransition = false
+        completedExerciseIndex = 0
+        nextExerciseIndex = nil
+        remainingExercises = []
         focusMode = false
         focusExerciseIndex = 0
         focusSetIndex = 0
@@ -255,16 +276,25 @@ final class WorkoutLoggerViewModel {
             // Check if all sets in this exercise are now complete
             let allDone = exercises[exerciseIndex].sets.allSatisfy { $0.completedAt != Date.distantPast }
             if allDone {
-                completedExerciseName = exercises[exerciseIndex].exercise.name
-                let nextIndex = exercises.indices.first { idx in
+                completedExerciseIndex = exerciseIndex
+
+                // Find the next incomplete exercise (prefer one after current, then wrap around)
+                let afterCurrent = exercises.indices.first { idx in
                     idx > exerciseIndex && exercises[idx].sets.contains { $0.completedAt == Date.distantPast }
                 }
-                if let nextIdx = nextIndex {
-                    nextExerciseSuggestion = exercises[nextIdx].exercise.name
-                } else {
-                    nextExerciseSuggestion = nil
+                let beforeCurrent = exercises.indices.first { idx in
+                    idx < exerciseIndex && exercises[idx].sets.contains { $0.completedAt == Date.distantPast }
                 }
-                showNextExercisePrompt = true
+                nextExerciseIndex = afterCurrent ?? beforeCurrent
+
+                // Build remaining exercises list (all incomplete, excluding current)
+                remainingExercises = exercises.enumerated().compactMap { idx, ex in
+                    guard idx != exerciseIndex,
+                          ex.sets.contains(where: { $0.completedAt == Date.distantPast }) else { return nil }
+                    return RemainingExercise(index: idx, name: ex.exercise.name)
+                }
+
+                showExerciseTransition = true
             }
         }
     }
@@ -330,6 +360,25 @@ final class WorkoutLoggerViewModel {
     func completeFocusedSet() {
         completeSet(exerciseIndex: focusExerciseIndex, setIndex: focusSetIndex)
         focusAdvance()
+    }
+
+    // MARK: - Exercise Transition Actions
+
+    func addAnotherSet() {
+        addSet(to: completedExerciseIndex)
+        showExerciseTransition = false
+    }
+
+    func moveToExercise(index: Int) {
+        if focusMode {
+            focusExerciseIndex = index
+            focusSetIndex = 0
+        }
+        showExerciseTransition = false
+    }
+
+    func dismissTransition() {
+        showExerciseTransition = false
     }
 
     // MARK: - Rest Timer
