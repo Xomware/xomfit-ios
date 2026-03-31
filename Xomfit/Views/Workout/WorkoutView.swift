@@ -9,6 +9,7 @@ struct WorkoutView: View {
     @State private var pendingWorkoutName = ""
     @State private var selectedTemplate: WorkoutTemplate?
     @State private var showTemplateList = false
+    @State private var showBuilder = false
 
     private var userId: String {
         authService.currentUser?.id.uuidString ?? ""
@@ -38,6 +39,28 @@ struct WorkoutView: View {
                     }
                     .padding(.horizontal, Theme.paddingMedium)
                     .padding(.top, Theme.paddingMedium)
+                    .padding(.bottom, Theme.paddingSmall)
+
+                    // Build Workout
+                    Button {
+                        showBuilder = true
+                    } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: "hammer.fill")
+                            Text("Build Workout")
+                                .font(.system(size: 17, weight: .bold))
+                        }
+                        .foregroundColor(Theme.accent)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(Color.clear)
+                        .cornerRadius(Theme.cornerRadius)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: Theme.cornerRadius)
+                                .strokeBorder(Theme.accent, lineWidth: 1.5)
+                        )
+                    }
+                    .padding(.horizontal, Theme.paddingMedium)
                     .padding(.bottom, Theme.paddingSmall)
 
                     // Quick Start templates
@@ -109,6 +132,9 @@ struct WorkoutView: View {
                 template: template
             )
             .environment(authService)
+        }
+        .sheet(isPresented: $showBuilder) {
+            WorkoutBuilderView()
         }
         .sheet(isPresented: $showTemplateList) {
             TemplateListView { template in
