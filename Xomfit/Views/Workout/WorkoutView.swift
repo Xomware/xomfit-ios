@@ -78,11 +78,16 @@ struct WorkoutView: View {
                         Spacer()
                     } else {
                         List {
-                            ForEach(workouts) { workout in
-                                WorkoutHistoryCard(workout: workout)
-                                    .listRowBackground(Color.clear)
-                                    .listRowSeparator(.hidden)
-                                    .listRowInsets(EdgeInsets(top: 6, leading: Theme.paddingMedium, bottom: 6, trailing: Theme.paddingMedium))
+                            ForEach(Array(workouts.enumerated()), id: \.element.id) { index, workout in
+                                NavigationLink {
+                                    WorkoutDetailView(workout: workout)
+                                } label: {
+                                    WorkoutHistoryCard(workout: workout)
+                                }
+                                .listRowBackground(Color.clear)
+                                .listRowSeparator(.hidden)
+                                .listRowInsets(EdgeInsets(top: 6, leading: Theme.paddingMedium, bottom: 6, trailing: Theme.paddingMedium))
+                                .staggeredAppear(index: index)
                             }
                             .onDelete { indexSet in
                                 let idsToDelete = indexSet.map { workouts[$0].id }
@@ -168,10 +173,11 @@ struct WorkoutView: View {
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: Theme.paddingSmall) {
-                    ForEach(TemplateService.shared.allTemplates().prefix(6)) { template in
+                    ForEach(Array(TemplateService.shared.allTemplates().prefix(6).enumerated()), id: \.element.id) { index, template in
                         TemplateCardView(template: template) {
                             previewTemplate = template
                         }
+                        .staggeredAppear(index: index)
                     }
                 }
                 .padding(.horizontal, Theme.paddingMedium)
@@ -192,7 +198,7 @@ struct WorkoutView: View {
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: Theme.paddingSmall) {
-                    ForEach(workouts.prefix(5)) { workout in
+                    ForEach(Array(workouts.prefix(5).enumerated()), id: \.element.id) { index, workout in
                         RecentWorkoutCard(workout: workout) {
                             pendingWorkoutName = workout.name
                             // Build a template from the workout's exercises
@@ -216,6 +222,7 @@ struct WorkoutView: View {
                             )
                             selectedTemplate = replayTemplate
                         }
+                        .staggeredAppear(index: index)
                     }
                 }
                 .padding(.horizontal, Theme.paddingMedium)

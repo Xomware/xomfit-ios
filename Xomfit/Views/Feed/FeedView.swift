@@ -15,7 +15,7 @@ struct FeedView: View {
                 Theme.background.ignoresSafeArea()
 
                 if viewModel.isLoading {
-                    XomFitLoaderPulse()
+                    feedSkeleton
                 } else if let error = viewModel.errorMessage {
                     errorView(message: error)
                 } else if viewModel.feedItems.isEmpty {
@@ -56,11 +56,24 @@ struct FeedView: View {
         }
     }
 
+    // MARK: - Skeleton Loading
+
+    private var feedSkeleton: some View {
+        VStack(spacing: 12) {
+            ForEach(0..<4, id: \.self) { index in
+                SkeletonCard(height: 120)
+                    .staggeredAppear(index: index)
+            }
+        }
+        .padding(.horizontal, Theme.paddingMedium)
+        .padding(.top, Theme.paddingMedium)
+    }
+
     // MARK: - Feed List
 
     private var feedList: some View {
         List {
-            ForEach(viewModel.feedItems) { item in
+            ForEach(Array(viewModel.feedItems.enumerated()), id: \.element.id) { index, item in
                 NavigationLink {
                     FeedDetailView(item: item, userId: userId)
                 } label: {
@@ -81,6 +94,7 @@ struct FeedView: View {
                     trailing: Theme.paddingMedium
                 ))
                 .buttonStyle(.plain)
+                .staggeredAppear(index: index)
                 .onAppear {
                     // Load more when near the end
                     if item.id == viewModel.feedItems.last?.id {

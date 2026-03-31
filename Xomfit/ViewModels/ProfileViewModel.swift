@@ -6,7 +6,6 @@ enum ProfileTab: String, CaseIterable, Identifiable {
     case feed
     case calendar
     case stats
-    case friends
 
     var id: String { rawValue }
 
@@ -15,7 +14,6 @@ enum ProfileTab: String, CaseIterable, Identifiable {
         case .feed: return "list.bullet"
         case .calendar: return "calendar"
         case .stats: return "chart.bar"
-        case .friends: return "person.2"
         }
     }
 
@@ -24,7 +22,6 @@ enum ProfileTab: String, CaseIterable, Identifiable {
         case .feed: return "Feed"
         case .calendar: return "Calendar"
         case .stats: return "Stats"
-        case .friends: return "Friends"
         }
     }
 }

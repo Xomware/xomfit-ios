@@ -60,6 +60,14 @@ extension View {
         modifier(GlassCardStyle())
     }
 
+    func shimmer() -> some View {
+        modifier(ShimmerModifier())
+    }
+
+    func staggeredAppear(index: Int) -> some View {
+        modifier(StaggeredAppearance(index: index))
+    }
+
     func glassStyle() -> some View {
         self
             .background(Theme.glassFill)
@@ -68,6 +76,89 @@ extension View {
                 RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall)
                     .strokeBorder(Theme.glassBorder, lineWidth: 0.5)
             )
+    }
+}
+
+// MARK: - Shimmer Modifier
+
+struct ShimmerModifier: ViewModifier {
+    @State private var phase: CGFloat = 0
+
+    func body(content: Content) -> some View {
+        content
+            .overlay(
+                LinearGradient(
+                    colors: [.clear, Color.white.opacity(0.1), .clear],
+                    startPoint: .init(x: phase - 0.5, y: 0.5),
+                    endPoint: .init(x: phase + 0.5, y: 0.5)
+                )
+            )
+            .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
+            .onAppear {
+                withAnimation(.linear(duration: 1.5).repeatForever(autoreverses: false)) {
+                    phase = 1.5
+                }
+            }
+    }
+}
+
+// MARK: - Skeleton Card
+
+struct SkeletonCard: View {
+    var height: CGFloat = 80
+
+    var body: some View {
+        RoundedRectangle(cornerRadius: Theme.cornerRadius)
+            .fill(Theme.cardBackground)
+            .frame(height: height)
+            .shimmer()
+    }
+}
+
+// MARK: - Staggered Appearance
+
+struct StaggeredAppearance: ViewModifier {
+    let index: Int
+    @State private var appeared = false
+
+    func body(content: Content) -> some View {
+        content
+            .opacity(appeared ? 1 : 0)
+            .offset(y: appeared ? 0 : 20)
+            .animation(
+                .spring(response: 0.4, dampingFraction: 0.8)
+                .delay(Double(index) * 0.05),
+                value: appeared
+            )
+            .onAppear { appeared = true }
+    }
+}
+
+// MARK: - Pressable Card Style
+
+struct PressableCardStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.97 : 1)
+            .opacity(configuration.isPressed ? 0.9 : 1)
+            .animation(.spring(response: 0.2), value: configuration.isPressed)
+    }
+}
+
+// MARK: - Haptics
+
+@MainActor
+enum Haptics {
+    static func light() {
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+    }
+
+    static func medium() {
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+    }
+
+    static func success() {
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
     }
 }
 

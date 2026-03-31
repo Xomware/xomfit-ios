@@ -38,6 +38,7 @@ private struct FloatingTabBar: View {
         HStack(spacing: 0) {
             ForEach(tabs.indices, id: \.self) { index in
                 Button {
+                    Haptics.light()
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                         selectedTab = index
                     }

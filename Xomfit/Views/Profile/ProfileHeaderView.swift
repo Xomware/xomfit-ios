@@ -11,6 +11,9 @@ struct ProfileHeaderView: View {
     let friendCount: Int
     let prCount: Int
     let friendshipStatus: ProfileFriendshipStatus
+    let friends: [FriendRow]
+    let friendProfiles: [String: ProfileRow]
+    let currentUserId: String
     let onStatTapped: (ProfileTab) -> Void
     let onActionTapped: () -> Void
 
@@ -25,9 +28,26 @@ struct ProfileHeaderView: View {
                 statColumn(value: feedItemCount, label: "Posts") {
                     onStatTapped(.feed)
                 }
-                statColumn(value: friendCount, label: "Friends") {
-                    onStatTapped(.friends)
+                NavigationLink {
+                    FriendsListView(
+                        friends: friends,
+                        friendProfiles: friendProfiles,
+                        currentUserId: currentUserId
+                    )
+                } label: {
+                    VStack(spacing: 2) {
+                        Text("\(friendCount)")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundStyle(Theme.textPrimary)
+                        Text("Friends")
+                            .font(Theme.fontSmall)
+                            .foregroundStyle(Theme.textSecondary)
+                    }
+                    .frame(minWidth: 44, minHeight: 44)
                 }
+                .buttonStyle(.plain)
+                .accessibilityLabel("\(friendCount) Friends")
+                .accessibilityAddTraits(.isButton)
                 statColumn(value: prCount, label: "PRs") {
                     onStatTapped(.stats)
                 }
