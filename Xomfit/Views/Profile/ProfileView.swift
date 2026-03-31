@@ -62,6 +62,9 @@ struct ProfileView: View {
         .task {
             await viewModel.loadAll(userId: resolvedUserId, currentUserId: currentUserId)
         }
+        .refreshable {
+            await viewModel.loadAll(userId: resolvedUserId, currentUserId: currentUserId)
+        }
         .sheet(isPresented: $showEditSheet) {
             EditProfileSheet(viewModel: viewModel, userId: resolvedUserId)
         }
