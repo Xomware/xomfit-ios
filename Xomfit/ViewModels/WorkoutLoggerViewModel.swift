@@ -183,6 +183,23 @@ final class WorkoutLoggerViewModel {
         exercises.swapAt(source, destination)
     }
 
+    // MARK: - Exercise Config (Grip / Attachment / Position)
+
+    func setGrip(exerciseIndex: Int, grip: GripType) {
+        guard exercises.indices.contains(exerciseIndex) else { return }
+        exercises[exerciseIndex].selectedGrip = exercises[exerciseIndex].selectedGrip == grip ? nil : grip
+    }
+
+    func setAttachment(exerciseIndex: Int, attachment: CableAttachment) {
+        guard exercises.indices.contains(exerciseIndex) else { return }
+        exercises[exerciseIndex].selectedAttachment = exercises[exerciseIndex].selectedAttachment == attachment ? nil : attachment
+    }
+
+    func setPosition(exerciseIndex: Int, position: ExercisePosition) {
+        guard exercises.indices.contains(exerciseIndex) else { return }
+        exercises[exerciseIndex].selectedPosition = exercises[exerciseIndex].selectedPosition == position ? nil : position
+    }
+
     // MARK: - Set Management
 
     func addSet(to exerciseIndex: Int) {

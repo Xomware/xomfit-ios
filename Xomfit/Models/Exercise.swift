@@ -8,6 +8,9 @@ struct Exercise: Codable, Identifiable, Hashable {
     var category: ExerciseCategory
     var description: String
     var tips: [String]
+    var supportedGrips: [GripType]? = nil
+    var supportedAttachments: [CableAttachment]? = nil
+    var supportedPositions: [ExercisePosition]? = nil
 }
 
 enum MuscleGroup: String, Codable, CaseIterable {
@@ -55,9 +58,54 @@ enum Equipment: String, Codable, CaseIterable {
 
 enum ExerciseCategory: String, Codable {
     case compound, isolation, cardio, stretching
-    
+
     var displayName: String {
         rawValue.capitalized
+    }
+}
+
+enum GripType: String, Codable, CaseIterable, Identifiable {
+    case overhand, underhand, neutral, wide, close
+    var id: String { rawValue }
+    var displayName: String {
+        switch self {
+        case .overhand: return "Overhand"
+        case .underhand: return "Underhand"
+        case .neutral: return "Neutral"
+        case .wide: return "Wide"
+        case .close: return "Close"
+        }
+    }
+}
+
+enum CableAttachment: String, Codable, CaseIterable, Identifiable {
+    case rope, straightBar, ezBar, vBar, dHandle, wideBar
+    var id: String { rawValue }
+    var displayName: String {
+        switch self {
+        case .rope: return "Rope"
+        case .straightBar: return "Straight Bar"
+        case .ezBar: return "EZ Bar"
+        case .vBar: return "V-Bar"
+        case .dHandle: return "D-Handle"
+        case .wideBar: return "Wide Bar"
+        }
+    }
+}
+
+enum ExercisePosition: String, Codable, CaseIterable, Identifiable {
+    case seated, standing, incline, decline, bentOver, chestSupported, lying
+    var id: String { rawValue }
+    var displayName: String {
+        switch self {
+        case .seated: return "Seated"
+        case .standing: return "Standing"
+        case .incline: return "Incline"
+        case .decline: return "Decline"
+        case .bentOver: return "Bent Over"
+        case .chestSupported: return "Chest Supported"
+        case .lying: return "Lying"
+        }
     }
 }
 
