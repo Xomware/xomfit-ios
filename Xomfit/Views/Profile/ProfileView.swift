@@ -36,8 +36,7 @@ struct ProfileView: View {
             Theme.background.ignoresSafeArea()
 
             if viewModel.isLoading {
-                ProgressView()
-                    .tint(Theme.accent)
+                XomFitLoaderPulse()
             } else if !viewModel.isOwnProfile && viewModel.isPrivate && viewModel.friendshipStatus != .friends {
                 PrivateProfileView(
                     displayName: viewModel.displayName,

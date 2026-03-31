@@ -15,8 +15,7 @@ struct XomFitApp: App {
                                 .resizable()
                                 .scaledToFit()
                                 .frame(height: 80)
-                            ProgressView()
-                                .tint(Theme.accent)
+                            XomFitLoaderPaint(size: 60)
                         }
                     }
                 } else if authService.isAuthenticated {
