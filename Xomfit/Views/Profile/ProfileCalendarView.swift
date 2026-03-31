@@ -7,18 +7,19 @@ struct ProfileCalendarView: View {
 
     private let calendar = Calendar.current
     private let dayOfWeekHeaders = ["S", "M", "T", "W", "T", "F", "S"]
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: 4), count: 7)
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 6), count: 7)
 
     var body: some View {
-        VStack(spacing: Theme.paddingMedium) {
+        VStack(spacing: Theme.paddingSmall) {
             monthNavigator
             dayOfWeekHeader
             calendarGrid
         }
-        .padding(Theme.paddingMedium)
+        .padding(.horizontal, 12)
+        .padding(.vertical, Theme.paddingMedium)
         .background(Theme.cardBackground)
         .clipShape(.rect(cornerRadius: Theme.cornerRadius))
-        .padding(.horizontal, Theme.paddingMedium)
+        .padding(.horizontal, Theme.paddingSmall)
     }
 
     // MARK: - Month Navigator
@@ -59,10 +60,10 @@ struct ProfileCalendarView: View {
     // MARK: - Day of Week Header
 
     private var dayOfWeekHeader: some View {
-        LazyVGrid(columns: columns, spacing: 4) {
+        LazyVGrid(columns: columns, spacing: 6) {
             ForEach(dayOfWeekHeaders, id: \.self) { day in
                 Text(day)
-                    .font(Theme.fontSmall)
+                    .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(Theme.textSecondary)
                     .frame(maxWidth: .infinity)
             }
@@ -73,7 +74,7 @@ struct ProfileCalendarView: View {
 
     private var calendarGrid: some View {
         let days = daysInMonth()
-        return LazyVGrid(columns: columns, spacing: 4) {
+        return LazyVGrid(columns: columns, spacing: 6) {
             ForEach(Array(days.enumerated()), id: \.offset) { _, date in
                 if let date {
                     dayCell(for: date)
@@ -91,12 +92,12 @@ struct ProfileCalendarView: View {
         let isToday = calendar.isDateInToday(date)
 
         return Text("\(dayNumber)")
-            .font(.system(size: 13, weight: count > 0 ? .bold : .regular))
+            .font(.system(size: 14, weight: count > 0 ? .bold : .regular))
             .foregroundStyle(cellForeground(count: count, isToday: isToday))
-            .frame(maxWidth: .infinity)
+            .frame(maxWidth: .infinity, minHeight: 36)
             .aspectRatio(1, contentMode: .fit)
             .background(cellBackground(count: count, isToday: isToday))
-            .clipShape(.rect(cornerRadius: 6))
+            .clipShape(.rect(cornerRadius: 8))
             .accessibilityLabel(dayCellAccessibilityLabel(dayNumber: dayNumber, count: count))
     }
 

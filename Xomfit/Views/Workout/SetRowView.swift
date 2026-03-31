@@ -92,7 +92,10 @@ struct SetRowView: View {
                 }
 
             // Complete checkmark button
-            Button(action: onComplete) {
+            Button(action: {
+                Haptics.success()
+                onComplete()
+            }) {
                 Image(systemName: isCompleted ? "checkmark.circle.fill" : "checkmark.circle")
                     .font(.system(size: 26))
                     .foregroundStyle(isCompleted ? Theme.accent : Theme.textSecondary.opacity(0.6))
