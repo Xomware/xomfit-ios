@@ -28,6 +28,9 @@ struct XomProgressView: View {
         .task {
             await viewModel.loadData(userId: userId)
         }
+        .refreshable {
+            await viewModel.loadData(userId: userId)
+        }
     }
 
     // MARK: - Empty State
