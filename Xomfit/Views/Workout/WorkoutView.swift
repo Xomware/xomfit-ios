@@ -94,19 +94,25 @@ struct WorkoutView: View {
             Button("Cancel", role: .cancel) {}
         }
         .fullScreenCover(isPresented: $showActiveWorkout, onDismiss: {
-            selectedTemplate = nil
             Task { await loadWorkouts() }
         }) {
             ActiveWorkoutView(
-                workoutName: selectedTemplate?.name ?? (pendingWorkoutName.isEmpty ? "Workout" : pendingWorkoutName),
-                template: selectedTemplate
+                workoutName: pendingWorkoutName.isEmpty ? "Workout" : pendingWorkoutName
+            )
+            .environment(authService)
+        }
+        .fullScreenCover(item: $selectedTemplate, onDismiss: {
+            Task { await loadWorkouts() }
+        }) { template in
+            ActiveWorkoutView(
+                workoutName: template.name,
+                template: template
             )
             .environment(authService)
         }
         .sheet(isPresented: $showTemplateList) {
             TemplateListView { template in
                 selectedTemplate = template
-                showActiveWorkout = true
             }
         }
     }
@@ -135,7 +141,6 @@ struct WorkoutView: View {
                     ForEach(TemplateService.shared.allTemplates().prefix(6)) { template in
                         TemplateCardView(template: template) {
                             selectedTemplate = template
-                            showActiveWorkout = true
                         }
                     }
                 }
