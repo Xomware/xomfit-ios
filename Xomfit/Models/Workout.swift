@@ -50,6 +50,9 @@ struct WorkoutExercise: Codable, Identifiable {
     var exercise: Exercise
     var sets: [WorkoutSet]
     var notes: String?
+    var selectedGrip: GripType? = nil
+    var selectedAttachment: CableAttachment? = nil
+    var selectedPosition: ExercisePosition? = nil
     
     var bestSet: WorkoutSet? {
         sets.max(by: { $0.volume < $1.volume })

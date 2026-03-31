@@ -331,6 +331,7 @@ private struct ExerciseCard: View {
                         }
                     }
                 }
+
                 Spacer()
 
                 // Reorder buttons
@@ -373,6 +374,18 @@ private struct ExerciseCard: View {
                         .frame(width: 44, height: 44)
                         .contentShape(Rectangle())
                 }
+            }
+
+            // Variant config (grip, attachment, position)
+            if exercise.exercise.supportedGrips != nil ||
+               exercise.exercise.supportedAttachments != nil ||
+               exercise.exercise.supportedPositions != nil {
+                ExerciseConfigRow(
+                    exercise: exercise,
+                    onGripChanged: { grip in viewModel.setGrip(exerciseIndex: exerciseIndex, grip: grip) },
+                    onAttachmentChanged: { att in viewModel.setAttachment(exerciseIndex: exerciseIndex, attachment: att) },
+                    onPositionChanged: { pos in viewModel.setPosition(exerciseIndex: exerciseIndex, position: pos) }
+                )
             }
 
             // Column headers
@@ -449,6 +462,76 @@ private struct ExerciseCard: View {
         .background(Theme.cardBackground)
         .cornerRadius(Theme.cornerRadius)
         }
+    }
+}
+
+// MARK: - Exercise Config Row
+
+private struct ExerciseConfigRow: View {
+    let exercise: WorkoutExercise
+    let onGripChanged: (GripType) -> Void
+    let onAttachmentChanged: (CableAttachment) -> Void
+    let onPositionChanged: (ExercisePosition) -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            if let grips = exercise.exercise.supportedGrips {
+                configSection(label: "Grip") {
+                    ForEach(grips) { grip in
+                        configPill(
+                            label: grip.displayName,
+                            isSelected: exercise.selectedGrip == grip
+                        ) { onGripChanged(grip) }
+                    }
+                }
+            }
+            if let attachments = exercise.exercise.supportedAttachments {
+                configSection(label: "Attachment") {
+                    ForEach(attachments) { attachment in
+                        configPill(
+                            label: attachment.displayName,
+                            isSelected: exercise.selectedAttachment == attachment
+                        ) { onAttachmentChanged(attachment) }
+                    }
+                }
+            }
+            if let positions = exercise.exercise.supportedPositions {
+                configSection(label: "Position") {
+                    ForEach(positions) { position in
+                        configPill(
+                            label: position.displayName,
+                            isSelected: exercise.selectedPosition == position
+                        ) { onPositionChanged(position) }
+                    }
+                }
+            }
+        }
+    }
+
+    private func configSection<Content: View>(label: String, @ViewBuilder content: () -> Content) -> some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 6) {
+                Text(label)
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundStyle(Theme.textSecondary)
+                    .textCase(.uppercase)
+                content()
+            }
+        }
+    }
+
+    private func configPill(label: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(label)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(isSelected ? .black : Theme.textSecondary)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(isSelected ? Theme.accent : Theme.secondaryBackground)
+                .clipShape(.capsule)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(label)\(isSelected ? ", selected" : "")")
     }
 }
 
