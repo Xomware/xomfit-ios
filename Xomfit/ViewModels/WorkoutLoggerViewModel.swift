@@ -1,3 +1,4 @@
+import ActivityKit
 import SwiftUI
 
 struct RemainingExercise: Identifiable {
@@ -48,6 +49,10 @@ final class WorkoutLoggerViewModel {
     var focusExerciseIndex: Int = 0
     var focusSetIndex: Int = 0
 
+    // Live Activity
+    private var liveActivity: Activity<XomfitWidgetAttributes>?
+    private var liveActivityUpdateCounter = 0
+
     // Stored so completeSet can fire PR checks without needing the caller to pass it
     private(set) var activeUserId: String = ""
 
@@ -96,9 +101,11 @@ final class WorkoutLoggerViewModel {
         focusExerciseIndex = 0
         focusSetIndex = 0
         skipRestTimer()
+        startLiveActivity()
     }
 
     func discardWorkout() {
+        endLiveActivity()
         workoutName = ""
         exercises = []
         isActive = false
@@ -146,6 +153,7 @@ final class WorkoutLoggerViewModel {
             ))
         }
         exercises = builtExercises
+        updateLiveActivity()
     }
 
     // MARK: - Exercise Management
@@ -177,6 +185,7 @@ final class WorkoutLoggerViewModel {
             notes: nil
         )
         exercises.append(workoutExercise)
+        updateLiveActivity()
     }
 
     /// Find the most recent set for an exercise from workout history.
@@ -195,6 +204,7 @@ final class WorkoutLoggerViewModel {
     func removeExercise(at index: Int) {
         guard exercises.indices.contains(index) else { return }
         exercises.remove(at: index)
+        updateLiveActivity()
     }
 
     func moveExercise(from source: Int, direction: Int) {
@@ -297,6 +307,7 @@ final class WorkoutLoggerViewModel {
                 showExerciseTransition = true
             }
         }
+        updateLiveActivity()
     }
 
     func removeSet(exerciseIndex: Int, setIndex: Int) {
@@ -440,9 +451,80 @@ final class WorkoutLoggerViewModel {
         showPRCelebration = true
     }
 
+    // MARK: - Live Activity
+
+    private func startLiveActivity() {
+        guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
+
+        let attributes = XomfitWidgetAttributes(
+            workoutName: workoutName,
+            startTime: startTime
+        )
+        let state = XomfitWidgetAttributes.ContentState(
+            elapsedSeconds: 0,
+            completedSets: completedSets,
+            totalSets: totalSets,
+            currentExercise: exercises.first?.exercise.name ?? "Warming up",
+            totalExercises: exercises.count
+        )
+
+        do {
+            liveActivity = try Activity.request(
+                attributes: attributes,
+                content: .init(state: state, staleDate: nil),
+                pushType: nil
+            )
+        } catch {
+            print("[LiveActivity] Failed to start: \(error)")
+        }
+    }
+
+    private func updateLiveActivity() {
+        guard let activity = liveActivity else { return }
+
+        let currentExName = exercises.first(where: { ex in
+            ex.sets.contains(where: { $0.completedAt == Date.distantPast })
+        })?.exercise.name ?? "Finishing up"
+
+        let state = XomfitWidgetAttributes.ContentState(
+            elapsedSeconds: Int(Date().timeIntervalSince(startTime)),
+            completedSets: completedSets,
+            totalSets: totalSets,
+            currentExercise: currentExName,
+            totalExercises: exercises.count
+        )
+
+        Task {
+            await activity.update(.init(state: state, staleDate: nil))
+        }
+    }
+
+    private func endLiveActivity() {
+        guard let activity = liveActivity else { return }
+        let finalState = XomfitWidgetAttributes.ContentState(
+            elapsedSeconds: Int(duration),
+            completedSets: completedSets,
+            totalSets: totalSets,
+            currentExercise: "Workout Complete",
+            totalExercises: exercises.count
+        )
+        Task {
+            await activity.end(.init(state: finalState, staleDate: nil), dismissalPolicy: .after(.now + 5))
+        }
+        liveActivity = nil
+    }
+
+    func tickLiveActivity() {
+        liveActivityUpdateCounter += 1
+        if liveActivityUpdateCounter % 30 == 0 {
+            updateLiveActivity()
+        }
+    }
+
     // MARK: - Finish Workout
 
     func finishWorkout(userId: String) async {
+        endLiveActivity()
         isSaving = true
         errorMessage = nil
 

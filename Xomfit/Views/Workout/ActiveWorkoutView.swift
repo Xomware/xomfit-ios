@@ -129,6 +129,7 @@ struct ActiveWorkoutView: View {
         }
         .onReceive(timer) { _ in
             viewModel.tickRestTimer()
+            viewModel.tickLiveActivity()
             // Haptic fires once when rest timer crosses zero
             if viewModel.isRestTimerActive && viewModel.restTimeRemaining <= 0 && !restTimerHapticFired {
                 restTimerHapticFired = true
