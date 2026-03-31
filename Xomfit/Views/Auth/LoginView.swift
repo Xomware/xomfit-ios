@@ -13,6 +13,13 @@ struct LoginView: View {
         NavigationStack {
             ZStack {
                 Theme.background.ignoresSafeArea()
+                RadialGradient(
+                    colors: [Theme.accent.opacity(0.06), .clear],
+                    center: .top,
+                    startRadius: 50,
+                    endRadius: 500
+                )
+                .ignoresSafeArea()
 
                 ScrollView {
                     VStack(spacing: Theme.paddingLarge) {
@@ -113,20 +120,14 @@ struct LoginView: View {
                             Button {
                                 signIn()
                             } label: {
-                                ZStack {
-                                    RoundedRectangle(cornerRadius: Theme.cornerRadius)
-                                        .fill(Theme.accent)
-                                    if isLoading {
-                                        ProgressView()
-                                            .tint(.black)
-                                    } else {
-                                        Text("Sign In")
-                                            .font(.system(size: 16, weight: .bold))
-                                            .foregroundColor(.black)
-                                    }
+                                if isLoading {
+                                    ProgressView()
+                                        .tint(.black)
+                                } else {
+                                    Text("Sign In")
                                 }
-                                .frame(height: 52)
                             }
+                            .buttonStyle(AccentButtonStyle())
                             .disabled(isLoading || email.isEmpty || password.isEmpty)
                             .opacity((isLoading || email.isEmpty || password.isEmpty) ? 0.6 : 1)
                         }
