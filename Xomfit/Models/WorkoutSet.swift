@@ -1,5 +1,10 @@
 import Foundation
 
+enum WeightMode: String, Codable {
+    case total      // default: weight is total (both hands on barbell)
+    case perSide    // weight is per arm/leg (e.g., 25lb each arm)
+}
+
 struct WorkoutSet: Codable, Identifiable, Hashable {
     static func == (lhs: WorkoutSet, rhs: WorkoutSet) -> Bool { lhs.id == rhs.id }
     func hash(into hasher: inout Hasher) { hasher.combine(id) }
@@ -10,13 +15,15 @@ struct WorkoutSet: Codable, Identifiable, Hashable {
     var rpe: Double? // Rate of Perceived Exertion (1-10)
     var isPersonalRecord: Bool
     var completedAt: Date
+    var weightMode: WeightMode = .total
 
     // MARK: - Form Check Video (optional attachment)
     var videoLocalURL: URL?       // locally saved clip after recording
     var videoRemoteURL: URL?      // uploaded to Supabase Storage
-    
+
     var volume: Double {
-        weight * Double(reps)
+        let multiplier: Double = weightMode == .perSide ? 2 : 1
+        return weight * Double(reps) * multiplier
     }
     
     var estimated1RM: Double {

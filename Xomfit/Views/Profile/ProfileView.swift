@@ -133,7 +133,9 @@ struct ProfileView: View {
                 totalWorkouts: viewModel.totalWorkouts,
                 totalVolume: viewModel.formattedVolume,
                 totalPRs: viewModel.totalPRs,
-                recentPRs: viewModel.recentPRs
+                recentPRs: viewModel.recentPRs,
+                muscleGroupSetsThisWeek: viewModel.muscleGroupSetsThisWeek,
+                muscleGroupSetsThisMonth: viewModel.muscleGroupSetsThisMonth
             )
         case .friends:
             ProfileFriendsView(
@@ -149,13 +151,24 @@ struct ProfileView: View {
     @ToolbarContentBuilder
     private var ownProfileToolbar: some ToolbarContent {
         ToolbarItem(placement: .topBarTrailing) {
-            NavigationLink {
-                SettingsView()
-            } label: {
-                Image(systemName: "gearshape.fill")
-                    .foregroundStyle(Theme.textSecondary)
+            HStack(spacing: 16) {
+                Button {
+                    viewModel.beginEditing()
+                    showEditSheet = true
+                } label: {
+                    Image(systemName: "pencil")
+                        .foregroundStyle(Theme.textSecondary)
+                }
+                .accessibilityLabel("Edit Profile")
+
+                NavigationLink {
+                    SettingsView()
+                } label: {
+                    Image(systemName: "gearshape.fill")
+                        .foregroundStyle(Theme.textSecondary)
+                }
+                .accessibilityLabel("Settings")
             }
-            .accessibilityLabel("Settings")
         }
     }
 }

@@ -5,10 +5,22 @@ struct ProfileStatsView: View {
     let totalVolume: String
     let totalPRs: Int
     let recentPRs: [PersonalRecord]
+    let muscleGroupSetsThisWeek: [String: Int]
+    let muscleGroupSetsThisMonth: [String: Int]
+
+    @State private var heatmapFilter: HeatmapTimeFilter = .week
+
+    private var activeMuscleGroupSets: [String: Int] {
+        switch heatmapFilter {
+        case .week: return muscleGroupSetsThisWeek
+        case .month: return muscleGroupSetsThisMonth
+        }
+    }
 
     var body: some View {
         VStack(spacing: Theme.paddingSmall) {
             statsCards
+            heatmapSection
             prSection
         }
         .padding(.horizontal, Theme.paddingMedium)
@@ -42,6 +54,32 @@ struct ProfileStatsView: View {
         .clipShape(.rect(cornerRadius: Theme.cornerRadius))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(value) \(label)")
+    }
+
+    // MARK: - Heatmap Section
+
+    private var heatmapSection: some View {
+        VStack(alignment: .leading, spacing: Theme.paddingSmall) {
+            HStack {
+                Text("Muscle Heatmap")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(Theme.textSecondary)
+
+                Spacer()
+
+                Picker("Time Range", selection: $heatmapFilter) {
+                    ForEach(HeatmapTimeFilter.allCases) { filter in
+                        Text(filter.rawValue).tag(filter)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 140)
+            }
+            .padding(.horizontal, Theme.paddingSmall)
+
+            BodyHeatmapView(muscleGroupSets: activeMuscleGroupSets)
+        }
+        .cardStyle()
     }
 
     // MARK: - PR Section

@@ -190,10 +190,14 @@ final class WorkoutService {
     // MARK: - Delete
 
     func deleteWorkout(id: String) async {
-        // Delete locally first
-        var workouts = loadAllFromCache()
-        workouts.removeAll { $0.id == id }
-        let data = try? JSONEncoder().encode(workouts)
+        // Grab the userId from cache before deleting (needed for feed cleanup)
+        let workouts = loadAllFromCache()
+        let workoutUserId = workouts.first(where: { $0.id == id })?.userId
+
+        // Delete locally
+        var updatedWorkouts = workouts
+        updatedWorkouts.removeAll { $0.id == id }
+        let data = try? JSONEncoder().encode(updatedWorkouts)
         UserDefaults.standard.set(data, forKey: storageKey)
 
         // Delete from Supabase (cascade handles exercises + sets)
@@ -201,6 +205,15 @@ final class WorkoutService {
             try await deleteFromSupabase(id: id)
         } catch {
             print("[WorkoutService] Supabase delete failed: \(error.localizedDescription)")
+        }
+
+        // Delete associated feed items
+        if let userId = workoutUserId {
+            do {
+                try await FeedService.shared.deleteFeedItemsForWorkout(workoutId: id, userId: userId)
+            } catch {
+                print("[WorkoutService] Feed item cleanup failed: \(error.localizedDescription)")
+            }
         }
     }
 

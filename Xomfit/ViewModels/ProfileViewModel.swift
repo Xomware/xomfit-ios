@@ -50,6 +50,7 @@ final class ProfileViewModel {
     var isPrivate: Bool = false
 
     // MARK: - Edit buffer (populated when the edit sheet opens)
+    var editUsername: String = ""
     var editDisplayName: String = ""
     var editBio: String = ""
     var editIsPrivate: Bool = false
@@ -59,6 +60,10 @@ final class ProfileViewModel {
     var totalVolume: Double = 0
     var totalPRs: Int = 0
     var recentPRs: [PersonalRecord] = []
+
+    // MARK: - Muscle Group Heatmap
+    var muscleGroupSetsThisWeek: [String: Int] = [:]
+    var muscleGroupSetsThisMonth: [String: Int] = [:]
 
     // MARK: - Tab state
     var selectedTab: ProfileTab = .feed
@@ -144,6 +149,7 @@ final class ProfileViewModel {
         totalWorkouts = workouts.count
         totalVolume = workouts.reduce(0) { $0 + $1.totalVolume }
         loadCalendarData(workouts: workouts)
+        computeMuscleGroupSets(workouts: workouts)
 
         await prsTask
         await feedTask
@@ -172,6 +178,7 @@ final class ProfileViewModel {
         let workouts = await WorkoutService.shared.fetchWorkouts(userId: userId)
         totalWorkouts = workouts.count
         totalVolume = workouts.reduce(0) { $0 + $1.totalVolume }
+        computeMuscleGroupSets(workouts: workouts)
 
         do {
             let prs = try await PRService.shared.fetchPRs(userId: userId)
@@ -190,14 +197,16 @@ final class ProfileViewModel {
         isSaving = true
         errorMessage = nil
         do {
+            let savedUsername = editUsername.isEmpty ? (username.isEmpty ? userId : username) : editUsername
             try await ProfileService.shared.upsertProfile(
                 userId: userId,
-                username: username.isEmpty ? userId : username,
+                username: savedUsername,
                 displayName: editDisplayName.isEmpty ? displayName : editDisplayName,
                 bio: editBio,
                 avatarURL: avatarURL,
                 isPrivate: editIsPrivate
             )
+            username = savedUsername
             displayName = editDisplayName.isEmpty ? displayName : editDisplayName
             bio = editBio
             isPrivate = editIsPrivate
@@ -210,6 +219,7 @@ final class ProfileViewModel {
     // MARK: - Edit sheet helpers
 
     func beginEditing() {
+        editUsername = username
         editDisplayName = displayName
         editBio = bio
         editIsPrivate = isPrivate
@@ -284,6 +294,37 @@ final class ProfileViewModel {
         } catch {
             friendshipStatus = .none
         }
+    }
+
+    func computeMuscleGroupSets(workouts: [Workout]) {
+        let calendar = Calendar.current
+        let now = Date()
+        let oneWeekAgo = calendar.date(byAdding: .weekOfYear, value: -1, to: now) ?? now
+        let oneMonthAgo = calendar.date(byAdding: .month, value: -1, to: now) ?? now
+
+        var weekSets: [String: Int] = [:]
+        var monthSets: [String: Int] = [:]
+
+        for workout in workouts {
+            let isThisWeek = workout.startTime >= oneWeekAgo
+            let isThisMonth = workout.startTime >= oneMonthAgo
+
+            guard isThisMonth else { continue }
+
+            for exercise in workout.exercises {
+                let setCount = exercise.sets.count
+                for muscleGroup in exercise.exercise.muscleGroups {
+                    let name = muscleGroup.displayName
+                    if isThisWeek {
+                        weekSets[name, default: 0] += setCount
+                    }
+                    monthSets[name, default: 0] += setCount
+                }
+            }
+        }
+
+        muscleGroupSetsThisWeek = weekSets
+        muscleGroupSetsThisMonth = monthSets
     }
 
     func loadCalendarData(workouts: [Workout]) {

@@ -10,6 +10,8 @@ struct WorkoutView: View {
     @State private var selectedTemplate: WorkoutTemplate?
     @State private var showTemplateList = false
     @State private var showBuilder = false
+    @State private var previewTemplate: WorkoutTemplate?
+    @State private var templateRefreshId = UUID()
 
     private var userId: String {
         authService.currentUser?.id.uuidString ?? ""
@@ -65,6 +67,11 @@ struct WorkoutView: View {
 
                     // Quick Start templates
                     templateSection
+
+                    // Recent workouts
+                    if !workouts.isEmpty {
+                        recentSection
+                    }
 
                     // Workout history
                     if workouts.isEmpty {
@@ -133,12 +140,23 @@ struct WorkoutView: View {
             )
             .environment(authService)
         }
-        .sheet(isPresented: $showBuilder) {
+        .sheet(isPresented: $showBuilder, onDismiss: {
+            templateRefreshId = UUID()
+        }) {
             WorkoutBuilderView()
+        }
+        .sheet(item: $previewTemplate) { template in
+            TemplateDetailView(template: template) {
+                selectedTemplate = template
+            }
         }
         .sheet(isPresented: $showTemplateList) {
             TemplateListView { template in
-                selectedTemplate = template
+                // Dismiss the list first, then show preview after a brief delay
+                showTemplateList = false
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    previewTemplate = template
+                }
             }
         }
     }
@@ -166,7 +184,51 @@ struct WorkoutView: View {
                 HStack(spacing: Theme.paddingSmall) {
                     ForEach(TemplateService.shared.allTemplates().prefix(6)) { template in
                         TemplateCardView(template: template) {
-                            selectedTemplate = template
+                            previewTemplate = template
+                        }
+                    }
+                }
+                .padding(.horizontal, Theme.paddingMedium)
+                .id(templateRefreshId)
+            }
+        }
+        .padding(.vertical, Theme.paddingSmall)
+    }
+
+    // MARK: - Recent Workouts
+
+    private var recentSection: some View {
+        VStack(alignment: .leading, spacing: Theme.paddingSmall) {
+            Text("Recent")
+                .font(.system(size: 16, weight: .bold))
+                .foregroundStyle(Theme.textPrimary)
+                .padding(.horizontal, Theme.paddingMedium)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: Theme.paddingSmall) {
+                    ForEach(workouts.prefix(5)) { workout in
+                        RecentWorkoutCard(workout: workout) {
+                            pendingWorkoutName = workout.name
+                            // Build a template from the workout's exercises
+                            let templateExercises = workout.exercises.map { ex in
+                                WorkoutTemplate.TemplateExercise(
+                                    id: UUID().uuidString,
+                                    exercise: ex.exercise,
+                                    targetSets: ex.sets.count,
+                                    targetReps: ex.bestSet.map { "\($0.reps)" } ?? "0",
+                                    notes: ex.notes
+                                )
+                            }
+                            let replayTemplate = WorkoutTemplate(
+                                id: UUID().uuidString,
+                                name: workout.name,
+                                description: "Repeat of \(workout.name)",
+                                exercises: templateExercises,
+                                estimatedDuration: Int(workout.duration / 60),
+                                category: .custom,
+                                isCustom: false
+                            )
+                            selectedTemplate = replayTemplate
                         }
                     }
                 }
@@ -244,5 +306,51 @@ private struct WorkoutHistoryCard: View {
                 .font(Theme.fontSmall)
                 .foregroundColor(Theme.textSecondary)
         }
+    }
+}
+
+// MARK: - Recent Workout Card
+
+private struct RecentWorkoutCard: View {
+    let workout: Workout
+    let onRepeat: () -> Void
+
+    var body: some View {
+        Button(action: onRepeat) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text(workout.name)
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(Theme.textPrimary)
+                    .lineLimit(1)
+
+                Text(workout.startTime.workoutDateString)
+                    .font(Theme.fontSmall)
+                    .foregroundStyle(Theme.textSecondary)
+
+                HStack(spacing: 6) {
+                    Text("\(workout.exercises.count) ex")
+                    Text(workout.durationString)
+                        .foregroundStyle(Theme.accent)
+                }
+                .font(Theme.fontSmall)
+                .foregroundStyle(Theme.textSecondary)
+
+                HStack(spacing: 4) {
+                    Image(systemName: "arrow.counterclockwise")
+                        .font(.system(size: 10, weight: .bold))
+                    Text("Repeat")
+                        .font(.system(size: 11, weight: .bold))
+                }
+                .foregroundStyle(Theme.accent)
+                .padding(.top, 2)
+            }
+            .padding(12)
+            .frame(width: 140, alignment: .leading)
+            .background(Theme.cardBackground)
+            .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Repeat \(workout.name) workout from \(workout.startTime.workoutDateString)")
+        .accessibilityAddTraits(.isButton)
     }
 }

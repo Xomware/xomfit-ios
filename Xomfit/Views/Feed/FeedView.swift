@@ -3,6 +3,7 @@ import SwiftUI
 struct FeedView: View {
     @Environment(AuthService.self) private var authService
     @State private var viewModel = FeedViewModel()
+    @State private var showUserSearch = false
 
     private var userId: String {
         authService.currentUser?.id.uuidString ?? ""
@@ -27,13 +28,26 @@ struct FeedView: View {
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    NavigationLink {
-                        FriendsView()
-                    } label: {
-                        Image(systemName: "person.badge.plus")
-                            .foregroundColor(Theme.accent)
+                    HStack(spacing: 16) {
+                        Button {
+                            showUserSearch = true
+                        } label: {
+                            Image(systemName: "magnifyingglass")
+                                .foregroundColor(Theme.accent)
+                        }
+                        .accessibilityLabel("Search users")
+
+                        NavigationLink {
+                            FriendsView()
+                        } label: {
+                            Image(systemName: "person.badge.plus")
+                                .foregroundColor(Theme.accent)
+                        }
                     }
                 }
+            }
+            .sheet(isPresented: $showUserSearch) {
+                UserSearchView()
             }
         }
         .onAppear {

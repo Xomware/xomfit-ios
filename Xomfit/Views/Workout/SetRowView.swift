@@ -7,9 +7,12 @@ struct SetRowView: View {
     let onRepsChange: (Int) -> Void
     let onComplete: () -> Void
     let onDelete: () -> Void
+    let onToggleWeightMode: () -> Void
 
     @State private var weightText: String
     @State private var repsText: String
+    @FocusState private var isWeightFocused: Bool
+    @FocusState private var isRepsFocused: Bool
 
     private var isCompleted: Bool {
         workoutSet.completedAt != Date.distantPast
@@ -21,7 +24,8 @@ struct SetRowView: View {
         onWeightChange: @escaping (Double) -> Void,
         onRepsChange: @escaping (Int) -> Void,
         onComplete: @escaping () -> Void,
-        onDelete: @escaping () -> Void
+        onDelete: @escaping () -> Void,
+        onToggleWeightMode: @escaping () -> Void = {}
     ) {
         self.setNumber = setNumber
         self.workoutSet = workoutSet
@@ -29,6 +33,7 @@ struct SetRowView: View {
         self.onRepsChange = onRepsChange
         self.onComplete = onComplete
         self.onDelete = onDelete
+        self.onToggleWeightMode = onToggleWeightMode
 
         let w = workoutSet.weight
         let r = workoutSet.reps
@@ -54,15 +59,20 @@ struct SetRowView: View {
                 .cornerRadius(Theme.cornerRadiusSmall)
                 .foregroundColor(isCompleted ? Theme.accent : Theme.textPrimary)
                 .frame(maxWidth: .infinity)
+                .focused($isWeightFocused)
                 .onChange(of: weightText) { _, newValue in
                     if let w = Double(newValue) {
                         onWeightChange(w)
                     }
                 }
 
-            Text("lbs  ×")
-                .font(Theme.fontCaption)
-                .foregroundColor(Theme.textSecondary)
+            Button(action: onToggleWeightMode) {
+                Text(workoutSet.weightMode == .perSide ? "lbs ×2  ×" : "lbs  ×")
+                    .font(Theme.fontCaption)
+                    .foregroundStyle(workoutSet.weightMode == .perSide ? Theme.accent : Theme.textSecondary)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(workoutSet.weightMode == .perSide ? "Per side weight, tap to switch to total" : "Total weight, tap to switch to per side")
 
             // Reps field
             TextField("0", text: $repsText)
@@ -74,6 +84,7 @@ struct SetRowView: View {
                 .cornerRadius(Theme.cornerRadiusSmall)
                 .foregroundColor(isCompleted ? Theme.accent : Theme.textPrimary)
                 .frame(maxWidth: .infinity)
+                .focused($isRepsFocused)
                 .onChange(of: repsText) { _, newValue in
                     if let r = Int(newValue) {
                         onRepsChange(r)
@@ -83,15 +94,27 @@ struct SetRowView: View {
             // Complete checkmark button
             Button(action: onComplete) {
                 Image(systemName: isCompleted ? "checkmark.circle.fill" : "checkmark.circle")
-                    .font(.system(size: 24))
-                    .foregroundColor(isCompleted ? Theme.accent : Theme.textSecondary)
+                    .font(.system(size: 26))
+                    .foregroundStyle(isCompleted ? Theme.accent : Theme.textSecondary.opacity(0.6))
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
             }
-            .frame(width: 36)
+            .buttonStyle(.plain)
+            .accessibilityLabel(isCompleted ? "Mark set \(setNumber) incomplete" : "Complete set \(setNumber)")
         }
         .padding(.horizontal, Theme.paddingMedium)
         .padding(.vertical, 6)
-        .background(isCompleted ? Theme.accent.opacity(0.08) : Color.clear)
+        .background(isCompleted ? Theme.accent.opacity(0.12) : Color.clear)
         .cornerRadius(Theme.cornerRadiusSmall)
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Done") {
+                    isWeightFocused = false
+                    isRepsFocused = false
+                }
+            }
+        }
         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
             Button(role: .destructive, action: onDelete) {
                 Label("Delete", systemImage: "trash")
