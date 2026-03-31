@@ -21,12 +21,12 @@ enum MuscleGroup: String, Codable, CaseIterable {
     
     var icon: String {
         switch self {
-        case .chest: return "figure.strengthtraining.traditional"
-        case .back, .lats: return "figure.rowing"
-        case .shoulders, .traps: return "figure.boxing"
-        case .biceps, .triceps, .forearms: return "figure.curling"
-        case .quads, .hamstrings, .glutes, .calves: return "figure.lunges"
-        case .abs: return "figure.core.training"
+        case .chest: return "dumbbell.fill"
+        case .back, .lats: return "figure.strengthtraining.traditional"
+        case .shoulders, .traps: return "bolt.fill"
+        case .biceps, .triceps, .forearms: return "dumbbell.fill"
+        case .quads, .hamstrings, .glutes, .calves: return "figure.walk"
+        case .abs: return "flame.fill"
         }
     }
 }
@@ -37,6 +37,19 @@ enum Equipment: String, Codable, CaseIterable {
     
     var displayName: String {
         rawValue.capitalized
+    }
+
+    var icon: String {
+        switch self {
+        case .barbell: return "figure.strengthtraining.traditional"
+        case .dumbbell: return "dumbbell.fill"
+        case .machine: return "gearshape.fill"
+        case .cable: return "arrow.up.and.down"
+        case .bodyweight: return "figure.walk"
+        case .kettlebell: return "dumbbell.fill"
+        case .bands: return "circle.dashed"
+        case .other: return "star.fill"
+        }
     }
 }
 
