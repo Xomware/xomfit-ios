@@ -30,7 +30,8 @@ Xomfit/Xomfit/
 pm_tool: github-projects
 github_project_number: 2
 github_project_owner: Xomware
-base_branch: master
+base_branch: develop
+release_branch: master
 test_commands:
   - xcodebuild test -scheme Xomfit -destination 'platform=iOS Simulator,name=iPhone 16'
 ```
