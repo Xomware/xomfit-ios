@@ -15,8 +15,7 @@ struct XomProgressView: View {
                 Theme.background.ignoresSafeArea()
 
                 if viewModel.isLoading {
-                    ProgressView()
-                        .tint(Theme.accent)
+                    XomFitLoaderPulse()
                 } else if viewModel.totalWorkouts == 0 {
                     emptyState
                 } else {

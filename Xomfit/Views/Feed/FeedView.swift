@@ -14,8 +14,7 @@ struct FeedView: View {
                 Theme.background.ignoresSafeArea()
 
                 if viewModel.isLoading {
-                    ProgressView()
-                        .tint(Theme.accent)
+                    XomFitLoaderPulse()
                 } else if let error = viewModel.errorMessage {
                     errorView(message: error)
                 } else if viewModel.feedItems.isEmpty {
