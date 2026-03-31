@@ -187,7 +187,7 @@ struct XomfitWidgetLiveActivity: Widget {
 
 extension XomfitWidgetAttributes {
     fileprivate static var preview: XomfitWidgetAttributes {
-        XomfitWidgetAttributes(workoutName: "Push Day", startTime: .now.addingTimeInterval(-754))
+        XomfitWidgetAttributes(workoutName: "Push Day", startTime: Date().addingTimeInterval(-754))
     }
 }
 

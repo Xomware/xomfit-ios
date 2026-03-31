@@ -8,6 +8,7 @@
 //
 
 import ActivityKit
+import Foundation
 
 struct XomfitWidgetAttributes: ActivityAttributes {
     public struct ContentState: Codable, Hashable {
