@@ -136,7 +136,8 @@ struct ProfileView: View {
         case .friends:
             ProfileFriendsView(
                 friends: viewModel.friends,
-                friendProfiles: viewModel.friendProfiles
+                friendProfiles: viewModel.friendProfiles,
+                currentUserId: resolvedUserId
             )
         }
     }

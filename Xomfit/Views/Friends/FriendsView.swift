@@ -198,7 +198,7 @@ struct FriendsView: View {
     private func performSearch(query: String) async {
         isSearching = true
         do {
-            searchResults = try await FriendsService.shared.searchUsers(query: query)
+            searchResults = try await FriendsService.shared.searchUsers(query: query, excludeUserId: userId)
         } catch {
             searchResults = []
         }
@@ -326,7 +326,7 @@ private struct PendingRequestRow: View {
                 Text("Friend Request")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(Theme.textPrimary)
-                Text("from \(request.userId)")
+                Text("from \(request.requesterId)")
                     .font(Theme.fontCaption)
                     .foregroundColor(Theme.textSecondary)
                     .lineLimit(1)
@@ -379,11 +379,11 @@ private struct FriendListRow: View {
             }
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(friend.friendId)
+                Text(friend.requesterId == userId ? friend.addresseeId : friend.requesterId)
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(Theme.textPrimary)
                     .lineLimit(1)
-                Text(friend.status == "mutual" ? "Friends" : "Following")
+                Text(friend.status == "accepted" ? "Friends" : "Pending")
                     .font(Theme.fontCaption)
                     .foregroundColor(Theme.textSecondary)
             }

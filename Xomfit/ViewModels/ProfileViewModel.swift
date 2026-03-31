@@ -251,12 +251,11 @@ final class ProfileViewModel {
     private func loadFriends(userId: String) async {
         do {
             let allFriends = try await FriendsService.shared.fetchFriends(userId: userId)
-            let mutualFriends = allFriends.filter { $0.status == "mutual" }
-            friends = mutualFriends
-            friendCount = mutualFriends.count
+            friends = allFriends
+            friendCount = allFriends.count
 
             // Batch-load friend profiles for display names
-            let friendIds = mutualFriends.map { $0.friendId }
+            let friendIds = allFriends.map { $0.requesterId == userId ? $0.addresseeId : $0.requesterId }
             for friendId in friendIds {
                 if friendProfiles[friendId] == nil {
                     if let profile = try? await ProfileService.shared.fetchProfile(userId: friendId) {
@@ -271,17 +270,13 @@ final class ProfileViewModel {
 
     private func loadFriendshipStatus(currentUserId: String, targetUserId: String) async {
         do {
-            // Check if current user sent a request to the target
-            let sentFriends = try await FriendsService.shared.fetchFriends(userId: currentUserId)
-            if let match = sentFriends.first(where: { $0.friendId == targetUserId }) {
-                friendshipStatus = match.status == "mutual" ? .friends : .pending
-                return
-            }
-
-            // Check if target sent a request to current user
-            let receivedFriends = try await FriendsService.shared.fetchFriends(userId: targetUserId)
-            if let match = receivedFriends.first(where: { $0.friendId == currentUserId }) {
-                friendshipStatus = match.status == "mutual" ? .friends : .pending
+            let allFriendships = try await FriendsService.shared.fetchFriends(userId: currentUserId)
+            let match = allFriendships.first(where: {
+                ($0.requesterId == currentUserId && $0.addresseeId == targetUserId) ||
+                ($0.requesterId == targetUserId && $0.addresseeId == currentUserId)
+            })
+            if let match {
+                friendshipStatus = match.status == "accepted" ? .friends : .pending
                 return
             }
 

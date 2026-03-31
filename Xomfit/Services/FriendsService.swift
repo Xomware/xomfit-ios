@@ -5,15 +5,15 @@ import Supabase
 
 struct FriendRow: Codable, Identifiable {
     let id: String
-    let userId: String
-    let friendId: String
+    let requesterId: String
+    let addresseeId: String
     let status: String
     let createdAt: String
 
     enum CodingKeys: String, CodingKey {
         case id
-        case userId = "user_id"
-        case friendId = "friend_id"
+        case requesterId = "requester_id"
+        case addresseeId = "addressee_id"
         case status
         case createdAt = "created_at"
     }
@@ -23,8 +23,8 @@ struct FriendRow: Codable, Identifiable {
 
 private struct FriendshipInsert: Encodable {
     let id: String
-    let user_id: String
-    let friend_id: String
+    let requester_id: String
+    let addressee_id: String
     let status: String
 }
 
@@ -43,13 +43,25 @@ final class FriendsService {
     // MARK: - Fetch Friends
 
     func fetchFriends(userId: String) async throws -> [FriendRow] {
-        let rows: [FriendRow] = try await supabase
+        // Friends where I'm the requester
+        let sent: [FriendRow] = try await supabase
             .from("friendships")
             .select()
-            .eq("user_id", value: userId)
+            .eq("requester_id", value: userId)
+            .eq("status", value: "accepted")
             .execute()
             .value
-        return rows
+
+        // Friends where I'm the addressee
+        let received: [FriendRow] = try await supabase
+            .from("friendships")
+            .select()
+            .eq("addressee_id", value: userId)
+            .eq("status", value: "accepted")
+            .execute()
+            .value
+
+        return sent + received
     }
 
     // MARK: - Fetch Pending Requests (requests sent TO this user)
@@ -58,7 +70,7 @@ final class FriendsService {
         let rows: [FriendRow] = try await supabase
             .from("friendships")
             .select()
-            .eq("friend_id", value: userId)
+            .eq("addressee_id", value: userId)
             .eq("status", value: "pending")
             .execute()
             .value
@@ -70,8 +82,8 @@ final class FriendsService {
     func sendFriendRequest(fromUserId: String, toUserId: String) async throws {
         let insert = FriendshipInsert(
             id: UUID().uuidString,
-            user_id: fromUserId,
-            friend_id: toUserId,
+            requester_id: fromUserId,
+            addressee_id: toUserId,
             status: "pending"
         )
         try await supabase
@@ -83,7 +95,7 @@ final class FriendsService {
     // MARK: - Accept Friend Request
 
     func acceptFriendRequest(friendshipId: String) async throws {
-        let update = FriendshipStatusUpdate(status: "mutual")
+        let update = FriendshipStatusUpdate(status: "accepted")
         try await supabase
             .from("friendships")
             .update(update)
@@ -111,15 +123,19 @@ final class FriendsService {
 
     // MARK: - Search Users
 
-    func searchUsers(query: String) async throws -> [ProfileRow] {
+    func searchUsers(query: String, excludeUserId: String? = nil) async throws -> [ProfileRow] {
         guard !query.isEmpty else { return [] }
-        let rows: [ProfileRow] = try await supabase
+        var request = supabase
             .from("profiles")
             .select()
             .ilike("username", value: "%\(query)%")
             .limit(20)
-            .execute()
-            .value
+
+        if let excludeId = excludeUserId {
+            request = request.neq("id", value: excludeId)
+        }
+
+        let rows: [ProfileRow] = try await request.execute().value
         return rows
     }
 }

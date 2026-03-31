@@ -3,6 +3,11 @@ import SwiftUI
 struct ProfileFriendsView: View {
     let friends: [FriendRow]
     let friendProfiles: [String: ProfileRow]
+    let currentUserId: String
+
+    private func otherUserId(_ friend: FriendRow) -> String {
+        friend.requesterId == currentUserId ? friend.addresseeId : friend.requesterId
+    }
 
     var body: some View {
         if friends.isEmpty {
@@ -11,7 +16,7 @@ struct ProfileFriendsView: View {
             LazyVStack(spacing: 0) {
                 ForEach(friends) { friend in
                     NavigationLink {
-                        ProfileView(userId: friend.friendId)
+                        ProfileView(userId: otherUserId(friend))
                     } label: {
                         friendRow(friend: friend)
                     }
@@ -33,8 +38,8 @@ struct ProfileFriendsView: View {
     // MARK: - Friend Row
 
     private func friendRow(friend: FriendRow) -> some View {
-        let profile = friendProfiles[friend.friendId]
-        let name = profile?.displayName ?? friend.friendId
+        let profile = friendProfiles[otherUserId(friend)]
+        let name = profile?.displayName ?? otherUserId(friend)
         let username = profile?.username ?? ""
         let initials = friendInitials(name: name, fallback: username)
 
