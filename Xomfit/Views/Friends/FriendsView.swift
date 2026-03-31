@@ -164,7 +164,7 @@ struct FriendsView: View {
                     .listRowBackground(Theme.cardBackground)
             } else {
                 ForEach(friends, id: \.id) { friend in
-                    FriendListRow(friend: friend) {
+                    FriendListRow(friend: friend, currentUserId: userId) {
                         removeFriend(friend)
                     }
                     .listRowBackground(Theme.cardBackground)
@@ -366,6 +366,7 @@ private struct PendingRequestRow: View {
 
 private struct FriendListRow: View {
     let friend: FriendRow
+    let currentUserId: String
     let onRemove: () -> Void
 
     var body: some View {
@@ -379,7 +380,7 @@ private struct FriendListRow: View {
             }
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(friend.requesterId == userId ? friend.addresseeId : friend.requesterId)
+                Text(friend.requesterId == currentUserId ? friend.addresseeId : friend.requesterId)
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(Theme.textPrimary)
                     .lineLimit(1)

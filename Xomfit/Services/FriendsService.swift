@@ -125,17 +125,18 @@ final class FriendsService {
 
     func searchUsers(query: String, excludeUserId: String? = nil) async throws -> [ProfileRow] {
         guard !query.isEmpty else { return [] }
-        var request = supabase
+        var rows: [ProfileRow] = try await supabase
             .from("profiles")
             .select()
             .ilike("username", value: "%\(query)%")
             .limit(20)
+            .execute()
+            .value
 
         if let excludeId = excludeUserId {
-            request = request.neq("id", value: excludeId)
+            rows = rows.filter { $0.id != excludeId }
         }
 
-        let rows: [ProfileRow] = try await request.execute().value
         return rows
     }
 }
