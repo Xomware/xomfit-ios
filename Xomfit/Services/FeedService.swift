@@ -103,7 +103,7 @@ final class FeedService {
     func fetchFeed(userId: String, limit: Int = 20, offset: Int = 0) async throws -> [SocialFeedItem] {
         let rows: [FeedItemRow] = try await supabase
             .from("feed_items")
-            .select("*, profiles(*)")
+            .select()
             .order("created_at", ascending: false)
             .range(from: offset, to: offset + limit - 1)
             .execute()
@@ -119,7 +119,7 @@ final class FeedService {
     func fetchUserFeed(userId: String, limit: Int = 20, offset: Int = 0) async throws -> [SocialFeedItem] {
         let rows: [FeedItemRow] = try await supabase
             .from("feed_items")
-            .select("*, profiles(*)")
+            .select()
             .eq("user_id", value: userId)
             .order("created_at", ascending: false)
             .range(from: offset, to: offset + limit - 1)
@@ -267,7 +267,7 @@ final class FeedService {
         // Fetch all workout-type feed items for this user (no profile join needed)
         let rows: [FeedItemRow] = try await supabase
             .from("feed_items")
-            .select("*, profiles(*)")
+            .select()
             .eq("user_id", value: userId)
             .eq("activity_type", value: ActivityType.workout.rawValue)
             .execute()
