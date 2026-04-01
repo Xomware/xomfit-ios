@@ -1,11 +1,15 @@
 #!/bin/sh
 # Xcode Cloud post-clone script
 
-# Auto-increment build number
+# Auto-increment build number and sync versions across all targets
 if [ -n "$CI_BUILD_NUMBER" ]; then
     echo "Setting build number to $CI_BUILD_NUMBER"
     cd "$CI_PRIMARY_REPOSITORY_PATH"
     agvtool new-version -all "$CI_BUILD_NUMBER"
+    # Sync marketing version across all targets to match main app
+    MARKETING_VERSION=$(agvtool what-marketing-version -terse1 | head -1)
+    echo "Syncing marketing version $MARKETING_VERSION to all targets"
+    agvtool new-marketing-version "$MARKETING_VERSION"
 fi
 
 # Generate Config.swift from environment variables
