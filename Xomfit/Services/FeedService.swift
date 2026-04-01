@@ -275,6 +275,22 @@ final class FeedService {
             .execute()
     }
 
+    // MARK: - Delete Feed Item
+
+    func deleteFeedItem(id: String) async throws {
+        try await supabase.from("feed_items").delete().eq("id", value: id).execute()
+    }
+
+    // MARK: - Update Caption
+
+    func updateCaption(feedItemId: String, caption: String) async throws {
+        try await supabase
+            .from("feed_items")
+            .update(["caption": caption])
+            .eq("id", value: feedItemId)
+            .execute()
+    }
+
     // MARK: - Delete Feed Items for Workout
 
     /// Deletes feed items associated with a workout.

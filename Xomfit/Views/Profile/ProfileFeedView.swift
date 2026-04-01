@@ -1,8 +1,9 @@
 import SwiftUI
 
 struct ProfileFeedView: View {
-    let feedItems: [SocialFeedItem]
+    @Binding var feedItems: [SocialFeedItem]
     var userId: String = ""
+    var currentUserId: String = ""
 
     var body: some View {
         if feedItems.isEmpty {
@@ -11,12 +12,26 @@ struct ProfileFeedView: View {
             LazyVStack(spacing: Theme.paddingSmall) {
                 ForEach(feedItems) { item in
                     NavigationLink {
-                        FeedDetailView(item: item, userId: userId)
+                        FeedDetailView(item: item, userId: currentUserId)
                     } label: {
                         FeedItemCard(
                             item: item,
                             onLike: { /* Like handled at feed level */ },
-                            onComment: { /* Comment handled at feed level */ }
+                            onComment: { /* Comment handled at feed level */ },
+                            onDelete: item.userId == currentUserId ? {
+                                Task {
+                                    feedItems.removeAll { $0.id == item.id }
+                                    try? await FeedService.shared.deleteFeedItem(id: item.id)
+                                }
+                            } : nil,
+                            onEdit: item.userId == currentUserId ? { newCaption in
+                                Task {
+                                    if let idx = feedItems.firstIndex(where: { $0.id == item.id }) {
+                                        feedItems[idx].caption = newCaption
+                                    }
+                                    try? await FeedService.shared.updateCaption(feedItemId: item.id, caption: newCaption)
+                                }
+                            } : nil
                         )
                     }
                     .buttonStyle(.plain)

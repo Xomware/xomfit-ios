@@ -11,6 +11,9 @@ struct WorkoutView: View {
     @State private var showBuilder = false
     @State private var previewTemplate: WorkoutTemplate?
     @State private var templateRefreshId = UUID()
+    @State private var recentWorkouts: [Workout] = []
+    @State private var myTemplates: [WorkoutTemplate] = []
+    @State private var savedTemplates: [WorkoutTemplate] = []
 
     private var userId: String {
         authService.currentUser?.id.uuidString ?? ""
@@ -52,6 +55,21 @@ struct WorkoutView: View {
 
                             // Quick Start templates
                             templateSection
+
+                            // Recent workouts
+                            if !recentWorkouts.isEmpty {
+                                recentSection
+                            }
+
+                            // My Workouts (custom templates)
+                            if !myTemplates.isEmpty {
+                                myWorkoutsSection
+                            }
+
+                            // Saved Workouts
+                            if !savedTemplates.isEmpty {
+                                savedSection
+                            }
                         }
                         .padding(.bottom, 80)
                     }
@@ -59,19 +77,26 @@ struct WorkoutView: View {
             }
             .navigationTitle("Workout")
             .toolbarColorScheme(.dark, for: .navigationBar)
+            .task {
+                await loadSections()
+            }
         }
         .alert("Name Your Workout", isPresented: $showNameEntry) {
             TextField("e.g. Push Day", text: $pendingWorkoutName)
             Button("Start") { showActiveWorkout = true }
             Button("Cancel", role: .cancel) {}
         }
-        .fullScreenCover(isPresented: $showActiveWorkout) {
+        .fullScreenCover(isPresented: $showActiveWorkout, onDismiss: {
+            Task { await loadSections() }
+        }) {
             ActiveWorkoutView(
                 workoutName: pendingWorkoutName.isEmpty ? "Workout" : pendingWorkoutName
             )
             .environment(authService)
         }
-        .fullScreenCover(item: $selectedTemplate) { template in
+        .fullScreenCover(item: $selectedTemplate, onDismiss: {
+            Task { await loadSections() }
+        }) { template in
             ActiveWorkoutView(
                 workoutName: template.name,
                 template: template
@@ -80,6 +105,7 @@ struct WorkoutView: View {
         }
         .sheet(isPresented: $showBuilder, onDismiss: {
             templateRefreshId = UUID()
+            Task { await loadSections() }
         }) {
             WorkoutBuilderView()
         }
@@ -134,4 +160,106 @@ struct WorkoutView: View {
         .padding(.vertical, Theme.paddingSmall)
     }
 
+    // MARK: - Recent Workouts
+
+    private var recentSection: some View {
+        VStack(alignment: .leading, spacing: Theme.paddingSmall) {
+            Text("Recent")
+                .font(.system(size: 16, weight: .bold))
+                .foregroundStyle(Theme.textPrimary)
+                .padding(.horizontal, Theme.paddingMedium)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: Theme.paddingSmall) {
+                    ForEach(Array(recentWorkouts.prefix(5).enumerated()), id: \.element.id) { index, workout in
+                        RecentWorkoutCard(workout: workout) {
+                            previewTemplate = templateFromWorkout(workout)
+                        }
+                        .staggeredAppear(index: index)
+                    }
+                }
+                .padding(.horizontal, Theme.paddingMedium)
+            }
+        }
+        .padding(.vertical, Theme.paddingSmall)
+    }
+
+    // MARK: - My Workouts
+
+    private var myWorkoutsSection: some View {
+        VStack(alignment: .leading, spacing: Theme.paddingSmall) {
+            Text("My Workouts")
+                .font(.system(size: 16, weight: .bold))
+                .foregroundStyle(Theme.textPrimary)
+                .padding(.horizontal, Theme.paddingMedium)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: Theme.paddingSmall) {
+                    ForEach(Array(myTemplates.enumerated()), id: \.element.id) { index, template in
+                        TemplateCardView(template: template) {
+                            previewTemplate = template
+                        }
+                        .staggeredAppear(index: index)
+                    }
+                }
+                .padding(.horizontal, Theme.paddingMedium)
+            }
+        }
+        .padding(.vertical, Theme.paddingSmall)
+    }
+
+    // MARK: - Saved Workouts
+
+    private var savedSection: some View {
+        VStack(alignment: .leading, spacing: Theme.paddingSmall) {
+            Text("Saved Workouts")
+                .font(.system(size: 16, weight: .bold))
+                .foregroundStyle(Theme.textPrimary)
+                .padding(.horizontal, Theme.paddingMedium)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: Theme.paddingSmall) {
+                    ForEach(Array(savedTemplates.enumerated()), id: \.element.id) { index, template in
+                        TemplateCardView(template: template) {
+                            previewTemplate = template
+                        }
+                        .staggeredAppear(index: index)
+                    }
+                }
+                .padding(.horizontal, Theme.paddingMedium)
+            }
+        }
+        .padding(.vertical, Theme.paddingSmall)
+    }
+
+    // MARK: - Data Loading
+
+    private func loadSections() async {
+        guard !userId.isEmpty else { return }
+        recentWorkouts = await WorkoutService.shared.fetchWorkouts(userId: userId)
+        let allCustom = TemplateService.shared.allTemplates().filter { $0.isCustom }
+        myTemplates = allCustom.filter { $0.category != .saved }
+        savedTemplates = allCustom.filter { $0.category == .saved }
+    }
+
+    private func templateFromWorkout(_ workout: Workout) -> WorkoutTemplate {
+        let exercises = workout.exercises.map { ex in
+            WorkoutTemplate.TemplateExercise(
+                id: UUID().uuidString,
+                exercise: ex.exercise,
+                targetSets: ex.sets.count,
+                targetReps: ex.bestSet.map { "\($0.reps)" } ?? "8",
+                notes: ex.notes
+            )
+        }
+        return WorkoutTemplate(
+            id: "recent-\(workout.id)",
+            name: workout.name,
+            description: "From \(workout.startTime.workoutDateString)",
+            exercises: exercises,
+            estimatedDuration: Int(workout.duration / 60),
+            category: .custom,
+            isCustom: false
+        )
+    }
 }

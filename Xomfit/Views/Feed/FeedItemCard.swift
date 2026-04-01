@@ -4,6 +4,13 @@ struct FeedItemCard: View {
     let item: SocialFeedItem
     let onLike: () -> Void
     let onComment: () -> Void
+    var onDelete: (() -> Void)? = nil
+    var onEdit: ((String) -> Void)? = nil
+    var onSave: (() -> Void)? = nil
+
+    @State private var showDeleteConfirm = false
+    @State private var showEditCaption = false
+    @State private var editedCaption = ""
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.paddingSmall) {
@@ -30,6 +37,21 @@ struct FeedItemCard: View {
         .padding(Theme.paddingMedium)
         .background(Theme.cardBackground)
         .cornerRadius(Theme.cornerRadius)
+        .confirmationDialog("Delete Post", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
+            Button("Delete", role: .destructive) {
+                onDelete?()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Are you sure you want to delete this post? This cannot be undone.")
+        }
+        .alert("Edit Caption", isPresented: $showEditCaption) {
+            TextField("Caption", text: $editedCaption)
+            Button("Save") {
+                onEdit?(editedCaption)
+            }
+            Button("Cancel", role: .cancel) {}
+        }
     }
 
     // MARK: - Header
@@ -58,6 +80,34 @@ struct FeedItemCard: View {
             Spacer()
 
             activityBadge
+
+            // Owner actions menu (delete / edit)
+            if onDelete != nil || onEdit != nil {
+                Menu {
+                    if onEdit != nil {
+                        Button {
+                            editedCaption = item.caption ?? ""
+                            showEditCaption = true
+                        } label: {
+                            Label("Edit Caption", systemImage: "pencil")
+                        }
+                    }
+                    if onDelete != nil {
+                        Button(role: .destructive) {
+                            showDeleteConfirm = true
+                        } label: {
+                            Label("Delete Post", systemImage: "trash")
+                        }
+                    }
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundStyle(Theme.textSecondary)
+                        .frame(width: 32, height: 32)
+                        .contentShape(Rectangle())
+                }
+                .accessibilityLabel("Post options")
+            }
         }
     }
 
@@ -168,6 +218,20 @@ struct FeedItemCard: View {
             .buttonStyle(.plain)
 
             Spacer()
+
+            // Save workout button (only for workout posts from others)
+            if item.activityType == .workout, let onSave {
+                Button {
+                    Haptics.success()
+                    onSave()
+                } label: {
+                    Image(systemName: "bookmark")
+                        .font(.system(size: 15))
+                        .foregroundStyle(Theme.textSecondary)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Save workout")
+            }
         }
     }
 }

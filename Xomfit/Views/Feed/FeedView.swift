@@ -82,7 +82,16 @@ struct FeedView: View {
                         onLike: {
                             Task { await viewModel.toggleLike(feedItem: item, userId: userId) }
                         },
-                        onComment: {}
+                        onComment: {},
+                        onDelete: item.userId == userId ? {
+                            Task { await viewModel.deleteFeedItem(id: item.id) }
+                        } : nil,
+                        onEdit: item.userId == userId ? { newCaption in
+                            Task { await viewModel.updateCaption(feedItemId: item.id, caption: newCaption) }
+                        } : nil,
+                        onSave: item.userId != userId && item.activityType == .workout ? {
+                            saveWorkoutFromFeed(item: item)
+                        } : nil
                     )
                 }
                 .listRowBackground(Color.clear)
@@ -150,6 +159,41 @@ struct FeedView: View {
             }
         }
         .padding(Theme.paddingLarge)
+    }
+
+    // MARK: - Save Workout from Feed
+
+    private func saveWorkoutFromFeed(item: SocialFeedItem) {
+        guard let activity = item.workoutActivity else { return }
+        let templateExercises = activity.exercises.map { ex in
+            WorkoutTemplate.TemplateExercise(
+                id: UUID().uuidString,
+                exercise: ExerciseDatabase.all.first(where: { $0.name == ex.name })
+                    ?? Exercise(
+                        id: ex.id,
+                        name: ex.name,
+                        muscleGroups: [],
+                        equipment: .other,
+                        category: .compound,
+                        description: "",
+                        tips: []
+                    ),
+                targetSets: 3,
+                targetReps: "\(ex.bestReps)",
+                notes: nil
+            )
+        }
+
+        let template = WorkoutTemplate(
+            id: UUID().uuidString,
+            name: activity.workoutName,
+            description: "Saved from \(item.user.displayName.isEmpty ? item.user.username : item.user.displayName)",
+            exercises: templateExercises,
+            estimatedDuration: Int(activity.duration / 60),
+            category: .saved,
+            isCustom: true
+        )
+        TemplateService.shared.saveCustomTemplate(template)
     }
 
     // MARK: - Error View
