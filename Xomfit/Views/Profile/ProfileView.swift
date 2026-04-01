@@ -165,7 +165,7 @@ struct ProfileView: View {
         case .feed:
             ProfileFeedView(feedItems: $viewModel.feedItems, userId: resolvedUserId, currentUserId: currentUserId)
         case .calendar:
-            ProfileCalendarView(workoutDays: viewModel.workoutDays)
+            ProfileCalendarView(workoutDays: viewModel.workoutDays, userId: resolvedUserId)
         case .stats:
             ProfileStatsView(
                 totalWorkouts: viewModel.totalWorkouts,
