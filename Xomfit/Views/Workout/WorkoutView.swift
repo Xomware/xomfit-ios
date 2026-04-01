@@ -22,39 +22,38 @@ struct WorkoutView: View {
                 Theme.background.ignoresSafeArea()
 
                 VStack(spacing: 0) {
-                    // Start Workout CTA
-                    Button {
-                        pendingWorkoutName = ""
-                        showNameEntry = true
-                    } label: {
-                        HStack(spacing: 10) {
-                            Image(systemName: "play.fill")
-                            Text("Start Workout")
-                        }
-                    }
-                    .buttonStyle(AccentButtonStyle())
-                    .padding(.horizontal, Theme.paddingMedium)
-                    .padding(.top, Theme.paddingMedium)
-                    .padding(.bottom, Theme.paddingSmall)
-
-                    // Build Workout
-                    Button {
-                        showBuilder = true
-                    } label: {
-                        HStack(spacing: 10) {
-                            Image(systemName: "hammer.fill")
-                            Text("Build Workout")
-                        }
-                    }
-                    .buttonStyle(GhostButtonStyle())
-                    .padding(.horizontal, Theme.paddingMedium)
-                    .padding(.bottom, Theme.paddingSmall)
-
                     ScrollView {
                         VStack(spacing: Theme.paddingSmall) {
+                            // Start Workout CTA
+                            Button {
+                                pendingWorkoutName = ""
+                                showNameEntry = true
+                            } label: {
+                                HStack(spacing: 10) {
+                                    Image(systemName: "play.fill")
+                                    Text("Start Workout")
+                                }
+                            }
+                            .buttonStyle(AccentButtonStyle())
+                            .padding(.horizontal, Theme.paddingMedium)
+                            .padding(.top, Theme.paddingMedium)
+
+                            // Build Workout
+                            Button {
+                                showBuilder = true
+                            } label: {
+                                HStack(spacing: 10) {
+                                    Image(systemName: "hammer.fill")
+                                    Text("Build Workout")
+                                }
+                            }
+                            .buttonStyle(GhostButtonStyle())
+                            .padding(.horizontal, Theme.paddingMedium)
+
                             // Quick Start templates
                             templateSection
                         }
+                        .padding(.bottom, 80)
                     }
                 }
             }

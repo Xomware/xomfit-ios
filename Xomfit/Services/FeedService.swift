@@ -11,7 +11,6 @@ struct FeedItemRow: Codable {
     let payload: String       // JSON-encoded payload blob stored as text
     let visibility: String
     let createdAt: String
-    let profiles: ProfileRow?
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -21,7 +20,6 @@ struct FeedItemRow: Codable {
         case payload
         case visibility
         case createdAt = "created_at"
-        case profiles
     }
 }
 
@@ -109,8 +107,17 @@ final class FeedService {
             .execute()
             .value
 
+        // Batch-fetch profiles for feed user names
+        let uniqueUserIds = Array(Set(rows.map { $0.userId }))
+        var profileMap: [String: ProfileRow] = [:]
+        for uid in uniqueUserIds {
+            if let profile = try? await ProfileService.shared.fetchProfile(userId: uid) {
+                profileMap[uid] = profile
+            }
+        }
+
         return rows.compactMap { row in
-            buildSocialFeedItem(from: row)
+            buildSocialFeedItem(from: row, profile: profileMap[row.userId])
         }
     }
 
@@ -126,8 +133,17 @@ final class FeedService {
             .execute()
             .value
 
+        // Batch-fetch profiles for feed user names
+        let uniqueUserIds = Array(Set(rows.map { $0.userId }))
+        var profileMap: [String: ProfileRow] = [:]
+        for uid in uniqueUserIds {
+            if let profile = try? await ProfileService.shared.fetchProfile(userId: uid) {
+                profileMap[uid] = profile
+            }
+        }
+
         return rows.compactMap { row in
-            buildSocialFeedItem(from: row)
+            buildSocialFeedItem(from: row, profile: profileMap[row.userId])
         }
     }
 
@@ -295,7 +311,7 @@ final class FeedService {
 
     // MARK: - Private Helpers
 
-    private func buildSocialFeedItem(from row: FeedItemRow) -> SocialFeedItem? {
+    private func buildSocialFeedItem(from row: FeedItemRow, profile: ProfileRow? = nil) -> SocialFeedItem? {
         guard let activityType = ActivityType(rawValue: row.activityType) else { return nil }
         let createdAt = iso8601.date(from: row.createdAt) ?? Date()
         let visibility = SocialFeedItem.FeedVisibility(rawValue: row.visibility) ?? .friends
@@ -318,9 +334,9 @@ final class FeedService {
             streakActivity = try? jsonDecoder.decode(StreakActivity.self, from: payloadData)
         }
 
-        // Build AppUser from joined profile data, falling back to placeholder
+        // Build AppUser from profile data, falling back to placeholder
         let user: AppUser
-        if let profile = row.profiles {
+        if let profile {
             user = AppUser(
                 id: profile.id,
                 username: profile.username,
