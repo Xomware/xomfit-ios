@@ -22,6 +22,7 @@ struct ProfileTabPicker: View {
                             .font(Theme.fontSmall)
                             .foregroundStyle(selectedTab == tab ? Theme.accent : Theme.textSecondary)
                     }
+                    .padding(.bottom, 10)
                     .frame(maxWidth: .infinity)
                     .frame(minHeight: 44)
                     .overlay(alignment: .bottom) {

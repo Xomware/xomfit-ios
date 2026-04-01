@@ -154,7 +154,7 @@ struct ProfileCalendarView: View {
 
         for day in range {
             if let date = calendar.date(byAdding: .day, value: day - 1, to: monthStart) {
-                days.append(date)
+                days.append(calendar.startOfDay(for: date))
             }
         }
 

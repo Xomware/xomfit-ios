@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ProfileFeedView: View {
     let feedItems: [SocialFeedItem]
+    var userId: String = ""
 
     var body: some View {
         if feedItems.isEmpty {
@@ -9,11 +10,16 @@ struct ProfileFeedView: View {
         } else {
             LazyVStack(spacing: Theme.paddingSmall) {
                 ForEach(feedItems) { item in
-                    FeedItemCard(
-                        item: item,
-                        onLike: { /* Like handled at feed level */ },
-                        onComment: { /* Comment handled at feed level */ }
-                    )
+                    NavigationLink {
+                        FeedDetailView(item: item, userId: userId)
+                    } label: {
+                        FeedItemCard(
+                            item: item,
+                            onLike: { /* Like handled at feed level */ },
+                            onComment: { /* Comment handled at feed level */ }
+                        )
+                    }
+                    .buttonStyle(.plain)
                 }
             }
             .padding(.horizontal, Theme.paddingMedium)

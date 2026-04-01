@@ -163,7 +163,7 @@ struct ProfileView: View {
     private var tabContent: some View {
         switch viewModel.selectedTab {
         case .feed:
-            ProfileFeedView(feedItems: viewModel.feedItems)
+            ProfileFeedView(feedItems: viewModel.feedItems, userId: resolvedUserId)
         case .calendar:
             ProfileCalendarView(workoutDays: viewModel.workoutDays)
         case .stats:
