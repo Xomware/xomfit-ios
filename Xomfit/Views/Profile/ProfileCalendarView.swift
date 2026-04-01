@@ -4,6 +4,7 @@ struct ProfileCalendarView: View {
     let workoutDays: [Date: Int]
     var onDaySelected: ((Date, [Workout]) -> Void)? = nil
 
+    @Environment(AuthService.self) private var authService
     @State private var displayedMonth: Date = Date()
     @State private var selectedDate: Date? = nil
     @State private var selectedDateWorkouts: [Workout] = []
@@ -40,6 +41,7 @@ struct ProfileCalendarView: View {
                     date: selectedDate,
                     workoutCount: normalizedWorkoutDays[selectedDate] ?? 0
                 )
+                .environment(authService)
             }
         }
     }
