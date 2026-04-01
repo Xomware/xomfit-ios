@@ -34,9 +34,11 @@ struct FeedItemCard: View {
             // Action bar: like + comment counts
             actionBar
         }
-        .padding(Theme.paddingMedium)
+        .padding(.horizontal, Theme.paddingMedium)
+        .padding(.vertical, 14)
         .background(Theme.cardBackground)
-        .cornerRadius(Theme.cornerRadius)
+        .clipShape(.rect(cornerRadius: 16))
+        .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
         .confirmationDialog("Delete Post", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
             Button("Delete", role: .destructive) {
                 onDelete?()

@@ -172,7 +172,7 @@ struct WorkoutView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: Theme.paddingSmall) {
                     ForEach(Array(recentWorkouts.prefix(5).enumerated()), id: \.element.id) { index, workout in
-                        RecentWorkoutCard(workout: workout) {
+                        TemplateCardView(template: templateFromWorkout(workout)) {
                             previewTemplate = templateFromWorkout(workout)
                         }
                         .staggeredAppear(index: index)

@@ -6,7 +6,7 @@ struct FeedView: View {
     @State private var showUserSearch = false
 
     private var userId: String {
-        authService.currentUser?.id.uuidString ?? ""
+        authService.currentUser?.id.uuidString.lowercased() ?? ""
     }
 
     var body: some View {
@@ -72,53 +72,44 @@ struct FeedView: View {
     // MARK: - Feed List
 
     private var feedList: some View {
-        List {
-            ForEach(Array(viewModel.feedItems.enumerated()), id: \.element.id) { index, item in
-                NavigationLink {
-                    FeedDetailView(item: item, userId: userId)
-                } label: {
-                    FeedItemCard(
-                        item: item,
-                        onLike: {
-                            Task { await viewModel.toggleLike(feedItem: item, userId: userId) }
-                        },
-                        onComment: {},
-                        onDelete: makeDeleteAction(for: item),
-                        onEdit: makeEditAction(for: item),
-                        onSave: makeSaveAction(for: item)
-                    )
-                }
-                .listRowBackground(Color.clear)
-                .listRowSeparator(.hidden)
-                .listRowInsets(EdgeInsets(
-                    top: 6,
-                    leading: Theme.paddingMedium,
-                    bottom: 6,
-                    trailing: Theme.paddingMedium
-                ))
-                .buttonStyle(.plain)
-                .staggeredAppear(index: index)
-                .onAppear {
-                    // Load more when near the end
-                    if item.id == viewModel.feedItems.last?.id {
-                        Task { await viewModel.loadMore(userId: userId) }
+        ScrollView {
+            LazyVStack(spacing: 12) {
+                ForEach(Array(viewModel.feedItems.enumerated()), id: \.element.id) { index, item in
+                    NavigationLink {
+                        FeedDetailView(item: item, userId: userId)
+                    } label: {
+                        FeedItemCard(
+                            item: item,
+                            onLike: {
+                                Task { await viewModel.toggleLike(feedItem: item, userId: userId) }
+                            },
+                            onComment: {},
+                            onDelete: makeDeleteAction(for: item),
+                            onEdit: makeEditAction(for: item),
+                            onSave: makeSaveAction(for: item)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .staggeredAppear(index: index)
+                    .onAppear {
+                        if item.id == viewModel.feedItems.last?.id {
+                            Task { await viewModel.loadMore(userId: userId) }
+                        }
                     }
                 }
-            }
 
-            if !viewModel.hasMore && !viewModel.feedItems.isEmpty {
-                Text("You're all caught up!")
-                    .font(Theme.fontCaption)
-                    .foregroundColor(Theme.textSecondary)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(Theme.paddingMedium)
-                    .listRowBackground(Color.clear)
-                    .listRowSeparator(.hidden)
+                if !viewModel.hasMore && !viewModel.feedItems.isEmpty {
+                    Text("You're all caught up!")
+                        .font(Theme.fontCaption)
+                        .foregroundStyle(Theme.textSecondary)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(Theme.paddingMedium)
+                }
             }
+            .padding(.horizontal, Theme.paddingMedium)
+            .padding(.top, Theme.paddingSmall)
+            .padding(.bottom, 100)
         }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
-        .safeAreaInset(edge: .bottom) { Color.clear.frame(height: 80) }
         .refreshable {
             await viewModel.refreshFeed(userId: userId)
         }

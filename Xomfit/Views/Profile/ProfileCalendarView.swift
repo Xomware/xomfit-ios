@@ -2,12 +2,26 @@ import SwiftUI
 
 struct ProfileCalendarView: View {
     let workoutDays: [Date: Int]
+    var onDaySelected: ((Date, [Workout]) -> Void)? = nil
 
     @State private var displayedMonth: Date = Date()
+    @State private var selectedDate: Date? = nil
+    @State private var selectedDateWorkouts: [Workout] = []
+    @State private var showDaySheet = false
 
     private let calendar = Calendar.current
     private let dayOfWeekHeaders = ["S", "M", "T", "W", "T", "F", "S"]
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 6), count: 7)
+
+    /// Normalize workoutDays keys to startOfDay for reliable matching.
+    private var normalizedWorkoutDays: [Date: Int] {
+        var result: [Date: Int] = [:]
+        for (date, count) in workoutDays {
+            let normalized = calendar.startOfDay(for: date)
+            result[normalized, default: 0] += count
+        }
+        return result
+    }
 
     var body: some View {
         VStack(spacing: Theme.paddingSmall) {
@@ -20,6 +34,14 @@ struct ProfileCalendarView: View {
         .background(Theme.cardBackground)
         .clipShape(.rect(cornerRadius: Theme.cornerRadius))
         .padding(.horizontal, Theme.paddingSmall)
+        .sheet(isPresented: $showDaySheet) {
+            if let selectedDate {
+                CalendarDayDetailSheet(
+                    date: selectedDate,
+                    workoutCount: normalizedWorkoutDays[selectedDate] ?? 0
+                )
+            }
+        }
     }
 
     // MARK: - Month Navigator
@@ -88,17 +110,40 @@ struct ProfileCalendarView: View {
 
     private func dayCell(for date: Date) -> some View {
         let dayNumber = calendar.component(.day, from: date)
-        let count = workoutCount(for: date)
+        let normalized = calendar.startOfDay(for: date)
+        let count = normalizedWorkoutDays[normalized] ?? 0
         let isToday = calendar.isDateInToday(date)
 
-        return Text("\(dayNumber)")
-            .font(.system(size: 14, weight: count > 0 ? .bold : .regular))
-            .foregroundStyle(cellForeground(count: count, isToday: isToday))
+        return Button {
+            if count > 0 {
+                selectedDate = normalized
+                showDaySheet = true
+            }
+        } label: {
+            VStack(spacing: 2) {
+                Text("\(dayNumber)")
+                    .font(.system(size: 14, weight: count > 0 ? .bold : .regular))
+                    .foregroundStyle(cellForeground(count: count, isToday: isToday))
+
+                // Workout indicator dot
+                if count > 0 {
+                    Circle()
+                        .fill(count >= 2 ? Theme.accent : Theme.accent.opacity(0.7))
+                        .frame(width: 5, height: 5)
+                } else {
+                    Circle()
+                        .fill(.clear)
+                        .frame(width: 5, height: 5)
+                }
+            }
             .frame(maxWidth: .infinity, minHeight: 36)
             .aspectRatio(1, contentMode: .fit)
             .background(cellBackground(count: count, isToday: isToday))
             .clipShape(.rect(cornerRadius: 8))
-            .accessibilityLabel(dayCellAccessibilityLabel(dayNumber: dayNumber, count: count))
+        }
+        .buttonStyle(.plain)
+        .disabled(count == 0)
+        .accessibilityLabel(dayCellAccessibilityLabel(dayNumber: dayNumber, count: count))
     }
 
     // MARK: - Cell Styling
@@ -167,15 +212,109 @@ struct ProfileCalendarView: View {
         return days
     }
 
-    private func workoutCount(for date: Date) -> Int {
-        let startOfDay = calendar.startOfDay(for: date)
-        return workoutDays[startOfDay] ?? 0
-    }
-
     private func dayCellAccessibilityLabel(dayNumber: Int, count: Int) -> String {
         if count > 0 {
-            return "Day \(dayNumber), \(count) workout\(count == 1 ? "" : "s")"
+            return "Day \(dayNumber), \(count) workout\(count == 1 ? "" : "s"), tap to view"
         }
         return "Day \(dayNumber)"
+    }
+}
+
+// MARK: - Calendar Day Detail Sheet
+
+private struct CalendarDayDetailSheet: View {
+    let date: Date
+    let workoutCount: Int
+
+    @Environment(AuthService.self) private var authService
+    @Environment(\.dismiss) private var dismiss
+    @State private var workouts: [Workout] = []
+    @State private var isLoading = true
+
+    private var userId: String {
+        authService.currentUser?.id.uuidString ?? ""
+    }
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Theme.background.ignoresSafeArea()
+
+                if isLoading {
+                    ProgressView().tint(Theme.accent)
+                } else if workouts.isEmpty {
+                    VStack(spacing: Theme.paddingSmall) {
+                        Image(systemName: "calendar.badge.exclamationmark")
+                            .font(.system(size: 40))
+                            .foregroundStyle(Theme.textSecondary)
+                        Text("No workouts found")
+                            .font(Theme.fontBody)
+                            .foregroundStyle(Theme.textSecondary)
+                    }
+                } else {
+                    List {
+                        ForEach(workouts) { workout in
+                            NavigationLink {
+                                WorkoutDetailView(workout: workout)
+                            } label: {
+                                HStack(spacing: 12) {
+                                    Image(systemName: "dumbbell.fill")
+                                        .font(.system(size: 16))
+                                        .foregroundStyle(Theme.accent)
+                                        .frame(width: 36, height: 36)
+                                        .background(Theme.accent.opacity(0.15))
+                                        .clipShape(.rect(cornerRadius: 8))
+
+                                    VStack(alignment: .leading, spacing: 3) {
+                                        Text(workout.name)
+                                            .font(.system(size: 15, weight: .semibold))
+                                            .foregroundStyle(Theme.textPrimary)
+                                        HStack(spacing: 8) {
+                                            Text("\(workout.exercises.count) exercises")
+                                            Text(workout.durationString)
+                                                .foregroundStyle(Theme.accent)
+                                        }
+                                        .font(Theme.fontSmall)
+                                        .foregroundStyle(Theme.textSecondary)
+                                    }
+
+                                    Spacer()
+                                }
+                            }
+                            .listRowBackground(Theme.cardBackground)
+                        }
+                    }
+                    .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
+                }
+            }
+            .navigationTitle(formattedDate)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") { dismiss() }
+                        .foregroundStyle(Theme.accent)
+                }
+            }
+            .task { await loadWorkouts() }
+        }
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
+    }
+
+    private var formattedDate: String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        return formatter.string(from: date)
+    }
+
+    private func loadWorkouts() async {
+        isLoading = true
+        let allWorkouts = await WorkoutService.shared.fetchWorkouts(userId: userId)
+        let calendar = Calendar.current
+        let targetDay = calendar.startOfDay(for: date)
+        workouts = allWorkouts.filter { calendar.startOfDay(for: $0.startTime) == targetDay }
+        isLoading = false
     }
 }

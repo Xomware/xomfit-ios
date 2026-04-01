@@ -149,7 +149,7 @@ final class FeedService {
 
     // MARK: - Post Workout to Feed
 
-    func postWorkoutToFeed(workout: Workout, userId: String) async throws {
+    func postWorkoutToFeed(workout: Workout, userId: String, caption: String? = nil) async throws {
         let exercises = workout.exercises.map { ex in
             WorkoutActivity.ExerciseSummary(
                 id: ex.id,
@@ -178,7 +178,7 @@ final class FeedService {
             id: UUID().uuidString,
             user_id: userId,
             activity_type: ActivityType.workout.rawValue,
-            caption: nil,
+            caption: caption,
             payload: payloadString,
             visibility: SocialFeedItem.FeedVisibility.friends.rawValue
         )
