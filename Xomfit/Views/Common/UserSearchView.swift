@@ -20,13 +20,17 @@ struct UserSearchView: View {
 
                 VStack(spacing: 0) {
                     searchBar
-                        .padding(.horizontal, Theme.paddingMedium)
-                        .padding(.vertical, Theme.paddingSmall)
+                        .padding(.horizontal, Theme.Spacing.md)
+                        .padding(.vertical, Theme.Spacing.sm)
 
                     if isSearching {
-                        Spacer()
-                        ProgressView()
-                            .tint(Theme.accent)
+                        VStack(spacing: Theme.Spacing.sm) {
+                            ForEach(0..<5, id: \.self) { _ in
+                                SkeletonCard(height: 56)
+                            }
+                        }
+                        .padding(.horizontal, Theme.Spacing.md)
+                        .padding(.top, Theme.Spacing.md)
                         Spacer()
                     } else if results.isEmpty && !query.isEmpty {
                         Spacer()
@@ -59,7 +63,7 @@ struct UserSearchView: View {
         HStack(spacing: 10) {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(Theme.textSecondary)
-                .font(.system(size: 16))
+                .font(.body)
 
             TextField("Search by username", text: $query)
                 .textInputAutocapitalization(.never)
@@ -77,7 +81,7 @@ struct UserSearchView: View {
             }
         }
         .padding(12)
-        .background(Theme.cardBackground)
+        .background(Theme.surface)
         .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
         .onChange(of: query) { _, newValue in
             searchTask?.cancel()
@@ -104,7 +108,7 @@ struct UserSearchView: View {
                 } label: {
                     userRow(profile)
                 }
-                .listRowBackground(Theme.cardBackground)
+                .listRowBackground(Theme.surface)
                 .listRowSeparatorTint(Theme.textSecondary.opacity(0.2))
             }
         }
@@ -121,7 +125,7 @@ struct UserSearchView: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(profile.displayName.isEmpty ? profile.username : profile.displayName)
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Theme.textPrimary)
                 Text("@\(profile.username)")
                     .font(Theme.fontCaption)
@@ -145,7 +149,7 @@ struct UserSearchView: View {
         }
 
         return Text(initials)
-            .font(.system(size: 14, weight: .bold))
+            .font(.subheadline.weight(.bold))
             .foregroundStyle(Theme.accent)
             .frame(width: 40, height: 40)
             .background(Theme.accent.opacity(0.15))
@@ -155,9 +159,9 @@ struct UserSearchView: View {
     // MARK: - Empty / No Results
 
     private var emptyState: some View {
-        VStack(spacing: Theme.paddingSmall) {
+        VStack(spacing: Theme.Spacing.sm) {
             Image(systemName: "magnifyingglass")
-                .font(.system(size: 36))
+                .font(.largeTitle)
                 .foregroundStyle(Theme.textSecondary)
             Text("Search for users by username")
                 .font(Theme.fontBody)
@@ -166,9 +170,9 @@ struct UserSearchView: View {
     }
 
     private var noResultsView: some View {
-        VStack(spacing: Theme.paddingSmall) {
+        VStack(spacing: Theme.Spacing.sm) {
             Image(systemName: "person.slash")
-                .font(.system(size: 36))
+                .font(.largeTitle)
                 .foregroundStyle(Theme.textSecondary)
             Text("No users found")
                 .font(Theme.fontBody)

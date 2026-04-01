@@ -8,13 +8,13 @@ struct ProfileTabPicker: View {
         HStack(spacing: 0) {
             ForEach(ProfileTab.allCases) { tab in
                 Button {
-                    withAnimation(.easeInOut(duration: 0.25)) {
+                    withAnimation(.xomConfident) {
                         selectedTab = tab
                     }
                 } label: {
-                    VStack(spacing: Theme.paddingSmall) {
+                    VStack(spacing: Theme.Spacing.sm) {
                         Image(systemName: tab.icon)
-                            .font(.system(size: 18))
+                            .font(.headline)
                             .foregroundStyle(selectedTab == tab ? Theme.accent : Theme.textSecondary)
                             .frame(height: 24)
 
@@ -39,7 +39,7 @@ struct ProfileTabPicker: View {
                 .accessibilityAddTraits(selectedTab == tab ? .isSelected : [])
             }
         }
-        .padding(.top, Theme.paddingSmall)
+        .padding(.top, Theme.Spacing.sm)
         .overlay(alignment: .bottom) {
             Divider()
                 .background(Theme.textSecondary.opacity(0.3))

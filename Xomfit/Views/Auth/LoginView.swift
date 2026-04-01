@@ -22,9 +22,9 @@ struct LoginView: View {
                 .ignoresSafeArea()
 
                 ScrollView {
-                    VStack(spacing: Theme.paddingLarge) {
+                    VStack(spacing: Theme.Spacing.lg) {
                         // Logo / Header
-                        VStack(spacing: Theme.paddingSmall) {
+                        VStack(spacing: Theme.Spacing.sm) {
                             Image("XomFitBanner")
                                 .resizable()
                                 .scaledToFit()
@@ -32,10 +32,10 @@ struct LoginView: View {
 
                             Text("Track. Lift. Grow.")
                                 .font(Theme.fontCaption)
-                                .foregroundColor(Theme.textSecondary)
+                                .foregroundStyle(Theme.textSecondary)
                         }
                         .padding(.top, 60)
-                        .padding(.bottom, Theme.paddingLarge)
+                        .padding(.bottom, Theme.Spacing.lg)
 
                         // Social Sign In Buttons
                         VStack(spacing: 12) {
@@ -54,7 +54,7 @@ struct LoginView: View {
                             }
                             .signInWithAppleButtonStyle(.white)
                             .frame(height: 52)
-                            .cornerRadius(Theme.cornerRadius)
+                            .clipShape(.rect(cornerRadius: Theme.cornerRadius))
 
                             // Google Sign In
                             Button {
@@ -67,54 +67,54 @@ struct LoginView: View {
                             } label: {
                                 HStack(spacing: 8) {
                                     Image(systemName: "g.circle.fill")
-                                        .font(.system(size: 20))
+                                        .font(.title3)
                                     Text("Sign in with Google")
-                                        .font(.system(size: 16, weight: .semibold))
+                                        .font(.body.weight(.semibold))
                                 }
-                                .foregroundColor(.black)
+                                .foregroundStyle(.black)
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 52)
                                 .background(Color.white)
-                                .cornerRadius(Theme.cornerRadius)
+                                .clipShape(.rect(cornerRadius: Theme.cornerRadius))
                             }
                         }
-                        .padding(.horizontal, Theme.paddingLarge)
+                        .padding(.horizontal, Theme.Spacing.lg)
 
                         // Divider
                         HStack {
                             Rectangle().fill(Theme.textSecondary.opacity(0.3)).frame(height: 1)
                             Text("or")
                                 .font(Theme.fontCaption)
-                                .foregroundColor(Theme.textSecondary)
+                                .foregroundStyle(Theme.textSecondary)
                             Rectangle().fill(Theme.textSecondary.opacity(0.3)).frame(height: 1)
                         }
-                        .padding(.horizontal, Theme.paddingLarge)
+                        .padding(.horizontal, Theme.Spacing.lg)
 
                         // Email Form
-                        VStack(spacing: Theme.paddingMedium) {
+                        VStack(spacing: Theme.Spacing.md) {
                             VStack(alignment: .leading, spacing: 6) {
                                 Text("Email")
                                     .font(Theme.fontCaption)
-                                    .foregroundColor(Theme.textSecondary)
+                                    .foregroundStyle(Theme.textSecondary)
                                 TextField("you@example.com", text: $email)
                                     .keyboardType(.emailAddress)
                                     .autocapitalization(.none)
                                     .autocorrectionDisabled()
-                                    .padding(Theme.paddingMedium)
-                                    .background(Theme.cardBackground)
-                                    .cornerRadius(Theme.cornerRadius)
-                                    .foregroundColor(Theme.textPrimary)
+                                    .padding(Theme.Spacing.md)
+                                    .background(Theme.surface)
+                                    .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+                                    .foregroundStyle(Theme.textPrimary)
                             }
 
                             VStack(alignment: .leading, spacing: 6) {
                                 Text("Password")
                                     .font(Theme.fontCaption)
-                                    .foregroundColor(Theme.textSecondary)
+                                    .foregroundStyle(Theme.textSecondary)
                                 SecureField("••••••••", text: $password)
-                                    .padding(Theme.paddingMedium)
-                                    .background(Theme.cardBackground)
-                                    .cornerRadius(Theme.cornerRadius)
-                                    .foregroundColor(Theme.textPrimary)
+                                    .padding(Theme.Spacing.md)
+                                    .background(Theme.surface)
+                                    .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+                                    .foregroundStyle(Theme.textPrimary)
                             }
 
                             Button {
@@ -131,20 +131,20 @@ struct LoginView: View {
                             .disabled(isLoading || email.isEmpty || password.isEmpty)
                             .opacity((isLoading || email.isEmpty || password.isEmpty) ? 0.6 : 1)
                         }
-                        .padding(.horizontal, Theme.paddingLarge)
+                        .padding(.horizontal, Theme.Spacing.lg)
 
                         // Sign up link
                         HStack(spacing: 4) {
                             Text("Don't have an account?")
-                                .foregroundColor(Theme.textSecondary)
+                                .foregroundStyle(Theme.textSecondary)
                                 .font(Theme.fontCaption)
                             NavigationLink(destination: SignUpView()) {
                                 Text("Sign Up")
-                                    .font(.system(size: 13, weight: .semibold))
-                                    .foregroundColor(Theme.accent)
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(Theme.accent)
                             }
                         }
-                        .padding(.top, Theme.paddingSmall)
+                        .padding(.top, Theme.Spacing.sm)
 
                         Spacer()
                     }

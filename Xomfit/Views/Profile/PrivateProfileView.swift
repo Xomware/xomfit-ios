@@ -8,7 +8,7 @@ struct PrivateProfileView: View {
     let onSendRequest: () -> Void
 
     var body: some View {
-        VStack(spacing: Theme.paddingLarge) {
+        VStack(spacing: Theme.Spacing.lg) {
             Spacer()
 
             // Avatar
@@ -17,7 +17,7 @@ struct PrivateProfileView: View {
                     .fill(Theme.accent.opacity(0.2))
                     .frame(width: 70, height: 70)
                 Text(initials)
-                    .font(.system(size: 24, weight: .bold))
+                    .font(.title2.weight(.bold))
                     .foregroundStyle(Theme.accent)
             }
 
@@ -25,7 +25,7 @@ struct PrivateProfileView: View {
             VStack(spacing: 4) {
                 if !displayName.isEmpty {
                     Text(displayName)
-                        .font(.system(size: 20, weight: .bold))
+                        .font(.title3.weight(.bold))
                         .foregroundStyle(Theme.textPrimary)
                 }
                 if !username.isEmpty {
@@ -36,9 +36,9 @@ struct PrivateProfileView: View {
             }
 
             // Lock icon + message
-            VStack(spacing: Theme.paddingSmall) {
+            VStack(spacing: Theme.Spacing.sm) {
                 Image(systemName: "lock.fill")
-                    .font(.system(size: 28))
+                    .font(.title)
                     .foregroundStyle(Theme.textSecondary)
 
                 Text("This account is private")
@@ -55,24 +55,24 @@ struct PrivateProfileView: View {
             if friendshipStatus == .none {
                 Button(action: onSendRequest) {
                     Text("Send Friend Request")
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(.subheadline.weight(.semibold))
                         .foregroundStyle(Theme.background)
                         .frame(maxWidth: .infinity)
                         .frame(height: 44)
                         .background(Theme.accent)
                         .clipShape(.rect(cornerRadius: Theme.cornerRadius))
                 }
-                .padding(.horizontal, Theme.paddingLarge)
+                .padding(.horizontal, Theme.Spacing.lg)
                 .accessibilityLabel("Send friend request to \(displayName)")
             } else if friendshipStatus == .pending {
                 Text("Friend Request Sent")
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Theme.textSecondary)
                     .frame(maxWidth: .infinity)
                     .frame(height: 44)
-                    .background(Theme.cardBackground)
+                    .background(Theme.surface)
                     .clipShape(.rect(cornerRadius: Theme.cornerRadius))
-                    .padding(.horizontal, Theme.paddingLarge)
+                    .padding(.horizontal, Theme.Spacing.lg)
             }
 
             Spacer()

@@ -24,16 +24,16 @@ struct ProfileCalendarView: View {
     }
 
     var body: some View {
-        VStack(spacing: Theme.paddingSmall) {
+        VStack(spacing: Theme.Spacing.sm) {
             monthNavigator
             dayOfWeekHeader
             calendarGrid
         }
         .padding(.horizontal, 12)
-        .padding(.vertical, Theme.paddingMedium)
-        .background(Theme.cardBackground)
+        .padding(.vertical, Theme.Spacing.md)
+        .background(Theme.surface)
         .clipShape(.rect(cornerRadius: Theme.cornerRadius))
-        .padding(.horizontal, Theme.paddingSmall)
+        .padding(.horizontal, Theme.Spacing.sm)
         .sheet(isPresented: $showDaySheet) {
             if let selectedDate {
                 CalendarDayDetailSheet(
@@ -52,7 +52,7 @@ struct ProfileCalendarView: View {
                 navigateMonth(by: -1)
             } label: {
                 Image(systemName: "chevron.left")
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.body.weight(.semibold))
                     .foregroundStyle(Theme.accent)
                     .frame(width: 44, height: 44)
             }
@@ -61,7 +61,7 @@ struct ProfileCalendarView: View {
             Spacer()
 
             Text(monthYearString)
-                .font(.system(size: 16, weight: .bold))
+                .font(.body.weight(.bold))
                 .foregroundStyle(Theme.textPrimary)
 
             Spacer()
@@ -70,7 +70,7 @@ struct ProfileCalendarView: View {
                 navigateMonth(by: 1)
             } label: {
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.body.weight(.semibold))
                     .foregroundStyle(canGoForward ? Theme.accent : Theme.textSecondary.opacity(0.3))
                     .frame(width: 44, height: 44)
             }
@@ -85,7 +85,7 @@ struct ProfileCalendarView: View {
         LazyVGrid(columns: columns, spacing: 6) {
             ForEach(dayOfWeekHeaders, id: \.self) { day in
                 Text(day)
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(.caption.weight(.semibold))
                     .foregroundStyle(Theme.textSecondary)
                     .frame(maxWidth: .infinity)
             }
@@ -116,13 +116,14 @@ struct ProfileCalendarView: View {
 
         return Button {
             if count > 0 {
+                Haptics.selection()
                 selectedDate = normalized
                 showDaySheet = true
             }
         } label: {
             VStack(spacing: 2) {
                 Text("\(dayNumber)")
-                    .font(.system(size: 14, weight: count > 0 ? .bold : .regular))
+                    .font(.subheadline.weight(count > 0 ? .bold : .regular))
                     .foregroundStyle(cellForeground(count: count, isToday: isToday))
 
                 // Workout indicator dot
@@ -179,7 +180,7 @@ struct ProfileCalendarView: View {
 
     private func navigateMonth(by value: Int) {
         if let newMonth = calendar.date(byAdding: .month, value: value, to: displayedMonth) {
-            withAnimation(.easeInOut(duration: 0.2)) {
+            withAnimation(.xomConfident) {
                 displayedMonth = newMonth
             }
         }
@@ -243,9 +244,9 @@ private struct CalendarDayDetailSheet: View {
                 if isLoading {
                     ProgressView().tint(Theme.accent)
                 } else if workouts.isEmpty {
-                    VStack(spacing: Theme.paddingSmall) {
+                    VStack(spacing: Theme.Spacing.sm) {
                         Image(systemName: "calendar.badge.exclamationmark")
-                            .font(.system(size: 40))
+                            .font(.largeTitle)
                             .foregroundStyle(Theme.textSecondary)
                         Text("No workouts found")
                             .font(Theme.fontBody)
@@ -259,7 +260,7 @@ private struct CalendarDayDetailSheet: View {
                             } label: {
                                 HStack(spacing: 12) {
                                     Image(systemName: "dumbbell.fill")
-                                        .font(.system(size: 16))
+                                        .font(.body)
                                         .foregroundStyle(Theme.accent)
                                         .frame(width: 36, height: 36)
                                         .background(Theme.accent.opacity(0.15))
@@ -267,7 +268,7 @@ private struct CalendarDayDetailSheet: View {
 
                                     VStack(alignment: .leading, spacing: 3) {
                                         Text(workout.name)
-                                            .font(.system(size: 15, weight: .semibold))
+                                            .font(.subheadline.weight(.semibold))
                                             .foregroundStyle(Theme.textPrimary)
                                         HStack(spacing: 8) {
                                             Text("\(workout.exercises.count) exercises")
@@ -281,7 +282,7 @@ private struct CalendarDayDetailSheet: View {
                                     Spacer()
                                 }
                             }
-                            .listRowBackground(Theme.cardBackground)
+                            .listRowBackground(Theme.surface)
                         }
                     }
                     .listStyle(.plain)

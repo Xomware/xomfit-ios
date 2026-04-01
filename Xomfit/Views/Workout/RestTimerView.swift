@@ -36,7 +36,7 @@ struct RestTimerView: View {
     }
 
     var body: some View {
-        HStack(spacing: Theme.paddingMedium) {
+        HStack(spacing: Theme.Spacing.md) {
             // Circular countdown ring
             ZStack {
                 Circle()
@@ -55,7 +55,7 @@ struct RestTimerView: View {
                     .animation(.linear(duration: 1), value: progress)
 
                 Text(timeString)
-                    .font(.system(size: 16, weight: .bold, design: .monospaced))
+                    .font(.body.weight(.bold).monospaced())
                     .monospacedDigit()
                     .foregroundStyle(isOvertime ? Theme.destructive : Theme.accent)
             }
@@ -66,15 +66,16 @@ struct RestTimerView: View {
             // Label + controls
             VStack(alignment: .leading, spacing: 8) {
                 Text("Rest")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.caption.weight(.semibold))
                     .foregroundStyle(Theme.textSecondary)
 
                 HStack(spacing: 10) {
                     Button {
+                        Haptics.light()
                         onSkip()
                     } label: {
                         Text("Skip")
-                            .font(.system(size: 13, weight: .bold))
+                            .font(.caption.weight(.bold))
                             .foregroundStyle(Theme.textPrimary)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 7)
@@ -84,10 +85,11 @@ struct RestTimerView: View {
                     .accessibilityLabel("Skip rest timer")
 
                     Button {
+                        Haptics.light()
                         onExtend()
                     } label: {
                         Text("+30s")
-                            .font(.system(size: 13, weight: .bold))
+                            .font(.caption.weight(.bold))
                             .foregroundStyle(Theme.accent)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 7)
@@ -100,8 +102,8 @@ struct RestTimerView: View {
 
             Spacer()
         }
-        .padding(Theme.paddingMedium)
-        .background(Theme.cardBackground)
+        .padding(Theme.Spacing.md)
+        .background(Theme.surface)
         .clipShape(.rect(cornerRadius: Theme.cornerRadius))
     }
 }

@@ -11,7 +11,7 @@ struct RecentWorkoutCard: View {
         }) {
             VStack(alignment: .leading, spacing: 6) {
                 Text(workout.name)
-                    .font(.system(size: 13, weight: .bold))
+                    .font(.caption.weight(.bold))
                     .foregroundStyle(Theme.textPrimary)
                     .lineLimit(1)
 
@@ -22,13 +22,13 @@ struct RecentWorkoutCard: View {
                 HStack(spacing: 8) {
                     HStack(spacing: 3) {
                         Image(systemName: "dumbbell.fill")
-                            .font(.system(size: 9))
+                            .font(.caption2)
                         Text("\(workout.exercises.count) ex")
                     }
 
                     HStack(spacing: 3) {
                         Image(systemName: "clock")
-                            .font(.system(size: 9))
+                            .font(.caption2)
                         Text(workout.durationString)
                             .foregroundStyle(Theme.accent)
                     }
@@ -39,7 +39,7 @@ struct RecentWorkoutCard: View {
             .padding(.horizontal, 12)
             .padding(.vertical, 10)
             .frame(width: 160, alignment: .leading)
-            .background(Theme.cardBackground)
+            .background(Theme.surface)
             .clipShape(.rect(cornerRadius: Theme.cornerRadius))
         }
         .buttonStyle(PressableCardStyle())

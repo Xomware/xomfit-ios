@@ -26,9 +26,10 @@ struct WorkoutView: View {
 
                 VStack(spacing: 0) {
                     ScrollView {
-                        VStack(spacing: Theme.paddingSmall) {
+                        VStack(spacing: Theme.Spacing.sm) {
                             // Start Workout CTA
                             Button {
+                                Haptics.light()
                                 pendingWorkoutName = ""
                                 showNameEntry = true
                             } label: {
@@ -38,11 +39,12 @@ struct WorkoutView: View {
                                 }
                             }
                             .buttonStyle(AccentButtonStyle())
-                            .padding(.horizontal, Theme.paddingMedium)
-                            .padding(.top, Theme.paddingMedium)
+                            .padding(.horizontal, Theme.Spacing.md)
+                            .padding(.top, Theme.Spacing.md)
 
                             // Build Workout
                             Button {
+                                Haptics.light()
                                 showBuilder = true
                             } label: {
                                 HStack(spacing: 10) {
@@ -51,7 +53,7 @@ struct WorkoutView: View {
                                 }
                             }
                             .buttonStyle(GhostButtonStyle())
-                            .padding(.horizontal, Theme.paddingMedium)
+                            .padding(.horizontal, Theme.Spacing.md)
 
                             // Quick Start templates
                             templateSection
@@ -128,24 +130,24 @@ struct WorkoutView: View {
     // MARK: - Templates
 
     private var templateSection: some View {
-        VStack(alignment: .leading, spacing: Theme.paddingSmall) {
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
             HStack {
                 Text("Quick Start")
-                    .font(.system(size: 16, weight: .bold))
+                    .font(.body.weight(.bold))
                     .foregroundStyle(Theme.textPrimary)
                 Spacer()
                 Button {
                     showTemplateList = true
                 } label: {
                     Text("See All")
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.caption.weight(.semibold))
                         .foregroundStyle(Theme.accent)
                 }
             }
-            .padding(.horizontal, Theme.paddingMedium)
+            .padding(.horizontal, Theme.Spacing.md)
 
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: Theme.paddingSmall) {
+                HStack(spacing: Theme.Spacing.sm) {
                     ForEach(Array(TemplateService.shared.allTemplates().prefix(6).enumerated()), id: \.element.id) { index, template in
                         TemplateCardView(template: template) {
                             previewTemplate = template
@@ -153,24 +155,24 @@ struct WorkoutView: View {
                         .staggeredAppear(index: index)
                     }
                 }
-                .padding(.horizontal, Theme.paddingMedium)
+                .padding(.horizontal, Theme.Spacing.md)
                 .id(templateRefreshId)
             }
         }
-        .padding(.vertical, Theme.paddingSmall)
+        .padding(.vertical, Theme.Spacing.sm)
     }
 
     // MARK: - Recent Workouts
 
     private var recentSection: some View {
-        VStack(alignment: .leading, spacing: Theme.paddingSmall) {
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
             Text("Recent")
-                .font(.system(size: 16, weight: .bold))
+                .font(.body.weight(.bold))
                 .foregroundStyle(Theme.textPrimary)
-                .padding(.horizontal, Theme.paddingMedium)
+                .padding(.horizontal, Theme.Spacing.md)
 
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: Theme.paddingSmall) {
+                HStack(spacing: Theme.Spacing.sm) {
                     ForEach(Array(recentWorkouts.prefix(5).enumerated()), id: \.element.id) { index, workout in
                         TemplateCardView(template: templateFromWorkout(workout)) {
                             previewTemplate = templateFromWorkout(workout)
@@ -178,23 +180,23 @@ struct WorkoutView: View {
                         .staggeredAppear(index: index)
                     }
                 }
-                .padding(.horizontal, Theme.paddingMedium)
+                .padding(.horizontal, Theme.Spacing.md)
             }
         }
-        .padding(.vertical, Theme.paddingSmall)
+        .padding(.vertical, Theme.Spacing.sm)
     }
 
     // MARK: - My Workouts
 
     private var myWorkoutsSection: some View {
-        VStack(alignment: .leading, spacing: Theme.paddingSmall) {
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
             Text("My Workouts")
-                .font(.system(size: 16, weight: .bold))
+                .font(.body.weight(.bold))
                 .foregroundStyle(Theme.textPrimary)
-                .padding(.horizontal, Theme.paddingMedium)
+                .padding(.horizontal, Theme.Spacing.md)
 
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: Theme.paddingSmall) {
+                HStack(spacing: Theme.Spacing.sm) {
                     ForEach(Array(myTemplates.enumerated()), id: \.element.id) { index, template in
                         TemplateCardView(template: template) {
                             previewTemplate = template
@@ -202,23 +204,23 @@ struct WorkoutView: View {
                         .staggeredAppear(index: index)
                     }
                 }
-                .padding(.horizontal, Theme.paddingMedium)
+                .padding(.horizontal, Theme.Spacing.md)
             }
         }
-        .padding(.vertical, Theme.paddingSmall)
+        .padding(.vertical, Theme.Spacing.sm)
     }
 
     // MARK: - Saved Workouts
 
     private var savedSection: some View {
-        VStack(alignment: .leading, spacing: Theme.paddingSmall) {
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
             Text("Saved Workouts")
-                .font(.system(size: 16, weight: .bold))
+                .font(.body.weight(.bold))
                 .foregroundStyle(Theme.textPrimary)
-                .padding(.horizontal, Theme.paddingMedium)
+                .padding(.horizontal, Theme.Spacing.md)
 
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: Theme.paddingSmall) {
+                HStack(spacing: Theme.Spacing.sm) {
                     ForEach(Array(savedTemplates.enumerated()), id: \.element.id) { index, template in
                         TemplateCardView(template: template) {
                             previewTemplate = template
@@ -226,10 +228,10 @@ struct WorkoutView: View {
                         .staggeredAppear(index: index)
                     }
                 }
-                .padding(.horizontal, Theme.paddingMedium)
+                .padding(.horizontal, Theme.Spacing.md)
             }
         }
-        .padding(.vertical, Theme.paddingSmall)
+        .padding(.vertical, Theme.Spacing.sm)
     }
 
     // MARK: - Data Loading

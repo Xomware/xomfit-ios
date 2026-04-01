@@ -10,6 +10,7 @@ struct ProfileRow: Codable {
     var bio: String
     var avatarURL: String?
     var isPrivate: Bool
+    var trainingGoals: [String]?
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -18,6 +19,7 @@ struct ProfileRow: Codable {
         case bio
         case avatarURL = "avatar_url"
         case isPrivate = "is_private"
+        case trainingGoals = "training_goals"
     }
 }
 
@@ -46,7 +48,8 @@ final class ProfileService {
         displayName: String,
         bio: String,
         avatarURL: String?,
-        isPrivate: Bool
+        isPrivate: Bool,
+        trainingGoals: [String]? = nil
     ) async throws {
         struct UpsertPayload: Encodable {
             let id: String
@@ -55,6 +58,7 @@ final class ProfileService {
             let bio: String
             let avatar_url: String?
             let is_private: Bool
+            let training_goals: [String]?
         }
 
         let payload = UpsertPayload(
@@ -63,12 +67,22 @@ final class ProfileService {
             display_name: displayName,
             bio: bio,
             avatar_url: avatarURL,
-            is_private: isPrivate
+            is_private: isPrivate,
+            training_goals: trainingGoals
         )
 
         try await supabase
             .from("profiles")
             .upsert(payload)
+            .execute()
+    }
+
+    func updateTrainingGoals(userId: String, goals: [TrainingGoal]) async throws {
+        let goalStrings = goals.map(\.rawValue)
+        try await supabase
+            .from("profiles")
+            .update(["training_goals": goalStrings])
+            .eq("id", value: userId)
             .execute()
     }
 }

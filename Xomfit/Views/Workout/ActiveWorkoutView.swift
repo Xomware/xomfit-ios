@@ -43,8 +43,8 @@ struct ActiveWorkoutView: View {
                                 },
                                 onExtend: { viewModel.extendRestTimer() }
                             )
-                            .padding(.horizontal, Theme.paddingMedium)
-                            .padding(.vertical, Theme.paddingSmall)
+                            .padding(.horizontal, Theme.Spacing.md)
+                            .padding(.vertical, Theme.Spacing.sm)
                             .transition(.move(edge: .top).combined(with: .opacity))
                         }
 
@@ -53,7 +53,7 @@ struct ActiveWorkoutView: View {
                             emptyState
                         } else {
                             ScrollView {
-                                LazyVStack(spacing: Theme.paddingMedium) {
+                                LazyVStack(spacing: Theme.Spacing.md) {
                                     ForEach(viewModel.exercises.indices, id: \.self) { exIdx in
                                         ExerciseCard(
                                             exerciseIndex: exIdx,
@@ -61,16 +61,16 @@ struct ActiveWorkoutView: View {
                                         )
                                     }
                                 }
-                                .padding(Theme.paddingMedium)
+                                .padding(Theme.Spacing.md)
                                 // Bottom padding so FAB doesn't overlap last card
                                 .padding(.bottom, 80)
                             }
                         }
                     }
                 }
-                .animation(.easeInOut(duration: 0.3), value: viewModel.isRestTimerActive)
-                .animation(.easeInOut(duration: 0.3), value: viewModel.showExerciseTransition)
-                .animation(.easeInOut(duration: 0.3), value: viewModel.focusMode)
+                .animation(.xomChill, value: viewModel.isRestTimerActive)
+                .animation(.xomChill, value: viewModel.showExerciseTransition)
+                .animation(.xomChill, value: viewModel.focusMode)
 
                 // Floating Add Exercise button (hidden in focus mode)
                 if !viewModel.focusMode {
@@ -81,18 +81,18 @@ struct ActiveWorkoutView: View {
                         } label: {
                             HStack(spacing: 8) {
                                 Image(systemName: "plus")
-                                    .font(.system(size: 16, weight: .bold))
+                                    .font(.body.weight(.bold))
                                 Text("Add Exercise")
-                                    .font(.system(size: 15, weight: .bold))
+                                    .font(.subheadline.weight(.bold))
                             }
-                            .foregroundColor(.black)
-                            .padding(.horizontal, Theme.paddingLarge)
+                            .foregroundStyle(.black)
+                            .padding(.horizontal, Theme.Spacing.lg)
                             .padding(.vertical, 14)
                             .background(Theme.accent)
-                            .cornerRadius(28)
+                            .clipShape(.rect(cornerRadius: 28))
                             .shadow(color: Theme.accent.opacity(0.4), radius: 8, x: 0, y: 4)
                         }
-                        .padding(.bottom, Theme.paddingLarge)
+                        .padding(.bottom, Theme.Spacing.lg)
                     }
                 }
 
@@ -116,10 +116,10 @@ struct ActiveWorkoutView: View {
                     VStack {
                         Spacer()
                         ExerciseTransitionCard(viewModel: viewModel)
-                            .padding(Theme.paddingMedium)
+                            .padding(Theme.Spacing.md)
                             .transition(.move(edge: .bottom).combined(with: .opacity))
                     }
-                    .animation(.easeOut(duration: 0.3), value: viewModel.showExerciseTransition)
+                    .animation(.xomConfident, value: viewModel.showExerciseTransition)
                 }
             }
             .toolbar(.hidden, for: .navigationBar)
@@ -178,11 +178,12 @@ struct ActiveWorkoutView: View {
         HStack {
             // Discard button
             Button {
+                Haptics.warning()
                 showDiscardAlert = true
             } label: {
                 Text("Discard")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(Theme.destructive)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Theme.destructive)
             }
 
             Spacer()
@@ -190,11 +191,11 @@ struct ActiveWorkoutView: View {
             // Timer
             VStack(spacing: 2) {
                 Text(viewModel.workoutName)
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundColor(Theme.textPrimary)
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(Theme.textPrimary)
                 Text(viewModel.durationString)
-                    .font(.system(size: 13, weight: .medium, design: .monospaced))
-                    .foregroundColor(Theme.accent)
+                    .font(.caption.weight(.medium).monospaced())
+                    .foregroundStyle(Theme.accent)
             }
 
             Spacer()
@@ -204,7 +205,7 @@ struct ActiveWorkoutView: View {
                 withAnimation { viewModel.focusMode.toggle() }
             } label: {
                 Image(systemName: viewModel.focusMode ? "list.bullet" : "eye")
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.subheadline.weight(.semibold))
                     .foregroundStyle(viewModel.focusMode ? Theme.accent : Theme.textSecondary)
                     .frame(width: 36, height: 36)
                     .background(viewModel.focusMode ? Theme.accent.opacity(0.15) : Theme.textSecondary.opacity(0.15))
@@ -214,6 +215,7 @@ struct ActiveWorkoutView: View {
 
             // Finish button
             Button {
+                Haptics.success()
                 workoutDescription = ""
                 showFinishSheet = true
             } label: {
@@ -225,7 +227,7 @@ struct ActiveWorkoutView: View {
                         .clipShape(.rect(cornerRadius: 8))
                 } else {
                     Text("Finish")
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.subheadline.weight(.bold))
                         .foregroundStyle(.black)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 8)
@@ -235,9 +237,9 @@ struct ActiveWorkoutView: View {
             }
             .disabled(viewModel.isSaving)
         }
-        .padding(.horizontal, Theme.paddingMedium)
-        .padding(.vertical, Theme.paddingMedium)
-        .background(Theme.cardBackground)
+        .padding(.horizontal, Theme.Spacing.md)
+        .padding(.vertical, Theme.Spacing.md)
+        .background(Theme.surface)
     }
 
     // MARK: - Rest Timer Config
@@ -259,7 +261,7 @@ struct ActiveWorkoutView: View {
                 Button("180s") { viewModel.defaultRestDuration = 180 }
             } label: {
                 Text(viewModel.defaultRestDuration > 0 ? "\(Int(viewModel.defaultRestDuration))s" : "Off")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Theme.accent)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
@@ -267,24 +269,24 @@ struct ActiveWorkoutView: View {
                     .clipShape(.capsule)
             }
         }
-        .padding(.horizontal, Theme.paddingMedium)
-        .padding(.vertical, Theme.paddingSmall)
+        .padding(.horizontal, Theme.Spacing.md)
+        .padding(.vertical, Theme.Spacing.sm)
     }
 
     // MARK: - Empty State
 
     private var emptyState: some View {
-        VStack(spacing: Theme.paddingMedium) {
+        VStack(spacing: Theme.Spacing.md) {
             Spacer()
             Image(systemName: "dumbbell")
                 .font(.system(size: 48))
-                .foregroundColor(Theme.textSecondary)
+                .foregroundStyle(Theme.textSecondary)
             Text("No exercises yet")
                 .font(Theme.fontHeadline)
-                .foregroundColor(Theme.textPrimary)
+                .foregroundStyle(Theme.textPrimary)
             Text("Tap \"Add Exercise\" to get started")
                 .font(Theme.fontBody)
-                .foregroundColor(Theme.textSecondary)
+                .foregroundStyle(Theme.textSecondary)
             Spacer()
             Spacer()
         }
@@ -313,18 +315,18 @@ private struct PRCelebrationBanner: View {
     let onDismiss: () -> Void
 
     var body: some View {
-        HStack(spacing: Theme.paddingMedium) {
+        HStack(spacing: Theme.Spacing.md) {
             Image(systemName: "trophy.fill")
-                .font(.system(size: 22))
-                .foregroundColor(.black)
+                .font(.title3)
+                .foregroundStyle(.black)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text("New Personal Record!")
-                    .font(.system(size: 14, weight: .black))
-                    .foregroundColor(.black)
+                    .font(.subheadline.weight(.black))
+                    .foregroundStyle(.black)
                 Text("\(pr.exerciseName) — \(pr.weight.formattedWeight) lbs × \(pr.reps)")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(.black.opacity(0.75))
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.black.opacity(0.75))
             }
 
             Spacer()
@@ -333,16 +335,16 @@ private struct PRCelebrationBanner: View {
                 onDismiss()
             } label: {
                 Image(systemName: "xmark")
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundColor(.black.opacity(0.6))
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.black.opacity(0.6))
             }
         }
-        .padding(.horizontal, Theme.paddingMedium)
-        .padding(.vertical, Theme.paddingMedium)
+        .padding(.horizontal, Theme.Spacing.md)
+        .padding(.vertical, Theme.Spacing.md)
         .background(Theme.prGold)
-        .cornerRadius(Theme.cornerRadius)
-        .padding(.horizontal, Theme.paddingMedium)
-        .padding(.top, Theme.paddingSmall)
+        .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+        .padding(.horizontal, Theme.Spacing.md)
+        .padding(.top, Theme.Spacing.sm)
         .shadow(color: Theme.prGold.opacity(0.5), radius: 8, x: 0, y: 4)
     }
 }
@@ -357,22 +359,22 @@ private struct ExerciseCard: View {
     var body: some View {
         if viewModel.exercises.indices.contains(exerciseIndex) {
             let exercise = viewModel.exercises[exerciseIndex]
-            VStack(alignment: .leading, spacing: Theme.paddingSmall) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
             // Exercise header
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(exercise.exercise.name)
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(Theme.textPrimary)
+                        .font(.body.weight(.bold))
+                        .foregroundStyle(Theme.textPrimary)
                     HStack(spacing: 4) {
                         ForEach(exercise.exercise.muscleGroups.prefix(2), id: \.self) { mg in
                             Text(mg.displayName)
                                 .font(Theme.fontSmall)
-                                .foregroundColor(Theme.accent)
+                                .foregroundStyle(Theme.accent)
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
                                 .background(Theme.accent.opacity(0.15))
-                                .cornerRadius(4)
+                                .clipShape(.rect(cornerRadius: 4))
                         }
                     }
                 }
@@ -382,12 +384,12 @@ private struct ExerciseCard: View {
                 // Reorder buttons
                 if exerciseIndex > 0 {
                     Button {
-                        withAnimation(.easeInOut(duration: 0.2)) {
+                        withAnimation(.xomConfident) {
                             viewModel.moveExercise(from: exerciseIndex, direction: -1)
                         }
                     } label: {
                         Image(systemName: "chevron.up")
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(.caption.weight(.semibold))
                             .foregroundStyle(Theme.textSecondary)
                             .frame(width: 44, height: 44)
                             .contentShape(Rectangle())
@@ -397,12 +399,12 @@ private struct ExerciseCard: View {
 
                 if exerciseIndex < viewModel.exercises.count - 1 {
                     Button {
-                        withAnimation(.easeInOut(duration: 0.2)) {
+                        withAnimation(.xomConfident) {
                             viewModel.moveExercise(from: exerciseIndex, direction: 1)
                         }
                     } label: {
                         Image(systemName: "chevron.down")
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(.caption.weight(.semibold))
                             .foregroundStyle(Theme.textSecondary)
                             .frame(width: 44, height: 44)
                             .contentShape(Rectangle())
@@ -414,8 +416,8 @@ private struct ExerciseCard: View {
                     viewModel.removeExercise(at: exerciseIndex)
                 } label: {
                     Image(systemName: "xmark")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(Theme.textSecondary)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Theme.textSecondary)
                         .frame(width: 44, height: 44)
                         .contentShape(Rectangle())
                 }
@@ -435,7 +437,7 @@ private struct ExerciseCard: View {
 
             // Column headers
             if !exercise.sets.isEmpty {
-                HStack(spacing: Theme.paddingSmall) {
+                HStack(spacing: Theme.Spacing.sm) {
                     Spacer().frame(width: 30) // delete button spacer
                     Text("SET")
                         .frame(width: 24)
@@ -450,8 +452,8 @@ private struct ExerciseCard: View {
                         .frame(width: 36)
                 }
                 .font(Theme.fontSmall)
-                .foregroundColor(Theme.textSecondary)
-                .padding(.horizontal, Theme.paddingMedium)
+                .foregroundStyle(Theme.textSecondary)
+                .padding(.horizontal, Theme.Spacing.md)
             }
 
             // Sets — use stable element IDs to prevent state loss on expand/collapse
@@ -495,18 +497,18 @@ private struct ExerciseCard: View {
                     Image(systemName: "plus")
                     Text("Add Set")
                 }
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(Theme.accent)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(Theme.accent)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 10)
                 .background(Theme.accent.opacity(0.08))
-                .cornerRadius(Theme.cornerRadiusSmall)
+                .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
             }
             .padding(.top, 4)
         }
-        .padding(Theme.paddingMedium)
-        .background(Theme.cardBackground)
-        .cornerRadius(Theme.cornerRadius)
+        .padding(Theme.Spacing.md)
+        .background(Theme.surface)
+        .clipShape(.rect(cornerRadius: Theme.cornerRadius))
         }
     }
 }
@@ -558,7 +560,7 @@ private struct ExerciseConfigRow: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 6) {
                 Text(label)
-                    .font(.system(size: 10, weight: .bold))
+                    .font(.caption2.weight(.bold))
                     .foregroundStyle(Theme.textSecondary)
                     .textCase(.uppercase)
                 content()
@@ -569,11 +571,11 @@ private struct ExerciseConfigRow: View {
     private func configPill(label: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(label)
-                .font(.system(size: 11, weight: .semibold))
+                .font(.caption2.weight(.semibold))
                 .foregroundStyle(isSelected ? .black : Theme.textSecondary)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 4)
-                .background(isSelected ? Theme.accent : Theme.secondaryBackground)
+                .background(isSelected ? Theme.accent : Theme.surfaceSecondary)
                 .clipShape(.capsule)
         }
         .buttonStyle(.plain)
@@ -588,21 +590,21 @@ private struct ExerciseTransitionCard: View {
     @State private var showRemainingList = false
 
     var body: some View {
-        VStack(spacing: Theme.paddingMedium) {
+        VStack(spacing: Theme.Spacing.md) {
             // Header: completed exercise name
-            HStack(spacing: Theme.paddingSmall) {
+            HStack(spacing: Theme.Spacing.sm) {
                 Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 24))
+                    .font(.title2)
                     .foregroundStyle(Theme.accent)
                 Text("\(viewModel.completedExerciseName) Complete")
-                    .font(.system(size: 18, weight: .bold))
+                    .font(.headline.weight(.bold))
                     .foregroundStyle(Theme.textPrimary)
                 Spacer()
                 Button {
                     withAnimation { viewModel.dismissTransition() }
                 } label: {
                     Image(systemName: "xmark")
-                        .font(.system(size: 13, weight: .bold))
+                        .font(.caption.weight(.bold))
                         .foregroundStyle(Theme.textSecondary)
                         .frame(width: 44, height: 44)
                         .contentShape(Rectangle())
@@ -617,9 +619,9 @@ private struct ExerciseTransitionCard: View {
             } label: {
                 HStack(spacing: 8) {
                     Image(systemName: "plus")
-                        .font(.system(size: 15, weight: .bold))
+                        .font(.subheadline.weight(.bold))
                     Text("Do Another Set")
-                        .font(.system(size: 15, weight: .bold))
+                        .font(.subheadline.weight(.bold))
                 }
                 .foregroundStyle(Theme.accent)
                 .frame(maxWidth: .infinity)
@@ -640,9 +642,9 @@ private struct ExerciseTransitionCard: View {
                     VStack(spacing: 4) {
                         HStack(spacing: 8) {
                             Image(systemName: "arrow.right")
-                                .font(.system(size: 15, weight: .bold))
+                                .font(.subheadline.weight(.bold))
                             Text("Move to \(nextEx.exercise.name)")
-                                .font(.system(size: 15, weight: .bold))
+                                .font(.subheadline.weight(.bold))
                         }
                         .foregroundStyle(.black)
 
@@ -662,22 +664,22 @@ private struct ExerciseTransitionCard: View {
             if !viewModel.remainingExercises.isEmpty {
                 VStack(spacing: 0) {
                     Button {
-                        withAnimation(.easeInOut(duration: 0.2)) {
+                        withAnimation(.xomConfident) {
                             showRemainingList.toggle()
                         }
                     } label: {
                         HStack(spacing: 8) {
                             Image(systemName: "list.bullet")
-                                .font(.system(size: 15, weight: .bold))
+                                .font(.subheadline.weight(.bold))
                             Text("Choose Different")
-                                .font(.system(size: 15, weight: .bold))
+                                .font(.subheadline.weight(.bold))
                             Spacer()
                             Image(systemName: showRemainingList ? "chevron.up" : "chevron.down")
-                                .font(.system(size: 12, weight: .semibold))
+                                .font(.caption.weight(.semibold))
                         }
                         .foregroundStyle(Theme.textSecondary)
                         .padding(.vertical, 12)
-                        .padding(.horizontal, Theme.paddingMedium)
+                        .padding(.horizontal, Theme.Spacing.md)
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
@@ -689,17 +691,17 @@ private struct ExerciseTransitionCard: View {
                                 Button {
                                     withAnimation { viewModel.moveToExercise(index: item.index) }
                                 } label: {
-                                    HStack(spacing: Theme.paddingSmall) {
+                                    HStack(spacing: Theme.Spacing.sm) {
                                         Circle()
                                             .fill(Theme.accent.opacity(0.3))
                                             .frame(width: 6, height: 6)
                                         Text(item.name)
-                                            .font(.system(size: 14, weight: .medium))
+                                            .font(.subheadline.weight(.medium))
                                             .foregroundStyle(Theme.textPrimary)
                                         Spacer()
                                     }
                                     .padding(.vertical, 10)
-                                    .padding(.horizontal, Theme.paddingMedium)
+                                    .padding(.horizontal, Theme.Spacing.md)
                                     .contentShape(Rectangle())
                                 }
                                 .buttonStyle(.plain)
@@ -709,12 +711,12 @@ private struct ExerciseTransitionCard: View {
                         .transition(.opacity.combined(with: .move(edge: .top)))
                     }
                 }
-                .background(Theme.secondaryBackground)
+                .background(Theme.surfaceSecondary)
                 .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall))
             }
         }
-        .padding(Theme.paddingMedium)
-        .background(Theme.cardBackground)
+        .padding(Theme.Spacing.md)
+        .background(Theme.surface)
         .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
         .shadow(color: .black.opacity(0.5), radius: 16, x: 0, y: -4)
     }
@@ -724,7 +726,7 @@ private struct ExerciseTransitionCard: View {
         let hints = buildConfigHints(for: exercise)
         if !hints.isEmpty {
             Text(hints.joined(separator: " \u{2022} "))
-                .font(.system(size: 12, weight: .medium))
+                .font(.caption.weight(.medium))
                 .foregroundStyle(.black.opacity(0.6))
         }
     }
@@ -756,10 +758,10 @@ private struct FinishWorkoutSheet: View {
             ZStack {
                 Theme.background.ignoresSafeArea()
 
-                VStack(spacing: Theme.paddingMedium) {
+                VStack(spacing: Theme.Spacing.md) {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Add a description")
-                            .font(.system(size: 15, weight: .semibold))
+                            .font(.subheadline.weight(.semibold))
                             .foregroundStyle(Theme.textPrimary)
                         Text("Optional -- this will appear as a caption on your feed post.")
                             .font(Theme.fontCaption)
@@ -771,9 +773,9 @@ private struct FinishWorkoutSheet: View {
                         .font(Theme.fontBody)
                         .foregroundStyle(Theme.textPrimary)
                         .scrollContentBackground(.hidden)
-                        .padding(Theme.paddingSmall)
+                        .padding(Theme.Spacing.sm)
                         .frame(minHeight: 100, maxHeight: 150)
-                        .background(Theme.cardBackground)
+                        .background(Theme.surface)
                         .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
                         .overlay(
                             RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall)
@@ -781,6 +783,7 @@ private struct FinishWorkoutSheet: View {
                         )
 
                     Button {
+                        Haptics.success()
                         onFinish()
                     } label: {
                         if isSaving {
@@ -790,7 +793,7 @@ private struct FinishWorkoutSheet: View {
                                 .padding(.vertical, 14)
                         } else {
                             Text("Finish Workout")
-                                .font(.system(size: 16, weight: .bold))
+                                .font(.body.weight(.bold))
                                 .foregroundStyle(.black)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 14)
@@ -802,7 +805,7 @@ private struct FinishWorkoutSheet: View {
 
                     Spacer()
                 }
-                .padding(Theme.paddingMedium)
+                .padding(Theme.Spacing.md)
             }
             .navigationTitle("Finish Workout")
             .navigationBarTitleDisplayMode(.inline)

@@ -73,10 +73,10 @@ struct ProfileView: View {
     // MARK: - Skeleton Loading
 
     private var profileSkeleton: some View {
-        VStack(spacing: Theme.paddingMedium) {
+        VStack(spacing: Theme.Spacing.md) {
             // Avatar placeholder
             Circle()
-                .fill(Theme.cardBackground)
+                .fill(Theme.surface)
                 .frame(width: 80, height: 80)
                 .shimmer()
 
@@ -85,23 +85,23 @@ struct ProfileView: View {
                 .frame(width: 160)
 
             // Stats row placeholder
-            HStack(spacing: Theme.paddingMedium) {
+            HStack(spacing: Theme.Spacing.md) {
                 ForEach(0..<3, id: \.self) { _ in
                     SkeletonCard(height: 50)
                 }
             }
-            .padding(.horizontal, Theme.paddingMedium)
+            .padding(.horizontal, Theme.Spacing.md)
 
             // Content placeholders
             ForEach(0..<3, id: \.self) { index in
                 SkeletonCard(height: 80)
                     .staggeredAppear(index: index)
             }
-            .padding(.horizontal, Theme.paddingMedium)
+            .padding(.horizontal, Theme.Spacing.md)
 
             Spacer()
         }
-        .padding(.top, Theme.paddingLarge)
+        .padding(.top, Theme.Spacing.lg)
     }
 
     // MARK: - Main Scroll Content
@@ -125,7 +125,7 @@ struct ProfileView: View {
                     friendProfiles: viewModel.friendProfiles,
                     currentUserId: resolvedUserId,
                     onStatTapped: { tab in
-                        withAnimation(.easeInOut(duration: 0.25)) {
+                        withAnimation(.xomConfident) {
                             viewModel.selectedTab = tab
                         }
                     },
@@ -147,7 +147,7 @@ struct ProfileView: View {
                 // Tab picker (pinned) + tab content
                 Section {
                     tabContent
-                        .padding(.top, Theme.paddingSmall)
+                        .padding(.top, Theme.Spacing.sm)
                         .padding(.bottom, 100) // Space for floating tab bar
                 } header: {
                     ProfileTabPicker(selectedTab: Bindable(viewModel).selectedTab)

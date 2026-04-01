@@ -20,27 +20,27 @@ struct SettingsView: View {
                         settingsRow(icon: "envelope.fill", iconColor: Theme.accent, label: "Email", value: email)
                     }
                 }
-                .listRowBackground(Theme.cardBackground)
+                .listRowBackground(Theme.surface)
 
                 Section("About") {
                     settingsRow(icon: "info.circle.fill", iconColor: Theme.accent, label: "Version", value: appVersion)
                     settingsRow(icon: "building.2.fill", iconColor: Theme.accent, label: "App", value: Config.appName)
                 }
-                .listRowBackground(Theme.cardBackground)
+                .listRowBackground(Theme.surface)
 
                 Section {
                     Button(role: .destructive) {
                         showSignOutConfirm = true
                     } label: {
-                        HStack(spacing: Theme.paddingMedium) {
+                        HStack(spacing: Theme.Spacing.md) {
                             Image(systemName: "rectangle.portrait.and.arrow.right")
                                 .frame(width: 24)
-                                .foregroundColor(Theme.destructive)
+                                .foregroundStyle(Theme.destructive)
                             Text("Sign Out")
-                                .foregroundColor(Theme.destructive)
+                                .foregroundStyle(Theme.destructive)
                         }
                     }
-                    .listRowBackground(Theme.cardBackground)
+                    .listRowBackground(Theme.surface)
                 }
             }
             .listStyle(.insetGrouped)
@@ -60,15 +60,15 @@ struct SettingsView: View {
     }
 
     private func settingsRow(icon: String, iconColor: Color, label: String, value: String) -> some View {
-        HStack(spacing: Theme.paddingMedium) {
+        HStack(spacing: Theme.Spacing.md) {
             Image(systemName: icon)
                 .frame(width: 24)
-                .foregroundColor(iconColor)
+                .foregroundStyle(iconColor)
             Text(label)
-                .foregroundColor(Theme.textPrimary)
+                .foregroundStyle(Theme.textPrimary)
             Spacer()
             Text(value)
-                .foregroundColor(Theme.textSecondary)
+                .foregroundStyle(Theme.textSecondary)
                 .font(Theme.fontCaption)
         }
     }

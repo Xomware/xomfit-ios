@@ -18,12 +18,12 @@ struct BodyHeatmapView: View {
     private static let backMuscles = ["Traps", "Back", "Lats", "Triceps", "Glutes", "Hamstrings", "Calves"]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.paddingSmall) {
-            HStack(alignment: .top, spacing: Theme.paddingSmall) {
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            HStack(alignment: .top, spacing: Theme.Spacing.sm) {
                 // Front column
-                VStack(spacing: Theme.paddingSmall) {
+                VStack(spacing: Theme.Spacing.sm) {
                     Text("Front")
-                        .font(.system(size: 13, weight: .bold))
+                        .font(.caption.weight(.bold))
                         .foregroundStyle(Theme.textSecondary)
 
                     ForEach(Self.frontMuscles, id: \.self) { muscle in
@@ -33,9 +33,9 @@ struct BodyHeatmapView: View {
                 .frame(maxWidth: .infinity)
 
                 // Back column
-                VStack(spacing: Theme.paddingSmall) {
+                VStack(spacing: Theme.Spacing.sm) {
                     Text("Back")
-                        .font(.system(size: 13, weight: .bold))
+                        .font(.caption.weight(.bold))
                         .foregroundStyle(Theme.textSecondary)
 
                     ForEach(Self.backMuscles, id: \.self) { muscle in
@@ -47,7 +47,7 @@ struct BodyHeatmapView: View {
 
             // Legend
             heatmapLegend
-                .padding(.top, Theme.paddingSmall)
+                .padding(.top, Theme.Spacing.sm)
         }
     }
 
@@ -56,16 +56,16 @@ struct BodyHeatmapView: View {
     private func muscleCell(name: String, sets: Int) -> some View {
         HStack {
             Text(name)
-                .font(.system(size: 13, weight: .semibold))
+                .font(.caption.weight(.semibold))
                 .foregroundStyle(sets > 0 ? Theme.textPrimary : Theme.textSecondary)
 
             Spacer()
 
             Text("\(sets)")
-                .font(.system(size: 13, weight: .bold, design: .monospaced))
+                .font(.caption.weight(.bold).monospaced())
                 .foregroundStyle(sets > 0 ? Theme.textPrimary : Theme.textSecondary)
         }
-        .padding(.horizontal, Theme.paddingSmall)
+        .padding(.horizontal, Theme.Spacing.sm)
         .padding(.vertical, 10)
         .background(heatColor(for: sets))
         .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
@@ -80,7 +80,7 @@ struct BodyHeatmapView: View {
     private func heatColor(for sets: Int) -> Color {
         switch sets {
         case 0:
-            return Theme.cardBackground
+            return Theme.surface
         case 1...3:
             return Theme.accent.opacity(0.3)
         case 4...8:
@@ -95,8 +95,8 @@ struct BodyHeatmapView: View {
     // MARK: - Legend
 
     private var heatmapLegend: some View {
-        HStack(spacing: Theme.paddingSmall) {
-            legendItem(color: Theme.cardBackground, label: "None")
+        HStack(spacing: Theme.Spacing.sm) {
+            legendItem(color: Theme.surface, label: "None")
             legendItem(color: Theme.accent.opacity(0.3), label: "Light")
             legendItem(color: Color.yellow.opacity(0.3), label: "Some")
             legendItem(color: Color.orange.opacity(0.3), label: "Moderate")
@@ -115,7 +115,7 @@ struct BodyHeatmapView: View {
                         .stroke(Theme.textSecondary.opacity(0.2), lineWidth: 0.5)
                 )
             Text(label)
-                .font(.system(size: 9, weight: .medium))
+                .font(.caption2.weight(.medium))
                 .foregroundStyle(Theme.textSecondary)
         }
         .accessibilityElement(children: .combine)

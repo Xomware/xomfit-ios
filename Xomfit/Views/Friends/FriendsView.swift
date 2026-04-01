@@ -66,9 +66,9 @@ struct FriendsView: View {
     private var searchBar: some View {
         HStack {
             Image(systemName: "magnifyingglass")
-                .foregroundColor(Theme.textSecondary)
+                .foregroundStyle(Theme.textSecondary)
             TextField("Search by username", text: $searchQuery)
-                .foregroundColor(Theme.textPrimary)
+                .foregroundStyle(Theme.textPrimary)
                 .autocorrectionDisabled()
                 .textInputAutocapitalization(.never)
                 .onChange(of: searchQuery) { _, newValue in
@@ -90,16 +90,16 @@ struct FriendsView: View {
                     searchResults = []
                 } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(Theme.textSecondary)
+                        .foregroundStyle(Theme.textSecondary)
                 }
             }
         }
-        .padding(Theme.paddingSmall)
-        .padding(.horizontal, Theme.paddingSmall)
-        .background(Theme.cardBackground)
-        .cornerRadius(Theme.cornerRadiusSmall)
-        .padding(.horizontal, Theme.paddingMedium)
-        .padding(.vertical, Theme.paddingSmall)
+        .padding(Theme.Spacing.sm)
+        .padding(.horizontal, Theme.Spacing.sm)
+        .background(Theme.surface)
+        .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
+        .padding(.horizontal, Theme.Spacing.md)
+        .padding(.vertical, Theme.Spacing.sm)
     }
 
     // MARK: - Sections
@@ -113,12 +113,12 @@ struct FriendsView: View {
                     ProgressView().tint(Theme.accent)
                     Spacer()
                 }
-                .listRowBackground(Theme.cardBackground)
+                .listRowBackground(Theme.surface)
             } else if searchResults.filter({ $0.id != userId }).isEmpty {
                 Text("No users found for \"\(searchQuery)\"")
-                    .foregroundColor(Theme.textSecondary)
+                    .foregroundStyle(Theme.textSecondary)
                     .font(Theme.fontBody)
-                    .listRowBackground(Theme.cardBackground)
+                    .listRowBackground(Theme.surface)
             } else {
                 ForEach(searchResults.filter { $0.id != userId }, id: \.id) { profile in
                     SearchResultRow(
@@ -127,13 +127,13 @@ struct FriendsView: View {
                     ) {
                         sendRequest(toUserId: profile.id)
                     }
-                    .listRowBackground(Theme.cardBackground)
+                    .listRowBackground(Theme.surface)
                 }
             }
         } header: {
             Text("Search Results")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(Theme.textSecondary)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(Theme.textSecondary)
                 .textCase(nil)
         }
     }
@@ -148,12 +148,12 @@ struct FriendsView: View {
                     onAccept: { acceptRequest(request) },
                     onDecline: { declineRequest(request) }
                 )
-                .listRowBackground(Theme.cardBackground)
+                .listRowBackground(Theme.surface)
             }
         } header: {
             Text("Friend Requests")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(Theme.accent)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(Theme.accent)
                 .textCase(nil)
         }
     }
@@ -163,9 +163,9 @@ struct FriendsView: View {
         Section {
             if friends.isEmpty {
                 Text("No friends yet. Search to add people!")
-                    .foregroundColor(Theme.textSecondary)
+                    .foregroundStyle(Theme.textSecondary)
                     .font(Theme.fontBody)
-                    .listRowBackground(Theme.cardBackground)
+                    .listRowBackground(Theme.surface)
             } else {
                 ForEach(friends, id: \.id) { friend in
                     let friendId = friend.requesterId == userId ? friend.addresseeId : friend.requesterId
@@ -176,13 +176,13 @@ struct FriendsView: View {
                     ) {
                         removeFriend(friend)
                     }
-                    .listRowBackground(Theme.cardBackground)
+                    .listRowBackground(Theme.surface)
                 }
             }
         } header: {
             Text("Friends (\(friends.count))")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(Theme.textSecondary)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(Theme.textSecondary)
                 .textCase(nil)
         }
     }
@@ -291,39 +291,40 @@ private struct SearchResultRow: View {
     @State private var requested = false
 
     var body: some View {
-        HStack(spacing: Theme.paddingMedium) {
+        HStack(spacing: Theme.Spacing.md) {
             ZStack {
                 Circle()
                     .fill(Theme.accent.opacity(0.2))
                     .frame(width: 40, height: 40)
                 Text(String(profile.displayName.prefix(2)).uppercased())
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(Theme.accent)
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(Theme.accent)
             }
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(profile.displayName)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(Theme.textPrimary)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Theme.textPrimary)
                 Text("@\(profile.username)")
                     .font(Theme.fontCaption)
-                    .foregroundColor(Theme.textSecondary)
+                    .foregroundStyle(Theme.textSecondary)
             }
 
             Spacer()
 
             if !isCurrentUser {
                 Button {
+                    Haptics.success()
                     requested = true
                     onAdd()
                 } label: {
                     Text(requested ? "Sent" : "Add")
-                        .font(.system(size: 13, weight: .bold))
-                        .foregroundColor(requested ? Theme.textSecondary : .black)
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(requested ? Theme.textSecondary : .black)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 7)
-                        .background(requested ? Theme.cardBackground : Theme.accent)
-                        .cornerRadius(Theme.cornerRadiusSmall)
+                        .background(requested ? Theme.surface : Theme.accent)
+                        .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
                 }
                 .disabled(requested)
                 .buttonStyle(.plain)
@@ -358,24 +359,24 @@ private struct PendingRequestRow: View {
     }
 
     var body: some View {
-        HStack(spacing: Theme.paddingMedium) {
+        HStack(spacing: Theme.Spacing.md) {
             ZStack {
                 Circle()
                     .fill(Theme.accent.opacity(0.2))
                     .frame(width: 40, height: 40)
                 Text(requesterInitials)
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(Theme.accent)
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(Theme.accent)
             }
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(requesterName)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(Theme.textPrimary)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Theme.textPrimary)
                 if let profile = requesterProfile {
                     Text("@\(profile.username)")
                         .font(Theme.fontCaption)
-                        .foregroundColor(Theme.textSecondary)
+                        .foregroundStyle(Theme.textSecondary)
                         .lineLimit(1)
                 }
             }
@@ -384,25 +385,27 @@ private struct PendingRequestRow: View {
 
             HStack(spacing: 8) {
                 Button("Accept") {
+                    Haptics.light()
                     onAccept()
                 }
-                .font(.system(size: 13, weight: .bold))
-                .foregroundColor(.black)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.black)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
                 .background(Theme.accent)
-                .cornerRadius(6)
+                .clipShape(.rect(cornerRadius: 6))
                 .buttonStyle(.plain)
 
                 Button("Decline") {
+                    Haptics.light()
                     onDecline()
                 }
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(Theme.destructive)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(Theme.destructive)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
                 .background(Theme.destructive.opacity(0.15))
-                .cornerRadius(6)
+                .clipShape(.rect(cornerRadius: 6))
                 .buttonStyle(.plain)
             }
         }
@@ -436,29 +439,29 @@ private struct FriendListRow: View {
     }
 
     var body: some View {
-        HStack(spacing: Theme.paddingMedium) {
+        HStack(spacing: Theme.Spacing.md) {
             ZStack {
                 Circle()
                     .fill(Theme.accent.opacity(0.2))
                     .frame(width: 40, height: 40)
                 Text(friendInitials)
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(Theme.accent)
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(Theme.accent)
             }
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(friendName)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(Theme.textPrimary)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Theme.textPrimary)
                     .lineLimit(1)
                 if let profile = friendProfile {
                     Text("@\(profile.username)")
                         .font(Theme.fontCaption)
-                        .foregroundColor(Theme.textSecondary)
+                        .foregroundStyle(Theme.textSecondary)
                 } else {
                     Text(friend.status == "accepted" ? "Friends" : "Pending")
                         .font(Theme.fontCaption)
-                        .foregroundColor(Theme.textSecondary)
+                        .foregroundStyle(Theme.textSecondary)
                 }
             }
 

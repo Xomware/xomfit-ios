@@ -9,7 +9,7 @@ struct ProfileFeedView: View {
         if feedItems.isEmpty {
             emptyState
         } else {
-            LazyVStack(spacing: Theme.paddingSmall) {
+            LazyVStack(spacing: Theme.Spacing.sm) {
                 ForEach(feedItems) { item in
                     NavigationLink {
                         FeedDetailView(item: item, userId: currentUserId)
@@ -25,7 +25,7 @@ struct ProfileFeedView: View {
                     .buttonStyle(.plain)
                 }
             }
-            .padding(.horizontal, Theme.paddingMedium)
+            .padding(.horizontal, Theme.Spacing.md)
         }
     }
 
@@ -48,9 +48,9 @@ struct ProfileFeedView: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: Theme.paddingSmall) {
+        VStack(spacing: Theme.Spacing.sm) {
             Image(systemName: "text.page")
-                .font(.system(size: 36))
+                .font(.largeTitle)
                 .foregroundStyle(Theme.textSecondary)
             Text("No posts yet")
                 .font(Theme.fontBody)

@@ -15,27 +15,27 @@ struct EditProfileSheet: View {
                         TextField("username", text: Bindable(viewModel).editUsername)
                             .textInputAutocapitalization(.never)
                             .autocorrectionDisabled()
-                            .listRowBackground(Theme.cardBackground)
+                            .listRowBackground(Theme.surface)
                             .foregroundStyle(Theme.textPrimary)
                     }
 
                     Section("Display Name") {
                         TextField("Your name", text: Bindable(viewModel).editDisplayName)
-                            .listRowBackground(Theme.cardBackground)
+                            .listRowBackground(Theme.surface)
                             .foregroundStyle(Theme.textPrimary)
                     }
 
                     Section("Bio") {
                         TextField("Tell people about yourself", text: Bindable(viewModel).editBio, axis: .vertical)
                             .lineLimit(3...5)
-                            .listRowBackground(Theme.cardBackground)
+                            .listRowBackground(Theme.surface)
                             .foregroundStyle(Theme.textPrimary)
                     }
 
                     Section {
                         Toggle("Private Account", isOn: Bindable(viewModel).editIsPrivate)
                             .tint(Theme.accent)
-                            .listRowBackground(Theme.cardBackground)
+                            .listRowBackground(Theme.surface)
                             .foregroundStyle(Theme.textPrimary)
                     } footer: {
                         Text("Only friends can see your activity when your account is private.")
@@ -57,6 +57,7 @@ struct EditProfileSheet: View {
                         ProgressView().tint(Theme.accent)
                     } else {
                         Button("Save") {
+                            Haptics.success()
                             Task {
                                 await viewModel.updateProfile(userId: userId)
                                 if viewModel.errorMessage == nil {
@@ -64,7 +65,7 @@ struct EditProfileSheet: View {
                                 }
                             }
                         }
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(.subheadline.weight(.semibold))
                         .foregroundStyle(Theme.accent)
                     }
                 }

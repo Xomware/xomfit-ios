@@ -18,7 +18,7 @@ struct FeedDetailView: View {
             Theme.background.ignoresSafeArea()
 
             ScrollView {
-                VStack(spacing: Theme.paddingMedium) {
+                VStack(spacing: Theme.Spacing.md) {
                     // Unified card: header + workout stats + exercises
                     unifiedCard
 
@@ -28,25 +28,25 @@ struct FeedDetailView: View {
                     } label: {
                         HStack(spacing: 8) {
                             Image(systemName: "bubble.right")
-                                .font(.system(size: 16))
+                                .font(.body)
                             Text("Comments")
-                                .font(.system(size: 15, weight: .semibold))
+                                .font(.subheadline.weight(.semibold))
                             Spacer()
                             Text("\(localItem.comments.count)")
-                                .font(.system(size: 14, weight: .medium))
+                                .font(.subheadline.weight(.medium))
                                 .foregroundStyle(Theme.textSecondary)
                             Image(systemName: "chevron.right")
-                                .font(.system(size: 13, weight: .semibold))
+                                .font(.caption.weight(.semibold))
                                 .foregroundStyle(Theme.textSecondary)
                         }
                         .foregroundStyle(Theme.textPrimary)
-                        .padding(Theme.paddingMedium)
-                        .background(Theme.cardBackground)
+                        .padding(Theme.Spacing.md)
+                        .background(Theme.surface)
                         .clipShape(.rect(cornerRadius: Theme.cornerRadius))
                     }
                     .buttonStyle(.plain)
                 }
-                .padding(Theme.paddingMedium)
+                .padding(Theme.Spacing.md)
                 .padding(.bottom, 20)
             }
         }
@@ -58,7 +58,7 @@ struct FeedDetailView: View {
     // MARK: - Unified Card
 
     private var unifiedCard: some View {
-        VStack(alignment: .leading, spacing: Theme.paddingMedium) {
+        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
             // User info header
             headerRow
 
@@ -76,16 +76,16 @@ struct FeedDetailView: View {
                 // Workout name + date
                 VStack(alignment: .leading, spacing: 6) {
                     Text(activity.workoutName)
-                        .font(.system(size: 20, weight: .bold, design: .rounded))
+                        .font(.title3.weight(.bold))
                         .foregroundStyle(Theme.textPrimary)
 
                     HStack(spacing: 8) {
                         Image(systemName: "calendar")
-                            .font(.system(size: 12))
+                            .font(.caption)
                         Text(localItem.createdAt.workoutDateString)
                         Text("--")
                         Image(systemName: "clock")
-                            .font(.system(size: 12))
+                            .font(.caption)
                         Text(formatDuration(activity.duration))
                     }
                     .font(Theme.fontCaption)
@@ -105,9 +105,9 @@ struct FeedDetailView: View {
                 // Exercise list with sets/weights
                 Divider().background(Theme.textSecondary.opacity(0.2))
 
-                VStack(alignment: .leading, spacing: Theme.paddingSmall) {
+                VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                     Text("Exercises")
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(.subheadline.weight(.semibold))
                         .foregroundStyle(Theme.textSecondary)
 
                     ForEach(activity.exercises) { exercise in
@@ -121,27 +121,27 @@ struct FeedDetailView: View {
             // Action bar (like)
             actionBar
         }
-        .padding(Theme.paddingMedium)
-        .background(Theme.cardBackground)
+        .padding(Theme.Spacing.md)
+        .background(Theme.surface)
         .clipShape(.rect(cornerRadius: Theme.cornerRadius))
     }
 
     // MARK: - Header
 
     private var headerRow: some View {
-        HStack(spacing: Theme.paddingSmall) {
+        HStack(spacing: Theme.Spacing.sm) {
             ZStack {
                 Circle()
                     .fill(Theme.accent.opacity(0.2))
                     .frame(width: 44, height: 44)
                 Text(avatarInitials)
-                    .font(.system(size: 15, weight: .bold))
+                    .font(.subheadline.weight(.bold))
                     .foregroundStyle(Theme.accent)
             }
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(localItem.user.displayName.isEmpty ? localItem.user.username : localItem.user.displayName)
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Theme.textPrimary)
                 Text(localItem.createdAt.timeAgo)
                     .font(Theme.fontSmall)
@@ -166,7 +166,7 @@ struct FeedDetailView: View {
     private var activityBadge: some View {
         HStack(spacing: 4) {
             Image(systemName: badgeIcon)
-                .font(.system(size: 11, weight: .semibold))
+                .font(.caption2.weight(.semibold))
             Text(badgeLabel)
                 .font(Theme.fontSmall)
         }
@@ -199,24 +199,25 @@ struct FeedDetailView: View {
         switch localItem.activityType {
         case .workout: return Theme.accent
         case .personalRecord: return Theme.prGold
-        case .milestone: return Color(hex: "AA66FF")
-        case .streak: return Color(hex: "FF6633")
+        case .milestone: return Theme.badgeMilestone
+        case .streak: return Theme.badgeStreak
         }
     }
 
     // MARK: - Action Bar
 
     private var actionBar: some View {
-        HStack(spacing: Theme.paddingLarge) {
+        HStack(spacing: Theme.Spacing.lg) {
             Button {
+                Haptics.medium()
                 Task { await toggleLike() }
             } label: {
                 HStack(spacing: 5) {
                     Image(systemName: localItem.isLiked ? "heart.fill" : "heart")
-                        .font(.system(size: 16))
+                        .font(.body)
                         .foregroundStyle(localItem.isLiked ? Theme.destructive : Theme.textSecondary)
                     Text("\(localItem.likes)")
-                        .font(.system(size: 14, weight: .medium))
+                        .font(.subheadline.weight(.medium))
                         .foregroundStyle(Theme.textSecondary)
                 }
             }
@@ -231,10 +232,10 @@ struct FeedDetailView: View {
     private func workoutStat(value: String, label: String, icon: String, color: Color = Theme.accent) -> some View {
         VStack(spacing: 4) {
             Image(systemName: icon)
-                .font(.system(size: 14))
+                .font(.subheadline)
                 .foregroundStyle(color)
             Text(value)
-                .font(.system(size: 16, weight: .bold))
+                .font(.body.weight(.bold))
                 .foregroundStyle(Theme.textPrimary)
             Text(label)
                 .font(Theme.fontSmall)
@@ -248,7 +249,7 @@ struct FeedDetailView: View {
     private func exerciseRow(exercise: WorkoutActivity.ExerciseSummary) -> some View {
         HStack(spacing: 12) {
             Image(systemName: "dumbbell.fill")
-                .font(.system(size: 14))
+                .font(.subheadline)
                 .foregroundStyle(exercise.isPR ? Theme.prGold : Theme.accent)
                 .frame(width: 32, height: 32)
                 .background((exercise.isPR ? Theme.prGold : Theme.accent).opacity(0.15))
@@ -257,15 +258,15 @@ struct FeedDetailView: View {
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 6) {
                     Text(exercise.name)
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(.subheadline.weight(.semibold))
                         .foregroundStyle(Theme.textPrimary)
 
                     if exercise.isPR {
                         HStack(spacing: 3) {
                             Image(systemName: "trophy.fill")
-                                .font(.system(size: 9))
+                                .font(.caption2)
                             Text("PR")
-                                .font(.system(size: 10, weight: .bold))
+                                .font(.caption2.weight(.bold))
                         }
                         .foregroundStyle(Theme.prGold)
                         .padding(.horizontal, 6)
@@ -276,7 +277,7 @@ struct FeedDetailView: View {
                 }
 
                 Text("\(exercise.bestWeight.formattedWeight) lbs x \(exercise.bestReps) reps")
-                    .font(.system(size: 13, weight: .medium))
+                    .font(.caption.weight(.medium))
                     .foregroundStyle(Theme.textSecondary)
             }
 

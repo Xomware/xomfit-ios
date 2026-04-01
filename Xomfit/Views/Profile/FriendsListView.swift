@@ -15,7 +15,7 @@ struct FriendsListView: View {
                     friendProfiles: friendProfiles,
                     currentUserId: currentUserId
                 )
-                .padding(.top, Theme.paddingSmall)
+                .padding(.top, Theme.Spacing.sm)
             }
         }
         .navigationTitle("Friends")

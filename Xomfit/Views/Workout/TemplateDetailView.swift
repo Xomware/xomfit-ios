@@ -14,11 +14,11 @@ struct TemplateDetailView: View {
 
                 VStack(spacing: 0) {
                     ScrollView {
-                        VStack(alignment: .leading, spacing: Theme.paddingMedium) {
+                        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
                             headerSection
                             exerciseList
                         }
-                        .padding(Theme.paddingMedium)
+                        .padding(Theme.Spacing.md)
                         // Bottom padding for the start button
                         .padding(.bottom, 80)
                     }
@@ -40,7 +40,7 @@ struct TemplateDetailView: View {
                             showEditor = true
                         } label: {
                             Image(systemName: "pencil")
-                                .font(.system(size: 15, weight: .semibold))
+                                .font(.subheadline.weight(.semibold))
                                 .foregroundStyle(Theme.accent)
                         }
                         .accessibilityLabel("Edit template")
@@ -56,10 +56,10 @@ struct TemplateDetailView: View {
     // MARK: - Header
 
     private var headerSection: some View {
-        VStack(alignment: .leading, spacing: Theme.paddingSmall) {
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
             HStack(spacing: 10) {
                 Image(systemName: template.category.icon)
-                    .font(.system(size: 22))
+                    .font(.title3)
                     .foregroundStyle(Theme.accent)
                     .frame(width: 40, height: 40)
                     .background(Theme.accent.opacity(0.15))
@@ -75,16 +75,16 @@ struct TemplateDetailView: View {
                 }
             }
 
-            HStack(spacing: Theme.paddingLarge) {
+            HStack(spacing: Theme.Spacing.lg) {
                 statPill(icon: "dumbbell.fill", label: "Exercises", value: "\(template.exercises.count)")
                 statPill(icon: "clock.fill", label: "Duration", value: "~\(template.estimatedDuration)m")
                 statPill(icon: "arrow.up.arrow.down", label: "Total Sets", value: "\(totalSets)")
             }
-            .padding(.top, Theme.paddingSmall)
+            .padding(.top, Theme.Spacing.sm)
         }
-        .padding(Theme.paddingMedium)
+        .padding(Theme.Spacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.cardBackground)
+        .background(Theme.surface)
         .clipShape(.rect(cornerRadius: Theme.cornerRadius))
     }
 
@@ -95,10 +95,10 @@ struct TemplateDetailView: View {
     private func statPill(icon: String, label: String, value: String) -> some View {
         VStack(spacing: 4) {
             Image(systemName: icon)
-                .font(.system(size: 14))
+                .font(.subheadline)
                 .foregroundStyle(Theme.accent)
             Text(value)
-                .font(.system(size: 15, weight: .bold))
+                .font(.subheadline.weight(.bold))
                 .foregroundStyle(Theme.textPrimary)
             Text(label)
                 .font(Theme.fontSmall)
@@ -110,9 +110,9 @@ struct TemplateDetailView: View {
     // MARK: - Exercise List
 
     private var exerciseList: some View {
-        VStack(alignment: .leading, spacing: Theme.paddingSmall) {
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
             Text("Exercises")
-                .font(.system(size: 16, weight: .bold))
+                .font(.body.weight(.bold))
                 .foregroundStyle(Theme.textPrimary)
 
             ForEach(Array(template.exercises.enumerated()), id: \.element.id) { index, exercise in
@@ -124,7 +124,7 @@ struct TemplateDetailView: View {
     private func exerciseRow(index: Int, exercise: WorkoutTemplate.TemplateExercise) -> some View {
         HStack(spacing: 12) {
             Text("\(index)")
-                .font(.system(size: 13, weight: .bold, design: .monospaced))
+                .font(.caption.weight(.bold).monospaced())
                 .foregroundStyle(Theme.accent)
                 .frame(width: 24, height: 24)
                 .background(Theme.accent.opacity(0.15))
@@ -132,7 +132,7 @@ struct TemplateDetailView: View {
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(exercise.exercise.name)
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Theme.textPrimary)
 
                 HStack(spacing: 6) {
@@ -154,11 +154,11 @@ struct TemplateDetailView: View {
             Spacer()
 
             Text("\(exercise.targetSets) x \(exercise.targetReps)")
-                .font(.system(size: 14, weight: .bold, design: .monospaced))
+                .font(.subheadline.weight(.bold).monospaced())
                 .foregroundStyle(Theme.accent)
         }
-        .padding(Theme.paddingMedium)
-        .background(Theme.cardBackground)
+        .padding(Theme.Spacing.md)
+        .background(Theme.surface)
         .clipShape(.rect(cornerRadius: Theme.cornerRadius))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(exercise.exercise.name), \(exercise.targetSets) sets of \(exercise.targetReps) reps")
@@ -177,7 +177,7 @@ struct TemplateDetailView: View {
             HStack(spacing: 10) {
                 Image(systemName: "play.fill")
                 Text("Start Workout")
-                    .font(.system(size: 17, weight: .bold))
+                    .font(.headline)
             }
             .foregroundStyle(.black)
             .frame(maxWidth: .infinity)
@@ -185,8 +185,8 @@ struct TemplateDetailView: View {
             .background(Theme.accent)
             .clipShape(.rect(cornerRadius: Theme.cornerRadius))
         }
-        .padding(.horizontal, Theme.paddingMedium)
-        .padding(.bottom, Theme.paddingMedium)
+        .padding(.horizontal, Theme.Spacing.md)
+        .padding(.bottom, Theme.Spacing.md)
         .background(Theme.background)
         .accessibilityLabel("Start \(template.name) workout")
     }
