@@ -18,9 +18,9 @@ struct ProfileHeaderView: View {
     let onActionTapped: () -> Void
 
     var body: some View {
-        VStack(spacing: Theme.paddingMedium) {
+        VStack(spacing: Theme.Spacing.md) {
             // Top row: avatar + stats
-            HStack(alignment: .center, spacing: Theme.paddingLarge) {
+            HStack(alignment: .center, spacing: Theme.Spacing.lg) {
                 avatarCircle
 
                 Spacer()
@@ -37,7 +37,7 @@ struct ProfileHeaderView: View {
                 } label: {
                     VStack(spacing: 2) {
                         Text("\(friendCount)")
-                            .font(.system(size: 18, weight: .bold))
+                            .font(.headline.weight(.bold))
                             .foregroundStyle(Theme.textPrimary)
                         Text("Friends")
                             .font(Theme.fontSmall)
@@ -54,13 +54,13 @@ struct ProfileHeaderView: View {
 
                 Spacer()
             }
-            .padding(.horizontal, Theme.paddingSmall)
+            .padding(.horizontal, Theme.Spacing.sm)
 
             // Name + username + bio
             VStack(alignment: .leading, spacing: 4) {
                 if !displayName.isEmpty {
                     Text(displayName)
-                        .font(.system(size: 16, weight: .bold))
+                        .font(.body.weight(.bold))
                         .foregroundStyle(Theme.textPrimary)
                 }
 
@@ -80,7 +80,7 @@ struct ProfileHeaderView: View {
                 if isPrivate && isOwnProfile {
                     HStack(spacing: 4) {
                         Image(systemName: "lock.fill")
-                            .font(.system(size: 11))
+                            .font(.caption2)
                         Text("Private Account")
                             .font(Theme.fontSmall)
                     }
@@ -93,7 +93,7 @@ struct ProfileHeaderView: View {
             // Action button
             actionButton
         }
-        .padding(Theme.paddingMedium)
+        .padding(Theme.Spacing.md)
     }
 
     // MARK: - Avatar
@@ -104,7 +104,7 @@ struct ProfileHeaderView: View {
                 .fill(Theme.accent.opacity(0.2))
                 .frame(width: 70, height: 70)
             Text(initials)
-                .font(.system(size: 24, weight: .bold))
+                .font(.title2.weight(.bold))
                 .foregroundStyle(Theme.accent)
         }
         .accessibilityLabel("Profile avatar")
@@ -116,7 +116,7 @@ struct ProfileHeaderView: View {
         Button(action: action) {
             VStack(spacing: 2) {
                 Text("\(value)")
-                    .font(.system(size: 18, weight: .bold))
+                    .font(.headline.weight(.bold))
                     .foregroundStyle(Theme.textPrimary)
                 Text(label)
                     .font(Theme.fontSmall)
@@ -132,9 +132,12 @@ struct ProfileHeaderView: View {
     // MARK: - Action Button
 
     private var actionButton: some View {
-        Button(action: onActionTapped) {
+        Button(action: {
+            Haptics.light()
+            onActionTapped()
+        }) {
             Text(actionButtonLabel)
-                .font(.system(size: 14, weight: .semibold))
+                .font(.subheadline.weight(.semibold))
                 .foregroundStyle(actionButtonForeground)
                 .frame(maxWidth: .infinity)
                 .frame(height: 34)
@@ -164,10 +167,10 @@ struct ProfileHeaderView: View {
     }
 
     private var actionButtonBackground: some ShapeStyle {
-        if isOwnProfile { return AnyShapeStyle(Theme.cardBackground) }
+        if isOwnProfile { return AnyShapeStyle(Theme.surface) }
         switch friendshipStatus {
         case .none: return AnyShapeStyle(Theme.accent)
-        case .pending: return AnyShapeStyle(Theme.cardBackground)
+        case .pending: return AnyShapeStyle(Theme.surface)
         case .friends: return AnyShapeStyle(Theme.accent.opacity(0.15))
         }
     }

@@ -15,7 +15,7 @@ struct MainTabView: View {
                 }
             }
             .transition(.opacity)
-            .animation(.easeInOut(duration: 0.2), value: selectedTab)
+            .animation(.xomChill, value: selectedTab)
 
             FloatingTabBar(selectedTab: $selectedTab)
         }
@@ -43,24 +43,24 @@ private struct FloatingTabBar: View {
                         selectedTab = index
                     }
                 } label: {
-                    VStack(spacing: 4) {
+                    VStack(spacing: Theme.Spacing.xs) {
                         Image(systemName: tabs[index].icon)
-                            .font(.system(size: selectedTab == index ? 22 : 20))
+                            .font(selectedTab == index ? .title3 : .body)
                             .symbolEffect(.bounce, value: selectedTab == index)
 
                         Text(tabs[index].label)
-                            .font(.system(size: 10, weight: .semibold))
+                            .font(.caption2.weight(.semibold))
                     }
                     .foregroundStyle(selectedTab == index ? Theme.accent : Theme.textSecondary)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 8)
+                    .padding(.vertical, Theme.Spacing.sm)
                 }
                 .accessibilityLabel(tabs[index].label)
             }
         }
-        .padding(.horizontal, Theme.paddingMedium)
+        .padding(.horizontal, Theme.Spacing.md)
         .padding(.top, 12)
-        .padding(.bottom, 24)
+        .padding(.bottom, Theme.Spacing.lg)
         .background(
             UnevenRoundedRectangle(
                 topLeadingRadius: 24,

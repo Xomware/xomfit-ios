@@ -42,12 +42,12 @@ struct SetRowView: View {
     }
 
     var body: some View {
-        HStack(spacing: Theme.paddingSmall) {
+        HStack(spacing: Theme.Spacing.sm) {
             // Delete button (visible, since swipeActions don't work outside List)
             Button(action: onDelete) {
                 Image(systemName: "minus.circle.fill")
                     .foregroundStyle(Theme.destructive)
-                    .font(.system(size: 18))
+                    .font(.headline)
             }
             .buttonStyle(.plain)
             .frame(width: 30)
@@ -55,8 +55,8 @@ struct SetRowView: View {
 
             // Set number
             Text("\(setNumber)")
-                .font(.system(size: 14, weight: .bold, design: .monospaced))
-                .foregroundColor(isCompleted ? Theme.accent : Theme.textSecondary)
+                .font(.subheadline.weight(.bold).monospaced())
+                .foregroundStyle(isCompleted ? Theme.accent : Theme.textSecondary)
                 .frame(width: 24, alignment: .center)
 
             // Weight field
@@ -65,9 +65,9 @@ struct SetRowView: View {
                 .multilineTextAlignment(.center)
                 .padding(.vertical, 8)
                 .padding(.horizontal, 6)
-                .background(Theme.cardBackground)
-                .cornerRadius(Theme.cornerRadiusSmall)
-                .foregroundColor(isCompleted ? Theme.accent : Theme.textPrimary)
+                .background(Theme.surface)
+                .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
+                .foregroundStyle(isCompleted ? Theme.accent : Theme.textPrimary)
                 .frame(maxWidth: .infinity)
                 .focused($isWeightFocused)
                 .onChange(of: weightText) { _, newValue in
@@ -90,9 +90,9 @@ struct SetRowView: View {
                 .multilineTextAlignment(.center)
                 .padding(.vertical, 8)
                 .padding(.horizontal, 6)
-                .background(Theme.cardBackground)
-                .cornerRadius(Theme.cornerRadiusSmall)
-                .foregroundColor(isCompleted ? Theme.accent : Theme.textPrimary)
+                .background(Theme.surface)
+                .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
+                .foregroundStyle(isCompleted ? Theme.accent : Theme.textPrimary)
                 .frame(maxWidth: .infinity)
                 .focused($isRepsFocused)
                 .onChange(of: repsText) { _, newValue in
@@ -107,7 +107,7 @@ struct SetRowView: View {
                 onComplete()
             }) {
                 Image(systemName: isCompleted ? "checkmark.circle.fill" : "checkmark.circle")
-                    .font(.system(size: 26))
+                    .font(.title2)
                     .foregroundStyle(isCompleted ? Theme.accent : Theme.textSecondary.opacity(0.6))
                     .frame(width: 44, height: 44)
                     .contentShape(Rectangle())
@@ -115,10 +115,10 @@ struct SetRowView: View {
             .buttonStyle(.plain)
             .accessibilityLabel(isCompleted ? "Mark set \(setNumber) incomplete" : "Complete set \(setNumber)")
         }
-        .padding(.horizontal, Theme.paddingMedium)
+        .padding(.horizontal, Theme.Spacing.md)
         .padding(.vertical, 6)
         .background(isCompleted ? Theme.accent.opacity(0.12) : Color.clear)
-        .cornerRadius(Theme.cornerRadiusSmall)
+        .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
         .toolbar {
             ToolbarItemGroup(placement: .keyboard) {
                 Spacer()

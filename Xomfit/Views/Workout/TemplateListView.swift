@@ -25,7 +25,7 @@ struct TemplateListView: View {
                         Section {
                             ForEach(items) { template in
                                 templateRow(template)
-                                    .listRowBackground(Theme.cardBackground)
+                                    .listRowBackground(Theme.surface)
                                     .listRowSeparator(.hidden)
                             }
                             .onDelete { indexSet in
@@ -38,7 +38,7 @@ struct TemplateListView: View {
                                 Text(category.displayName)
                                     .foregroundStyle(Theme.textPrimary)
                             }
-                            .font(.system(size: 14, weight: .bold))
+                            .font(.subheadline.weight(.bold))
                         }
                     }
                 }
@@ -65,9 +65,9 @@ struct TemplateListView: View {
             onSelect(template)
             dismiss()
         } label: {
-            HStack(spacing: Theme.paddingMedium) {
+            HStack(spacing: Theme.Spacing.md) {
                 Image(systemName: template.category.icon)
-                    .font(.system(size: 18))
+                    .font(.headline)
                     .foregroundStyle(Theme.accent)
                     .frame(width: 36, height: 36)
                     .background(Theme.accent.opacity(0.15))
@@ -75,7 +75,7 @@ struct TemplateListView: View {
 
                 VStack(alignment: .leading, spacing: 3) {
                     Text(template.name)
-                        .font(.system(size: 15, weight: .bold))
+                        .font(.subheadline.weight(.bold))
                         .foregroundStyle(Theme.textPrimary)
                     Text(template.description)
                         .font(Theme.fontCaption)

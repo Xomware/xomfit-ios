@@ -14,14 +14,14 @@ struct WorkoutBuilderView: View {
                 Theme.background.ignoresSafeArea()
 
                 ScrollView {
-                    VStack(spacing: Theme.paddingMedium) {
+                    VStack(spacing: Theme.Spacing.md) {
                         nameField
                         categoryPicker
                         exerciseList
                         addExerciseButton
                     }
-                    .padding(.horizontal, Theme.paddingMedium)
-                    .padding(.vertical, Theme.paddingSmall)
+                    .padding(.horizontal, Theme.Spacing.md)
+                    .padding(.vertical, Theme.Spacing.sm)
                 }
             }
             .navigationTitle("Build Workout")
@@ -34,6 +34,7 @@ struct WorkoutBuilderView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
+                        Haptics.success()
                         viewModel.save()
                         dismiss()
                     }
@@ -60,33 +61,33 @@ struct WorkoutBuilderView: View {
 
     private var nameField: some View {
         TextField("Workout Name", text: $viewModel.name)
-            .font(.system(size: 16, weight: .semibold))
+            .font(.body.weight(.semibold))
             .foregroundStyle(Theme.textPrimary)
-            .padding(Theme.paddingMedium)
-            .background(Theme.cardBackground)
-            .cornerRadius(Theme.cornerRadius)
+            .padding(Theme.Spacing.md)
+            .background(Theme.surface)
+            .clipShape(.rect(cornerRadius: Theme.cornerRadius))
     }
 
     // MARK: - Category Picker
 
     private var categoryPicker: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: Theme.paddingSmall) {
+            HStack(spacing: Theme.Spacing.sm) {
                 ForEach(WorkoutTemplate.TemplateCategory.allCases, id: \.self) { cat in
                     Button {
                         viewModel.category = cat
                     } label: {
                         HStack(spacing: 4) {
                             Image(systemName: cat.icon)
-                                .font(.system(size: 11))
+                                .font(.caption2)
                             Text(cat.displayName)
                                 .font(Theme.fontSmall)
                         }
                         .foregroundStyle(viewModel.category == cat ? .black : Theme.textSecondary)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 8)
-                        .background(viewModel.category == cat ? Theme.accent : Theme.cardBackground)
-                        .cornerRadius(20)
+                        .background(viewModel.category == cat ? Theme.accent : Theme.surface)
+                        .clipShape(.rect(cornerRadius: 20))
                     }
                     .accessibilityLabel("\(cat.displayName) category")
                     .accessibilityAddTraits(viewModel.category == cat ? .isSelected : [])
@@ -102,7 +103,7 @@ struct WorkoutBuilderView: View {
             if viewModel.exercises.isEmpty {
                 emptyState
             } else {
-                VStack(spacing: Theme.paddingSmall) {
+                VStack(spacing: Theme.Spacing.sm) {
                     ForEach(Array(viewModel.exercises.enumerated()), id: \.element.id) { index, exercise in
                         BuilderExerciseRow(
                             exercise: exercise,
@@ -123,9 +124,9 @@ struct WorkoutBuilderView: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: Theme.paddingSmall) {
+        VStack(spacing: Theme.Spacing.sm) {
             Image(systemName: "dumbbell.fill")
-                .font(.system(size: 32))
+                .font(.largeTitle)
                 .foregroundStyle(Theme.textSecondary.opacity(0.5))
             Text("No exercises yet")
                 .font(Theme.fontBody)
@@ -135,25 +136,26 @@ struct WorkoutBuilderView: View {
                 .foregroundStyle(Theme.textSecondary.opacity(0.7))
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, Theme.paddingLarge * 2)
+        .padding(.vertical, Theme.Spacing.lg * 2)
     }
 
     // MARK: - Add Exercise Button
 
     private var addExerciseButton: some View {
         Button {
+            Haptics.light()
             showExercisePicker = true
         } label: {
             HStack(spacing: 8) {
                 Image(systemName: "plus.circle.fill")
                 Text("Add Exercise")
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.subheadline.weight(.semibold))
             }
             .foregroundStyle(Theme.accent)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
             .background(Theme.accent.opacity(0.1))
-            .cornerRadius(Theme.cornerRadius)
+            .clipShape(.rect(cornerRadius: Theme.cornerRadius))
             .overlay(
                 RoundedRectangle(cornerRadius: Theme.cornerRadius)
                     .strokeBorder(Theme.accent.opacity(0.3), lineWidth: 1)
@@ -174,12 +176,12 @@ private struct BuilderExerciseRow: View {
     @State private var repsText: String = ""
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.paddingSmall) {
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
             // Header: name + delete
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(exercise.exercise.name)
-                        .font(.system(size: 15, weight: .bold))
+                        .font(.subheadline.weight(.bold))
                         .foregroundStyle(Theme.textPrimary)
 
                     HStack(spacing: 4) {
@@ -189,8 +191,8 @@ private struct BuilderExerciseRow: View {
                                 .foregroundStyle(Theme.textSecondary)
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
-                                .background(Theme.secondaryBackground)
-                                .cornerRadius(4)
+                                .background(Theme.surfaceSecondary)
+                                .clipShape(.rect(cornerRadius: 4))
                         }
                     }
                 }
@@ -199,7 +201,7 @@ private struct BuilderExerciseRow: View {
 
                 Button(action: onDelete) {
                     Image(systemName: "trash")
-                        .font(.system(size: 14))
+                        .font(.subheadline)
                         .foregroundStyle(Theme.destructive.opacity(0.8))
                         .frame(width: 44, height: 44)
                         .contentShape(Rectangle())
@@ -208,7 +210,7 @@ private struct BuilderExerciseRow: View {
             }
 
             // Sets & Reps controls
-            HStack(spacing: Theme.paddingMedium) {
+            HStack(spacing: Theme.Spacing.md) {
                 // Sets stepper
                 HStack(spacing: 8) {
                     Text("Sets")
@@ -225,7 +227,7 @@ private struct BuilderExerciseRow: View {
                     .frame(minWidth: 44, minHeight: 44)
 
                     Text("\(exercise.targetSets)")
-                        .font(.system(size: 16, weight: .bold, design: .monospaced))
+                        .font(.body.weight(.bold).monospaced())
                         .foregroundStyle(Theme.textPrimary)
                         .frame(minWidth: 24)
 
@@ -247,14 +249,14 @@ private struct BuilderExerciseRow: View {
                         .foregroundStyle(Theme.textSecondary)
 
                     TextField("8-12", text: $repsText)
-                        .font(.system(size: 14, weight: .semibold, design: .monospaced))
+                        .font(.subheadline.weight(.semibold).monospaced())
                         .foregroundStyle(Theme.textPrimary)
                         .multilineTextAlignment(.center)
                         .frame(width: 60)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 6)
-                        .background(Theme.secondaryBackground)
-                        .cornerRadius(Theme.cornerRadiusSmall)
+                        .background(Theme.surfaceSecondary)
+                        .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
                         .onAppear { repsText = exercise.targetReps }
                         .onChange(of: repsText) { _, newValue in
                             onUpdateReps(newValue)
@@ -262,8 +264,8 @@ private struct BuilderExerciseRow: View {
                 }
             }
         }
-        .padding(Theme.paddingMedium)
-        .background(Theme.cardBackground)
-        .cornerRadius(Theme.cornerRadius)
+        .padding(Theme.Spacing.md)
+        .background(Theme.surface)
+        .clipShape(.rect(cornerRadius: Theme.cornerRadius))
     }
 }

@@ -8,6 +8,7 @@ import Supabase
 final class AuthService {
     var isAuthenticated = false
     var needsProfileCompletion = false
+    var needsOnboarding = false
     var currentSession: Session?
     var currentUser: User?
     var isLoading = true
@@ -45,14 +46,37 @@ final class AuthService {
             needsProfileCompletion = profile.username.isEmpty
                 || profile.username == profile.id
                 || profile.username == emailPrefix
+
+            if !needsProfileCompletion {
+                needsOnboarding = !hasCompletedOnboarding()
+            }
         } catch {
-            // Profile doesn't exist or fetch failed — needs completion
             needsProfileCompletion = true
         }
     }
 
     func profileCompleted() {
         needsProfileCompletion = false
+        needsOnboarding = !hasCompletedOnboarding()
+    }
+
+    // MARK: - Onboarding
+
+    func onboardingCompleted() {
+        needsOnboarding = false
+        markOnboardingComplete()
+    }
+
+    private var onboardingKey: String {
+        "xomfit_onboarding_completed_\(currentUser?.id.uuidString ?? "")"
+    }
+
+    private func hasCompletedOnboarding() -> Bool {
+        UserDefaults.standard.bool(forKey: onboardingKey)
+    }
+
+    private func markOnboardingComplete() {
+        UserDefaults.standard.set(true, forKey: onboardingKey)
     }
 
     // MARK: - Email Auth
@@ -90,7 +114,6 @@ final class AuthService {
 
     // MARK: - Apple Sign In
 
-    /// Generate nonce and return ASAuthorizationAppleIDRequest
     func prepareAppleSignIn() -> ASAuthorizationAppleIDRequest {
         let nonce = randomNonce()
         currentNonce = nonce
@@ -100,7 +123,6 @@ final class AuthService {
         return request
     }
 
-    /// Handle the Apple Sign In result
     func handleAppleSignIn(_ result: Result<ASAuthorization, Error>) async {
         errorMessage = nil
         switch result {
@@ -129,7 +151,6 @@ final class AuthService {
             }
 
         case .failure(let error):
-            // User cancelled is not an error worth showing
             if (error as NSError).code != ASAuthorizationError.canceled.rawValue {
                 errorMessage = error.localizedDescription
             }

@@ -48,7 +48,7 @@ struct ProfileCompletionView: View {
         Section("Display Name") {
             TextField("Your name", text: $displayName)
                 .textContentType(.name)
-                .listRowBackground(Theme.cardBackground)
+                .listRowBackground(Theme.surface)
                 .foregroundStyle(Theme.textPrimary)
                 .accessibilityLabel("Display name")
         }
@@ -76,13 +76,13 @@ struct ProfileCompletionView: View {
                         .controlSize(.small)
                 }
             }
-            .listRowBackground(Theme.cardBackground)
+            .listRowBackground(Theme.surface)
 
             if let usernameError {
                 Text(usernameError)
                     .font(Theme.fontSmall)
                     .foregroundStyle(Theme.destructive)
-                    .listRowBackground(Theme.cardBackground)
+                    .listRowBackground(Theme.surface)
             }
         } header: {
             Text("Username")
@@ -95,7 +95,7 @@ struct ProfileCompletionView: View {
         Section("Bio (optional)") {
             TextField("Tell people about yourself", text: $bio, axis: .vertical)
                 .lineLimit(3...5)
-                .listRowBackground(Theme.cardBackground)
+                .listRowBackground(Theme.surface)
                 .foregroundStyle(Theme.textPrimary)
                 .accessibilityLabel("Bio")
         }
@@ -115,11 +115,11 @@ struct ProfileCompletionView: View {
                             .tint(.black)
                     } else {
                         Text("Continue")
-                            .font(.system(size: 17, weight: .semibold))
+                            .font(.body.weight(.semibold))
                     }
                     Spacer()
                 }
-                .padding(.vertical, Theme.paddingSmall)
+                .padding(.vertical, Theme.Spacing.sm)
             }
             .disabled(!isFormValid || isSaving)
             .listRowBackground(isFormValid && !isSaving ? Theme.accent : Theme.accent.opacity(0.4))
@@ -131,7 +131,7 @@ struct ProfileCompletionView: View {
                 Text(errorMessage)
                     .font(Theme.fontSmall)
                     .foregroundStyle(Theme.destructive)
-                    .listRowBackground(Theme.cardBackground)
+                    .listRowBackground(Theme.surface)
             }
         }
     }

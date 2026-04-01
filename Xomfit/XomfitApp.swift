@@ -10,7 +10,7 @@ struct XomFitApp: App {
                 if authService.isLoading {
                     ZStack {
                         Theme.background.ignoresSafeArea()
-                        VStack(spacing: Theme.paddingMedium) {
+                        VStack(spacing: Theme.Spacing.md) {
                             Image("XomFitBanner")
                                 .resizable()
                                 .scaledToFit()
@@ -23,6 +23,11 @@ struct XomFitApp: App {
                         .environment(authService)
                         .sheet(isPresented: Bindable(authService).needsProfileCompletion) {
                             ProfileCompletionView()
+                                .environment(authService)
+                                .interactiveDismissDisabled()
+                        }
+                        .fullScreenCover(isPresented: Bindable(authService).needsOnboarding) {
+                            OnboardingView()
                                 .environment(authService)
                                 .interactiveDismissDisabled()
                         }

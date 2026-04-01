@@ -7,16 +7,16 @@ struct PRBadgeRow: View {
         HStack {
             Image(systemName: "trophy.fill")
                 .foregroundStyle(Theme.prGold)
-                .font(.system(size: 14))
+                .font(.subheadline)
 
             Text(pr.exerciseName)
-                .font(.system(size: 14, weight: .semibold))
+                .font(.subheadline.weight(.semibold))
                 .foregroundStyle(Theme.textPrimary)
 
             Spacer()
 
             Text("\(pr.weight.formattedWeight) \u{00D7} \(pr.reps)")
-                .font(.system(size: 14, weight: .bold))
+                .font(.subheadline.weight(.bold))
                 .foregroundStyle(Theme.accent)
 
             if let imp = pr.improvementString {

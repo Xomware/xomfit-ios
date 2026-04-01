@@ -12,7 +12,7 @@ struct TemplateCardView: View {
             HStack(spacing: 10) {
                 // Category icon
                 Image(systemName: template.category.icon)
-                    .font(.system(size: 18))
+                    .font(.headline)
                     .foregroundStyle(Theme.accent)
                     .frame(width: 32, height: 32)
                     .background(Theme.accent.opacity(0.15))
@@ -20,7 +20,7 @@ struct TemplateCardView: View {
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(template.name)
-                        .font(.system(size: 13, weight: .bold))
+                        .font(.caption.weight(.bold))
                         .foregroundStyle(Theme.textPrimary)
                         .lineLimit(1)
 
@@ -36,7 +36,7 @@ struct TemplateCardView: View {
             .padding(.horizontal, 12)
             .padding(.vertical, 10)
             .frame(width: 160, alignment: .leading)
-            .background(Theme.cardBackground)
+            .background(Theme.surface)
             .clipShape(.rect(cornerRadius: Theme.cornerRadius))
         }
         .buttonStyle(PressableCardStyle())

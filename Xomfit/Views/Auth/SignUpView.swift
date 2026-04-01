@@ -23,18 +23,18 @@ struct SignUpView: View {
             Theme.background.ignoresSafeArea()
 
             ScrollView {
-                VStack(spacing: Theme.paddingLarge) {
+                VStack(spacing: Theme.Spacing.lg) {
                     // Header
-                    VStack(spacing: Theme.paddingSmall) {
+                    VStack(spacing: Theme.Spacing.sm) {
                         Text("Create Account")
                             .font(Theme.fontTitle)
-                            .foregroundColor(Theme.textPrimary)
+                            .foregroundStyle(Theme.textPrimary)
                         Text("Start your fitness journey")
                             .font(Theme.fontCaption)
-                            .foregroundColor(Theme.textSecondary)
+                            .foregroundStyle(Theme.textSecondary)
                     }
                     .padding(.top, 48)
-                    .padding(.bottom, Theme.paddingMedium)
+                    .padding(.bottom, Theme.Spacing.md)
 
                     // Form
                     VStack(spacing: 14) {
@@ -51,23 +51,23 @@ struct SignUpView: View {
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Password")
                                 .font(Theme.fontCaption)
-                                .foregroundColor(Theme.textSecondary)
+                                .foregroundStyle(Theme.textSecondary)
                             SecureField("Min 8 characters", text: $password)
-                                .padding(Theme.paddingMedium)
-                                .background(Theme.cardBackground)
-                                .cornerRadius(Theme.cornerRadius)
-                                .foregroundColor(Theme.textPrimary)
+                                .padding(Theme.Spacing.md)
+                                .background(Theme.surface)
+                                .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+                                .foregroundStyle(Theme.textPrimary)
                         }
 
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Confirm Password")
                                 .font(Theme.fontCaption)
-                                .foregroundColor(Theme.textSecondary)
+                                .foregroundStyle(Theme.textSecondary)
                             SecureField("Repeat password", text: $confirmPassword)
-                                .padding(Theme.paddingMedium)
-                                .background(Theme.cardBackground)
-                                .cornerRadius(Theme.cornerRadius)
-                                .foregroundColor(Theme.textPrimary)
+                                .padding(Theme.Spacing.md)
+                                .background(Theme.surface)
+                                .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+                                .foregroundStyle(Theme.textPrimary)
                         }
 
                         Button {
@@ -81,32 +81,32 @@ struct SignUpView: View {
                                         .tint(.black)
                                 } else {
                                     Text("Create Account")
-                                        .font(.system(size: 16, weight: .bold))
-                                        .foregroundColor(.black)
+                                        .font(.body.weight(.bold))
+                                        .foregroundStyle(.black)
                                 }
                             }
                             .frame(height: 52)
                         }
                         .disabled(isLoading || !formValid)
                         .opacity((isLoading || !formValid) ? 0.6 : 1)
-                        .padding(.top, Theme.paddingSmall)
+                        .padding(.top, Theme.Spacing.sm)
                     }
-                    .padding(.horizontal, Theme.paddingLarge)
+                    .padding(.horizontal, Theme.Spacing.lg)
 
                     // Back to login
                     HStack(spacing: 4) {
                         Text("Already have an account?")
-                            .foregroundColor(Theme.textSecondary)
+                            .foregroundStyle(Theme.textSecondary)
                             .font(Theme.fontCaption)
                         Button {
                             dismiss()
                         } label: {
                             Text("Sign In")
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundColor(Theme.accent)
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(Theme.accent)
                         }
                     }
-                    .padding(.top, Theme.paddingSmall)
+                    .padding(.top, Theme.Spacing.sm)
 
                     Spacer()
                 }
@@ -128,15 +128,15 @@ struct SignUpView: View {
         VStack(alignment: .leading, spacing: 6) {
             Text(label)
                 .font(Theme.fontCaption)
-                .foregroundColor(Theme.textSecondary)
+                .foregroundStyle(Theme.textSecondary)
             TextField(label, text: text)
                 .keyboardType(keyboard)
                 .autocapitalization(autocap ? .words : .none)
                 .autocorrectionDisabled()
-                .padding(Theme.paddingMedium)
-                .background(Theme.cardBackground)
-                .cornerRadius(Theme.cornerRadius)
-                .foregroundColor(Theme.textPrimary)
+                .padding(Theme.Spacing.md)
+                .background(Theme.surface)
+                .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+                .foregroundStyle(Theme.textPrimary)
         }
     }
 

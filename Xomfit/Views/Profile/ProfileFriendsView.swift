@@ -29,9 +29,9 @@ struct ProfileFriendsView: View {
                     }
                 }
             }
-            .background(Theme.cardBackground)
+            .background(Theme.surface)
             .clipShape(.rect(cornerRadius: Theme.cornerRadius))
-            .padding(.horizontal, Theme.paddingMedium)
+            .padding(.horizontal, Theme.Spacing.md)
         }
     }
 
@@ -43,19 +43,19 @@ struct ProfileFriendsView: View {
         let username = profile?.username ?? ""
         let initials = friendInitials(name: name, fallback: username)
 
-        return HStack(spacing: Theme.paddingMedium) {
+        return HStack(spacing: Theme.Spacing.md) {
             ZStack {
                 Circle()
                     .fill(Theme.accent.opacity(0.2))
                     .frame(width: 40, height: 40)
                 Text(initials)
-                    .font(.system(size: 14, weight: .bold))
+                    .font(.subheadline.weight(.bold))
                     .foregroundStyle(Theme.accent)
             }
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(name)
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Theme.textPrimary)
                 if !username.isEmpty {
                     Text("@\(username)")
@@ -67,10 +67,10 @@ struct ProfileFriendsView: View {
             Spacer()
 
             Image(systemName: "chevron.right")
-                .font(.system(size: 13, weight: .semibold))
+                .font(.caption.weight(.semibold))
                 .foregroundStyle(Theme.textSecondary)
         }
-        .padding(Theme.paddingMedium)
+        .padding(Theme.Spacing.md)
         .frame(minHeight: 44)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(name)\(username.isEmpty ? "" : ", @\(username)")")
@@ -80,9 +80,9 @@ struct ProfileFriendsView: View {
     // MARK: - Empty State
 
     private var emptyState: some View {
-        VStack(spacing: Theme.paddingSmall) {
+        VStack(spacing: Theme.Spacing.sm) {
             Image(systemName: "person.2")
-                .font(.system(size: 36))
+                .font(.largeTitle)
                 .foregroundStyle(Theme.textSecondary)
             Text("No friends yet")
                 .font(Theme.fontBody)

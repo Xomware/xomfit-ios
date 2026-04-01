@@ -29,12 +29,12 @@ struct FeedView: View {
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    HStack(spacing: 16) {
+                    HStack(spacing: Theme.Spacing.md) {
                         Button {
                             showUserSearch = true
                         } label: {
                             Image(systemName: "magnifyingglass")
-                                .foregroundColor(Theme.accent)
+                                .foregroundStyle(Theme.accent)
                         }
                         .accessibilityLabel("Search users")
 
@@ -42,7 +42,7 @@ struct FeedView: View {
                             FriendsView()
                         } label: {
                             Image(systemName: "person.badge.plus")
-                                .foregroundColor(Theme.accent)
+                                .foregroundStyle(Theme.accent)
                         }
                     }
                 }
@@ -65,12 +65,12 @@ struct FeedView: View {
     private var feedSkeleton: some View {
         VStack(spacing: 12) {
             ForEach(0..<4, id: \.self) { index in
-                SkeletonCard(height: 120)
+                XomSkeletonRow(style: .feedPost)
                     .staggeredAppear(index: index)
             }
         }
-        .padding(.horizontal, Theme.paddingMedium)
-        .padding(.top, Theme.paddingMedium)
+        .padding(.horizontal, Theme.Spacing.md)
+        .padding(.top, Theme.Spacing.md)
     }
 
     // MARK: - Feed List
@@ -108,11 +108,11 @@ struct FeedView: View {
                         .font(Theme.fontCaption)
                         .foregroundStyle(Theme.textSecondary)
                         .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(Theme.paddingMedium)
+                        .padding(Theme.Spacing.md)
                 }
             }
-            .padding(.horizontal, Theme.paddingMedium)
-            .padding(.top, Theme.paddingSmall)
+            .padding(.horizontal, Theme.Spacing.md)
+            .padding(.top, Theme.Spacing.sm)
             .padding(.bottom, 100)
         }
         .refreshable {
@@ -123,32 +123,13 @@ struct FeedView: View {
     // MARK: - Empty State
 
     private var emptyState: some View {
-        VStack(spacing: Theme.paddingMedium) {
-            Image(systemName: "person.2.fill")
-                .font(.system(size: 48))
-                .foregroundColor(Theme.textSecondary)
-            Text("Your feed is empty")
-                .font(Theme.fontHeadline)
-                .foregroundColor(Theme.textPrimary)
-            Text("Add friends to see their workouts, PRs, and milestones here")
-                .font(Theme.fontBody)
-                .foregroundColor(Theme.textSecondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, Theme.paddingLarge)
-
-            NavigationLink {
-                FriendsView()
-            } label: {
-                Text("Find Friends")
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundColor(.black)
-                    .padding(.horizontal, Theme.paddingLarge)
-                    .padding(.vertical, 12)
-                    .background(Theme.accent)
-                    .cornerRadius(Theme.cornerRadius)
-            }
-        }
-        .padding(Theme.paddingLarge)
+        XomEmptyState(
+            icon: "person.2.fill",
+            title: "Your feed is empty",
+            subtitle: "Add friends to see their workouts, PRs, and milestones here",
+            ctaLabel: "Find Friends",
+            ctaAction: { showUserSearch = true }
+        )
     }
 
     // MARK: - Feed Item Actions
@@ -206,22 +187,12 @@ struct FeedView: View {
     // MARK: - Error View
 
     private func errorView(message: String) -> some View {
-        VStack(spacing: Theme.paddingMedium) {
-            Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 40))
-                .foregroundColor(Theme.warning)
-            Text("Failed to load feed")
-                .font(Theme.fontHeadline)
-                .foregroundColor(Theme.textPrimary)
-            Text(message)
-                .font(Theme.fontCaption)
-                .foregroundColor(Theme.textSecondary)
-                .multilineTextAlignment(.center)
-            Button("Try Again") {
-                Task { await viewModel.loadFeed(userId: userId) }
-            }
-            .foregroundColor(Theme.accent)
-        }
-        .padding(Theme.paddingLarge)
+        XomEmptyState(
+            icon: "exclamationmark.triangle",
+            title: "Failed to load feed",
+            subtitle: message,
+            ctaLabel: "Try Again",
+            ctaAction: { Task { await viewModel.loadFeed(userId: userId) } }
+        )
     }
 }

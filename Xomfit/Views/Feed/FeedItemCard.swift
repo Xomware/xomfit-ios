@@ -11,33 +11,29 @@ struct FeedItemCard: View {
     @State private var showDeleteConfirm = false
     @State private var showEditCaption = false
     @State private var editedCaption = ""
+    @State private var likeScale: CGFloat = 1
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.paddingSmall) {
-            // Header row: avatar + name + badge + timestamp
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
             headerRow
-
-            // Activity-specific content
             activityContent
 
-            // Caption
             if let caption = item.caption, !caption.isEmpty {
                 Text(caption)
                     .font(Theme.fontBody)
-                    .foregroundColor(Theme.textPrimary)
+                    .foregroundStyle(Theme.textPrimary)
                     .padding(.top, 2)
             }
 
             Divider()
                 .background(Theme.textSecondary.opacity(0.3))
 
-            // Action bar: like + comment counts
             actionBar
         }
-        .padding(.horizontal, Theme.paddingMedium)
+        .padding(.horizontal, Theme.Spacing.md)
         .padding(.vertical, 14)
-        .background(Theme.cardBackground)
-        .clipShape(.rect(cornerRadius: 16))
+        .background(Theme.surface)
+        .clipShape(.rect(cornerRadius: Theme.cornerRadius))
         .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
         .contextMenu {
             if onEdit != nil {
@@ -76,31 +72,28 @@ struct FeedItemCard: View {
     // MARK: - Header
 
     private var headerRow: some View {
-        HStack(spacing: Theme.paddingSmall) {
-            // Avatar
-            ZStack {
-                Circle()
-                    .fill(Theme.accent.opacity(0.2))
-                    .frame(width: 40, height: 40)
-                Text(avatarInitials)
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(Theme.accent)
-            }
+        HStack(spacing: Theme.Spacing.sm) {
+            XomAvatar(
+                name: item.user.displayName.isEmpty ? item.user.username : item.user.displayName,
+                size: 40
+            )
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(item.user.displayName.isEmpty ? item.user.username : item.user.displayName)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(Theme.textPrimary)
-                Text(item.createdAt.timeAgo)
-                    .font(Theme.fontSmall)
-                    .foregroundColor(Theme.textSecondary)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Theme.textPrimary)
+
+                HStack(spacing: Theme.Spacing.xs) {
+                    Text(item.createdAt.timeAgo)
+                        .font(Theme.fontSmall)
+                        .foregroundStyle(Theme.textSecondary)
+                }
             }
 
             Spacer()
 
             activityBadge
 
-            // Owner actions menu (delete / edit)
             if onDelete != nil || onEdit != nil {
                 Menu {
                     if onEdit != nil {
@@ -120,7 +113,7 @@ struct FeedItemCard: View {
                     }
                 } label: {
                     Image(systemName: "ellipsis")
-                        .font(.system(size: 16, weight: .medium))
+                        .font(.body)
                         .foregroundStyle(Theme.textSecondary)
                         .frame(width: 32, height: 32)
                         .contentShape(Rectangle())
@@ -130,29 +123,20 @@ struct FeedItemCard: View {
         }
     }
 
-    private var avatarInitials: String {
-        let name = item.user.displayName.isEmpty ? item.user.username : item.user.displayName
-        let parts = name.split(separator: " ")
-        if parts.count >= 2 {
-            return String(parts[0].prefix(1) + parts[1].prefix(1)).uppercased()
-        }
-        return String(name.prefix(2)).uppercased()
-    }
-
     // MARK: - Activity Badge
 
     private var activityBadge: some View {
         HStack(spacing: 4) {
             Image(systemName: badgeIcon)
-                .font(.system(size: 11, weight: .semibold))
+                .font(Theme.fontSmall)
             Text(badgeLabel)
                 .font(Theme.fontSmall)
         }
-        .foregroundColor(badgeColor)
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
+        .foregroundStyle(badgeColor)
+        .padding(.horizontal, Theme.Spacing.sm)
+        .padding(.vertical, Theme.Spacing.xs)
         .background(badgeColor.opacity(0.15))
-        .cornerRadius(Theme.cornerRadiusSmall)
+        .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
     }
 
     private var badgeIcon: String {
@@ -175,10 +159,10 @@ struct FeedItemCard: View {
 
     private var badgeColor: Color {
         switch item.activityType {
-        case .workout: return Theme.accent
-        case .personalRecord: return Theme.prGold
-        case .milestone: return Color(hex: "AA66FF")
-        case .streak: return Color(hex: "FF6633")
+        case .workout: return Theme.badgeWorkout
+        case .personalRecord: return Theme.badgePR
+        case .milestone: return Theme.badgeMilestone
+        case .streak: return Theme.badgeStreak
         }
     }
 
@@ -209,43 +193,54 @@ struct FeedItemCard: View {
     // MARK: - Action Bar
 
     private var actionBar: some View {
-        HStack(spacing: Theme.paddingLarge) {
-            // Like button
-            Button(action: onLike) {
+        HStack(spacing: Theme.Spacing.lg) {
+            // Like button with animation
+            Button {
+                withAnimation(.xomCelebration) {
+                    likeScale = 1.3
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                    withAnimation(.xomPlayful) {
+                        likeScale = 1
+                    }
+                }
+                onLike()
+            } label: {
                 HStack(spacing: 5) {
                     Image(systemName: item.isLiked ? "heart.fill" : "heart")
-                        .font(.system(size: 15))
-                        .foregroundColor(item.isLiked ? Theme.destructive : Theme.textSecondary)
+                        .font(.subheadline)
+                        .foregroundStyle(item.isLiked ? Theme.destructive : Theme.textSecondary)
+                        .scaleEffect(likeScale)
                     Text("\(item.likes)")
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundColor(Theme.textSecondary)
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(Theme.textSecondary)
                 }
             }
             .buttonStyle(.plain)
+            .sensoryFeedback(.impact(weight: .medium), trigger: item.isLiked)
 
             // Comment button
             Button(action: onComment) {
                 HStack(spacing: 5) {
                     Image(systemName: "bubble.right")
-                        .font(.system(size: 15))
-                        .foregroundColor(Theme.textSecondary)
+                        .font(.subheadline)
+                        .foregroundStyle(Theme.textSecondary)
                     Text("\(item.comments.count)")
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundColor(Theme.textSecondary)
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(Theme.textSecondary)
                 }
             }
             .buttonStyle(.plain)
 
             Spacer()
 
-            // Save workout button (only for workout posts from others)
             if item.activityType == .workout, let onSave {
                 Button {
                     Haptics.success()
                     onSave()
                 } label: {
                     Image(systemName: "bookmark")
-                        .font(.system(size: 15))
+                        .font(.subheadline)
                         .foregroundStyle(Theme.textSecondary)
                 }
                 .buttonStyle(.plain)
@@ -261,18 +256,32 @@ private struct WorkoutActivityContent: View {
     let activity: WorkoutActivity
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.paddingSmall) {
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
             Text(activity.workoutName)
-                .font(.system(size: 16, weight: .bold))
-                .foregroundColor(Theme.textPrimary)
+                .font(.body.weight(.bold))
+                .foregroundStyle(Theme.textPrimary)
 
-            HStack(spacing: Theme.paddingLarge) {
-                miniStat(icon: "clock", value: formatDuration(activity.duration))
-                miniStat(icon: "scalemass", value: formatVolume(activity.totalVolume))
-                miniStat(icon: "list.bullet", value: "\(activity.totalSets) sets")
-                if activity.prCount > 0 {
-                    miniStat(icon: "trophy.fill", value: "\(activity.prCount) PR", color: Theme.prGold)
+            // Stats grid — max 3 primary + optional PR badge
+            HStack(spacing: 0) {
+                XomStat(formatDuration(activity.duration), label: "Duration", icon: "clock", iconColor: Theme.textSecondary)
+                XomStat(formatVolume(activity.totalVolume), label: "Volume", icon: "scalemass", iconColor: Theme.textSecondary)
+                XomStat("\(activity.totalSets)", label: "Sets", icon: "list.bullet", iconColor: Theme.textSecondary)
+            }
+            .padding(.vertical, Theme.Spacing.xs)
+
+            if activity.prCount > 0 {
+                HStack(spacing: Theme.Spacing.xs) {
+                    Image(systemName: "trophy.fill")
+                        .font(Theme.fontSmall)
+                        .foregroundStyle(Theme.prGold)
+                    Text("\(activity.prCount) PR\(activity.prCount > 1 ? "s" : "")")
+                        .font(Theme.fontSmall)
+                        .foregroundStyle(Theme.prGold)
                 }
+                .padding(.horizontal, Theme.Spacing.sm)
+                .padding(.vertical, Theme.Spacing.xs)
+                .background(Theme.prGold.opacity(0.12))
+                .clipShape(.rect(cornerRadius: 6))
             }
 
             if !activity.exercises.isEmpty {
@@ -283,31 +292,20 @@ private struct WorkoutActivityContent: View {
                                 if ex.isPR {
                                     Image(systemName: "trophy.fill")
                                         .font(.system(size: 9))
-                                        .foregroundColor(Theme.prGold)
+                                        .foregroundStyle(Theme.prGold)
                                 }
                                 Text(ex.name)
                                     .font(Theme.fontSmall)
-                                    .foregroundColor(ex.isPR ? Theme.prGold : Theme.textSecondary)
+                                    .foregroundStyle(ex.isPR ? Theme.prGold : Theme.textSecondary)
                             }
-                            .padding(.horizontal, 8)
+                            .padding(.horizontal, Theme.Spacing.sm)
                             .padding(.vertical, 3)
                             .background(Theme.background)
-                            .cornerRadius(4)
+                            .clipShape(.rect(cornerRadius: 4))
                         }
                     }
                 }
             }
-        }
-    }
-
-    private func miniStat(icon: String, value: String, color: Color = Theme.textSecondary) -> some View {
-        HStack(spacing: 3) {
-            Image(systemName: icon)
-                .font(.system(size: 11))
-                .foregroundColor(color)
-            Text(value)
-                .font(.system(size: 12, weight: .medium))
-                .foregroundColor(color)
         }
     }
 
@@ -318,8 +316,8 @@ private struct WorkoutActivityContent: View {
     }
 
     private func formatVolume(_ volume: Double) -> String {
-        if volume >= 1000 { return String(format: "%.1fk lbs", volume / 1000) }
-        return "\(Int(volume)) lbs"
+        if volume >= 1000 { return String(format: "%.1fk", volume / 1000) }
+        return "\(Int(volume))"
     }
 }
 
@@ -329,35 +327,35 @@ private struct PRActivityContent: View {
     let activity: PRActivity
 
     var body: some View {
-        HStack(spacing: Theme.paddingMedium) {
+        HStack(spacing: Theme.Spacing.md) {
             Image(systemName: "trophy.fill")
-                .font(.system(size: 32))
-                .foregroundColor(Theme.prGold)
+                .font(.largeTitle)
+                .foregroundStyle(Theme.prGold)
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                 Text(activity.exerciseName)
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(Theme.textPrimary)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Theme.textPrimary)
                 Text("\(activity.weight.formattedWeight) lbs × \(activity.reps) reps")
-                    .font(.system(size: 18, weight: .black))
-                    .foregroundColor(Theme.prGold)
+                    .font(.title3.weight(.black))
+                    .foregroundStyle(Theme.prGold)
                 if let prev = activity.previousBest {
                     Text("Previous best: \(prev.formattedWeight) lbs")
                         .font(Theme.fontCaption)
-                        .foregroundColor(Theme.textSecondary)
+                        .foregroundStyle(Theme.textSecondary)
                 }
             }
 
             if let imp = activity.improvement, imp > 0 {
                 Spacer()
                 Text("+\(imp.formattedWeight)")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(Theme.accent)
+                    .font(.body.weight(.bold))
+                    .foregroundStyle(Theme.accent)
             }
         }
-        .padding(Theme.paddingMedium)
+        .padding(Theme.Spacing.md)
         .background(Theme.prGold.opacity(0.08))
-        .cornerRadius(Theme.cornerRadiusSmall)
+        .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
     }
 }
 
@@ -367,32 +365,32 @@ private struct MilestoneActivityContent: View {
     let activity: MilestoneActivity
 
     var body: some View {
-        HStack(spacing: Theme.paddingMedium) {
+        HStack(spacing: Theme.Spacing.md) {
             Text(activity.icon)
-                .font(.system(size: 32))
+                .font(.largeTitle)
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                 Text(activity.title)
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundColor(Theme.textPrimary)
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(Theme.textPrimary)
                 Text(activity.subtitle)
                     .font(Theme.fontCaption)
-                    .foregroundColor(Theme.textSecondary)
+                    .foregroundStyle(Theme.textSecondary)
             }
 
             Spacer()
 
             Text(activity.badge)
                 .font(Theme.fontSmall)
-                .foregroundColor(Color(hex: "AA66FF"))
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(Color(hex: "AA66FF").opacity(0.15))
-                .cornerRadius(6)
+                .foregroundStyle(Theme.badgeMilestone)
+                .padding(.horizontal, Theme.Spacing.sm)
+                .padding(.vertical, Theme.Spacing.xs)
+                .background(Theme.badgeMilestone.opacity(0.15))
+                .clipShape(.rect(cornerRadius: 6))
         }
-        .padding(Theme.paddingMedium)
-        .background(Color(hex: "AA66FF").opacity(0.08))
-        .cornerRadius(Theme.cornerRadiusSmall)
+        .padding(Theme.Spacing.md)
+        .background(Theme.badgeMilestone.opacity(0.08))
+        .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
     }
 }
 
@@ -402,30 +400,30 @@ private struct StreakActivityContent: View {
     let activity: StreakActivity
 
     var body: some View {
-        HStack(spacing: Theme.paddingMedium) {
+        HStack(spacing: Theme.Spacing.md) {
             Image(systemName: "flame.fill")
-                .font(.system(size: 32))
-                .foregroundColor(Color(hex: "FF6633"))
+                .font(.largeTitle)
+                .foregroundStyle(Theme.badgeStreak)
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                 Text("\(activity.currentStreak) Day Streak")
-                    .font(.system(size: 18, weight: .black))
-                    .foregroundColor(Color(hex: "FF6633"))
+                    .font(.title3.weight(.black))
+                    .foregroundStyle(Theme.badgeStreak)
                 if activity.isNewRecord {
                     Text("New personal streak record!")
                         .font(Theme.fontCaption)
-                        .foregroundColor(Theme.accent)
+                        .foregroundStyle(Theme.accent)
                 } else {
                     Text("Previous best: \(activity.previousBest) days")
                         .font(Theme.fontCaption)
-                        .foregroundColor(Theme.textSecondary)
+                        .foregroundStyle(Theme.textSecondary)
                 }
             }
 
             Spacer()
         }
-        .padding(Theme.paddingMedium)
-        .background(Color(hex: "FF6633").opacity(0.08))
-        .cornerRadius(Theme.cornerRadiusSmall)
+        .padding(Theme.Spacing.md)
+        .background(Theme.badgeStreak.opacity(0.08))
+        .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
     }
 }

@@ -18,8 +18,8 @@ struct WorkoutFocusView: View {
             Theme.background.ignoresSafeArea()
 
             if let exercise, let currentSet {
-                VStack(spacing: Theme.paddingLarge) {
-                    Spacer().frame(height: Theme.paddingSmall)
+                VStack(spacing: Theme.Spacing.lg) {
+                    Spacer().frame(height: Theme.Spacing.sm)
 
                     exerciseHeader(exercise: exercise)
 
@@ -35,7 +35,7 @@ struct WorkoutFocusView: View {
 
                     Spacer()
                 }
-                .padding(.horizontal, Theme.paddingLarge)
+                .padding(.horizontal, Theme.Spacing.lg)
 
                 // Rest timer overlay
                 if viewModel.isRestTimerActive {
@@ -52,7 +52,7 @@ struct WorkoutFocusView: View {
     private func exerciseHeader(exercise: WorkoutExercise) -> some View {
         VStack(spacing: 4) {
             Text(exercise.exercise.name)
-                .font(.system(size: 24, weight: .bold))
+                .font(.title2.weight(.bold))
                 .foregroundStyle(Theme.textPrimary)
                 .multilineTextAlignment(.center)
                 .accessibilityAddTraits(.isHeader)
@@ -75,7 +75,7 @@ struct WorkoutFocusView: View {
 
     private func setIndicator(exercise: WorkoutExercise) -> some View {
         Text("Set \(viewModel.focusSetIndex + 1) of \(exercise.sets.count)")
-            .font(.system(size: 15, weight: .semibold))
+            .font(.subheadline.weight(.semibold))
             .foregroundStyle(Theme.textSecondary)
     }
 
@@ -115,17 +115,17 @@ struct WorkoutFocusView: View {
             // Per-side indicator
             if currentSet.weightMode == .perSide {
                 Text("lbs x2 (per side)")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.caption.weight(.semibold))
                     .foregroundStyle(Theme.accent)
             } else {
                 Text("lbs")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.caption.weight(.semibold))
                     .foregroundStyle(Theme.textSecondary)
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, Theme.paddingMedium)
-        .background(Theme.cardBackground)
+        .padding(.vertical, Theme.Spacing.md)
+        .background(Theme.surface)
         .clipShape(.rect(cornerRadius: Theme.cornerRadius))
     }
 
@@ -163,8 +163,8 @@ struct WorkoutFocusView: View {
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, Theme.paddingMedium)
-        .background(Theme.cardBackground)
+        .padding(.vertical, Theme.Spacing.md)
+        .background(Theme.surface)
         .clipShape(.rect(cornerRadius: Theme.cornerRadius))
     }
 
@@ -179,11 +179,11 @@ struct WorkoutFocusView: View {
             }
         } label: {
             Text(isCompleted ? "COMPLETED" : "DONE")
-                .font(.system(size: 20, weight: .black))
+                .font(.title3.weight(.black))
                 .foregroundStyle(isCompleted ? Theme.textSecondary : .black)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 18)
-                .background(isCompleted ? Theme.cardBackground : Theme.accent)
+                .background(isCompleted ? Theme.surface : Theme.accent)
                 .clipShape(.rect(cornerRadius: Theme.cornerRadius))
         }
         .disabled(isCompleted)
@@ -193,23 +193,23 @@ struct WorkoutFocusView: View {
     // MARK: - Exercise Navigation
 
     private var exerciseNavigation: some View {
-        HStack(spacing: Theme.paddingLarge) {
+        HStack(spacing: Theme.Spacing.lg) {
             Button {
                 dismissKeyboard()
                 viewModel.focusPreviousExercise()
             } label: {
                 Image(systemName: "chevron.left")
-                    .font(.system(size: 22, weight: .bold))
+                    .font(.title3.weight(.bold))
                     .foregroundStyle(viewModel.focusExerciseIndex > 0 ? Theme.textPrimary : Theme.textSecondary.opacity(0.3))
                     .frame(width: 56, height: 56)
-                    .background(Theme.cardBackground)
+                    .background(Theme.surface)
                     .clipShape(Circle())
             }
             .disabled(viewModel.focusExerciseIndex <= 0)
             .accessibilityLabel("Previous exercise")
 
             Text("\(viewModel.focusExerciseIndex + 1) / \(viewModel.exercises.count)")
-                .font(.system(size: 15, weight: .semibold, design: .monospaced))
+                .font(.subheadline.weight(.semibold).monospaced())
                 .foregroundStyle(Theme.textSecondary)
 
             Button {
@@ -217,10 +217,10 @@ struct WorkoutFocusView: View {
                 viewModel.focusNextExercise()
             } label: {
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 22, weight: .bold))
+                    .font(.title3.weight(.bold))
                     .foregroundStyle(viewModel.focusExerciseIndex < viewModel.exercises.count - 1 ? Theme.textPrimary : Theme.textSecondary.opacity(0.3))
                     .frame(width: 56, height: 56)
-                    .background(Theme.cardBackground)
+                    .background(Theme.surface)
                     .clipShape(Circle())
             }
             .disabled(viewModel.focusExerciseIndex >= viewModel.exercises.count - 1)
@@ -239,8 +239,8 @@ struct WorkoutFocusView: View {
                 onSkip: { viewModel.skipRestTimer() },
                 onExtend: { viewModel.extendRestTimer() }
             )
-            .padding(.horizontal, Theme.paddingMedium)
-            .padding(.bottom, Theme.paddingLarge)
+            .padding(.horizontal, Theme.Spacing.md)
+            .padding(.bottom, Theme.Spacing.lg)
             .shadow(color: .black.opacity(0.5), radius: 12, x: 0, y: -4)
         }
         .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -249,7 +249,7 @@ struct WorkoutFocusView: View {
     // MARK: - Empty State
 
     private var emptyFocusState: some View {
-        VStack(spacing: Theme.paddingMedium) {
+        VStack(spacing: Theme.Spacing.md) {
             Image(systemName: "dumbbell")
                 .font(.system(size: 48))
                 .foregroundStyle(Theme.textSecondary)

@@ -36,7 +36,7 @@ struct XomProgressView: View {
     // MARK: - Empty State
 
     private var emptyState: some View {
-        VStack(spacing: Theme.paddingMedium) {
+        VStack(spacing: Theme.Spacing.md) {
             Image("XomFitLogo")
                 .resizable()
                 .scaledToFit()
@@ -48,21 +48,21 @@ struct XomProgressView: View {
                 .foregroundStyle(Theme.textSecondary)
                 .multilineTextAlignment(.center)
         }
-        .padding(Theme.paddingLarge)
+        .padding(Theme.Spacing.lg)
     }
 
     // MARK: - Content
 
     private var contentView: some View {
         ScrollView {
-            VStack(spacing: Theme.paddingMedium) {
+            VStack(spacing: Theme.Spacing.md) {
                 summaryCards
                 liftProgressionSection
                 weeklyVolumeSection
                 muscleGroupSection
                 recentPRsSection
             }
-            .padding(Theme.paddingMedium)
+            .padding(Theme.Spacing.md)
             .padding(.bottom, 100)
         }
     }
@@ -77,12 +77,12 @@ private struct SummaryCardsView: View {
     let totalPRs: Int
 
     private let columns = [
-        GridItem(.flexible(), spacing: Theme.paddingSmall),
-        GridItem(.flexible(), spacing: Theme.paddingSmall),
+        GridItem(.flexible(), spacing: Theme.Spacing.sm),
+        GridItem(.flexible(), spacing: Theme.Spacing.sm),
     ]
 
     var body: some View {
-        LazyVGrid(columns: columns, spacing: Theme.paddingSmall) {
+        LazyVGrid(columns: columns, spacing: Theme.Spacing.sm) {
             StatCard(icon: "dumbbell.fill", value: "\(totalWorkouts)", label: "Workouts")
             StatCard(icon: "flame.fill", value: "\(currentStreak)", label: "Day Streak")
             StatCard(icon: "scalemass.fill", value: formattedVolume, label: "Volume")
@@ -99,11 +99,11 @@ private struct StatCard: View {
     var body: some View {
         VStack(spacing: 6) {
             Image(systemName: icon)
-                .font(.system(size: 18))
+                .font(.headline)
                 .foregroundStyle(Theme.accent)
 
             Text(value)
-                .font(.system(size: 22, weight: .bold))
+                .font(.title3.weight(.bold))
                 .foregroundStyle(Theme.textPrimary)
 
             Text(label)
@@ -111,7 +111,7 @@ private struct StatCard: View {
                 .foregroundStyle(Theme.textSecondary)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, Theme.paddingMedium)
+        .padding(.vertical, Theme.Spacing.md)
         .cardStyle()
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(label): \(value)")
@@ -126,10 +126,10 @@ private struct LiftProgressionChart: View {
     @Binding var selectedExercise: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.paddingSmall) {
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
             HStack {
                 Text("Strength Over Time")
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Theme.textPrimary)
 
                 Spacer()
@@ -146,7 +146,7 @@ private struct LiftProgressionChart: View {
                             Text(selectedExercise)
                                 .font(Theme.fontCaption)
                             Image(systemName: "chevron.up.chevron.down")
-                                .font(.system(size: 10))
+                                .font(.caption2)
                         }
                         .foregroundStyle(Theme.accent)
                     }
@@ -204,9 +204,9 @@ private struct WeeklyVolumeChart: View {
     let data: [(label: String, volume: Double)]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.paddingSmall) {
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
             Text("Weekly Volume")
-                .font(.system(size: 15, weight: .semibold))
+                .font(.subheadline.weight(.semibold))
                 .foregroundStyle(Theme.textPrimary)
 
             Chart {
@@ -245,9 +245,9 @@ private struct MuscleGroupChart: View {
     let data: [(group: String, sets: Int)]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.paddingSmall) {
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
             Text("Muscle Groups")
-                .font(.system(size: 15, weight: .semibold))
+                .font(.subheadline.weight(.semibold))
                 .foregroundStyle(Theme.textPrimary)
 
             Chart {
@@ -314,9 +314,9 @@ extension XomProgressView {
     @ViewBuilder
     fileprivate var recentPRsSection: some View {
         if !viewModel.recentPRs.isEmpty {
-            VStack(alignment: .leading, spacing: Theme.paddingSmall) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                 Text("Recent PRs")
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Theme.textPrimary)
 
                 ForEach(viewModel.recentPRs) { pr in

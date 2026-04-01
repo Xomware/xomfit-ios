@@ -29,12 +29,12 @@ struct PRListView: View {
                         Section {
                             ForEach(records) { pr in
                                 PRRow(pr: pr)
-                                    .listRowBackground(Theme.cardBackground)
+                                    .listRowBackground(Theme.surface)
                             }
                         } header: {
                             Text(exerciseName)
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundColor(Theme.accent)
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(Theme.accent)
                                 .textCase(nil)
                         }
                     }
@@ -51,18 +51,18 @@ struct PRListView: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: Theme.paddingMedium) {
+        VStack(spacing: Theme.Spacing.md) {
             Image(systemName: "trophy")
                 .font(.system(size: 48))
-                .foregroundColor(Theme.textSecondary)
+                .foregroundStyle(Theme.textSecondary)
             Text("No PRs yet")
                 .font(Theme.fontHeadline)
-                .foregroundColor(Theme.textPrimary)
+                .foregroundStyle(Theme.textPrimary)
             Text("Complete sets during workouts to track your personal records")
                 .font(Theme.fontBody)
-                .foregroundColor(Theme.textSecondary)
+                .foregroundStyle(Theme.textSecondary)
                 .multilineTextAlignment(.center)
-                .padding(.horizontal, Theme.paddingLarge)
+                .padding(.horizontal, Theme.Spacing.lg)
         }
     }
 
@@ -97,19 +97,19 @@ private struct PRRow: View {
     }
 
     var body: some View {
-        HStack(spacing: Theme.paddingMedium) {
+        HStack(spacing: Theme.Spacing.md) {
             Image(systemName: "trophy.fill")
-                .foregroundColor(Theme.prGold)
-                .font(.system(size: 20))
+                .foregroundStyle(Theme.prGold)
+                .font(.title3)
                 .frame(width: 28)
 
             VStack(alignment: .leading, spacing: 3) {
                 Text("\(pr.weight.formattedWeight) lbs × \(pr.reps) reps")
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundColor(Theme.textPrimary)
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(Theme.textPrimary)
                 Text(dateString)
                     .font(Theme.fontCaption)
-                    .foregroundColor(Theme.textSecondary)
+                    .foregroundStyle(Theme.textSecondary)
             }
 
             Spacer()
@@ -117,13 +117,13 @@ private struct PRRow: View {
             VStack(alignment: .trailing, spacing: 3) {
                 if let pct = improvementPercent {
                     Text(pct)
-                        .font(.system(size: 13, weight: .bold))
-                        .foregroundColor(Theme.accent)
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(Theme.accent)
                 }
                 if let prev = pr.previousBest {
                     Text("Prev: \(prev.formattedWeight)")
                         .font(Theme.fontSmall)
-                        .foregroundColor(Theme.textSecondary)
+                        .foregroundStyle(Theme.textSecondary)
                 }
             }
         }

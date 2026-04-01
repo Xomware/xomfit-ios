@@ -8,12 +8,12 @@ struct WorkoutDetailView: View {
             Theme.background.ignoresSafeArea()
 
             ScrollView {
-                VStack(spacing: Theme.paddingMedium) {
+                VStack(spacing: Theme.Spacing.md) {
                     summaryCard
                     exerciseList
                 }
-                .padding(.horizontal, Theme.paddingMedium)
-                .padding(.vertical, Theme.paddingSmall)
+                .padding(.horizontal, Theme.Spacing.md)
+                .padding(.vertical, Theme.Spacing.sm)
             }
         }
         .navigationTitle(workout.name)
@@ -24,7 +24,7 @@ struct WorkoutDetailView: View {
     // MARK: - Summary Card
 
     private var summaryCard: some View {
-        VStack(spacing: Theme.paddingMedium) {
+        VStack(spacing: Theme.Spacing.md) {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(workout.startTime.workoutDateString)
@@ -39,7 +39,7 @@ struct WorkoutDetailView: View {
                 }
                 Spacer()
                 Text(workout.durationString)
-                    .font(.system(size: 15, weight: .bold, design: .monospaced))
+                    .font(.subheadline.weight(.bold).monospaced())
                     .foregroundStyle(Theme.accent)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
@@ -68,7 +68,7 @@ struct WorkoutDetailView: View {
                                 .foregroundStyle(Theme.textSecondary)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 4)
-                                .background(Theme.secondaryBackground)
+                                .background(Theme.surfaceSecondary)
                                 .clipShape(.rect(cornerRadius: 6))
                         }
                     }
@@ -78,7 +78,7 @@ struct WorkoutDetailView: View {
             if let notes = workout.notes, !notes.isEmpty {
                 HStack {
                     Image(systemName: "note.text")
-                        .font(.system(size: 12))
+                        .font(.caption)
                         .foregroundStyle(Theme.textSecondary)
                     Text(notes)
                         .font(Theme.fontCaption)
@@ -87,15 +87,15 @@ struct WorkoutDetailView: View {
                 }
             }
         }
-        .padding(Theme.paddingMedium)
-        .background(Theme.cardBackground)
+        .padding(Theme.Spacing.md)
+        .background(Theme.surface)
         .clipShape(.rect(cornerRadius: Theme.cornerRadius))
     }
 
     // MARK: - Exercise List
 
     private var exerciseList: some View {
-        VStack(spacing: Theme.paddingSmall) {
+        VStack(spacing: Theme.Spacing.sm) {
             ForEach(Array(workout.exercises.enumerated()), id: \.element.id) { index, exercise in
                 exerciseCard(exercise: exercise, index: index + 1)
             }
@@ -117,9 +117,9 @@ struct WorkoutDetailView: View {
                         Text("VOL")
                             .frame(width: 70, alignment: .trailing)
                     }
-                    .font(.system(size: 10, weight: .semibold))
+                    .font(.caption2.weight(.semibold))
                     .foregroundStyle(Theme.textSecondary)
-                    .padding(.top, Theme.paddingSmall)
+                    .padding(.top, Theme.Spacing.sm)
 
                     // Set rows
                     ForEach(Array(exercise.sets.enumerated()), id: \.element.id) { setIndex, workoutSet in
@@ -135,16 +135,16 @@ struct WorkoutDetailView: View {
                     }
                 }
             } label: {
-                HStack(spacing: Theme.paddingSmall) {
+                HStack(spacing: Theme.Spacing.sm) {
                     Text("\(index)")
-                        .font(.system(size: 13, weight: .bold, design: .monospaced))
+                        .font(.caption.weight(.bold).monospaced())
                         .foregroundStyle(Theme.accent)
                         .frame(width: 24, height: 24)
                         .background(Theme.accent.opacity(0.12))
                         .clipShape(.rect(cornerRadius: 6))
 
                     Text(exercise.exercise.name)
-                        .font(.system(size: 15, weight: .bold))
+                        .font(.subheadline.weight(.bold))
                         .foregroundStyle(Theme.textPrimary)
 
                     Spacer()
@@ -156,9 +156,9 @@ struct WorkoutDetailView: View {
                     if exercise.sets.contains(where: { $0.isPersonalRecord }) {
                         HStack(spacing: 3) {
                             Image(systemName: "trophy.fill")
-                                .font(.system(size: 11))
+                                .font(.caption2)
                             Text("PR")
-                                .font(.system(size: 11, weight: .bold))
+                                .font(.caption2.weight(.bold))
                         }
                         .foregroundStyle(Theme.prGold)
                     }
@@ -166,8 +166,8 @@ struct WorkoutDetailView: View {
             }
             .tint(Theme.accent)
         }
-        .padding(Theme.paddingMedium)
-        .background(Theme.cardBackground)
+        .padding(Theme.Spacing.md)
+        .background(Theme.surface)
         .clipShape(.rect(cornerRadius: Theme.cornerRadius))
     }
 
@@ -191,12 +191,12 @@ struct WorkoutDetailView: View {
 
             if set.isPersonalRecord {
                 Image(systemName: "trophy.fill")
-                    .font(.system(size: 10))
+                    .font(.caption2)
                     .foregroundStyle(Theme.prGold)
                     .padding(.leading, 6)
             }
         }
-        .font(.system(size: 14, weight: .medium, design: .monospaced))
+        .font(.subheadline.weight(.medium).monospaced())
         .padding(.vertical, 4)
         .accessibilityLabel("Set \(number): \(formatWeight(set.weight)) lbs for \(set.reps) reps\(set.isPersonalRecord ? ", personal record" : "")")
     }
@@ -206,7 +206,7 @@ struct WorkoutDetailView: View {
     private func summaryStatView(value: String, label: String, highlight: Bool = false) -> some View {
         VStack(spacing: 2) {
             Text(value)
-                .font(.system(size: 16, weight: .bold))
+                .font(.body.weight(.bold))
                 .foregroundStyle(highlight ? Theme.prGold : Theme.textPrimary)
             Text(label)
                 .font(Theme.fontSmall)

@@ -38,12 +38,12 @@ struct ToastView: View {
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
-                .font(.system(size: 20))
-                .foregroundColor(iconColor)
+                .font(.title3)
+                .foregroundStyle(iconColor)
 
             Text(toast.message)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.white)
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(.white)
                 .lineLimit(2)
 
             Spacer()
@@ -77,20 +77,20 @@ struct ToastModifier: ViewModifier {
                         .onAppear {
                             Task {
                                 try? await Task.sleep(for: .seconds(toast.duration))
-                                withAnimation(.easeInOut(duration: 0.3)) {
+                                withAnimation(.xomConfident) {
                                     self.toast = nil
                                 }
                             }
                         }
                         .onTapGesture {
-                            withAnimation(.easeInOut(duration: 0.3)) {
+                            withAnimation(.xomConfident) {
                                 self.toast = nil
                             }
                         }
                         .zIndex(100)
                 }
             }
-            .animation(.spring(response: 0.4, dampingFraction: 0.8), value: toast)
+            .animation(.xomConfident, value: toast)
     }
 }
 

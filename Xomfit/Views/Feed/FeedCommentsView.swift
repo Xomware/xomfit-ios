@@ -15,14 +15,19 @@ struct FeedCommentsView: View {
 
             VStack(spacing: 0) {
                 if isLoading {
-                    Spacer()
-                    ProgressView().tint(Theme.accent)
+                    VStack(spacing: Theme.Spacing.sm) {
+                        ForEach(0..<4, id: \.self) { _ in
+                            SkeletonCard(height: 60)
+                        }
+                    }
+                    .padding(.horizontal, Theme.Spacing.md)
+                    .padding(.top, Theme.Spacing.md)
                     Spacer()
                 } else if comments.isEmpty {
                     Spacer()
-                    VStack(spacing: Theme.paddingSmall) {
+                    VStack(spacing: Theme.Spacing.sm) {
                         Image(systemName: "bubble.right")
-                            .font(.system(size: 40))
+                            .font(.largeTitle)
                             .foregroundStyle(Theme.textSecondary)
                         Text("No comments yet")
                             .font(Theme.fontHeadline)
@@ -37,11 +42,11 @@ struct FeedCommentsView: View {
                         LazyVStack(spacing: 0) {
                             ForEach(comments) { comment in
                                 CommentRow(comment: comment)
-                                    .padding(.horizontal, Theme.paddingMedium)
+                                    .padding(.horizontal, Theme.Spacing.md)
                                     .padding(.vertical, 6)
                             }
                         }
-                        .padding(.top, Theme.paddingSmall)
+                        .padding(.top, Theme.Spacing.sm)
                     }
                 }
 
@@ -57,16 +62,17 @@ struct FeedCommentsView: View {
     // MARK: - Comment Composer
 
     private var commentComposer: some View {
-        HStack(spacing: Theme.paddingSmall) {
+        HStack(spacing: Theme.Spacing.sm) {
             TextField("Add a comment...", text: $newCommentText)
                 .font(Theme.fontBody)
                 .foregroundStyle(Theme.textPrimary)
-                .padding(.horizontal, Theme.paddingMedium)
+                .padding(.horizontal, Theme.Spacing.md)
                 .padding(.vertical, 10)
-                .background(Theme.cardBackground)
+                .background(Theme.surface)
                 .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
 
             Button {
+                Haptics.light()
                 Task { await postComment() }
             } label: {
                 if isPosting {
@@ -75,15 +81,15 @@ struct FeedCommentsView: View {
                         .frame(width: 44, height: 44)
                 } else {
                     Image(systemName: "arrow.up.circle.fill")
-                        .font(.system(size: 32))
+                        .font(.largeTitle)
                         .foregroundStyle(newCommentText.isEmpty ? Theme.textSecondary : Theme.accent)
                 }
             }
             .disabled(newCommentText.trimmingCharacters(in: .whitespaces).isEmpty || isPosting)
         }
-        .padding(.horizontal, Theme.paddingMedium)
-        .padding(.vertical, Theme.paddingSmall)
-        .background(Theme.cardBackground)
+        .padding(.horizontal, Theme.Spacing.md)
+        .padding(.vertical, Theme.Spacing.sm)
+        .background(Theme.surface)
     }
 
     // MARK: - Actions
@@ -123,20 +129,20 @@ private struct CommentRow: View {
     let comment: FeedComment
 
     var body: some View {
-        HStack(alignment: .top, spacing: Theme.paddingSmall) {
+        HStack(alignment: .top, spacing: Theme.Spacing.sm) {
             ZStack {
                 Circle()
                     .fill(Theme.accent.opacity(0.15))
                     .frame(width: 34, height: 34)
                 Text(initials)
-                    .font(.system(size: 12, weight: .bold))
+                    .font(.caption.weight(.bold))
                     .foregroundStyle(Theme.accent)
             }
 
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 6) {
                     Text(comment.user?.displayName ?? "User")
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.caption.weight(.semibold))
                         .foregroundStyle(Theme.textPrimary)
                     Text(comment.createdAt.timeAgo)
                         .font(Theme.fontSmall)

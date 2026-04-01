@@ -39,26 +39,26 @@ struct ExercisePickerView: View {
                     // Search bar
                     HStack {
                         Image(systemName: "magnifyingglass")
-                            .foregroundColor(Theme.textSecondary)
+                            .foregroundStyle(Theme.textSecondary)
                         TextField("Search exercises...", text: $searchText)
-                            .foregroundColor(Theme.textPrimary)
+                            .foregroundStyle(Theme.textPrimary)
                             .autocorrectionDisabled()
                         if !searchText.isEmpty {
                             Button { searchText = "" } label: {
                                 Image(systemName: "xmark.circle.fill")
-                                    .foregroundColor(Theme.textSecondary)
+                                    .foregroundStyle(Theme.textSecondary)
                             }
                         }
                     }
-                    .padding(Theme.paddingMedium)
-                    .background(Theme.cardBackground)
-                    .cornerRadius(Theme.cornerRadius)
-                    .padding(.horizontal, Theme.paddingMedium)
-                    .padding(.vertical, Theme.paddingSmall)
+                    .padding(Theme.Spacing.md)
+                    .background(Theme.surface)
+                    .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+                    .padding(.horizontal, Theme.Spacing.md)
+                    .padding(.vertical, Theme.Spacing.sm)
 
                     // Muscle group filter chips
                     ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: Theme.paddingSmall) {
+                        HStack(spacing: Theme.Spacing.sm) {
                             FilterChip(label: "All", isSelected: selectedMuscleGroup == nil) {
                                 selectedMuscleGroup = nil
                             }
@@ -68,8 +68,8 @@ struct ExercisePickerView: View {
                                 }
                             }
                         }
-                        .padding(.horizontal, Theme.paddingMedium)
-                        .padding(.vertical, Theme.paddingSmall)
+                        .padding(.horizontal, Theme.Spacing.md)
+                        .padding(.vertical, Theme.Spacing.sm)
                     }
 
                     // Exercise list
@@ -78,16 +78,17 @@ struct ExercisePickerView: View {
                             Section {
                                 ForEach(exercises) { exercise in
                                     ExerciseRow(exercise: exercise) {
+                                        Haptics.selection()
                                         onSelect(exercise)
                                         dismiss()
                                     }
-                                    .listRowBackground(Theme.cardBackground)
+                                    .listRowBackground(Theme.surface)
                                     .listRowSeparatorTint(Theme.textSecondary.opacity(0.2))
                                 }
                             } header: {
                                 Text(groupName)
                                     .font(Theme.fontCaption)
-                                    .foregroundColor(Theme.textSecondary)
+                                    .foregroundStyle(Theme.textSecondary)
                                     .textCase(nil)
                             }
                         }
@@ -102,7 +103,7 @@ struct ExercisePickerView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
-                        .foregroundColor(Theme.accent)
+                        .foregroundStyle(Theme.accent)
                 }
             }
         }
@@ -120,11 +121,11 @@ private struct FilterChip: View {
         Button(action: action) {
             Text(label)
                 .font(Theme.fontSmall)
-                .foregroundColor(isSelected ? .black : Theme.textSecondary)
+                .foregroundStyle(isSelected ? .black : Theme.textSecondary)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
-                .background(isSelected ? Theme.accent : Theme.cardBackground)
-                .cornerRadius(20)
+                .background(isSelected ? Theme.accent : Theme.surface)
+                .clipShape(.rect(cornerRadius: 20))
         }
     }
 }
@@ -135,40 +136,40 @@ private struct ExerciseRow: View {
 
     var body: some View {
         Button(action: onTap) {
-            HStack(spacing: Theme.paddingMedium) {
+            HStack(spacing: Theme.Spacing.md) {
                 Image(systemName: exercise.equipment.icon)
-                    .font(.system(size: 20))
-                    .foregroundColor(Theme.accent)
+                    .font(.title3)
+                    .foregroundStyle(Theme.accent)
                     .frame(width: 36, height: 36)
                     .background(Theme.accent.opacity(0.1))
-                    .cornerRadius(8)
+                    .clipShape(.rect(cornerRadius: 8))
 
                 VStack(alignment: .leading, spacing: 3) {
                     Text(exercise.name)
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundColor(Theme.textPrimary)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Theme.textPrimary)
                     HStack(spacing: 6) {
                         Text(exercise.equipment.displayName)
                             .font(Theme.fontSmall)
-                            .foregroundColor(Theme.textSecondary)
+                            .foregroundStyle(Theme.textSecondary)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
-                            .background(Theme.secondaryBackground)
-                            .cornerRadius(4)
+                            .background(Theme.surfaceSecondary)
+                            .clipShape(.rect(cornerRadius: 4))
                         ForEach(exercise.muscleGroups.prefix(2), id: \.self) { mg in
                             Text(mg.displayName)
                                 .font(Theme.fontSmall)
-                                .foregroundColor(Theme.textSecondary)
+                                .foregroundStyle(Theme.textSecondary)
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
-                                .background(Theme.secondaryBackground)
-                                .cornerRadius(4)
+                                .background(Theme.surfaceSecondary)
+                                .clipShape(.rect(cornerRadius: 4))
                         }
                     }
                 }
                 Spacer()
                 Image(systemName: "plus.circle")
-                    .foregroundColor(Theme.accent)
+                    .foregroundStyle(Theme.accent)
             }
             .padding(.vertical, 4)
         }

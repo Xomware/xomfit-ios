@@ -18,18 +18,18 @@ struct ProfileStatsView: View {
     }
 
     var body: some View {
-        VStack(spacing: Theme.paddingSmall) {
+        VStack(spacing: Theme.Spacing.sm) {
             statsCards
             heatmapSection
             prSection
         }
-        .padding(.horizontal, Theme.paddingMedium)
+        .padding(.horizontal, Theme.Spacing.md)
     }
 
     // MARK: - Stats Cards
 
     private var statsCards: some View {
-        HStack(spacing: Theme.paddingSmall) {
+        HStack(spacing: Theme.Spacing.sm) {
             statCard(icon: "dumbbell.fill", value: "\(totalWorkouts)", label: "Workouts", color: Theme.accent)
             statCard(icon: "scalemass.fill", value: totalVolume, label: "Volume", color: Theme.accent)
             statCard(icon: "trophy.fill", value: "\(totalPRs)", label: "PRs", color: Theme.prGold)
@@ -39,18 +39,18 @@ struct ProfileStatsView: View {
     private func statCard(icon: String, value: String, label: String, color: Color) -> some View {
         VStack(spacing: 6) {
             Image(systemName: icon)
-                .font(.system(size: 18))
+                .font(.headline)
                 .foregroundStyle(color)
             Text(value)
-                .font(.system(size: 18, weight: .bold))
+                .font(.headline.weight(.bold))
                 .foregroundStyle(Theme.textPrimary)
             Text(label)
                 .font(Theme.fontSmall)
                 .foregroundStyle(Theme.textSecondary)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, Theme.paddingMedium)
-        .background(Theme.cardBackground)
+        .padding(.vertical, Theme.Spacing.md)
+        .background(Theme.surface)
         .clipShape(.rect(cornerRadius: Theme.cornerRadius))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(value) \(label)")
@@ -59,10 +59,10 @@ struct ProfileStatsView: View {
     // MARK: - Heatmap Section
 
     private var heatmapSection: some View {
-        VStack(alignment: .leading, spacing: Theme.paddingSmall) {
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
             HStack {
                 Text("Muscle Heatmap")
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Theme.textSecondary)
 
                 Spacer()
@@ -75,7 +75,7 @@ struct ProfileStatsView: View {
                 .pickerStyle(.segmented)
                 .frame(width: 140)
             }
-            .padding(.horizontal, Theme.paddingSmall)
+            .padding(.horizontal, Theme.Spacing.sm)
 
             BodyHeatmapView(muscleGroupSets: activeMuscleGroupSets)
         }
@@ -89,11 +89,11 @@ struct ProfileStatsView: View {
         if recentPRs.isEmpty {
             emptyState
         } else {
-            VStack(alignment: .leading, spacing: Theme.paddingSmall) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                 Text("Recent PRs")
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Theme.textSecondary)
-                    .padding(.horizontal, Theme.paddingSmall)
+                    .padding(.horizontal, Theme.Spacing.sm)
 
                 ForEach(recentPRs) { pr in
                     PRBadgeRow(pr: pr)
@@ -104,9 +104,9 @@ struct ProfileStatsView: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: Theme.paddingSmall) {
+        VStack(spacing: Theme.Spacing.sm) {
             Image(systemName: "trophy")
-                .font(.system(size: 36))
+                .font(.largeTitle)
                 .foregroundStyle(Theme.textSecondary)
             Text("No PRs yet")
                 .font(Theme.fontBody)

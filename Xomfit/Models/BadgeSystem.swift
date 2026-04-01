@@ -4,9 +4,9 @@ import SwiftUI
 /// Badge achievement system for challenges
 class BadgeSystem {
     static let shared = BadgeSystem()
-    
+
     // MARK: - Badge Types
-    
+
     enum BadgeType: String, Codable {
         case firstPlace = "first_place"
         case secondPlace = "second_place"
@@ -20,22 +20,22 @@ class BadgeSystem {
         case marathoner = "marathoner"
         case speedDemon = "speed_demon"
     }
-    
+
     private var earnedBadges: [String: Set<BadgeType>] = [:]
-    
+
     // MARK: - Public Methods
-    
+
     /// Check if a user has earned a badge
     func hasBadge(_ type: BadgeType, for userId: String) -> Bool {
         return earnedBadges[userId]?.contains(type) ?? false
     }
-    
+
     /// Get all earned badges for a user
     func getBadges(for userId: String) -> [Badge] {
         let badgeTypes = earnedBadges[userId] ?? []
         return badgeTypes.map { createBadge(for: $0) }
     }
-    
+
     /// Award a badge to a user
     func awardBadge(_ type: BadgeType, to userId: String) -> Badge? {
         if !hasBadge(type, for: userId) {
@@ -47,46 +47,46 @@ class BadgeSystem {
         }
         return nil
     }
-    
+
     /// Check and award badges based on challenge results
     func checkAndAwardBadges(for results: [ChallengeLeaderboardEntry], challengeType: ChallengeType) -> [String: [Badge]] {
         var awardedBadges: [String: [Badge]] = [:]
-        
+
         guard let topPerformer = results.first else { return awardedBadges }
-        
+
         // Award placement badges
         if let badge = awardBadge(.firstPlace, to: topPerformer.userId) {
             awardedBadges[topPerformer.userId, default: []].append(badge)
         }
-        
+
         if results.count >= 2, let badge = awardBadge(.secondPlace, to: results[1].userId) {
             awardedBadges[results[1].userId, default: []].append(badge)
         }
-        
+
         if results.count >= 3, let badge = awardBadge(.thirdPlace, to: results[2].userId) {
             awardedBadges[results[2].userId, default: []].append(badge)
         }
-        
+
         // Award streak badges
         for result in results {
             if result.streak >= 7, let badge = awardBadge(.streakMaster, to: result.userId) {
                 awardedBadges[result.userId, default: []].append(badge)
             }
         }
-        
+
         // Award challenge creator badge
         // (This would be handled separately when creating a challenge)
-        
+
         // Award most improved badge
         // (This requires historical data comparison)
-        
+
         return awardedBadges
     }
-    
+
     /// Check for streak badges
     func checkStreakBadges(userId: String, streakCount: Int) -> [Badge] {
         var badges: [Badge] = []
-        
+
         let streakMilestones = [7, 14, 30, 60, 100]
         for milestone in streakMilestones {
             if streakCount >= milestone {
@@ -98,16 +98,16 @@ class BadgeSystem {
                     default: return .streakMaster
                     }
                 }()
-                
+
                 if let badge = awardBadge(badgeType, to: userId) {
                     badges.append(badge)
                 }
             }
         }
-        
+
         return badges
     }
-    
+
     /// Check for PR-related badges
     func checkPRBadges(userId: String, prCount: Int) -> [Badge]? {
         if prCount >= 5 {
@@ -115,7 +115,7 @@ class BadgeSystem {
         }
         return nil
     }
-    
+
     /// Award all-star badge for participating in multiple challenges
     func checkAllStarBadge(userId: String, completedChallenges: Int) -> Badge? {
         if completedChallenges >= 5 {
@@ -123,9 +123,9 @@ class BadgeSystem {
         }
         return nil
     }
-    
+
     // MARK: - Private Methods
-    
+
     private func createBadge(
         for type: BadgeType,
         earnedDate: Date = Date()
@@ -139,7 +139,7 @@ class BadgeSystem {
             earnedDate: earnedDate
         )
     }
-    
+
     private func badgeInfo(for type: BadgeType) -> (name: String, description: String, icon: String) {
         switch type {
         case .firstPlace:
@@ -216,7 +216,7 @@ class BadgeSystem {
 struct BadgeDisplayView: View {
     let badge: Badge
     let size: CGFloat = 48
-    
+
     var body: some View {
         VStack(spacing: 4) {
             ZStack {
@@ -229,20 +229,20 @@ struct BadgeDisplayView: View {
                         )
                     )
                     .frame(width: size, height: size)
-                
+
                 Image(systemName: badge.systemImage)
                     .font(.system(size: size * 0.4))
-                    .foregroundColor(.orange)
+                    .foregroundStyle(.orange)
             }
-            
+
             Text(badge.name)
                 .font(.caption2)
                 .fontWeight(.semibold)
                 .lineLimit(1)
-            
+
             Text(badge.description)
                 .font(.caption)
-                .foregroundColor(.gray)
+                .foregroundStyle(.gray)
                 .lineLimit(2)
                 .multilineTextAlignment(.center)
         }
@@ -252,25 +252,25 @@ struct BadgeDisplayView: View {
 // MARK: - Badge Collection View
 struct BadgeCollectionView: View {
     let badges: [Badge]
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Achievements")
                 .font(.headline)
-            
+
             if badges.isEmpty {
                 VStack(spacing: 8) {
                     Image(systemName: "star.circle")
-                        .font(.system(size: 32))
-                        .foregroundColor(.gray)
+                        .font(.largeTitle)
+                        .foregroundStyle(.gray)
                     Text("No badges earned yet")
                         .font(.caption)
-                        .foregroundColor(.gray)
+                        .foregroundStyle(.gray)
                 }
                 .frame(maxWidth: .infinity)
                 .padding()
                 .background(Color(.systemGray6))
-                .cornerRadius(12)
+                .clipShape(.rect(cornerRadius: 12))
             } else {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 80))], spacing: 12) {
                     ForEach(badges) { badge in
@@ -286,7 +286,7 @@ struct BadgeCollectionView: View {
 struct BadgeNotificationView: View {
     let badge: Badge
     @State private var isShowing = true
-    
+
     var body: some View {
         if isShowing {
             VStack(spacing: 12) {
@@ -294,23 +294,23 @@ struct BadgeNotificationView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         HStack(spacing: 8) {
                             Image(systemName: badge.systemImage)
-                                .foregroundColor(.orange)
+                                .foregroundStyle(.orange)
                             Text("Badge Earned!")
                                 .font(.headline)
                         }
                         Text(badge.description)
                             .font(.caption)
-                            .foregroundColor(.gray)
+                            .foregroundStyle(.gray)
                     }
                     Spacer()
                     Button(action: { withAnimation { isShowing = false } }) {
                         Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(.gray)
+                            .foregroundStyle(.gray)
                     }
                 }
                 .padding()
                 .background(Color(.systemGray6))
-                .cornerRadius(12)
+                .clipShape(.rect(cornerRadius: 12))
             }
             .transition(.move(edge: .bottom))
         }
@@ -328,7 +328,7 @@ struct BadgeNotificationView: View {
                 earnedDate: Date()
             )
         )
-        
+
         BadgeCollectionView(
             badges: [
                 Badge(id: "1", name: "First Place", description: "Won a challenge", icon: "crown.fill", earnedDate: Date()),
