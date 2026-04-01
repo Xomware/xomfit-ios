@@ -7,6 +7,8 @@ struct ActiveWorkoutView: View {
     @State private var viewModel = WorkoutLoggerViewModel()
     @State private var showExercisePicker = false
     @State private var showDiscardAlert = false
+    @State private var showFinishSheet = false
+    @State private var workoutDescription = ""
     @State private var timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     @State private var restTimerHapticFired = false
 
@@ -120,7 +122,7 @@ struct ActiveWorkoutView: View {
             .toolbar(.hidden, for: .navigationBar)
         }
         .onAppear {
-            let userId = authService.currentUser?.id.uuidString ?? ""
+            let userId = authService.currentUser?.id.uuidString.lowercased() ?? ""
             if let template {
                 viewModel.startFromTemplate(template, userId: userId)
             } else {
@@ -155,6 +157,15 @@ struct ActiveWorkoutView: View {
             Button("Keep Going", role: .cancel) {}
         } message: {
             Text("All logged sets will be lost.")
+        }
+        .sheet(isPresented: $showFinishSheet) {
+            FinishWorkoutSheet(
+                description: $workoutDescription,
+                isSaving: viewModel.isSaving,
+                onFinish: { finishWorkout() }
+            )
+            .presentationDetents([.medium])
+            .presentationDragIndicator(.visible)
         }
     }
 
@@ -200,22 +211,23 @@ struct ActiveWorkoutView: View {
 
             // Finish button
             Button {
-                finishWorkout()
+                workoutDescription = ""
+                showFinishSheet = true
             } label: {
                 if viewModel.isSaving {
                     ProgressView()
                         .tint(.black)
                         .frame(width: 70, height: 32)
                         .background(Theme.accent)
-                        .cornerRadius(8)
+                        .clipShape(.rect(cornerRadius: 8))
                 } else {
                     Text("Finish")
                         .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(.black)
+                        .foregroundStyle(.black)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 8)
                         .background(Theme.accent)
-                        .cornerRadius(8)
+                        .clipShape(.rect(cornerRadius: 8))
                 }
             }
             .disabled(viewModel.isSaving)
@@ -247,10 +259,13 @@ struct ActiveWorkoutView: View {
     // MARK: - Actions
 
     private func finishWorkout() {
-        guard let userId = authService.currentUser?.id.uuidString else { return }
+        guard let user = authService.currentUser else { return }
+        let userId = user.id.uuidString.lowercased()
+        let notes = workoutDescription.trimmingCharacters(in: .whitespacesAndNewlines)
         Task {
-            await viewModel.finishWorkout(userId: userId)
+            await viewModel.finishWorkout(userId: userId, notes: notes.isEmpty ? nil : notes)
             if viewModel.errorMessage == nil {
+                showFinishSheet = false
                 dismiss()
             }
         }
@@ -691,5 +706,72 @@ private struct ExerciseTransitionCard: View {
             hints.append(contentsOf: positions.prefix(2).map(\.displayName))
         }
         return hints
+    }
+}
+
+// MARK: - Finish Workout Sheet
+
+private struct FinishWorkoutSheet: View {
+    @Binding var description: String
+    let isSaving: Bool
+    let onFinish: () -> Void
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Theme.background.ignoresSafeArea()
+
+                VStack(spacing: Theme.paddingMedium) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Add a description")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(Theme.textPrimary)
+                        Text("Optional -- this will appear as a caption on your feed post.")
+                            .font(Theme.fontCaption)
+                            .foregroundStyle(Theme.textSecondary)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                    TextEditor(text: $description)
+                        .font(Theme.fontBody)
+                        .foregroundStyle(Theme.textPrimary)
+                        .scrollContentBackground(.hidden)
+                        .padding(Theme.paddingSmall)
+                        .frame(minHeight: 100, maxHeight: 150)
+                        .background(Theme.cardBackground)
+                        .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall)
+                                .stroke(Theme.textSecondary.opacity(0.2), lineWidth: 1)
+                        )
+
+                    Button {
+                        onFinish()
+                    } label: {
+                        if isSaving {
+                            ProgressView()
+                                .tint(.black)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                        } else {
+                            Text("Finish Workout")
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundStyle(.black)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                        }
+                    }
+                    .background(Theme.accent)
+                    .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+                    .disabled(isSaving)
+
+                    Spacer()
+                }
+                .padding(Theme.paddingMedium)
+            }
+            .navigationTitle("Finish Workout")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarColorScheme(.dark, for: .navigationBar)
+        }
     }
 }

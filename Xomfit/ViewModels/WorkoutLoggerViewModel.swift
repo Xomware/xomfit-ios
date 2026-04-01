@@ -523,7 +523,7 @@ final class WorkoutLoggerViewModel {
 
     // MARK: - Finish Workout
 
-    func finishWorkout(userId: String) async {
+    func finishWorkout(userId: String, notes: String? = nil) async {
         endLiveActivity()
         isSaving = true
         errorMessage = nil
@@ -541,6 +541,7 @@ final class WorkoutLoggerViewModel {
             )
         }
 
+        let trimmedNotes = notes?.trimmingCharacters(in: .whitespacesAndNewlines)
         let workout = Workout(
             id: UUID().uuidString,
             userId: userId,
@@ -548,13 +549,13 @@ final class WorkoutLoggerViewModel {
             exercises: completedExercises,
             startTime: startTime,
             endTime: Date(),
-            notes: nil
+            notes: trimmedNotes?.isEmpty == false ? trimmedNotes : nil
         )
 
         do {
             try await WorkoutService.shared.saveWorkout(workout)
             // Auto-post to feed after saving
-            try await FeedService.shared.postWorkoutToFeed(workout: workout, userId: userId)
+            try await FeedService.shared.postWorkoutToFeed(workout: workout, userId: userId, caption: workout.notes)
             // Only discard local state after successful save
             isSaving = false
             discardWorkout()

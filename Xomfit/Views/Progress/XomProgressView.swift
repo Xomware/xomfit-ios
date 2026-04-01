@@ -63,6 +63,7 @@ struct XomProgressView: View {
                 recentPRsSection
             }
             .padding(Theme.paddingMedium)
+            .padding(.bottom, 100)
         }
     }
 }
