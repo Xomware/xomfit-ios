@@ -83,15 +83,9 @@ struct FeedView: View {
                             Task { await viewModel.toggleLike(feedItem: item, userId: userId) }
                         },
                         onComment: {},
-                        onDelete: item.userId == userId ? {
-                            Task { await viewModel.deleteFeedItem(id: item.id) }
-                        } : nil,
-                        onEdit: item.userId == userId ? { newCaption in
-                            Task { await viewModel.updateCaption(feedItemId: item.id, caption: newCaption) }
-                        } : nil,
-                        onSave: item.userId != userId && item.activityType == .workout ? {
-                            saveWorkoutFromFeed(item: item)
-                        } : nil
+                        onDelete: makeDeleteAction(for: item),
+                        onEdit: makeEditAction(for: item),
+                        onSave: makeSaveAction(for: item)
                     )
                 }
                 .listRowBackground(Color.clear)
@@ -159,6 +153,23 @@ struct FeedView: View {
             }
         }
         .padding(Theme.paddingLarge)
+    }
+
+    // MARK: - Feed Item Actions
+
+    private func makeDeleteAction(for item: SocialFeedItem) -> (() -> Void)? {
+        guard item.userId == userId else { return nil }
+        return { Task { await viewModel.deleteFeedItem(id: item.id) } }
+    }
+
+    private func makeEditAction(for item: SocialFeedItem) -> ((String) -> Void)? {
+        guard item.userId == userId else { return nil }
+        return { newCaption in Task { await viewModel.updateCaption(feedItemId: item.id, caption: newCaption) } }
+    }
+
+    private func makeSaveAction(for item: SocialFeedItem) -> (() -> Void)? {
+        guard item.userId != userId, item.activityType == .workout else { return nil }
+        return { saveWorkoutFromFeed(item: item) }
     }
 
     // MARK: - Save Workout from Feed

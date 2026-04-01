@@ -18,26 +18,32 @@ struct ProfileFeedView: View {
                             item: item,
                             onLike: { /* Like handled at feed level */ },
                             onComment: { /* Comment handled at feed level */ },
-                            onDelete: item.userId == currentUserId ? {
-                                Task {
-                                    feedItems.removeAll { $0.id == item.id }
-                                    try? await FeedService.shared.deleteFeedItem(id: item.id)
-                                }
-                            } : nil,
-                            onEdit: item.userId == currentUserId ? { newCaption in
-                                Task {
-                                    if let idx = feedItems.firstIndex(where: { $0.id == item.id }) {
-                                        feedItems[idx].caption = newCaption
-                                    }
-                                    try? await FeedService.shared.updateCaption(feedItemId: item.id, caption: newCaption)
-                                }
-                            } : nil
+                            onDelete: deleteAction(for: item),
+                            onEdit: editAction(for: item)
                         )
                     }
                     .buttonStyle(.plain)
                 }
             }
             .padding(.horizontal, Theme.paddingMedium)
+        }
+    }
+
+    private func deleteAction(for item: SocialFeedItem) -> (() -> Void)? {
+        guard item.userId == currentUserId else { return nil }
+        return {
+            feedItems.removeAll { $0.id == item.id }
+            Task { try? await FeedService.shared.deleteFeedItem(id: item.id) }
+        }
+    }
+
+    private func editAction(for item: SocialFeedItem) -> ((String) -> Void)? {
+        guard item.userId == currentUserId else { return nil }
+        return { newCaption in
+            if let idx = feedItems.firstIndex(where: { $0.id == item.id }) {
+                feedItems[idx].caption = newCaption
+            }
+            Task { try? await FeedService.shared.updateCaption(feedItemId: item.id, caption: newCaption) }
         }
     }
 
