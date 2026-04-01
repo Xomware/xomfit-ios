@@ -43,6 +43,16 @@ struct SetRowView: View {
 
     var body: some View {
         HStack(spacing: Theme.paddingSmall) {
+            // Delete button (visible, since swipeActions don't work outside List)
+            Button(action: onDelete) {
+                Image(systemName: "minus.circle.fill")
+                    .foregroundStyle(Theme.destructive)
+                    .font(.system(size: 18))
+            }
+            .buttonStyle(.plain)
+            .frame(width: 30)
+            .accessibilityLabel("Delete set \(setNumber)")
+
             // Set number
             Text("\(setNumber)")
                 .font(.system(size: 14, weight: .bold, design: .monospaced))
@@ -118,11 +128,7 @@ struct SetRowView: View {
                 }
             }
         }
-        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-            Button(role: .destructive, action: onDelete) {
-                Label("Delete", systemImage: "trash")
-            }
-        }
+        .animation(nil, value: workoutSet.completedAt)
         // Keep local text state in sync if set is reset externally
         .onChange(of: workoutSet.weight) { _, newWeight in
             let formatted = newWeight > 0 ? newWeight.formattedWeight : ""

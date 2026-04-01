@@ -5,6 +5,7 @@ struct TemplateDetailView: View {
     let onStart: () -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @State private var showEditor = false
 
     var body: some View {
         NavigationStack {
@@ -33,6 +34,21 @@ struct TemplateDetailView: View {
                     Button("Close") { dismiss() }
                         .foregroundStyle(Theme.textSecondary)
                 }
+                if template.isCustom {
+                    ToolbarItem(placement: .primaryAction) {
+                        Button {
+                            showEditor = true
+                        } label: {
+                            Image(systemName: "pencil")
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundStyle(Theme.accent)
+                        }
+                        .accessibilityLabel("Edit template")
+                    }
+                }
+            }
+            .sheet(isPresented: $showEditor) {
+                WorkoutBuilderView(template: template)
             }
         }
     }

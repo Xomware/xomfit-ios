@@ -103,59 +103,68 @@ struct WorkoutDetailView: View {
     }
 
     private func exerciseCard(exercise: WorkoutExercise, index: Int) -> some View {
-        VStack(alignment: .leading, spacing: Theme.paddingSmall) {
-            // Exercise name header
-            HStack(spacing: Theme.paddingSmall) {
-                Text("\(index)")
-                    .font(.system(size: 13, weight: .bold, design: .monospaced))
-                    .foregroundStyle(Theme.accent)
-                    .frame(width: 24, height: 24)
-                    .background(Theme.accent.opacity(0.12))
-                    .clipShape(.rect(cornerRadius: 6))
-
-                Text(exercise.exercise.name)
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(Theme.textPrimary)
-
-                Spacer()
-
-                if exercise.sets.contains(where: { $0.isPersonalRecord }) {
-                    HStack(spacing: 3) {
-                        Image(systemName: "trophy.fill")
-                            .font(.system(size: 11))
-                        Text("PR")
-                            .font(.system(size: 11, weight: .bold))
+        VStack(alignment: .leading, spacing: 0) {
+            DisclosureGroup {
+                VStack(alignment: .leading, spacing: 0) {
+                    // Column headers
+                    HStack(spacing: 0) {
+                        Text("SET")
+                            .frame(width: 36, alignment: .leading)
+                        Text("WEIGHT")
+                            .frame(maxWidth: .infinity, alignment: .trailing)
+                        Text("REPS")
+                            .frame(width: 50, alignment: .trailing)
+                        Text("VOL")
+                            .frame(width: 70, alignment: .trailing)
                     }
-                    .foregroundStyle(Theme.prGold)
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(Theme.textSecondary)
+                    .padding(.top, Theme.paddingSmall)
+
+                    // Set rows
+                    ForEach(Array(exercise.sets.enumerated()), id: \.element.id) { setIndex, workoutSet in
+                        setRow(set: workoutSet, number: setIndex + 1)
+                    }
+
+                    // Exercise notes
+                    if let notes = exercise.notes, !notes.isEmpty {
+                        Text(notes)
+                            .font(Theme.fontSmall)
+                            .foregroundStyle(Theme.textSecondary)
+                            .padding(.top, 4)
+                    }
+                }
+            } label: {
+                HStack(spacing: Theme.paddingSmall) {
+                    Text("\(index)")
+                        .font(.system(size: 13, weight: .bold, design: .monospaced))
+                        .foregroundStyle(Theme.accent)
+                        .frame(width: 24, height: 24)
+                        .background(Theme.accent.opacity(0.12))
+                        .clipShape(.rect(cornerRadius: 6))
+
+                    Text(exercise.exercise.name)
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(Theme.textPrimary)
+
+                    Spacer()
+
+                    Text("\(exercise.sets.count) sets")
+                        .font(Theme.fontCaption)
+                        .foregroundStyle(Theme.textSecondary)
+
+                    if exercise.sets.contains(where: { $0.isPersonalRecord }) {
+                        HStack(spacing: 3) {
+                            Image(systemName: "trophy.fill")
+                                .font(.system(size: 11))
+                            Text("PR")
+                                .font(.system(size: 11, weight: .bold))
+                        }
+                        .foregroundStyle(Theme.prGold)
+                    }
                 }
             }
-
-            // Column headers
-            HStack(spacing: 0) {
-                Text("SET")
-                    .frame(width: 36, alignment: .leading)
-                Text("WEIGHT")
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-                Text("REPS")
-                    .frame(width: 50, alignment: .trailing)
-                Text("VOL")
-                    .frame(width: 70, alignment: .trailing)
-            }
-            .font(.system(size: 10, weight: .semibold))
-            .foregroundStyle(Theme.textSecondary)
-
-            // Set rows
-            ForEach(Array(exercise.sets.enumerated()), id: \.element.id) { setIndex, workoutSet in
-                setRow(set: workoutSet, number: setIndex + 1)
-            }
-
-            // Exercise notes
-            if let notes = exercise.notes, !notes.isEmpty {
-                Text(notes)
-                    .font(Theme.fontSmall)
-                    .foregroundStyle(Theme.textSecondary)
-                    .padding(.top, 2)
-            }
+            .tint(Theme.accent)
         }
         .padding(Theme.paddingMedium)
         .background(Theme.cardBackground)

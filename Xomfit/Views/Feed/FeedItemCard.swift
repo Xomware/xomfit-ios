@@ -39,6 +39,23 @@ struct FeedItemCard: View {
         .background(Theme.cardBackground)
         .clipShape(.rect(cornerRadius: 16))
         .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
+        .contextMenu {
+            if onEdit != nil {
+                Button {
+                    editedCaption = item.caption ?? ""
+                    showEditCaption = true
+                } label: {
+                    Label("Edit Caption", systemImage: "pencil")
+                }
+            }
+            if onDelete != nil {
+                Button(role: .destructive) {
+                    showDeleteConfirm = true
+                } label: {
+                    Label("Delete Post", systemImage: "trash")
+                }
+            }
+        }
         .confirmationDialog("Delete Post", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
             Button("Delete", role: .destructive) {
                 onDelete?()

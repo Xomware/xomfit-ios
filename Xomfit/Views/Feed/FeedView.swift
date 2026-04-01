@@ -4,6 +4,7 @@ struct FeedView: View {
     @Environment(AuthService.self) private var authService
     @State private var viewModel = FeedViewModel()
     @State private var showUserSearch = false
+    @State private var selectedFeedItem: SocialFeedItem? = nil
 
     private var userId: String {
         authService.currentUser?.id.uuidString.lowercased() ?? ""
@@ -46,6 +47,9 @@ struct FeedView: View {
                     }
                 }
             }
+            .navigationDestination(item: $selectedFeedItem) { item in
+                FeedDetailView(item: item, userId: userId)
+            }
             .sheet(isPresented: $showUserSearch) {
                 UserSearchView()
             }
@@ -75,21 +79,22 @@ struct FeedView: View {
         ScrollView {
             LazyVStack(spacing: 12) {
                 ForEach(Array(viewModel.feedItems.enumerated()), id: \.element.id) { index, item in
-                    NavigationLink {
-                        FeedDetailView(item: item, userId: userId)
-                    } label: {
-                        FeedItemCard(
-                            item: item,
-                            onLike: {
-                                Task { await viewModel.toggleLike(feedItem: item, userId: userId) }
-                            },
-                            onComment: {},
-                            onDelete: makeDeleteAction(for: item),
-                            onEdit: makeEditAction(for: item),
-                            onSave: makeSaveAction(for: item)
-                        )
+                    FeedItemCard(
+                        item: item,
+                        onLike: {
+                            Task { await viewModel.toggleLike(feedItem: item, userId: userId) }
+                        },
+                        onComment: {
+                            selectedFeedItem = item
+                        },
+                        onDelete: makeDeleteAction(for: item),
+                        onEdit: makeEditAction(for: item),
+                        onSave: makeSaveAction(for: item)
+                    )
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        selectedFeedItem = item
                     }
-                    .buttonStyle(.plain)
                     .staggeredAppear(index: index)
                     .onAppear {
                         if item.id == viewModel.feedItems.last?.id {

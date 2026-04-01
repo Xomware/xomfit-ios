@@ -9,7 +9,15 @@ enum ActivityType: String, Codable, CaseIterable {
 }
 
 /// A unified feed item that wraps different activity types
-struct SocialFeedItem: Codable, Identifiable {
+struct SocialFeedItem: Codable, Identifiable, Hashable {
+    static func == (lhs: SocialFeedItem, rhs: SocialFeedItem) -> Bool {
+        lhs.id == rhs.id
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+
     let id: String
     let userId: String
     let activityType: ActivityType

@@ -6,6 +6,8 @@ struct WorkoutBuilderView: View {
     @State private var viewModel = WorkoutBuilderViewModel()
     @State private var showExercisePicker = false
 
+    var template: WorkoutTemplate? = nil
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -39,6 +41,11 @@ struct WorkoutBuilderView: View {
                     .foregroundStyle(viewModel.isValid ? Theme.accent : Theme.textSecondary)
                     .disabled(!viewModel.isValid)
                 }
+            }
+        }
+        .onAppear {
+            if let template {
+                viewModel.loadTemplate(template)
             }
         }
         .interactiveDismissDisabled(!viewModel.exercises.isEmpty)

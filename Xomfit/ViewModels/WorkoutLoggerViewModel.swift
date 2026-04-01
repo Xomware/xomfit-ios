@@ -21,6 +21,7 @@ final class WorkoutLoggerViewModel {
     var restTimeRemaining: Double = 0
     var restDuration: Double = 0
     var isRestTimerActive: Bool = false
+    var defaultRestDuration: Double = 90
 
     // PR celebration — set when a completed set beats the user's record
     var newPR: PersonalRecord? = nil
@@ -304,7 +305,9 @@ final class WorkoutLoggerViewModel {
                     return RemainingExercise(index: idx, name: ex.exercise.name)
                 }
 
-                showExerciseTransition = true
+                if focusMode {
+                    showExerciseTransition = true
+                }
             }
         }
         updateLiveActivity()
@@ -395,13 +398,9 @@ final class WorkoutLoggerViewModel {
     // MARK: - Rest Timer
 
     func startRestTimer(for category: ExerciseCategory) {
-        let duration: Double = switch category {
-        case .compound: 90
-        case .isolation: 60
-        case .cardio, .stretching: 30
-        }
-        restDuration = duration
-        restTimeRemaining = duration
+        guard defaultRestDuration > 0 else { return }
+        restDuration = defaultRestDuration
+        restTimeRemaining = defaultRestDuration
         isRestTimerActive = true
     }
 
