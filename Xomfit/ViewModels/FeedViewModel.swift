@@ -104,6 +104,30 @@ final class FeedViewModel {
         }
     }
 
+    // MARK: - Delete Feed Item
+
+    func deleteFeedItem(id: String) async {
+        feedItems.removeAll { $0.id == id }
+        do {
+            try await FeedService.shared.deleteFeedItem(id: id)
+        } catch {
+            // Item already removed from local state; non-fatal
+        }
+    }
+
+    // MARK: - Update Caption
+
+    func updateCaption(feedItemId: String, caption: String) async {
+        if let index = feedItems.firstIndex(where: { $0.id == feedItemId }) {
+            feedItems[index].caption = caption
+        }
+        do {
+            try await FeedService.shared.updateCaption(feedItemId: feedItemId, caption: caption)
+        } catch {
+            // Optimistic update already applied; non-fatal
+        }
+    }
+
     // MARK: - Load Comments
 
     func loadComments(for feedItemId: String) async throws -> [FeedComment] {

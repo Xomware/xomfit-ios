@@ -31,6 +31,11 @@ struct FeedDetailView: View {
                             onComment: {}
                         )
 
+                        // Workout breakdown (if workout type)
+                        if let activity = localItem.workoutActivity {
+                            workoutBreakdown(activity: activity)
+                        }
+
                         // Comments section
                         commentsSection
                     }
@@ -45,6 +50,126 @@ struct FeedDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .onAppear { loadComments() }
+    }
+
+    // MARK: - Workout Breakdown
+
+    private func workoutBreakdown(activity: WorkoutActivity) -> some View {
+        VStack(alignment: .leading, spacing: Theme.paddingMedium) {
+            // Workout header
+            VStack(alignment: .leading, spacing: 6) {
+                Text(activity.workoutName)
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .foregroundStyle(Theme.textPrimary)
+
+                HStack(spacing: 8) {
+                    Image(systemName: "calendar")
+                        .font(.system(size: 12))
+                    Text(localItem.createdAt.workoutDateString)
+                    Text("--")
+                    Image(systemName: "clock")
+                        .font(.system(size: 12))
+                    Text(formatDuration(activity.duration))
+                }
+                .font(Theme.fontCaption)
+                .foregroundStyle(Theme.textSecondary)
+            }
+
+            // Stats row
+            HStack(spacing: 0) {
+                workoutStat(value: "\(activity.exerciseCount)", label: "Exercises", icon: "dumbbell.fill")
+                workoutStat(value: "\(activity.totalSets)", label: "Sets", icon: "list.bullet")
+                workoutStat(value: formatVolume(activity.totalVolume), label: "Volume", icon: "scalemass")
+                if activity.prCount > 0 {
+                    workoutStat(value: "\(activity.prCount)", label: "PRs", icon: "trophy.fill", color: Theme.prGold)
+                }
+            }
+
+            // Exercise list
+            VStack(alignment: .leading, spacing: Theme.paddingSmall) {
+                Text("Exercises")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(Theme.textSecondary)
+
+                ForEach(activity.exercises) { exercise in
+                    exerciseCard(exercise: exercise)
+                }
+            }
+        }
+        .cardStyle()
+    }
+
+    private func workoutStat(value: String, label: String, icon: String, color: Color = Theme.accent) -> some View {
+        VStack(spacing: 4) {
+            Image(systemName: icon)
+                .font(.system(size: 14))
+                .foregroundStyle(color)
+            Text(value)
+                .font(.system(size: 16, weight: .bold))
+                .foregroundStyle(Theme.textPrimary)
+            Text(label)
+                .font(Theme.fontSmall)
+                .foregroundStyle(Theme.textSecondary)
+        }
+        .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(value) \(label)")
+    }
+
+    private func exerciseCard(exercise: WorkoutActivity.ExerciseSummary) -> some View {
+        HStack(spacing: 12) {
+            // Exercise icon
+            Image(systemName: "dumbbell.fill")
+                .font(.system(size: 14))
+                .foregroundStyle(exercise.isPR ? Theme.prGold : Theme.accent)
+                .frame(width: 32, height: 32)
+                .background((exercise.isPR ? Theme.prGold : Theme.accent).opacity(0.15))
+                .clipShape(.rect(cornerRadius: 8))
+
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(spacing: 6) {
+                    Text(exercise.name)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(Theme.textPrimary)
+
+                    if exercise.isPR {
+                        HStack(spacing: 3) {
+                            Image(systemName: "trophy.fill")
+                                .font(.system(size: 9))
+                            Text("PR")
+                                .font(.system(size: 10, weight: .bold))
+                        }
+                        .foregroundStyle(Theme.prGold)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Theme.prGold.opacity(0.15))
+                        .clipShape(.rect(cornerRadius: 4))
+                    }
+                }
+
+                Text("\(exercise.bestWeight.formattedWeight) lbs x \(exercise.bestReps) reps")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(Theme.textSecondary)
+            }
+
+            Spacer()
+        }
+        .padding(12)
+        .background(Theme.background)
+        .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(exercise.name), \(exercise.bestWeight.formattedWeight) pounds by \(exercise.bestReps) reps\(exercise.isPR ? ", personal record" : "")")
+    }
+
+    private func formatDuration(_ seconds: TimeInterval) -> String {
+        let minutes = Int(seconds / 60)
+        if minutes < 60 { return "\(minutes)m" }
+        return "\(minutes / 60)h \(minutes % 60)m"
+    }
+
+    private func formatVolume(_ volume: Double) -> String {
+        if volume >= 1000 { return String(format: "%.1fk lbs", volume / 1000) }
+        return "\(Int(volume)) lbs"
     }
 
     // MARK: - Comments Section

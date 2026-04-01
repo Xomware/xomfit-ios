@@ -21,6 +21,7 @@ struct WorkoutTemplate: Codable, Identifiable {
         case push, pull, legs, upperBody, lowerBody, fullBody
         case chest, back, shoulders, arms
         case custom
+        case saved
 
         var displayName: String {
             switch self {
@@ -35,6 +36,7 @@ struct WorkoutTemplate: Codable, Identifiable {
             case .shoulders: return "Shoulders"
             case .arms: return "Arms"
             case .custom: return "Custom"
+            case .saved: return "Saved"
             }
         }
 
@@ -51,6 +53,7 @@ struct WorkoutTemplate: Codable, Identifiable {
             case .shoulders: return "bolt.fill"
             case .arms: return "dumbbell.fill"
             case .custom: return "star.fill"
+            case .saved: return "bookmark.fill"
             }
         }
     }
