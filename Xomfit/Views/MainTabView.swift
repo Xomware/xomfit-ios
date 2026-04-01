@@ -68,7 +68,16 @@ private struct FloatingTabBar: View {
                 bottomTrailingRadius: 0,
                 topTrailingRadius: 24
             )
-            .fill(.ultraThinMaterial)
+            .fill(Theme.background.opacity(0.85))
+            .background(
+                UnevenRoundedRectangle(
+                    topLeadingRadius: 24,
+                    bottomLeadingRadius: 0,
+                    bottomTrailingRadius: 0,
+                    topTrailingRadius: 24
+                )
+                .fill(.ultraThinMaterial)
+            )
             .overlay(
                 UnevenRoundedRectangle(
                     topLeadingRadius: 24,

@@ -6,6 +6,13 @@ struct FeedDetailView: View {
 
     @State private var viewModel = FeedViewModel()
     @State private var localItem: SocialFeedItem
+    @State private var expandedExercises: Set<String> = []
+    @State private var showDeleteConfirm = false
+    @State private var showEditCaption = false
+    @State private var editedCaption = ""
+    @Environment(\.dismiss) private var dismiss
+
+    private var isOwnPost: Bool { item.userId == userId }
 
     init(item: SocialFeedItem, userId: String) {
         self.item = item
@@ -19,32 +26,7 @@ struct FeedDetailView: View {
 
             ScrollView {
                 VStack(spacing: Theme.Spacing.md) {
-                    // Unified card: header + workout stats + exercises
                     unifiedCard
-
-                    // Comments navigation button
-                    NavigationLink {
-                        FeedCommentsView(feedItemId: item.id, userId: userId)
-                    } label: {
-                        HStack(spacing: 8) {
-                            Image(systemName: "bubble.right")
-                                .font(.body)
-                            Text("Comments")
-                                .font(.subheadline.weight(.semibold))
-                            Spacer()
-                            Text("\(localItem.comments.count)")
-                                .font(.subheadline.weight(.medium))
-                                .foregroundStyle(Theme.textSecondary)
-                            Image(systemName: "chevron.right")
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(Theme.textSecondary)
-                        }
-                        .foregroundStyle(Theme.textPrimary)
-                        .padding(Theme.Spacing.md)
-                        .background(Theme.surface)
-                        .clipShape(.rect(cornerRadius: Theme.cornerRadius))
-                    }
-                    .buttonStyle(.plain)
                 }
                 .padding(Theme.Spacing.md)
                 .padding(.bottom, 20)
@@ -53,27 +35,66 @@ struct FeedDetailView: View {
         .navigationTitle("Post")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarColorScheme(.dark, for: .navigationBar)
+        .toolbar {
+            if isOwnPost {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        Button {
+                            editedCaption = localItem.caption ?? ""
+                            showEditCaption = true
+                        } label: {
+                            Label("Edit Caption", systemImage: "pencil")
+                        }
+                        Button(role: .destructive) {
+                            showDeleteConfirm = true
+                        } label: {
+                            Label("Delete Post", systemImage: "trash")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis")
+                            .foregroundStyle(Theme.textSecondary)
+                    }
+                }
+            }
+        }
+        .confirmationDialog("Delete Post", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
+            Button("Delete", role: .destructive) {
+                Task {
+                    await viewModel.deleteFeedItem(id: item.id)
+                    dismiss()
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Are you sure you want to delete this post? This cannot be undone.")
+        }
+        .alert("Edit Caption", isPresented: $showEditCaption) {
+            TextField("Caption", text: $editedCaption)
+            Button("Save") {
+                Task {
+                    await viewModel.updateCaption(feedItemId: item.id, caption: editedCaption)
+                    localItem.caption = editedCaption
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        }
     }
 
     // MARK: - Unified Card
 
     private var unifiedCard: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.md) {
-            // User info header
             headerRow
 
-            // Caption
             if let caption = localItem.caption, !caption.isEmpty {
                 Text(caption)
                     .font(Theme.fontBody)
                     .foregroundStyle(Theme.textPrimary)
             }
 
-            // Workout breakdown (if workout type)
             if let activity = localItem.workoutActivity {
                 Divider().background(Theme.textSecondary.opacity(0.2))
 
-                // Workout name + date
                 VStack(alignment: .leading, spacing: 6) {
                     Text(activity.workoutName)
                         .font(.title3.weight(.bold))
@@ -92,7 +113,6 @@ struct FeedDetailView: View {
                     .foregroundStyle(Theme.textSecondary)
                 }
 
-                // Stats row
                 HStack(spacing: 0) {
                     workoutStat(value: "\(activity.exerciseCount)", label: "Exercises", icon: "dumbbell.fill")
                     workoutStat(value: "\(activity.totalSets)", label: "Sets", icon: "list.bullet")
@@ -102,7 +122,6 @@ struct FeedDetailView: View {
                     }
                 }
 
-                // Exercise list with sets/weights
                 Divider().background(Theme.textSecondary.opacity(0.2))
 
                 VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
@@ -118,7 +137,6 @@ struct FeedDetailView: View {
 
             Divider().background(Theme.textSecondary.opacity(0.2))
 
-            // Action bar (like)
             actionBar
         }
         .padding(Theme.Spacing.md)
@@ -223,6 +241,20 @@ struct FeedDetailView: View {
             }
             .buttonStyle(.plain)
 
+            NavigationLink {
+                FeedCommentsView(feedItemId: item.id, userId: userId)
+            } label: {
+                HStack(spacing: 5) {
+                    Image(systemName: "bubble.right")
+                        .font(.body)
+                        .foregroundStyle(Theme.textSecondary)
+                    Text("\(localItem.comments.count)")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(Theme.textSecondary)
+                }
+            }
+            .buttonStyle(.plain)
+
             Spacer()
         }
     }
@@ -247,47 +279,98 @@ struct FeedDetailView: View {
     }
 
     private func exerciseRow(exercise: WorkoutActivity.ExerciseSummary) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: "dumbbell.fill")
-                .font(.subheadline)
-                .foregroundStyle(exercise.isPR ? Theme.prGold : Theme.accent)
-                .frame(width: 32, height: 32)
-                .background((exercise.isPR ? Theme.prGold : Theme.accent).opacity(0.15))
-                .clipShape(.rect(cornerRadius: 8))
+        let isExpanded = expandedExercises.contains(exercise.id)
+        let displaySets = exercise.setCount ?? 1
 
-            VStack(alignment: .leading, spacing: 3) {
-                HStack(spacing: 6) {
-                    Text(exercise.name)
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(Theme.textPrimary)
-
-                    if exercise.isPR {
-                        HStack(spacing: 3) {
-                            Image(systemName: "trophy.fill")
-                                .font(.caption2)
-                            Text("PR")
-                                .font(.caption2.weight(.bold))
-                        }
-                        .foregroundStyle(Theme.prGold)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(Theme.prGold.opacity(0.15))
-                        .clipShape(.rect(cornerRadius: 4))
+        return VStack(spacing: 0) {
+            Button {
+                Haptics.selection()
+                withAnimation(.xomConfident) {
+                    if isExpanded {
+                        expandedExercises.remove(exercise.id)
+                    } else {
+                        expandedExercises.insert(exercise.id)
                     }
                 }
+            } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: "dumbbell.fill")
+                        .font(.subheadline)
+                        .foregroundStyle(exercise.isPR ? Theme.prGold : Theme.accent)
+                        .frame(width: 32, height: 32)
+                        .background((exercise.isPR ? Theme.prGold : Theme.accent).opacity(0.15))
+                        .clipShape(.rect(cornerRadius: 8))
 
-                Text("\(exercise.bestWeight.formattedWeight) lbs x \(exercise.bestReps) reps")
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(Theme.textSecondary)
+                    VStack(alignment: .leading, spacing: 3) {
+                        HStack(spacing: 6) {
+                            Text(exercise.name)
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(Theme.textPrimary)
+
+                            if exercise.isPR {
+                                HStack(spacing: 3) {
+                                    Image(systemName: "trophy.fill")
+                                        .font(.caption2)
+                                    Text("PR")
+                                        .font(.caption2.weight(.bold))
+                                }
+                                .foregroundStyle(Theme.prGold)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Theme.prGold.opacity(0.15))
+                                .clipShape(.rect(cornerRadius: 4))
+                            }
+                        }
+
+                        Text("\(displaySets) set\(displaySets == 1 ? "" : "s") · Best: \(exercise.bestWeight.formattedWeight) lbs x \(exercise.bestReps) reps")
+                            .font(.caption.weight(.medium))
+                            .foregroundStyle(Theme.textSecondary)
+                    }
+
+                    Spacer()
+
+                    if let sets = exercise.sets, !sets.isEmpty {
+                        Image(systemName: "chevron.right")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(Theme.textSecondary)
+                            .rotationEffect(.degrees(isExpanded ? 90 : 0))
+                    }
+                }
             }
+            .buttonStyle(.plain)
+            .padding(10)
 
-            Spacer()
+            if isExpanded, let sets = exercise.sets, !sets.isEmpty {
+                VStack(spacing: 0) {
+                    ForEach(sets) { set in
+                        HStack {
+                            Text("Set \(set.setNumber)")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(Theme.textSecondary)
+                                .frame(width: 44, alignment: .leading)
+                            Text("\(set.weight.formattedWeight) lbs")
+                                .font(.caption.weight(.medium))
+                                .foregroundStyle(Theme.textPrimary)
+                            Text("x")
+                                .font(.caption)
+                                .foregroundStyle(Theme.textSecondary)
+                            Text("\(set.reps) reps")
+                                .font(.caption.weight(.medium))
+                                .foregroundStyle(Theme.textPrimary)
+                            Spacer()
+                        }
+                        .padding(.horizontal, 54)
+                        .padding(.vertical, 6)
+                    }
+                }
+                .padding(.bottom, 8)
+                .transition(.opacity.combined(with: .move(edge: .top)))
+            }
         }
-        .padding(10)
         .background(Theme.background)
         .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(exercise.name), \(exercise.bestWeight.formattedWeight) pounds by \(exercise.bestReps) reps\(exercise.isPR ? ", personal record" : "")")
+        .accessibilityLabel("\(exercise.name), \(displaySets) sets, best \(exercise.bestWeight.formattedWeight) pounds by \(exercise.bestReps) reps\(exercise.isPR ? ", personal record" : "")")
     }
 
     private func formatDuration(_ seconds: TimeInterval) -> String {

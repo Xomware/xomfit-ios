@@ -64,6 +64,15 @@ struct WorkoutActivity: Codable {
         let bestWeight: Double
         let bestReps: Int
         let isPR: Bool
+        let setCount: Int?
+        let sets: [SetDetail]?
+
+        struct SetDetail: Codable, Identifiable {
+            var id: String { "\(setNumber)" }
+            let setNumber: Int
+            let weight: Double
+            let reps: Int
+        }
     }
 }
 
@@ -137,8 +146,17 @@ extension SocialFeedItem {
             exerciseCount: 5,
             prCount: 1,
             exercises: [
-                .init(id: "es-1", name: "Squat", bestWeight: 315, bestReps: 5, isPR: true),
-                .init(id: "es-2", name: "Leg Press", bestWeight: 450, bestReps: 10, isPR: false)
+                .init(id: "es-1", name: "Squat", bestWeight: 315, bestReps: 5, isPR: true, setCount: 4, sets: [
+                    .init(setNumber: 1, weight: 275, reps: 5),
+                    .init(setNumber: 2, weight: 295, reps: 5),
+                    .init(setNumber: 3, weight: 315, reps: 5),
+                    .init(setNumber: 4, weight: 315, reps: 3)
+                ]),
+                .init(id: "es-2", name: "Leg Press", bestWeight: 450, bestReps: 10, isPR: false, setCount: 3, sets: [
+                    .init(setNumber: 1, weight: 400, reps: 10),
+                    .init(setNumber: 2, weight: 450, reps: 10),
+                    .init(setNumber: 3, weight: 450, reps: 8)
+                ])
             ]
         ),
         caption: "Great leg session today!",

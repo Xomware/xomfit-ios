@@ -156,7 +156,15 @@ final class FeedService {
                 name: ex.exercise.name,
                 bestWeight: ex.bestSet?.weight ?? 0,
                 bestReps: ex.bestSet?.reps ?? 0,
-                isPR: ex.sets.contains { $0.isPersonalRecord }
+                isPR: ex.sets.contains { $0.isPersonalRecord },
+                setCount: ex.sets.count,
+                sets: ex.sets.enumerated().map { index, set in
+                    WorkoutActivity.ExerciseSummary.SetDetail(
+                        setNumber: index + 1,
+                        weight: set.weight,
+                        reps: set.reps
+                    )
+                }
             )
         }
 
