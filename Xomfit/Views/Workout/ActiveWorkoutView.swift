@@ -25,6 +25,9 @@ struct ActiveWorkoutView: View {
                     // Header bar
                     headerBar
 
+                    // Rest timer config
+                    restTimerConfig
+
                     if viewModel.focusMode {
                         // Focus mode — large gym-floor view
                         WorkoutFocusView(viewModel: viewModel)
@@ -237,6 +240,37 @@ struct ActiveWorkoutView: View {
         .background(Theme.cardBackground)
     }
 
+    // MARK: - Rest Timer Config
+
+    private var restTimerConfig: some View {
+        HStack {
+            Image(systemName: "timer")
+                .foregroundStyle(Theme.accent)
+            Text("Rest Timer")
+                .font(Theme.fontBody)
+                .foregroundStyle(Theme.textPrimary)
+            Spacer()
+            Menu {
+                Button("Off") { viewModel.defaultRestDuration = 0 }
+                Button("30s") { viewModel.defaultRestDuration = 30 }
+                Button("60s") { viewModel.defaultRestDuration = 60 }
+                Button("90s") { viewModel.defaultRestDuration = 90 }
+                Button("120s") { viewModel.defaultRestDuration = 120 }
+                Button("180s") { viewModel.defaultRestDuration = 180 }
+            } label: {
+                Text(viewModel.defaultRestDuration > 0 ? "\(Int(viewModel.defaultRestDuration))s" : "Off")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(Theme.accent)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(Theme.accent.opacity(0.12))
+                    .clipShape(.capsule)
+            }
+        }
+        .padding(.horizontal, Theme.paddingMedium)
+        .padding(.vertical, Theme.paddingSmall)
+    }
+
     // MARK: - Empty State
 
     private var emptyState: some View {
@@ -402,6 +436,7 @@ private struct ExerciseCard: View {
             // Column headers
             if !exercise.sets.isEmpty {
                 HStack(spacing: Theme.paddingSmall) {
+                    Spacer().frame(width: 30) // delete button spacer
                     Text("SET")
                         .frame(width: 24)
                     Spacer()
@@ -419,11 +454,11 @@ private struct ExerciseCard: View {
                 .padding(.horizontal, Theme.paddingMedium)
             }
 
-            // Sets
-            ForEach(exercise.sets.indices, id: \.self) { setIdx in
+            // Sets — use stable element IDs to prevent state loss on expand/collapse
+            ForEach(Array(exercise.sets.enumerated()), id: \.element.id) { setIdx, workoutSet in
                 SetRowView(
                     setNumber: setIdx + 1,
-                    workoutSet: exercise.sets[setIdx],
+                    workoutSet: workoutSet,
                     onWeightChange: { w in
                         viewModel.updateSet(
                             exerciseIndex: exerciseIndex,
