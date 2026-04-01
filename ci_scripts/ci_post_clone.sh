@@ -11,13 +11,11 @@ if [ -n "$CI_BUILD_NUMBER" ]; then
     sed -i '' "s/CURRENT_PROJECT_VERSION = [^;]*/CURRENT_PROJECT_VERSION = $CI_BUILD_NUMBER/g" "$PBXPROJ"
 fi
 
-# 2. Marketing version — auto-increment patch version based on build number
-# Format: MAJOR.MINOR.BUILD (e.g., 1.0.7, 1.0.8, 1.0.9...)
-# Set MAJOR and MINOR via env vars, patch auto-increments
+# 2. Marketing version — auto-increment based on build number
+# Format: MAJOR.BUILD (e.g., 1.7, 1.8, 1.9...)
+# Set MAJOR via env var when ready for 2.x
 MAJOR="${APP_VERSION_MAJOR:-1}"
-MINOR="${APP_VERSION_MINOR:-0}"
-PATCH="${CI_BUILD_NUMBER:-0}"
-MARKETING_VERSION="${MAJOR}.${MINOR}.${PATCH}"
+MARKETING_VERSION="${MAJOR}.${CI_BUILD_NUMBER:-0}"
 echo "Setting marketing version to $MARKETING_VERSION for all targets"
 sed -i '' "s/MARKETING_VERSION = [^;]*/MARKETING_VERSION = $MARKETING_VERSION/g" "$PBXPROJ"
 
