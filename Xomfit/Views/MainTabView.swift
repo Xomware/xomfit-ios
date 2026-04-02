@@ -96,7 +96,7 @@ private struct FloatingTabBar: View {
         }
         .padding(.horizontal, Theme.Spacing.md)
         .padding(.top, 12)
-        .padding(.bottom, Theme.Spacing.sm)
+        .safeAreaPadding(.bottom)
         .background(
             Rectangle()
                 .fill(Theme.background)
