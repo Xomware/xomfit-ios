@@ -148,7 +148,6 @@ struct ProfileView: View {
                 Section {
                     tabContent
                         .padding(.top, Theme.Spacing.sm)
-                        .padding(.bottom, 100) // Space for floating tab bar
                 } header: {
                     ProfileTabPicker(selectedTab: Bindable(viewModel).selectedTab)
                         .background(Theme.background)

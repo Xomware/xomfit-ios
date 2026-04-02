@@ -4,7 +4,7 @@ struct MainTabView: View {
     @State private var selectedTab = 0
 
     var body: some View {
-        ZStack(alignment: .bottom) {
+        ZStack {
             Group {
                 switch selectedTab {
                 case 0: FeedView()
@@ -16,7 +16,8 @@ struct MainTabView: View {
             }
             .transition(.opacity)
             .animation(.xomChill, value: selectedTab)
-
+        }
+        .safeAreaInset(edge: .bottom) {
             FloatingTabBar(selectedTab: $selectedTab)
         }
     }
