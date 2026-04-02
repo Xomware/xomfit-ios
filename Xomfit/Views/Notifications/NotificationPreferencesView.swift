@@ -1,39 +1,52 @@
 import SwiftUI
 
 struct NotificationPreferencesView: View {
-    @State private var prefs = NotificationService.shared.preferences
+    @Environment(AuthService.self) private var authService
+    @State private var prefs: NotificationPreferences?
+    @State private var isLoading = true
+
+    private var userId: String {
+        authService.currentUser?.id.uuidString.lowercased() ?? ""
+    }
 
     var body: some View {
         ZStack {
             Theme.background.ignoresSafeArea()
 
-            List {
-                Section {
-                    prefToggle("Friend Requests", icon: "person.badge.plus", isOn: $prefs.friendRequests)
-                    prefToggle("Likes", icon: "heart.fill", isOn: $prefs.likes)
-                    prefToggle("Comments", icon: "bubble.right.fill", isOn: $prefs.comments)
-                } header: {
-                    Text("Social")
-                }
+            if isLoading {
+                ProgressView()
+            } else if let prefs = Binding($prefs) {
+                List {
+                    Section {
+                        prefToggle("Social", icon: "bubble.left.and.bubble.right.fill", isOn: prefs.social)
+                        prefToggle("Friend Activity", icon: "figure.strengthtraining.traditional", isOn: prefs.friendActivity)
+                    } header: {
+                        Text("Social")
+                    }
 
-                Section {
-                    prefToggle("Personal Records", icon: "trophy.fill", isOn: $prefs.personalRecords)
-                    prefToggle("Streak Milestones", icon: "flame.fill", isOn: $prefs.streakMilestones)
-                    prefToggle("Friend Workouts", icon: "figure.strengthtraining.traditional", isOn: $prefs.friendWorkouts)
-                } header: {
-                    Text("Activity")
+                    Section {
+                        prefToggle("Personal Records", icon: "trophy.fill", isOn: prefs.personalRecords)
+                        prefToggle("Workout Reminders", icon: "alarm.fill", isOn: prefs.workoutReminders)
+                        prefToggle("Challenges", icon: "flag.fill", isOn: prefs.challenges)
+                    } header: {
+                        Text("Activity")
+                    }
                 }
+                .scrollContentBackground(.hidden)
             }
-            .scrollContentBackground(.hidden)
         }
         .navigationTitle("Notification Settings")
         .navigationBarTitleDisplayMode(.inline)
-        .onChange(of: prefs.friendRequests) { _, _ in save() }
-        .onChange(of: prefs.likes) { _, _ in save() }
-        .onChange(of: prefs.comments) { _, _ in save() }
-        .onChange(of: prefs.personalRecords) { _, _ in save() }
-        .onChange(of: prefs.streakMilestones) { _, _ in save() }
-        .onChange(of: prefs.friendWorkouts) { _, _ in save() }
+        .task {
+            prefs = NotificationService.shared.preferences
+                ?? NotificationPreferences.defaultPrefs(userId: userId)
+            isLoading = false
+        }
+        .onChange(of: prefs) { _, newPrefs in
+            if let newPrefs {
+                NotificationService.shared.updatePreferences(newPrefs)
+            }
+        }
     }
 
     private func prefToggle(_ label: String, icon: String, isOn: Binding<Bool>) -> some View {
@@ -50,9 +63,5 @@ struct NotificationPreferencesView: View {
         }
         .tint(Theme.accent)
         .listRowBackground(Theme.surface)
-    }
-
-    private func save() {
-        NotificationService.shared.updatePreferences(prefs)
     }
 }

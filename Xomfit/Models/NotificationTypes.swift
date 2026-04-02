@@ -84,7 +84,7 @@ enum NotificationType: String {
 }
 
 // MARK: - Notification Preferences
-struct NotificationPreferences: Codable {
+struct NotificationPreferences: Codable, Equatable {
     var userId: String
     var isEnabled: Bool
     

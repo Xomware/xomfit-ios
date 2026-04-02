@@ -50,7 +50,7 @@ final class NotificationService {
 
     // MARK: - Preferences
 
-    var preferences = NotificationPreferences()
+    var preferences: NotificationPreferences?
 
     func updatePreferences(_ prefs: NotificationPreferences) {
         preferences = prefs
@@ -60,16 +60,9 @@ final class NotificationService {
 
     private func syncPreferencesToSupabase(_ prefs: NotificationPreferences) async {
         do {
-            let userId = try await supabase.auth.session.user.id.uuidString.lowercased()
             try await supabase
                 .from("notification_preferences")
-                .upsert([
-                    "user_id": userId,
-                    "is_enabled": String(isPermissionGranted),
-                    "friend_activity": String(prefs.friendWorkouts),
-                    "personal_records": String(prefs.personalRecords),
-                    "social": String(prefs.likes && prefs.comments && prefs.friendRequests)
-                ], onConflict: "user_id")
+                .upsert(prefs, onConflict: "user_id")
                 .execute()
         } catch {
             print("[NotificationService] Failed to sync preferences: \(error.localizedDescription)")
@@ -212,11 +205,3 @@ struct AppNotification: Codable, Identifiable {
     }
 }
 
-struct NotificationPreferences: Codable {
-    var friendRequests = true
-    var likes = true
-    var comments = true
-    var personalRecords = true
-    var streakMilestones = true
-    var friendWorkouts = true
-}
