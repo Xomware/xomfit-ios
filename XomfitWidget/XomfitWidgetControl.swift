@@ -2,7 +2,7 @@
 //  XomfitWidgetControl.swift
 //  XomfitWidget
 //
-//  Created by Dominick Giordano on 3/31/26.
+//  Control Center widget for quick workout start.
 //
 
 import AppIntents
@@ -13,65 +13,22 @@ struct XomfitWidgetControl: ControlWidget {
     static let kind: String = "com.Xomware.Xomfit.XomfitWidget"
 
     var body: some ControlWidgetConfiguration {
-        AppIntentControlConfiguration(
-            kind: Self.kind,
-            provider: Provider()
-        ) { value in
-            ControlWidgetToggle(
-                "Start Timer",
-                isOn: value.isRunning,
-                action: StartTimerIntent(value.name)
-            ) { isRunning in
-                Label(isRunning ? "On" : "Off", systemImage: "timer")
+        StaticControlConfiguration(kind: Self.kind) {
+            ControlWidgetButton(action: OpenWorkoutIntent()) {
+                Label("Start Workout", systemImage: "figure.strengthtraining.traditional")
             }
         }
-        .displayName("Timer")
-        .description("A an example control that runs a timer.")
+        .displayName("Start Workout")
+        .description("Quickly start a new workout in XomFit.")
     }
 }
 
-extension XomfitWidgetControl {
-    struct Value {
-        var isRunning: Bool
-        var name: String
-    }
-
-    struct Provider: AppIntentControlValueProvider {
-        func previewValue(configuration: TimerConfiguration) -> Value {
-            XomfitWidgetControl.Value(isRunning: false, name: configuration.timerName)
-        }
-
-        func currentValue(configuration: TimerConfiguration) async throws -> Value {
-            let isRunning = true // Check if the timer is running
-            return XomfitWidgetControl.Value(isRunning: isRunning, name: configuration.timerName)
-        }
-    }
-}
-
-struct TimerConfiguration: ControlConfigurationIntent {
-    static let title: LocalizedStringResource = "Timer Name Configuration"
-
-    @Parameter(title: "Timer Name", default: "Timer")
-    var timerName: String
-}
-
-struct StartTimerIntent: SetValueIntent {
-    static let title: LocalizedStringResource = "Start a timer"
-
-    @Parameter(title: "Timer Name")
-    var name: String
-
-    @Parameter(title: "Timer is running")
-    var value: Bool
-
-    init() {}
-
-    init(_ name: String) {
-        self.name = name
-    }
+struct OpenWorkoutIntent: AppIntent {
+    static var title: LocalizedStringResource = "Start Workout"
+    static var openAppWhenRun: Bool = true
 
     func perform() async throws -> some IntentResult {
-        // Start the timer…
+        // Opens the app — deep link handling can route to workout
         return .result()
     }
 }

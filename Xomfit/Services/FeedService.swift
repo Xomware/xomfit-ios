@@ -149,7 +149,7 @@ final class FeedService {
 
     // MARK: - Post Workout to Feed
 
-    func postWorkoutToFeed(workout: Workout, userId: String, caption: String? = nil) async throws {
+    func postWorkoutToFeed(workout: Workout, userId: String, caption: String? = nil, photoURLs: [String]? = nil) async throws {
         let exercises = workout.exercises.map { ex in
             WorkoutActivity.ExerciseSummary(
                 id: ex.id,
@@ -178,7 +178,8 @@ final class FeedService {
             prCount: workout.totalPRs,
             exercises: exercises,
             location: workout.location,
-            rating: workout.rating
+            rating: workout.rating,
+            photoURLs: photoURLs
         )
 
         let payloadData = try jsonEncoder.encode(activity)
@@ -234,10 +235,19 @@ final class FeedService {
             feed_item_id: feedItemId,
             user_id: userId
         )
-        try await supabase
-            .from("feed_likes")
-            .insert(insert)
-            .execute()
+        do {
+            try await supabase
+                .from("feed_likes")
+                .insert(insert)
+                .execute()
+        } catch {
+            SyncManager.shared.enqueue(SyncOperation(
+                type: .likeFeedItem,
+                entityId: feedItemId,
+                userId: userId
+            ))
+            throw error
+        }
     }
 
     func unlikeFeedItem(feedItemId: String, userId: String) async throws {
@@ -279,10 +289,20 @@ final class FeedService {
             user_id: userId,
             text: text
         )
-        try await supabase
-            .from("feed_comments")
-            .insert(insert)
-            .execute()
+        do {
+            try await supabase
+                .from("feed_comments")
+                .insert(insert)
+                .execute()
+        } catch {
+            SyncManager.shared.enqueue(SyncOperation(
+                type: .postComment,
+                entityId: feedItemId,
+                userId: userId,
+                payload: text
+            ))
+            throw error
+        }
     }
 
     // MARK: - Delete Feed Item

@@ -23,6 +23,7 @@ final class ProgressViewModel {
     // Exercise picker
     var availableExercises: [String] = []
     var selectedExercise: String = ""
+    var chartTimeframe: ChartTimeframe = .threeMonths
 
     // Recent PRs
     var recentPRs: [PersonalRecord] = []
@@ -30,7 +31,9 @@ final class ProgressViewModel {
     // MARK: - Computed
 
     var filteredStrengthData: [StrengthDataPoint] {
-        strengthDataPoints.filter { $0.exerciseName == selectedExercise }
+        let exerciseFiltered = strengthDataPoints.filter { $0.exerciseName == selectedExercise }
+        guard let cutoff = chartTimeframe.startDate else { return exerciseFiltered }
+        return exerciseFiltered.filter { $0.date >= cutoff }
     }
 
     var formattedTotalVolume: String {

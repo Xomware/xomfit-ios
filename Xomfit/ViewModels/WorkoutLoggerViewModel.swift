@@ -500,6 +500,7 @@ final class WorkoutLoggerViewModel {
         // Trigger the celebration banner
         newPR = pr
         showPRCelebration = true
+        Haptics.prCelebration()
     }
 
     // MARK: - Live Activity
@@ -574,7 +575,7 @@ final class WorkoutLoggerViewModel {
 
     // MARK: - Finish Workout
 
-    func finishWorkout(userId: String, notes: String? = nil) async {
+    func finishWorkout(userId: String, notes: String? = nil, photoURLs: [String]? = nil) async {
         endLiveActivity()
         isSaving = true
         errorMessage = nil
@@ -613,7 +614,7 @@ final class WorkoutLoggerViewModel {
         do {
             try await WorkoutService.shared.saveWorkout(workout)
             // Auto-post to feed after saving
-            try await FeedService.shared.postWorkoutToFeed(workout: workout, userId: userId, caption: workout.notes)
+            try await FeedService.shared.postWorkoutToFeed(workout: workout, userId: userId, caption: workout.notes, photoURLs: photoURLs)
             // Only discard local state after successful save
             isSaving = false
             discardWorkout()

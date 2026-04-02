@@ -1,5 +1,27 @@
 import Foundation
 
+enum ChartTimeframe: String, CaseIterable, Identifiable {
+    case oneMonth = "1M"
+    case threeMonths = "3M"
+    case sixMonths = "6M"
+    case oneYear = "1Y"
+    case allTime = "All"
+
+    var id: String { rawValue }
+
+    var startDate: Date? {
+        let cal = Calendar.current
+        let now = Date()
+        switch self {
+        case .oneMonth: return cal.date(byAdding: .month, value: -1, to: now)
+        case .threeMonths: return cal.date(byAdding: .month, value: -3, to: now)
+        case .sixMonths: return cal.date(byAdding: .month, value: -6, to: now)
+        case .oneYear: return cal.date(byAdding: .year, value: -1, to: now)
+        case .allTime: return nil
+        }
+    }
+}
+
 struct StrengthDataPoint: Identifiable, Codable {
     var id: UUID
     var date: Date

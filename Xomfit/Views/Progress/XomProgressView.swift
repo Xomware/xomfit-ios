@@ -134,6 +134,7 @@ private struct LiftProgressionChart: View {
     let dataPoints: [StrengthDataPoint]
     let exercises: [String]
     @Binding var selectedExercise: String
+    @Binding var timeframe: ChartTimeframe
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
@@ -160,6 +161,24 @@ private struct LiftProgressionChart: View {
                         }
                         .foregroundStyle(Theme.accent)
                     }
+                }
+            }
+
+            // Timeframe picker
+            HStack(spacing: 6) {
+                ForEach(ChartTimeframe.allCases) { tf in
+                    Button {
+                        withAnimation(.xomChill) { timeframe = tf }
+                    } label: {
+                        Text(tf.rawValue)
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(timeframe == tf ? .black : Theme.textSecondary)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(timeframe == tf ? Theme.accent : Theme.surfaceSecondary)
+                            .clipShape(.capsule)
+                    }
+                    .buttonStyle(.plain)
                 }
             }
 
@@ -306,7 +325,8 @@ extension XomProgressView {
         LiftProgressionChart(
             dataPoints: viewModel.filteredStrengthData,
             exercises: viewModel.availableExercises,
-            selectedExercise: Bindable(viewModel).selectedExercise
+            selectedExercise: Bindable(viewModel).selectedExercise,
+            timeframe: Bindable(viewModel).chartTimeframe
         )
     }
 

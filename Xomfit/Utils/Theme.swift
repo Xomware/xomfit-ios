@@ -1,3 +1,4 @@
+import CoreHaptics
 import SwiftUI
 
 // MARK: - Design Tokens
@@ -122,6 +123,82 @@ enum Haptics {
 
     static func selection() {
         UISelectionFeedbackGenerator().selectionChanged()
+    }
+
+    // MARK: - Custom Patterns (CoreHaptics)
+
+    /// Ascending burst for PR celebration — builds up then hits hard
+    static func prCelebration() {
+        guard CHHapticEngine.capabilitiesForHardware().supportsHaptics else { return }
+        do {
+            let engine = try CHHapticEngine()
+            try engine.start()
+            let events: [CHHapticEvent] = [
+                CHHapticEvent(eventType: .hapticTransient, parameters: [
+                    CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.4),
+                    CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.3)
+                ], relativeTime: 0),
+                CHHapticEvent(eventType: .hapticTransient, parameters: [
+                    CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.6),
+                    CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.5)
+                ], relativeTime: 0.1),
+                CHHapticEvent(eventType: .hapticTransient, parameters: [
+                    CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.8),
+                    CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.7)
+                ], relativeTime: 0.2),
+                CHHapticEvent(eventType: .hapticTransient, parameters: [
+                    CHHapticEventParameter(parameterID: .hapticIntensity, value: 1.0),
+                    CHHapticEventParameter(parameterID: .hapticSharpness, value: 1.0)
+                ], relativeTime: 0.35),
+            ]
+            let pattern = try CHHapticPattern(events: events, parameters: [])
+            let player = try engine.makePlayer(with: pattern)
+            try player.start(atTime: 0)
+        } catch {}
+    }
+
+    /// Satisfying completion pattern for finishing a workout
+    static func workoutComplete() {
+        guard CHHapticEngine.capabilitiesForHardware().supportsHaptics else { return }
+        do {
+            let engine = try CHHapticEngine()
+            try engine.start()
+            let events: [CHHapticEvent] = [
+                CHHapticEvent(eventType: .hapticContinuous, parameters: [
+                    CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.6),
+                    CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.3)
+                ], relativeTime: 0, duration: 0.2),
+                CHHapticEvent(eventType: .hapticTransient, parameters: [
+                    CHHapticEventParameter(parameterID: .hapticIntensity, value: 1.0),
+                    CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.8)
+                ], relativeTime: 0.3),
+            ]
+            let pattern = try CHHapticPattern(events: events, parameters: [])
+            let player = try engine.makePlayer(with: pattern)
+            try player.start(atTime: 0)
+        } catch {}
+    }
+
+    /// Quick double tap for streak milestone or leaderboard rank up
+    static func rankUp() {
+        guard CHHapticEngine.capabilitiesForHardware().supportsHaptics else { return }
+        do {
+            let engine = try CHHapticEngine()
+            try engine.start()
+            let events: [CHHapticEvent] = [
+                CHHapticEvent(eventType: .hapticTransient, parameters: [
+                    CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.7),
+                    CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.6)
+                ], relativeTime: 0),
+                CHHapticEvent(eventType: .hapticTransient, parameters: [
+                    CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.9),
+                    CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.8)
+                ], relativeTime: 0.12),
+            ]
+            let pattern = try CHHapticPattern(events: events, parameters: [])
+            let player = try engine.makePlayer(with: pattern)
+            try player.start(atTime: 0)
+        } catch {}
     }
 }
 

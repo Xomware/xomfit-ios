@@ -12,6 +12,9 @@ struct WorkoutView: View {
     @State private var previewTemplate: WorkoutTemplate?
     @State private var templateRefreshId = UUID()
     @State private var recentWorkouts: [Workout] = []
+    private var hasStartedFirstWorkout: Bool {
+        UserDefaults.standard.bool(forKey: "xomfit_first_workout_started")
+    }
     @State private var myTemplates: [WorkoutTemplate] = []
     @State private var savedTemplates: [WorkoutTemplate] = []
 
@@ -54,6 +57,11 @@ struct WorkoutView: View {
                             }
                             .buttonStyle(GhostButtonStyle())
                             .padding(.horizontal, Theme.Spacing.md)
+
+                            // First workout guide for new users
+                            if recentWorkouts.isEmpty && !hasStartedFirstWorkout {
+                                firstWorkoutCard
+                            }
 
                             // Quick Start templates
                             templateSection
@@ -124,6 +132,49 @@ struct WorkoutView: View {
                 }
             }
         }
+    }
+
+    // MARK: - First Workout Guide
+
+    private var firstWorkoutCard: some View {
+        VStack(spacing: Theme.Spacing.md) {
+            Image(systemName: "figure.strengthtraining.traditional")
+                .font(.system(size: 40))
+                .foregroundStyle(Theme.accent)
+
+            Text("Welcome to XomFit!")
+                .font(.title3.weight(.bold))
+                .foregroundStyle(Theme.textPrimary)
+
+            Text("Start with a guided workout to learn the ropes. We'll walk you through logging sets, using the rest timer, and more.")
+                .font(Theme.fontBody)
+                .foregroundStyle(Theme.textSecondary)
+                .multilineTextAlignment(.center)
+
+            Button {
+                Haptics.medium()
+                UserDefaults.standard.set(true, forKey: "xomfit_first_workout_started")
+                selectedTemplate = WorkoutTemplate.builtIn.first(where: { $0.id == "tpl-fb-a" })
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "play.fill")
+                    Text("Start Guided Workout")
+                }
+            }
+            .buttonStyle(AccentButtonStyle())
+
+            Button {
+                UserDefaults.standard.set(true, forKey: "xomfit_first_workout_started")
+            } label: {
+                Text("Skip — I know what I'm doing")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(Theme.textSecondary)
+            }
+        }
+        .padding(Theme.Spacing.lg)
+        .background(Theme.surface)
+        .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+        .padding(.horizontal, Theme.Spacing.md)
     }
 
     // MARK: - Templates

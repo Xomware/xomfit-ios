@@ -234,6 +234,17 @@ struct FeedItemCard: View {
 
             Spacer()
 
+            // Share button
+            Button {
+                shareFeedItem()
+            } label: {
+                Image(systemName: "square.and.arrow.up")
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.textSecondary)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Share")
+
             if item.activityType == .workout, let onSave {
                 Button {
                     Haptics.success()
@@ -246,6 +257,37 @@ struct FeedItemCard: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel("Save workout")
             }
+        }
+    }
+
+    private func shareFeedItem() {
+        let name = item.user.displayName.isEmpty ? item.user.username : item.user.displayName
+        var text = ""
+        switch item.activityType {
+        case .workout:
+            if let w = item.workoutActivity {
+                text = "💪 \(name) crushed \(w.workoutName)!\n\(w.exerciseCount) exercises · \(w.totalSets) sets · \(Int(w.totalVolume)) lbs"
+                if w.prCount > 0 { text += " · \(w.prCount) PR\(w.prCount > 1 ? "s" : "")! 🏆" }
+            }
+        case .personalRecord:
+            if let pr = item.prActivity {
+                text = "🏆 \(name) hit a new PR!\n\(pr.exerciseName): \(Int(pr.weight)) lbs x \(pr.reps)"
+            }
+        case .milestone:
+            if let m = item.milestoneActivity {
+                text = "🎉 \(name) reached a milestone!\n\(m.title) — \(m.subtitle)"
+            }
+        case .streak:
+            if let s = item.streakActivity {
+                text = "🔥 \(name) is on a \(s.currentStreak)-day streak!"
+            }
+        }
+        text += "\n\nShared from XomFit"
+
+        let controller = UIActivityViewController(activityItems: [text], applicationActivities: nil)
+        if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let root = scene.keyWindow?.rootViewController {
+            root.present(controller, animated: true)
         }
     }
 }
@@ -304,6 +346,31 @@ private struct WorkoutActivityContent: View {
                 .padding(.vertical, Theme.Spacing.xs)
                 .background(Theme.prGold.opacity(0.12))
                 .clipShape(.rect(cornerRadius: 6))
+            }
+
+            // Photo gallery
+            if let photoURLs = activity.photoURLs, !photoURLs.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 6) {
+                        ForEach(photoURLs, id: \.self) { urlString in
+                            AsyncImage(url: URL(string: urlString)) { phase in
+                                switch phase {
+                                case .success(let image):
+                                    image
+                                        .resizable()
+                                        .scaledToFill()
+                                case .failure:
+                                    Image(systemName: "photo")
+                                        .foregroundStyle(Theme.textSecondary)
+                                default:
+                                    ProgressView()
+                                }
+                            }
+                            .frame(width: 120, height: 120)
+                            .clipShape(.rect(cornerRadius: 8))
+                        }
+                    }
+                }
             }
 
             if !activity.exercises.isEmpty {
