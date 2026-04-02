@@ -128,7 +128,7 @@ final class FriendsService {
         var rows: [ProfileRow] = try await supabase
             .from("profiles")
             .select()
-            .ilike("username", value: "%\(query)%")
+            .ilike("username", pattern: "%\(query)%")
             .limit(20)
             .execute()
             .value

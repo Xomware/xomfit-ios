@@ -174,7 +174,7 @@ struct OnboardingFriendsScreen: View {
     }
 
     private func sendRequest(to targetId: String) {
-        withAnimation(.xomConfident) {
+        _ = withAnimation(.xomConfident) {
             sentRequests.insert(targetId)
         }
         Task {
@@ -184,7 +184,7 @@ struct OnboardingFriendsScreen: View {
                     toUserId: targetId
                 )
             } catch {
-                withAnimation {
+                _ = withAnimation {
                     sentRequests.remove(targetId)
                 }
             }
