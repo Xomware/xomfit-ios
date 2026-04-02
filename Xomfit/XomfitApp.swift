@@ -2,6 +2,7 @@ import SwiftUI
 
 @main
 struct XomFitApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @State private var authService = AuthService()
 
     var body: some Scene {
@@ -21,6 +22,9 @@ struct XomFitApp: App {
                 } else if authService.isAuthenticated {
                     MainTabView()
                         .environment(authService)
+                        .task {
+                            await NotificationService.shared.requestPermission()
+                        }
                         .sheet(isPresented: Bindable(authService).needsProfileCompletion) {
                             ProfileCompletionView()
                                 .environment(authService)
