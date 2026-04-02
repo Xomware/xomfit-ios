@@ -2,6 +2,7 @@ import SwiftUI
 
 struct MainTabView: View {
     @State private var selectedTab = 0
+    @State private var tabBarVisible = true
 
     var body: some View {
         ZStack {
@@ -18,8 +19,42 @@ struct MainTabView: View {
             .animation(.xomChill, value: selectedTab)
         }
         .safeAreaInset(edge: .bottom) {
-            FloatingTabBar(selectedTab: $selectedTab)
+            if tabBarVisible {
+                FloatingTabBar(selectedTab: $selectedTab)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
         }
+        .environment(\.tabBarVisible, $tabBarVisible)
+    }
+}
+
+// MARK: - Tab Bar Visibility Environment Key
+
+private struct TabBarVisibleKey: EnvironmentKey {
+    static let defaultValue: Binding<Bool> = .constant(true)
+}
+
+extension EnvironmentValues {
+    var tabBarVisible: Binding<Bool> {
+        get { self[TabBarVisibleKey.self] }
+        set { self[TabBarVisibleKey.self] = newValue }
+    }
+}
+
+/// Apply to any view pushed inside a NavigationStack to hide the floating tab bar.
+struct HideTabBar: ViewModifier {
+    @Environment(\.tabBarVisible) private var tabBarVisible
+
+    func body(content: Content) -> some View {
+        content
+            .onAppear { withAnimation(.xomChill) { tabBarVisible.wrappedValue = false } }
+            .onDisappear { withAnimation(.xomChill) { tabBarVisible.wrappedValue = true } }
+    }
+}
+
+extension View {
+    func hideTabBar() -> some View {
+        modifier(HideTabBar())
     }
 }
 

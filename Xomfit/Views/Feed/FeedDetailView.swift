@@ -387,6 +387,7 @@ struct FeedDetailView: View {
 
             NavigationLink {
                 FeedCommentsView(feedItemId: item.id, userId: userId)
+                    .hideTabBar()
             } label: {
                 HStack(spacing: 5) {
                     Image(systemName: "bubble.right")

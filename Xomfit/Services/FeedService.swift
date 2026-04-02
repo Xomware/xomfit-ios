@@ -176,7 +176,9 @@ final class FeedService {
             totalSets: workout.totalSets,
             exerciseCount: workout.exercises.count,
             prCount: workout.totalPRs,
-            exercises: exercises
+            exercises: exercises,
+            location: workout.location,
+            rating: workout.rating
         )
 
         let payloadData = try jsonEncoder.encode(activity)

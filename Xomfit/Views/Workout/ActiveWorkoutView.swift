@@ -3,6 +3,7 @@ import SwiftUI
 struct ActiveWorkoutView: View {
     @Environment(AuthService.self) private var authService
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.scenePhase) private var scenePhase
 
     @State private var viewModel = WorkoutLoggerViewModel()
     @State private var showExercisePicker = false
@@ -153,6 +154,11 @@ struct ActiveWorkoutView: View {
                 restTimerHapticFired = false
             }
         }
+        .onChange(of: scenePhase) { _, newPhase in
+            if newPhase == .active {
+                viewModel.recalculateRestTimer()
+            }
+        }
         .sheet(isPresented: $showExercisePicker) {
             ExercisePickerView { exercise in
                 viewModel.addExercise(exercise)
@@ -170,10 +176,12 @@ struct ActiveWorkoutView: View {
         .sheet(isPresented: $showFinishSheet) {
             FinishWorkoutSheet(
                 description: $workoutDescription,
+                location: $viewModel.location,
+                rating: $viewModel.rating,
                 isSaving: viewModel.isSaving,
                 onFinish: { finishWorkout() }
             )
-            .presentationDetents([.medium])
+            .presentationDetents([.large])
             .presentationDragIndicator(.visible)
         }
     }
@@ -208,7 +216,12 @@ struct ActiveWorkoutView: View {
 
             // Focus mode toggle
             Button {
-                withAnimation { viewModel.focusMode.toggle() }
+                withAnimation {
+                    viewModel.focusMode.toggle()
+                    if viewModel.focusMode {
+                        viewModel.syncFocusToCurrentExercise()
+                    }
+                }
             } label: {
                 Image(systemName: viewModel.focusMode ? "list.bullet" : "eye")
                     .font(.subheadline.weight(.semibold))
@@ -703,6 +716,8 @@ private struct ExerciseTransitionCard: View {
 
 private struct FinishWorkoutSheet: View {
     @Binding var description: String
+    @Binding var location: String
+    @Binding var rating: Int
     let isSaving: Bool
     let onFinish: () -> Void
 
@@ -711,54 +726,101 @@ private struct FinishWorkoutSheet: View {
             ZStack {
                 Theme.background.ignoresSafeArea()
 
-                VStack(spacing: Theme.Spacing.md) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Add a description")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(Theme.textPrimary)
-                        Text("Optional -- this will appear as a caption on your feed post.")
-                            .font(Theme.fontCaption)
-                            .foregroundStyle(Theme.textSecondary)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-
-                    TextEditor(text: $description)
-                        .font(Theme.fontBody)
-                        .foregroundStyle(Theme.textPrimary)
-                        .scrollContentBackground(.hidden)
-                        .padding(Theme.Spacing.sm)
-                        .frame(minHeight: 100, maxHeight: 150)
-                        .background(Theme.surface)
-                        .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall)
-                                .stroke(Theme.textSecondary.opacity(0.2), lineWidth: 1)
-                        )
-
-                    Button {
-                        Haptics.success()
-                        onFinish()
-                    } label: {
-                        if isSaving {
-                            ProgressView()
-                                .tint(.black)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 14)
-                        } else {
-                            Text("Finish Workout")
-                                .font(.body.weight(.bold))
-                                .foregroundStyle(.black)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 14)
+                ScrollView {
+                    VStack(spacing: Theme.Spacing.lg) {
+                        // Star Rating
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("How was your workout?")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(Theme.textPrimary)
+                            HStack(spacing: 8) {
+                                ForEach(1...5, id: \.self) { star in
+                                    Button {
+                                        withAnimation(.xomChill) {
+                                            rating = rating == star ? 0 : star
+                                        }
+                                    } label: {
+                                        Image(systemName: star <= rating ? "star.fill" : "star")
+                                            .font(.title2)
+                                            .foregroundStyle(star <= rating ? Theme.accent : Theme.textSecondary.opacity(0.4))
+                                    }
+                                    .buttonStyle(.plain)
+                                    .accessibilityLabel("\(star) star\(star > 1 ? "s" : "")")
+                                }
+                                Spacer()
+                            }
                         }
-                    }
-                    .background(Theme.accent)
-                    .clipShape(.rect(cornerRadius: Theme.cornerRadius))
-                    .disabled(isSaving)
 
-                    Spacer()
+                        // Location
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Location")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(Theme.textPrimary)
+                            HStack(spacing: 8) {
+                                Image(systemName: "location.fill")
+                                    .font(.caption)
+                                    .foregroundStyle(Theme.textSecondary)
+                                TextField("Gym name", text: $location)
+                                    .font(Theme.fontBody)
+                                    .foregroundStyle(Theme.textPrimary)
+                            }
+                            .padding(Theme.Spacing.sm)
+                            .background(Theme.surface)
+                            .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall)
+                                    .stroke(Theme.textSecondary.opacity(0.2), lineWidth: 1)
+                            )
+                        }
+
+                        // Description
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Caption")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(Theme.textPrimary)
+                            Text("Optional — appears on your feed post.")
+                                .font(Theme.fontCaption)
+                                .foregroundStyle(Theme.textSecondary)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                        TextEditor(text: $description)
+                            .font(Theme.fontBody)
+                            .foregroundStyle(Theme.textPrimary)
+                            .scrollContentBackground(.hidden)
+                            .padding(Theme.Spacing.sm)
+                            .frame(minHeight: 80, maxHeight: 120)
+                            .background(Theme.surface)
+                            .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall)
+                                    .stroke(Theme.textSecondary.opacity(0.2), lineWidth: 1)
+                            )
+
+                        // Finish button
+                        Button {
+                            Haptics.success()
+                            onFinish()
+                        } label: {
+                            if isSaving {
+                                ProgressView()
+                                    .tint(.black)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 14)
+                            } else {
+                                Text("Finish Workout")
+                                    .font(.body.weight(.bold))
+                                    .foregroundStyle(.black)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 14)
+                            }
+                        }
+                        .background(Theme.accent)
+                        .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+                        .disabled(isSaving)
+                    }
+                    .padding(Theme.Spacing.md)
                 }
-                .padding(Theme.Spacing.md)
             }
             .navigationTitle("Finish Workout")
             .navigationBarTitleDisplayMode(.inline)

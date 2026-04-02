@@ -2,30 +2,55 @@ import SwiftUI
 
 struct ProfileFeedView: View {
     @Binding var feedItems: [SocialFeedItem]
+    var filteredItems: [SocialFeedItem]
+    var isFiltered: Bool
+    @Binding var dateRange: FeedDateRange
+    @Binding var muscleGroups: Set<MuscleGroup>
     var userId: String = ""
     var currentUserId: String = ""
 
     var body: some View {
-        if feedItems.isEmpty {
-            emptyState
-        } else {
-            LazyVStack(spacing: Theme.Spacing.sm) {
-                ForEach(feedItems) { item in
-                    NavigationLink {
-                        FeedDetailView(item: item, userId: currentUserId)
-                    } label: {
-                        FeedItemCard(
-                            item: item,
-                            onLike: { /* Like handled at feed level */ },
-                            onComment: { /* Comment handled at feed level */ },
-                            onDelete: deleteAction(for: item),
-                            onEdit: editAction(for: item)
-                        )
-                    }
-                    .buttonStyle(.plain)
-                }
+        VStack(spacing: 0) {
+            if !feedItems.isEmpty {
+                FeedFilterBar(
+                    selectedDateRange: $dateRange,
+                    selectedMuscleGroups: $muscleGroups
+                )
             }
-            .padding(.horizontal, Theme.Spacing.md)
+
+            if feedItems.isEmpty {
+                emptyState
+            } else if isFiltered && filteredItems.isEmpty {
+                VStack(spacing: Theme.Spacing.sm) {
+                    Image(systemName: "line.3.horizontal.decrease")
+                        .font(.largeTitle)
+                        .foregroundStyle(Theme.textSecondary)
+                    Text("No matching posts")
+                        .font(Theme.fontBody)
+                        .foregroundStyle(Theme.textSecondary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 60)
+            } else {
+                LazyVStack(spacing: Theme.Spacing.sm) {
+                    ForEach(filteredItems) { item in
+                        NavigationLink {
+                            FeedDetailView(item: item, userId: currentUserId)
+                                .hideTabBar()
+                        } label: {
+                            FeedItemCard(
+                                item: item,
+                                onLike: { /* Like handled at feed level */ },
+                                onComment: { /* Comment handled at feed level */ },
+                                onDelete: deleteAction(for: item),
+                                onEdit: editAction(for: item)
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, Theme.Spacing.md)
+            }
         }
     }
 

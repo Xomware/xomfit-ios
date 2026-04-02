@@ -252,6 +252,7 @@ private struct CalendarDayDetailSheet: View {
                         ForEach(workouts) { workout in
                             NavigationLink {
                                 WorkoutDetailView(workout: workout)
+                                    .hideTabBar()
                             } label: {
                                 HStack(spacing: 12) {
                                     Image(systemName: "dumbbell.fill")

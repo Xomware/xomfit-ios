@@ -22,7 +22,24 @@ struct FeedView: View {
                 } else if viewModel.feedItems.isEmpty {
                     emptyState
                 } else {
-                    feedList
+                    VStack(spacing: 0) {
+                        FeedFilterBar(
+                            selectedDateRange: $viewModel.dateRange,
+                            selectedMuscleGroups: $viewModel.selectedMuscleGroups
+                        )
+
+                        if viewModel.isFiltered && viewModel.filteredFeedItems.isEmpty {
+                            Spacer()
+                            XomEmptyState(
+                                icon: "line.3.horizontal.decrease",
+                                title: "No matching posts",
+                                subtitle: "Try adjusting your filters"
+                            )
+                            Spacer()
+                        } else {
+                            feedList
+                        }
+                    }
                 }
             }
             .navigationTitle("Feed")
@@ -40,6 +57,7 @@ struct FeedView: View {
 
                         NavigationLink {
                             FriendsView()
+                                .hideTabBar()
                         } label: {
                             Image(systemName: "person.badge.plus")
                                 .foregroundStyle(Theme.accent)
@@ -49,6 +67,7 @@ struct FeedView: View {
             }
             .navigationDestination(item: $selectedFeedItem) { item in
                 FeedDetailView(item: item, userId: userId)
+                    .hideTabBar()
             }
             .sheet(isPresented: $showUserSearch) {
                 UserSearchView()
@@ -78,7 +97,7 @@ struct FeedView: View {
     private var feedList: some View {
         ScrollView {
             LazyVStack(spacing: 12) {
-                ForEach(Array(viewModel.feedItems.enumerated()), id: \.element.id) { index, item in
+                ForEach(Array(viewModel.filteredFeedItems.enumerated()), id: \.element.id) { index, item in
                     FeedItemCard(
                         item: item,
                         onLike: {
@@ -103,7 +122,7 @@ struct FeedView: View {
                     }
                 }
 
-                if !viewModel.hasMore && !viewModel.feedItems.isEmpty {
+                if !viewModel.hasMore && !viewModel.filteredFeedItems.isEmpty {
                     Text("You're all caught up!")
                         .font(Theme.fontCaption)
                         .foregroundStyle(Theme.textSecondary)

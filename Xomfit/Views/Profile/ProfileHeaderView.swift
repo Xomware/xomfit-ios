@@ -34,6 +34,7 @@ struct ProfileHeaderView: View {
                         friendProfiles: friendProfiles,
                         currentUserId: currentUserId
                     )
+                    .hideTabBar()
                 } label: {
                     VStack(spacing: 2) {
                         Text("\(friendCount)")

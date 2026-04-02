@@ -24,6 +24,17 @@ struct XomProgressView: View {
             }
             .navigationTitle("Progress")
             .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink {
+                        LeaderboardView()
+                    } label: {
+                        Image(systemName: "trophy.fill")
+                            .foregroundStyle(Theme.accent)
+                    }
+                    .accessibilityLabel("Leaderboard")
+                }
+            }
         }
         .task {
             await viewModel.loadData(userId: userId)

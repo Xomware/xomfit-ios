@@ -57,6 +57,8 @@ struct WorkoutActivity: Codable {
     let exerciseCount: Int
     let prCount: Int
     let exercises: [ExerciseSummary]
+    var location: String?
+    var rating: Int?
 
     struct ExerciseSummary: Codable, Identifiable {
         let id: String

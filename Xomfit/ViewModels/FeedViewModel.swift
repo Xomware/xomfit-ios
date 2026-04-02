@@ -8,6 +8,30 @@ final class FeedViewModel {
     var isRefreshing: Bool = false
     var errorMessage: String? = nil
 
+    // Filters
+    var dateRange: FeedDateRange = .all
+    var selectedMuscleGroups: Set<MuscleGroup> = []
+
+    var filteredFeedItems: [SocialFeedItem] {
+        feedItems.filter { item in
+            // Date filter
+            if let start = dateRange.startDate, item.createdAt < start {
+                return false
+            }
+            // Muscle group filter (only applies to workout posts)
+            if !selectedMuscleGroups.isEmpty {
+                guard let exercises = item.workoutActivity?.exercises else { return false }
+                let itemGroups = exercises.flatMap { ex in
+                    ExerciseDatabase.all.first(where: { $0.name == ex.name })?.muscleGroups ?? []
+                }
+                if selectedMuscleGroups.isDisjoint(with: itemGroups) { return false }
+            }
+            return true
+        }
+    }
+
+    var isFiltered: Bool { dateRange != .all || !selectedMuscleGroups.isEmpty }
+
     // Pagination state
     private let pageSize = 20
     private var offset = 0

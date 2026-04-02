@@ -257,9 +257,31 @@ private struct WorkoutActivityContent: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            Text(activity.workoutName)
-                .font(.body.weight(.bold))
-                .foregroundStyle(Theme.textPrimary)
+            HStack(spacing: Theme.Spacing.sm) {
+                Text(activity.workoutName)
+                    .font(.body.weight(.bold))
+                    .foregroundStyle(Theme.textPrimary)
+
+                if let rating = activity.rating, rating > 0 {
+                    HStack(spacing: 2) {
+                        ForEach(1...5, id: \.self) { star in
+                            Image(systemName: star <= rating ? "star.fill" : "star")
+                                .font(.system(size: 10))
+                                .foregroundStyle(star <= rating ? Theme.accent : Theme.textSecondary.opacity(0.3))
+                        }
+                    }
+                }
+            }
+
+            if let location = activity.location, !location.isEmpty {
+                HStack(spacing: 4) {
+                    Image(systemName: "location.fill")
+                        .font(.system(size: 10))
+                    Text(location)
+                        .font(Theme.fontSmall)
+                }
+                .foregroundStyle(Theme.textSecondary)
+            }
 
             // Stats grid — max 3 primary + optional PR badge
             HStack(spacing: 0) {

@@ -162,7 +162,15 @@ struct ProfileView: View {
     private var tabContent: some View {
         switch viewModel.selectedTab {
         case .feed:
-            ProfileFeedView(feedItems: $viewModel.feedItems, userId: resolvedUserId, currentUserId: currentUserId)
+            ProfileFeedView(
+                feedItems: $viewModel.feedItems,
+                filteredItems: viewModel.filteredFeedItems,
+                isFiltered: viewModel.isFeedFiltered,
+                dateRange: $viewModel.feedDateRange,
+                muscleGroups: $viewModel.feedMuscleGroups,
+                userId: resolvedUserId,
+                currentUserId: currentUserId
+            )
         case .calendar:
             ProfileCalendarView(workoutDays: viewModel.workoutDays, userId: resolvedUserId)
         case .stats:
@@ -194,6 +202,7 @@ struct ProfileView: View {
 
                 NavigationLink {
                     SettingsView()
+                        .hideTabBar()
                 } label: {
                     Image(systemName: "gearshape.fill")
                         .foregroundStyle(Theme.textSecondary)

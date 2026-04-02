@@ -343,22 +343,47 @@ struct WorkoutFocusView: View {
     private var restTimerOverlay: some View {
         Group {
             if isRestTimerMinimized {
-                // Minimized: bottom banner
+                // Minimized: bottom banner with Lift button and tap-to-expand
                 VStack {
                     Spacer()
-                    RestTimerView(
-                        restTimeRemaining: viewModel.restTimeRemaining,
-                        restDuration: viewModel.restDuration,
-                        onSkip: {
+                    HStack(spacing: Theme.Spacing.sm) {
+                        // Tap the timer area to expand back to full screen
+                        Button {
+                            withAnimation(.xomChill) { isRestTimerMinimized = false }
+                        } label: {
+                            RestTimerView(
+                                restTimeRemaining: viewModel.restTimeRemaining,
+                                restDuration: viewModel.restDuration,
+                                onSkip: { viewModel.skipRestTimer() },
+                                onExtend: { viewModel.extendRestTimer() }
+                            )
+                        }
+                        .buttonStyle(.plain)
+
+                        // Lift button to skip timer entirely
+                        Button {
+                            Haptics.success()
                             viewModel.skipRestTimer()
                             isRestTimerMinimized = false
-                        },
-                        onExtend: { viewModel.extendRestTimer() }
-                    )
-                    .padding(.horizontal, Theme.Spacing.md)
-                    .padding(.bottom, Theme.Spacing.lg)
-                    .shadow(color: .black.opacity(0.5), radius: 12, x: 0, y: -4)
+                        } label: {
+                            Text("LIFT")
+                                .font(.caption.weight(.black))
+                                .foregroundStyle(.black)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 10)
+                                .background(Theme.accent)
+                                .clipShape(.capsule)
+                        }
+                    }
+                    if let nextEx = viewModel.nextExercise {
+                        Text("Next: \(nextEx.exercise.name)")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(Theme.accent)
+                    }
                 }
+                .padding(.horizontal, Theme.Spacing.md)
+                .padding(.bottom, Theme.Spacing.lg)
+                .shadow(color: .black.opacity(0.5), radius: 12, x: 0, y: -4)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             } else {
                 // Full-screen rest timer
@@ -432,6 +457,18 @@ struct WorkoutFocusView: View {
                     }
                 }
                 .frame(width: 240, height: 240)
+
+                // Next exercise hint
+                if let nextEx = viewModel.nextExercise {
+                    VStack(spacing: 4) {
+                        Text("NEXT UP")
+                            .font(.caption2.weight(.bold))
+                            .foregroundStyle(Theme.accent)
+                        Text(nextEx.exercise.name)
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(Theme.textPrimary)
+                    }
+                }
 
                 // +30s button
                 Button {

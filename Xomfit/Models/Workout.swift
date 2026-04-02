@@ -8,6 +8,8 @@ struct Workout: Codable, Identifiable {
     var startTime: Date
     var endTime: Date?
     var notes: String?
+    var location: String?
+    var rating: Int?
     
     var startDate: Date { startTime }
 
