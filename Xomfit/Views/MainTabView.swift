@@ -96,34 +96,18 @@ private struct FloatingTabBar: View {
         }
         .padding(.horizontal, Theme.Spacing.md)
         .padding(.top, 12)
-        .padding(.bottom, Theme.Spacing.lg)
+        .padding(.bottom, Theme.Spacing.sm)
         .background(
-            UnevenRoundedRectangle(
-                topLeadingRadius: 24,
-                bottomLeadingRadius: 0,
-                bottomTrailingRadius: 0,
-                topTrailingRadius: 24
-            )
-            .fill(Theme.background.opacity(0.85))
-            .background(
-                UnevenRoundedRectangle(
-                    topLeadingRadius: 24,
-                    bottomLeadingRadius: 0,
-                    bottomTrailingRadius: 0,
-                    topTrailingRadius: 24
+            Theme.background
+                .overlay(
+                    UnevenRoundedRectangle(
+                        topLeadingRadius: 24,
+                        bottomLeadingRadius: 0,
+                        bottomTrailingRadius: 0,
+                        topTrailingRadius: 24
+                    )
+                    .strokeBorder(Theme.glassBorder, lineWidth: 0.5)
                 )
-                .fill(.ultraThinMaterial)
-            )
-            .overlay(
-                UnevenRoundedRectangle(
-                    topLeadingRadius: 24,
-                    bottomLeadingRadius: 0,
-                    bottomTrailingRadius: 0,
-                    topTrailingRadius: 24
-                )
-                .strokeBorder(Theme.glassBorder, lineWidth: 0.5)
-            )
         )
-        .ignoresSafeArea(.container, edges: .bottom)
     }
 }
