@@ -141,7 +141,7 @@ struct FeedItemCard: View {
 
     private var badgeIcon: String {
         switch item.activityType {
-        case .workout: return "dumbbell.fill"
+        case .workout: return "figure.strengthtraining.traditional"
         case .personalRecord: return "trophy.fill"
         case .milestone: return "star.fill"
         case .streak: return "flame.fill"

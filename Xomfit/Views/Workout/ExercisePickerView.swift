@@ -137,7 +137,7 @@ private struct ExerciseRow: View {
     var body: some View {
         Button(action: onTap) {
             HStack(spacing: Theme.Spacing.md) {
-                Image(systemName: exercise.equipment.icon)
+                Image(systemName: exercise.icon)
                     .font(.title3)
                     .foregroundStyle(Theme.accent)
                     .frame(width: 36, height: 36)

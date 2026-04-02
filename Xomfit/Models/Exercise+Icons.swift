@@ -1,0 +1,167 @@
+import Foundation
+
+// MARK: - Exercise Icon Mapping
+// Maps exercise IDs to SF Symbol names.
+// Exercise.icon checks this dictionary first, then falls back to muscle group icon.
+
+extension Exercise {
+    /// Static mapping from exercise ID to SF Symbol name.
+    static let iconMapping: [String: String] = [
+
+        // MARK: Chest
+        "ex-bench-flat":             "figure.strengthtraining.traditional",
+        "ex-bench-incline":          "figure.strengthtraining.traditional",
+        "ex-bench-db":               "dumbbell.fill",
+        "ex-incline-db":             "dumbbell.fill",
+        "ex-chest-fly":              "figure.arms.open",
+        "ex-dips":                   "figure.strengthtraining.functional",
+        "ex-pushup":                 "figure.strengthtraining.functional",
+        "ex-machine-press":          "gearshape.fill",
+        "ex-decline-bench":          "figure.strengthtraining.traditional",
+        "ex-decline-db-press":       "dumbbell.fill",
+        "ex-incline-machine-press":  "gearshape.fill",
+        "ex-cable-high-fly":         "figure.arms.open",
+        "ex-cable-low-fly":          "figure.arms.open",
+        "ex-landmine-press":         "figure.strengthtraining.traditional",
+        "ex-pec-deck":               "figure.arms.open",
+        "ex-db-fly":                 "figure.arms.open",
+        "ex-svend-press":            "figure.arms.open",
+        "ex-single-arm-cable-press": "arrow.up.and.down",
+        "ex-single-arm-floor-press": "dumbbell.fill",
+
+        // MARK: Back
+        "ex-deadlift":               "figure.strengthtraining.traditional",
+        "ex-row-barbell":            "figure.indoor.rowing",
+        "ex-row-db":                 "figure.indoor.rowing",
+        "ex-pullup":                 "figure.climbing",
+        "ex-chinup":                 "figure.climbing",
+        "ex-lat-pulldown":           "chevron.down",
+        "ex-cable-row":              "figure.indoor.rowing",
+        "ex-face-pull":              "arrow.up.and.down",
+        "ex-chest-supported-row":    "figure.indoor.rowing",
+        "ex-tbar-row":               "figure.indoor.rowing",
+        "ex-pendlay-row":            "figure.indoor.rowing",
+        "ex-close-grip-pulldown":    "chevron.down",
+        "ex-reverse-grip-pulldown":  "chevron.down",
+        "ex-straight-arm-pulldown":  "chevron.down",
+        "ex-cable-reverse-fly":      "figure.arms.open",
+        "ex-machine-row":            "gearshape.fill",
+        "ex-pullover-machine":       "gearshape.fill",
+        "ex-seal-row":               "figure.indoor.rowing",
+        "ex-single-arm-lat-pulldown":"chevron.down",
+        "ex-single-arm-cable-row":   "figure.indoor.rowing",
+        "ex-db-pullover":            "dumbbell.fill",
+        "ex-single-arm-machine-row": "gearshape.fill",
+        "ex-meadows-row":            "figure.indoor.rowing",
+
+        // MARK: Shoulders
+        "ex-ohp":                           "figure.strengthtraining.traditional",
+        "ex-db-shoulder-press":             "dumbbell.fill",
+        "ex-lateral-raise":                 "figure.arms.open",
+        "ex-front-raise":                   "figure.arms.open",
+        "ex-rear-delt-fly":                 "figure.arms.open",
+        "ex-shrugs":                        "figure.strengthtraining.traditional",
+        "ex-machine-shoulder-press":        "gearshape.fill",
+        "ex-cable-lateral-raise":           "figure.arms.open",
+        "ex-machine-lateral-raise":         "gearshape.fill",
+        "ex-cable-front-raise":             "figure.arms.open",
+        "ex-db-shrugs":                     "dumbbell.fill",
+        "ex-machine-shrugs":                "gearshape.fill",
+        "ex-arnold-press":                  "dumbbell.fill",
+        "ex-upright-row":                   "figure.strengthtraining.traditional",
+        "ex-cable-rear-delt-fly":           "figure.arms.open",
+        "ex-reverse-pec-deck":              "gearshape.fill",
+        "ex-single-arm-db-shoulder-press":  "dumbbell.fill",
+        "ex-single-arm-landmine-press":     "figure.strengthtraining.traditional",
+        "ex-single-arm-face-pull":          "arrow.up.and.down",
+
+        // MARK: Legs
+        "ex-squat":                  "figure.strengthtraining.traditional",
+        "ex-front-squat":            "figure.strengthtraining.traditional",
+        "ex-leg-press":              "gearshape.fill",
+        "ex-rdl":                    "figure.strengthtraining.traditional",
+        "ex-lunge":                  "figure.step.training",
+        "ex-leg-curl":               "gearshape.fill",
+        "ex-leg-ext":                "gearshape.fill",
+        "ex-calf-raise":             "figure.step.training",
+        "ex-hip-thrust":             "figure.strengthtraining.traditional",
+        "ex-hack-squat":             "gearshape.fill",
+        "ex-goblet-squat":           "dumbbell.fill",
+        "ex-bulgarian-split-squat":  "figure.step.training",
+        "ex-sumo-deadlift":          "figure.strengthtraining.traditional",
+        "ex-db-rdl":                 "dumbbell.fill",
+        "ex-seated-leg-curl":        "gearshape.fill",
+        "ex-glute-kickback":         "gearshape.fill",
+        "ex-seated-calf-raise":      "gearshape.fill",
+        "ex-smith-squat":            "gearshape.fill",
+        "ex-step-ups":               "figure.step.training",
+        "ex-single-leg-press":       "gearshape.fill",
+        "ex-single-leg-ext":         "gearshape.fill",
+        "ex-pistol-squat":           "figure.strengthtraining.functional",
+        "ex-reverse-lunge":          "figure.step.training",
+        "ex-lateral-lunge":          "figure.step.training",
+        "ex-split-squat":            "figure.step.training",
+        "ex-curtsy-lunge":           "figure.step.training",
+        "ex-single-leg-hip-thrust":  "figure.strengthtraining.functional",
+        "ex-cable-kickback":         "arrow.up.and.down",
+        "ex-cable-hip-abduction":    "arrow.up.and.down",
+        "ex-single-leg-rdl":         "dumbbell.fill",
+        "ex-single-leg-curl":        "gearshape.fill",
+        "ex-kb-single-leg-rdl":      "figure.strengthtraining.functional",
+        "ex-single-leg-calf-raise":  "figure.step.training",
+
+        // MARK: Arms
+        "ex-barbell-curl":               "figure.strengthtraining.traditional",
+        "ex-db-curl":                    "dumbbell.fill",
+        "ex-hammer-curl":                "dumbbell.fill",
+        "ex-preacher-curl":              "dumbbell.fill",
+        "ex-tricep-pushdown":            "arrow.up.and.down",
+        "ex-skull-crusher":              "figure.strengthtraining.traditional",
+        "ex-overhead-ext":               "dumbbell.fill",
+        "ex-close-grip-bench":           "figure.strengthtraining.traditional",
+        "ex-cable-curl":                 "arrow.up.and.down",
+        "ex-concentration-curl":         "dumbbell.fill",
+        "ex-ez-bar-curl":                "figure.strengthtraining.traditional",
+        "ex-spider-curl":                "dumbbell.fill",
+        "ex-incline-db-curl":            "dumbbell.fill",
+        "ex-cable-overhead-tri-ext":     "arrow.up.and.down",
+        "ex-tricep-dip-machine":         "gearshape.fill",
+        "ex-kickbacks":                  "dumbbell.fill",
+        "ex-reverse-curl":               "figure.strengthtraining.traditional",
+        "ex-wrist-curl":                 "dumbbell.fill",
+        "ex-single-arm-cable-curl":      "arrow.up.and.down",
+        "ex-single-arm-machine-preacher":"gearshape.fill",
+        "ex-cross-body-hammer-curl":     "dumbbell.fill",
+        "ex-bayesian-curl":              "arrow.up.and.down",
+        "ex-single-arm-pushdown":        "arrow.up.and.down",
+        "ex-single-arm-cable-oh-ext":    "arrow.up.and.down",
+        "ex-single-arm-wrist-curl":      "dumbbell.fill",
+        "ex-single-arm-reverse-wrist-curl": "dumbbell.fill",
+
+        // MARK: Core
+        "ex-plank":                   "figure.core.training",
+        "ex-hanging-leg-raise":       "figure.core.training",
+        "ex-cable-crunch":            "figure.core.training",
+        "ex-ab-wheel":                "figure.core.training",
+        "ex-cable-woodchop":          "figure.core.training",
+        "ex-russian-twist":           "figure.core.training",
+        "ex-decline-situp":           "figure.core.training",
+        "ex-dead-bug":                "figure.core.training",
+        "ex-pallof-press":            "figure.core.training",
+        "ex-mountain-climbers":       "figure.highintensity.intervaltraining",
+        "ex-single-arm-farmers-carry":"figure.walk",
+        "ex-single-arm-pallof-press": "figure.core.training",
+        "ex-side-plank":              "figure.core.training",
+        "ex-copenhagen-plank":        "figure.core.training",
+        "ex-suitcase-deadlift":       "figure.strengthtraining.traditional",
+    ]
+
+    /// Resolved SF Symbol name for this exercise.
+    /// Resolution order: exercise-specific mapping → primary muscle group → fallback.
+    var icon: String {
+        if let mapped = Exercise.iconMapping[id] {
+            return mapped
+        }
+        return muscleGroups.first?.icon ?? "dumbbell.fill"
+    }
+}

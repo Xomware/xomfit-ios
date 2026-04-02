@@ -42,15 +42,15 @@ struct WorkoutTemplate: Codable, Identifiable {
 
         var icon: String {
             switch self {
-            case .push: return "dumbbell.fill"
-            case .pull: return "figure.strengthtraining.traditional"
-            case .legs: return "figure.walk"
-            case .upperBody: return "dumbbell.fill"
+            case .push: return "figure.strengthtraining.traditional"
+            case .pull: return "figure.indoor.rowing"
+            case .legs: return "figure.step.training"
+            case .upperBody: return "figure.arms.open"
             case .lowerBody: return "figure.run"
             case .fullBody: return "figure.strengthtraining.traditional"
-            case .chest: return "dumbbell.fill"
-            case .back: return "figure.strengthtraining.traditional"
-            case .shoulders: return "bolt.fill"
+            case .chest: return "figure.strengthtraining.traditional"
+            case .back: return "figure.indoor.rowing"
+            case .shoulders: return "figure.arms.open"
             case .arms: return "dumbbell.fill"
             case .custom: return "star.fill"
             case .saved: return "bookmark.fill"

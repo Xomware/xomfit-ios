@@ -21,7 +21,7 @@ struct RecentWorkoutCard: View {
 
                 HStack(spacing: 8) {
                     HStack(spacing: 3) {
-                        Image(systemName: "dumbbell.fill")
+                        Image(systemName: "figure.strengthtraining.traditional")
                             .font(.caption2)
                         Text("\(workout.exercises.count) ex")
                     }

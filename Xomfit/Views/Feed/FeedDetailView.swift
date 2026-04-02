@@ -122,7 +122,7 @@ struct FeedDetailView: View {
                 }
 
                 HStack(spacing: 0) {
-                    workoutStat(value: "\(activity.exerciseCount)", label: "Exercises", icon: "dumbbell.fill")
+                    workoutStat(value: "\(activity.exerciseCount)", label: "Exercises", icon: "figure.strengthtraining.traditional")
                     workoutStat(value: "\(activity.totalSets)", label: "Sets", icon: "list.bullet")
                     workoutStat(value: formatVolume(activity.totalVolume), label: "Volume", icon: "scalemass")
                     if activity.prCount > 0 {
@@ -255,7 +255,7 @@ struct FeedDetailView: View {
     /// Fallback when workout fetch fails — shows summary only
     private func fallbackExerciseRow(exercise: WorkoutActivity.ExerciseSummary) -> some View {
         HStack(spacing: 12) {
-            Image(systemName: "dumbbell.fill")
+            Image(systemName: "figure.strengthtraining.traditional")
                 .font(.subheadline)
                 .foregroundStyle(exercise.isPR ? Theme.prGold : Theme.accent)
                 .frame(width: 32, height: 32)
@@ -341,7 +341,7 @@ struct FeedDetailView: View {
 
     private var badgeIcon: String {
         switch localItem.activityType {
-        case .workout: return "dumbbell.fill"
+        case .workout: return "figure.strengthtraining.traditional"
         case .personalRecord: return "trophy.fill"
         case .milestone: return "star.fill"
         case .streak: return "flame.fill"
