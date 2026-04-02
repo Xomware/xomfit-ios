@@ -16,6 +16,8 @@ final class WorkoutLoggerViewModel {
     var isActive = false
     var isSaving = false
     var errorMessage: String?
+    var location: String = ""
+    var rating: Int = 0
 
     // Rest timer
     var restTimeRemaining: Double = 0
@@ -130,6 +132,8 @@ final class WorkoutLoggerViewModel {
         focusMode = false
         focusExerciseIndex = 0
         focusSetIndex = 0
+        location = ""
+        rating = 0
         skipRestTimer()
     }
 
@@ -322,9 +326,7 @@ final class WorkoutLoggerViewModel {
                     return RemainingExercise(index: idx, name: ex.exercise.name)
                 }
 
-                if focusMode {
-                    showExerciseTransition = true
-                }
+                showExerciseTransition = true
             }
         }
         updateLiveActivity()
@@ -387,6 +389,23 @@ final class WorkoutLoggerViewModel {
         focusSetIndex = 0
     }
 
+    /// Sync focus indices to the first incomplete exercise/set. Called when entering focus mode from list mode.
+    func syncFocusToCurrentExercise() {
+        // Find first exercise with an incomplete set
+        for (exIdx, ex) in exercises.enumerated() {
+            if let setIdx = ex.sets.firstIndex(where: { $0.completedAt == Date.distantPast }) {
+                focusExerciseIndex = exIdx
+                focusSetIndex = setIdx
+                return
+            }
+        }
+        // All done — point to last exercise, last set
+        if let last = exercises.indices.last {
+            focusExerciseIndex = last
+            focusSetIndex = max(exercises[last].sets.count - 1, 0)
+        }
+    }
+
     /// Complete the focused set and auto-advance.
     func completeFocusedSet() {
         completeSet(exerciseIndex: focusExerciseIndex, setIndex: focusSetIndex)
@@ -419,11 +438,22 @@ final class WorkoutLoggerViewModel {
 
     // MARK: - Rest Timer
 
+    /// Timestamp when the rest timer was started — used to survive background suspension.
+    private var restTimerStartDate: Date?
+
     func startRestTimer(for category: ExerciseCategory) {
         guard defaultRestDuration > 0 else { return }
         restDuration = defaultRestDuration
         restTimeRemaining = defaultRestDuration
         isRestTimerActive = true
+        restTimerStartDate = Date()
+    }
+
+    /// Called when the app returns to foreground. Recalculates rest timer based on wall-clock time elapsed.
+    func recalculateRestTimer() {
+        guard isRestTimerActive, let startDate = restTimerStartDate else { return }
+        let elapsed = Date().timeIntervalSince(startDate)
+        restTimeRemaining = restDuration - elapsed
     }
 
     func tickRestTimer() {
@@ -567,6 +597,7 @@ final class WorkoutLoggerViewModel {
         }
 
         let trimmedNotes = notes?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedLocation = location.trimmingCharacters(in: .whitespacesAndNewlines)
         let workout = Workout(
             id: UUID().uuidString,
             userId: userId,
@@ -574,7 +605,9 @@ final class WorkoutLoggerViewModel {
             exercises: completedExercises,
             startTime: startTime,
             endTime: Date(),
-            notes: trimmedNotes?.isEmpty == false ? trimmedNotes : nil
+            notes: trimmedNotes?.isEmpty == false ? trimmedNotes : nil,
+            location: trimmedLocation.isEmpty ? nil : trimmedLocation,
+            rating: rating > 0 ? rating : nil
         )
 
         do {

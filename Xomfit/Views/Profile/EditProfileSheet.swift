@@ -17,6 +17,24 @@ struct EditProfileSheet: View {
                             .autocorrectionDisabled()
                             .listRowBackground(Theme.surface)
                             .foregroundStyle(Theme.textPrimary)
+                            .onChange(of: viewModel.editUsername) { _, _ in
+                                viewModel.checkUsernameAvailability(userId: userId)
+                            }
+
+                        if viewModel.isCheckingUsername {
+                            HStack(spacing: 6) {
+                                ProgressView().controlSize(.mini)
+                                Text("Checking availability...")
+                                    .font(Theme.fontSmall)
+                                    .foregroundStyle(Theme.textSecondary)
+                            }
+                            .listRowBackground(Theme.surface)
+                        } else if let error = viewModel.usernameError {
+                            Text(error)
+                                .font(Theme.fontSmall)
+                                .foregroundStyle(Theme.destructive)
+                                .listRowBackground(Theme.surface)
+                        }
                     }
 
                     Section("Display Name") {
@@ -66,7 +84,8 @@ struct EditProfileSheet: View {
                             }
                         }
                         .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(Theme.accent)
+                        .foregroundStyle(viewModel.canSaveProfile ? Theme.accent : Theme.textSecondary)
+                        .disabled(!viewModel.canSaveProfile)
                     }
                 }
             }

@@ -17,6 +17,7 @@ struct ProfileFriendsView: View {
                 ForEach(friends) { friend in
                     NavigationLink {
                         ProfileView(userId: otherUserId(friend))
+                            .hideTabBar()
                     } label: {
                         friendRow(friend: friend)
                     }

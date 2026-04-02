@@ -1,4 +1,5 @@
 import Foundation
+import Supabase
 
 // MARK: - Profile Tab
 
@@ -52,6 +53,11 @@ final class ProfileViewModel {
     var editBio: String = ""
     var editIsPrivate: Bool = false
 
+    // MARK: - Username validation
+    var usernameError: String?
+    var isCheckingUsername: Bool = false
+    private var usernameCheckTask: Task<Void, Never>?
+
     // MARK: - Stats
     var totalWorkouts: Int = 0
     var totalVolume: Double = 0
@@ -67,6 +73,26 @@ final class ProfileViewModel {
 
     // MARK: - Feed
     var feedItems: [SocialFeedItem] = []
+    var feedDateRange: FeedDateRange = .all
+    var feedMuscleGroups: Set<MuscleGroup> = []
+
+    var filteredFeedItems: [SocialFeedItem] {
+        feedItems.filter { item in
+            if let start = feedDateRange.startDate, item.createdAt < start {
+                return false
+            }
+            if !feedMuscleGroups.isEmpty {
+                guard let exercises = item.workoutActivity?.exercises else { return false }
+                let itemGroups = exercises.flatMap { ex in
+                    ExerciseDatabase.all.first(where: { $0.name == ex.name })?.muscleGroups ?? []
+                }
+                if feedMuscleGroups.isDisjoint(with: itemGroups) { return false }
+            }
+            return true
+        }
+    }
+
+    var isFeedFiltered: Bool { feedDateRange != .all || !feedMuscleGroups.isEmpty }
 
     // MARK: - Calendar
     var workoutDays: [Date: Int] = [:]
@@ -191,10 +217,16 @@ final class ProfileViewModel {
     // MARK: - Update
 
     func updateProfile(userId: String) async {
+        guard canSaveProfile else {
+            errorMessage = usernameError ?? "Invalid username."
+            return
+        }
+
         isSaving = true
         errorMessage = nil
         do {
-            let savedUsername = editUsername.isEmpty ? (username.isEmpty ? userId : username) : editUsername
+            let savedUsername = editUsername.trimmingCharacters(in: .whitespaces).lowercased()
+                .isEmpty ? (username.isEmpty ? userId : username) : editUsername.trimmingCharacters(in: .whitespaces).lowercased()
             try await ProfileService.shared.upsertProfile(
                 userId: userId,
                 username: savedUsername,
@@ -220,6 +252,60 @@ final class ProfileViewModel {
         editDisplayName = displayName
         editBio = bio
         editIsPrivate = isPrivate
+        usernameError = nil
+        isCheckingUsername = false
+    }
+
+    /// Debounced username uniqueness check against Supabase.
+    func checkUsernameAvailability(userId: String) {
+        usernameCheckTask?.cancel()
+        usernameError = nil
+
+        let trimmed = editUsername.trimmingCharacters(in: .whitespaces).lowercased()
+        guard !trimmed.isEmpty else { return }
+
+        // Validate format first
+        guard trimmed.count >= 3 else {
+            usernameError = "Username must be at least 3 characters."
+            return
+        }
+        guard trimmed.allSatisfy({ $0.isLetter || $0.isNumber || $0 == "_" }) else {
+            usernameError = "Letters, numbers, and underscores only."
+            return
+        }
+
+        // Skip server check if username hasn't changed
+        if trimmed == username { return }
+
+        isCheckingUsername = true
+        usernameCheckTask = Task {
+            try? await Task.sleep(for: .milliseconds(300))
+            guard !Task.isCancelled else { return }
+
+            do {
+                let existing: [ProfileRow] = try await supabase
+                    .from("profiles")
+                    .select("id")
+                    .eq("username", value: trimmed)
+                    .neq("id", value: userId)
+                    .limit(1)
+                    .execute()
+                    .value
+
+                guard !Task.isCancelled else { return }
+                if !existing.isEmpty {
+                    usernameError = "Username already taken."
+                }
+            } catch {
+                guard !Task.isCancelled else { return }
+            }
+            isCheckingUsername = false
+        }
+    }
+
+    /// Whether the save button should be disabled.
+    var canSaveProfile: Bool {
+        usernameError == nil && !isCheckingUsername && !editUsername.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
     // MARK: - Friend Request

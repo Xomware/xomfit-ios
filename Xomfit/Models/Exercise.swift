@@ -17,7 +17,8 @@ struct Exercise: Codable, Identifiable, Hashable {
     var defaultLaterality: Laterality = .bilateral
 }
 
-enum MuscleGroup: String, Codable, CaseIterable {
+enum MuscleGroup: String, Codable, CaseIterable, Identifiable {
+    var id: String { rawValue }
     case chest, back, shoulders, biceps, triceps
     case quads, hamstrings, glutes, calves
     case abs, forearms, traps, lats
