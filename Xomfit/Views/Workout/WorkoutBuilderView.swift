@@ -125,7 +125,7 @@ struct WorkoutBuilderView: View {
 
     private var emptyState: some View {
         VStack(spacing: Theme.Spacing.sm) {
-            Image(systemName: "dumbbell.fill")
+            Image(systemName: "figure.strengthtraining.traditional")
                 .font(.largeTitle)
                 .foregroundStyle(Theme.textSecondary.opacity(0.5))
             Text("No exercises yet")

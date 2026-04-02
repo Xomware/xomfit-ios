@@ -73,7 +73,6 @@ struct WorkoutView: View {
                                 savedSection
                             }
                         }
-                        .padding(.bottom, 80)
                     }
                 }
             }

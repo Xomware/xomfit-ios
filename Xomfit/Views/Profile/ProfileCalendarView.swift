@@ -2,13 +2,10 @@ import SwiftUI
 
 struct ProfileCalendarView: View {
     let workoutDays: [Date: Int]
-    var onDaySelected: ((Date, [Workout]) -> Void)? = nil
+    let userId: String
 
-    @Environment(AuthService.self) private var authService
     @State private var displayedMonth: Date = Date()
-    @State private var selectedDate: Date? = nil
-    @State private var selectedDateWorkouts: [Workout] = []
-    @State private var showDaySheet = false
+    @State private var selectedDate: IdentifiableDate? = nil
 
     private let calendar = Calendar.current
     private let dayOfWeekHeaders = ["S", "M", "T", "W", "T", "F", "S"]
@@ -35,14 +32,11 @@ struct ProfileCalendarView: View {
         .background(Theme.surface)
         .clipShape(.rect(cornerRadius: Theme.cornerRadius))
         .padding(.horizontal, Theme.Spacing.sm)
-        .sheet(isPresented: $showDaySheet) {
-            if let selectedDate {
-                CalendarDayDetailSheet(
-                    date: selectedDate,
-                    workoutCount: normalizedWorkoutDays[selectedDate] ?? 0
-                )
-                .environment(authService)
-            }
+        .sheet(item: $selectedDate) { selected in
+            CalendarDayDetailSheet(
+                date: selected.date,
+                userId: userId
+            )
         }
     }
 
@@ -119,8 +113,7 @@ struct ProfileCalendarView: View {
         return Button {
             if count > 0 {
                 Haptics.selection()
-                selectedDate = normalized
-                showDaySheet = true
+                selectedDate = IdentifiableDate(date: normalized)
             }
         } label: {
             VStack(spacing: 2) {
@@ -128,7 +121,6 @@ struct ProfileCalendarView: View {
                     .font(.subheadline.weight(count > 0 ? .bold : .regular))
                     .foregroundStyle(cellForeground(count: count, isToday: isToday))
 
-                // Workout indicator dot
                 if count > 0 {
                     Circle()
                         .fill(count >= 2 ? Theme.accent : Theme.accent.opacity(0.7))
@@ -206,7 +198,6 @@ struct ProfileCalendarView: View {
             }
         }
 
-        // Pad to fill the last row
         let remainder = days.count % 7
         if remainder > 0 {
             days.append(contentsOf: Array(repeating: nil as Date?, count: 7 - remainder))
@@ -223,20 +214,22 @@ struct ProfileCalendarView: View {
     }
 }
 
+// MARK: - Identifiable Date Wrapper
+
+private struct IdentifiableDate: Identifiable {
+    let id = UUID()
+    let date: Date
+}
+
 // MARK: - Calendar Day Detail Sheet
 
 private struct CalendarDayDetailSheet: View {
     let date: Date
-    let workoutCount: Int
+    let userId: String
 
-    @Environment(AuthService.self) private var authService
     @Environment(\.dismiss) private var dismiss
     @State private var workouts: [Workout] = []
     @State private var isLoading = true
-
-    private var userId: String {
-        authService.currentUser?.id.uuidString.lowercased() ?? ""
-    }
 
     var body: some View {
         NavigationStack {

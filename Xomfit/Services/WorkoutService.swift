@@ -168,6 +168,26 @@ final class WorkoutService {
 
     // MARK: - Fetch
 
+    func fetchWorkout(id: String) async -> Workout? {
+        do {
+            let rows: [WorkoutWithRelations] = try await supabase
+                .from("workouts")
+                .select("*, workout_exercises(*, workout_sets(*))")
+                .eq("id", value: id)
+                .limit(1)
+                .execute()
+                .value
+
+            guard let row = rows.first else { return nil }
+            return buildWorkout(from: row)
+        } catch {
+            print("[WorkoutService] Supabase fetch workout failed: \(error.localizedDescription)")
+            // Fallback to cache
+            let all = loadAllFromCache()
+            return all.first(where: { $0.id == id })
+        }
+    }
+
     func fetchWorkouts(userId: String) async -> [Workout] {
         do {
             let workouts = try await fetchFromSupabase(userId: userId)
@@ -284,52 +304,54 @@ final class WorkoutService {
             .execute()
             .value
 
-        return rows.map { row in
-            let exercises = row.workoutExercises
-                .sorted { $0.sortOrder < $1.sortOrder }
-                .map { exRow in
-                    let exercise = ExerciseDatabase.all.first(where: { $0.id == exRow.exerciseId })
-                        ?? Exercise(
-                            id: exRow.exerciseId,
-                            name: exRow.exerciseName,
-                            muscleGroups: [],
-                            equipment: .other,
-                            category: .compound,
-                            description: "",
-                            tips: []
-                        )
+        return rows.map { buildWorkout(from: $0) }
+    }
 
-                    let sets = exRow.workoutSets
-                        .sorted { $0.setNumber < $1.setNumber }
-                        .map { setRow in
-                            WorkoutSet(
-                                id: setRow.id,
-                                exerciseId: exRow.exerciseId,
-                                weight: setRow.weight,
-                                reps: setRow.reps,
-                                rpe: setRow.rpe,
-                                isPersonalRecord: setRow.isPr,
-                                completedAt: setRow.completedAt.flatMap { iso8601.date(from: $0) } ?? Date()
-                            )
-                        }
-
-                    return WorkoutExercise(
-                        id: exRow.id,
-                        exercise: exercise,
-                        sets: sets
+    private func buildWorkout(from row: WorkoutWithRelations) -> Workout {
+        let exercises = row.workoutExercises
+            .sorted { $0.sortOrder < $1.sortOrder }
+            .map { exRow in
+                let exercise = ExerciseDatabase.all.first(where: { $0.id == exRow.exerciseId })
+                    ?? Exercise(
+                        id: exRow.exerciseId,
+                        name: exRow.exerciseName,
+                        muscleGroups: [],
+                        equipment: .other,
+                        category: .compound,
+                        description: "",
+                        tips: []
                     )
-                }
 
-            return Workout(
-                id: row.id,
-                userId: row.userId,
-                name: row.name,
-                exercises: exercises,
-                startTime: iso8601.date(from: row.startTime) ?? Date(),
-                endTime: row.endTime.flatMap { iso8601.date(from: $0) },
-                notes: row.notes
-            )
-        }
+                let sets = exRow.workoutSets
+                    .sorted { $0.setNumber < $1.setNumber }
+                    .map { setRow in
+                        WorkoutSet(
+                            id: setRow.id,
+                            exerciseId: exRow.exerciseId,
+                            weight: setRow.weight,
+                            reps: setRow.reps,
+                            rpe: setRow.rpe,
+                            isPersonalRecord: setRow.isPr,
+                            completedAt: setRow.completedAt.flatMap { iso8601.date(from: $0) } ?? Date()
+                        )
+                    }
+
+                return WorkoutExercise(
+                    id: exRow.id,
+                    exercise: exercise,
+                    sets: sets
+                )
+            }
+
+        return Workout(
+            id: row.id,
+            userId: row.userId,
+            name: row.name,
+            exercises: exercises,
+            startTime: iso8601.date(from: row.startTime) ?? Date(),
+            endTime: row.endTime.flatMap { iso8601.date(from: $0) },
+            notes: row.notes
+        )
     }
 
     private func deleteFromSupabase(id: String) async throws {

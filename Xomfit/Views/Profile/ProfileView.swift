@@ -148,7 +148,6 @@ struct ProfileView: View {
                 Section {
                     tabContent
                         .padding(.top, Theme.Spacing.sm)
-                        .padding(.bottom, 100) // Space for floating tab bar
                 } header: {
                     ProfileTabPicker(selectedTab: Bindable(viewModel).selectedTab)
                         .background(Theme.background)
@@ -165,7 +164,7 @@ struct ProfileView: View {
         case .feed:
             ProfileFeedView(feedItems: $viewModel.feedItems, userId: resolvedUserId, currentUserId: currentUserId)
         case .calendar:
-            ProfileCalendarView(workoutDays: viewModel.workoutDays)
+            ProfileCalendarView(workoutDays: viewModel.workoutDays, userId: resolvedUserId)
         case .stats:
             ProfileStatsView(
                 totalWorkouts: viewModel.totalWorkouts,
