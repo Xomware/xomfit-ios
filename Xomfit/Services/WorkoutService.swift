@@ -162,7 +162,16 @@ final class WorkoutService {
         do {
             try await saveToSupabase(workout)
         } catch {
-            print("[WorkoutService] Supabase save failed: \(error.localizedDescription)")
+            print("[WorkoutService] Supabase save failed, queuing for retry: \(error.localizedDescription)")
+            if let data = try? JSONEncoder().encode(workout),
+               let payload = String(data: data, encoding: .utf8) {
+                SyncManager.shared.enqueue(SyncOperation(
+                    type: .saveWorkout,
+                    entityId: workout.id,
+                    userId: workout.userId,
+                    payload: payload
+                ))
+            }
         }
     }
 

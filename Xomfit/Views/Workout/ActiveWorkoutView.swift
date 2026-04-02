@@ -1,4 +1,5 @@
 import SwiftUI
+import PhotosUI
 
 struct ActiveWorkoutView: View {
     @Environment(AuthService.self) private var authService
@@ -10,6 +11,9 @@ struct ActiveWorkoutView: View {
     @State private var showDiscardAlert = false
     @State private var showFinishSheet = false
     @State private var workoutDescription = ""
+    @State private var saveAsTemplate = false
+    @State private var selectedPhotos: [PhotosPickerItem] = []
+    @State private var photoImages: [UIImage] = []
     @State private var timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     @State private var restTimerHapticFired = false
 
@@ -178,6 +182,9 @@ struct ActiveWorkoutView: View {
                 description: $workoutDescription,
                 location: $viewModel.location,
                 rating: $viewModel.rating,
+                saveAsTemplate: $saveAsTemplate,
+                selectedPhotos: $selectedPhotos,
+                photoImages: $photoImages,
                 isSaving: viewModel.isSaving,
                 onFinish: { finishWorkout() }
             )
@@ -317,8 +324,42 @@ struct ActiveWorkoutView: View {
         guard let user = authService.currentUser else { return }
         let userId = user.id.uuidString.lowercased()
         let notes = workoutDescription.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        // Save as template if requested
+        if saveAsTemplate {
+            let templateExercises = viewModel.exercises.map { ex in
+                WorkoutTemplate.TemplateExercise(
+                    id: UUID().uuidString,
+                    exercise: ex.exercise,
+                    targetSets: ex.sets.count,
+                    targetReps: ex.bestSet.map { "\($0.reps)" } ?? "8",
+                    notes: ex.notes
+                )
+            }
+            let template = WorkoutTemplate(
+                id: UUID().uuidString,
+                name: viewModel.workoutName,
+                description: notes.isEmpty ? "Custom template" : notes,
+                exercises: templateExercises,
+                estimatedDuration: Int(Date().timeIntervalSince(viewModel.startTime) / 60),
+                category: .custom,
+                isCustom: true
+            )
+            TemplateService.shared.saveCustomTemplate(template)
+        }
+
         Task {
-            await viewModel.finishWorkout(userId: userId, notes: notes.isEmpty ? nil : notes)
+            // Upload photos if any were selected
+            var uploadedURLs: [String]?
+            if !photoImages.isEmpty {
+                uploadedURLs = try? await PhotoService.shared.uploadWorkoutPhotos(
+                    photoImages,
+                    workoutId: UUID().uuidString,
+                    userId: userId
+                )
+            }
+
+            await viewModel.finishWorkout(userId: userId, notes: notes.isEmpty ? nil : notes, photoURLs: uploadedURLs)
             if viewModel.errorMessage == nil {
                 showFinishSheet = false
                 dismiss()
@@ -718,6 +759,9 @@ private struct FinishWorkoutSheet: View {
     @Binding var description: String
     @Binding var location: String
     @Binding var rating: Int
+    @Binding var saveAsTemplate: Bool
+    @Binding var selectedPhotos: [PhotosPickerItem]
+    @Binding var photoImages: [UIImage]
     let isSaving: Bool
     let onFinish: () -> Void
 
@@ -797,9 +841,82 @@ private struct FinishWorkoutSheet: View {
                                     .stroke(Theme.textSecondary.opacity(0.2), lineWidth: 1)
                             )
 
+                        // Save as template toggle
+                        Toggle(isOn: $saveAsTemplate) {
+                            HStack(spacing: 8) {
+                                Image(systemName: "bookmark.fill")
+                                    .foregroundStyle(Theme.accent)
+                                Text("Save as Template")
+                                    .font(.subheadline.weight(.medium))
+                                    .foregroundStyle(Theme.textPrimary)
+                            }
+                        }
+                        .tint(Theme.accent)
+
+                        // Photos
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Photos")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(Theme.textPrimary)
+                            Text("Add up to 4 photos from your workout.")
+                                .font(Theme.fontCaption)
+                                .foregroundStyle(Theme.textSecondary)
+
+                            if !photoImages.isEmpty {
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 8) {
+                                        ForEach(photoImages.indices, id: \.self) { index in
+                                            ZStack(alignment: .topTrailing) {
+                                                Image(uiImage: photoImages[index])
+                                                    .resizable()
+                                                    .scaledToFill()
+                                                    .frame(width: 80, height: 80)
+                                                    .clipShape(.rect(cornerRadius: 8))
+
+                                                Button {
+                                                    photoImages.remove(at: index)
+                                                    if index < selectedPhotos.count {
+                                                        selectedPhotos.remove(at: index)
+                                                    }
+                                                } label: {
+                                                    Image(systemName: "xmark.circle.fill")
+                                                        .font(.caption)
+                                                        .foregroundStyle(.white)
+                                                        .shadow(radius: 2)
+                                                }
+                                                .offset(x: 4, y: -4)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            PhotosPicker(
+                                selection: $selectedPhotos,
+                                maxSelectionCount: 4,
+                                matching: .images
+                            ) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "photo.on.rectangle.angled")
+                                    Text(photoImages.isEmpty ? "Add Photos" : "Change Photos")
+                                        .font(.subheadline.weight(.medium))
+                                }
+                                .foregroundStyle(Theme.accent)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                                .background(Theme.accent.opacity(0.12))
+                                .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
+                            }
+                            .onChange(of: selectedPhotos) { _, newItems in
+                                Task {
+                                    photoImages = await PhotoService.shared.loadImages(from: newItems)
+                                }
+                            }
+                        }
+
                         // Finish button
                         Button {
-                            Haptics.success()
+                            Haptics.workoutComplete()
                             onFinish()
                         } label: {
                             if isSaving {

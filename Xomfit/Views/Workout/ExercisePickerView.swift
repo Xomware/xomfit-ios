@@ -6,11 +6,29 @@ struct ExercisePickerView: View {
 
     @State private var searchText = ""
     @State private var selectedMuscleGroup: MuscleGroup? = nil
+    @State private var selectedEquipment: Equipment? = nil
+
+    private static let recentKey = "recentExerciseIds"
+
+    private var recentExercises: [Exercise] {
+        let ids = UserDefaults.standard.stringArray(forKey: Self.recentKey) ?? []
+        return ids.compactMap { id in ExerciseDatabase.all.first(where: { $0.id == id }) }
+    }
+
+    private static func recordRecent(_ exercise: Exercise) {
+        var ids = UserDefaults.standard.stringArray(forKey: recentKey) ?? []
+        ids.removeAll { $0 == exercise.id }
+        ids.insert(exercise.id, at: 0)
+        UserDefaults.standard.set(Array(ids.prefix(10)), forKey: recentKey)
+    }
 
     private var filtered: [Exercise] {
         var exercises = ExerciseDatabase.all
         if let mg = selectedMuscleGroup {
             exercises = exercises.filter { $0.muscleGroups.contains(mg) }
+        }
+        if let eq = selectedEquipment {
+            exercises = exercises.filter { $0.equipment == eq }
         }
         if !searchText.isEmpty {
             let query = searchText.lowercased()
@@ -69,16 +87,54 @@ struct ExercisePickerView: View {
                             }
                         }
                         .padding(.horizontal, Theme.Spacing.md)
-                        .padding(.vertical, Theme.Spacing.sm)
+                        .padding(.vertical, Theme.Spacing.xs)
+                    }
+
+                    // Equipment filter chips
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: Theme.Spacing.sm) {
+                            FilterChip(label: "All Equipment", isSelected: selectedEquipment == nil) {
+                                selectedEquipment = nil
+                            }
+                            ForEach(Equipment.allCases, id: \.self) { eq in
+                                FilterChip(label: eq.displayName, isSelected: selectedEquipment == eq) {
+                                    selectedEquipment = selectedEquipment == eq ? nil : eq
+                                }
+                            }
+                        }
+                        .padding(.horizontal, Theme.Spacing.md)
+                        .padding(.bottom, Theme.Spacing.sm)
                     }
 
                     // Exercise list
                     List {
+                        // Recently used section
+                        if searchText.isEmpty && selectedMuscleGroup == nil && selectedEquipment == nil && !recentExercises.isEmpty {
+                            Section {
+                                ForEach(recentExercises) { exercise in
+                                    ExerciseRow(exercise: exercise) {
+                                        Haptics.selection()
+                                        Self.recordRecent(exercise)
+                                        onSelect(exercise)
+                                        dismiss()
+                                    }
+                                    .listRowBackground(Theme.surface)
+                                    .listRowSeparatorTint(Theme.textSecondary.opacity(0.2))
+                                }
+                            } header: {
+                                Text("Recently Used")
+                                    .font(Theme.fontCaption)
+                                    .foregroundStyle(Theme.accent)
+                                    .textCase(nil)
+                            }
+                        }
+
                         ForEach(groupedByMuscle, id: \.0) { groupName, exercises in
                             Section {
                                 ForEach(exercises) { exercise in
                                     ExerciseRow(exercise: exercise) {
                                         Haptics.selection()
+                                        Self.recordRecent(exercise)
                                         onSelect(exercise)
                                         dismiss()
                                     }

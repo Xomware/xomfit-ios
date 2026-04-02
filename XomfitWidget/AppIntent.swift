@@ -2,17 +2,9 @@
 //  AppIntent.swift
 //  XomfitWidget
 //
-//  Created by Dominick Giordano on 3/31/26.
+//  Placeholder — no configurable intents for the stats widget yet.
 //
 
-import WidgetKit
 import AppIntents
 
-struct ConfigurationAppIntent: WidgetConfigurationIntent {
-    static var title: LocalizedStringResource { "Configuration" }
-    static var description: IntentDescription { "This is an example widget." }
-
-    // An example configurable parameter.
-    @Parameter(title: "Favorite Emoji", default: "😃")
-    var favoriteEmoji: String
-}
+// Reserved for future widget configuration intents (e.g., selecting which stat to display).

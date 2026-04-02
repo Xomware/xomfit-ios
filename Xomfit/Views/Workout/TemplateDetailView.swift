@@ -34,16 +34,27 @@ struct TemplateDetailView: View {
                     Button("Close") { dismiss() }
                         .foregroundStyle(Theme.textSecondary)
                 }
-                if template.isCustom {
-                    ToolbarItem(placement: .primaryAction) {
+                ToolbarItem(placement: .primaryAction) {
+                    HStack(spacing: Theme.Spacing.sm) {
                         Button {
-                            showEditor = true
+                            shareTemplate()
                         } label: {
-                            Image(systemName: "pencil")
+                            Image(systemName: "square.and.arrow.up")
                                 .font(.subheadline.weight(.semibold))
                                 .foregroundStyle(Theme.accent)
                         }
-                        .accessibilityLabel("Edit template")
+                        .accessibilityLabel("Share template")
+
+                        if template.isCustom {
+                            Button {
+                                showEditor = true
+                            } label: {
+                                Image(systemName: "pencil")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(Theme.accent)
+                            }
+                            .accessibilityLabel("Edit template")
+                        }
                     }
                 }
             }
@@ -86,6 +97,25 @@ struct TemplateDetailView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Theme.surface)
         .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+    }
+
+    private func shareTemplate() {
+        let exercises = template.exercises.map { "\($0.exercise.name) — \($0.targetSets) x \($0.targetReps)" }.joined(separator: "\n")
+        let text = """
+        💪 \(template.name)
+        \(template.description)
+
+        \(exercises)
+
+        \(template.exercises.count) exercises · ~\(template.estimatedDuration) min
+
+        Shared from XomFit
+        """
+        let controller = UIActivityViewController(activityItems: [text], applicationActivities: nil)
+        if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let root = scene.keyWindow?.rootViewController {
+            root.present(controller, animated: true)
+        }
     }
 
     private var totalSets: Int {

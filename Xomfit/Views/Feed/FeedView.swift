@@ -4,6 +4,7 @@ struct FeedView: View {
     @Environment(AuthService.self) private var authService
     @State private var viewModel = FeedViewModel()
     @State private var showUserSearch = false
+    @State private var showNotifications = false
     @State private var selectedFeedItem: SocialFeedItem? = nil
 
     private var userId: String {
@@ -48,6 +49,22 @@ struct FeedView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     HStack(spacing: Theme.Spacing.md) {
                         Button {
+                            showNotifications = true
+                        } label: {
+                            ZStack(alignment: .topTrailing) {
+                                Image(systemName: "bell")
+                                    .foregroundStyle(Theme.accent)
+                                if NotificationService.shared.unreadCount > 0 {
+                                    Circle()
+                                        .fill(Theme.destructive)
+                                        .frame(width: 8, height: 8)
+                                        .offset(x: 3, y: -3)
+                                }
+                            }
+                        }
+                        .accessibilityLabel("Notifications")
+
+                        Button {
                             showUserSearch = true
                         } label: {
                             Image(systemName: "magnifyingglass")
@@ -71,6 +88,9 @@ struct FeedView: View {
             }
             .sheet(isPresented: $showUserSearch) {
                 UserSearchView()
+            }
+            .sheet(isPresented: $showNotifications) {
+                NotificationInboxView()
             }
         }
         .onAppear {

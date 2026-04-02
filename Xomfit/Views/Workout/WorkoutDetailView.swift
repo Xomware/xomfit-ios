@@ -19,6 +19,7 @@ struct WorkoutDetailView: View {
         .navigationTitle(workout.name)
         .navigationBarTitleDisplayMode(.inline)
         .toolbarColorScheme(.dark, for: .navigationBar)
+        .hideTabBar()
     }
 
     // MARK: - Summary Card
@@ -36,8 +37,28 @@ struct WorkoutDetailView: View {
                             .font(Theme.fontSmall)
                             .foregroundStyle(Theme.textSecondary)
                     }
+
+                    if let location = workout.location, !location.isEmpty {
+                        HStack(spacing: 4) {
+                            Image(systemName: "location.fill")
+                                .font(.caption2)
+                            Text(location)
+                                .font(Theme.fontSmall)
+                        }
+                        .foregroundStyle(Theme.textSecondary)
+                    }
                 }
                 Spacer()
+
+                if let rating = workout.rating, rating > 0 {
+                    HStack(spacing: 2) {
+                        ForEach(1...5, id: \.self) { star in
+                            Image(systemName: star <= rating ? "star.fill" : "star")
+                                .font(.caption)
+                                .foregroundStyle(star <= rating ? Theme.accent : Theme.textSecondary.opacity(0.3))
+                        }
+                    }
+                }
                 Text(workout.durationString)
                     .font(.subheadline.weight(.bold).monospaced())
                     .foregroundStyle(Theme.accent)
