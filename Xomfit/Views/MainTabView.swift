@@ -98,8 +98,9 @@ private struct FloatingTabBar: View {
         .padding(.top, 12)
         .padding(.bottom, Theme.Spacing.sm)
         .background(
-            Theme.background
-                .overlay(
+            Rectangle()
+                .fill(Theme.background)
+                .overlay(alignment: .top) {
                     UnevenRoundedRectangle(
                         topLeadingRadius: 24,
                         bottomLeadingRadius: 0,
@@ -107,7 +108,8 @@ private struct FloatingTabBar: View {
                         topTrailingRadius: 24
                     )
                     .strokeBorder(Theme.glassBorder, lineWidth: 0.5)
-                )
+                }
+                .ignoresSafeArea(.container, edges: .bottom)
         )
     }
 }
