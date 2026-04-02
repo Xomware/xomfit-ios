@@ -47,7 +47,7 @@ struct LiveWorkoutViewer: Codable, Identifiable {
     let userId: String
     var user: AppUser?
     let joinedAt: Date
-    let allowedReactions: [String] = ["💪", "🔥", "👏", "🎯", "😤"]
+    var allowedReactions: [String] = ["💪", "🔥", "👏", "🎯", "😤"]
 }
 
 /// WebSocket message for real-time updates

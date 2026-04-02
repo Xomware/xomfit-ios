@@ -19,7 +19,7 @@ private func validateSupabaseConfig() {
         """)
     }
     
-    guard let url = URL(string: Config.supabaseURL) else {
+    guard URL(string: Config.supabaseURL) != nil else {
         fatalError("❌ Invalid Supabase URL: \(Config.supabaseURL)")
     }
 }
