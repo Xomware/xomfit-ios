@@ -6,8 +6,6 @@ enum WeightMode: String, Codable {
 }
 
 struct WorkoutSet: Codable, Identifiable, Hashable {
-    static func == (lhs: WorkoutSet, rhs: WorkoutSet) -> Bool { lhs.id == rhs.id }
-    func hash(into hasher: inout Hasher) { hasher.combine(id) }
     let id: String
     var exerciseId: String
     var weight: Double

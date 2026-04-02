@@ -11,6 +11,10 @@ struct Exercise: Codable, Identifiable, Hashable {
     var supportedGrips: [GripType]? = nil
     var supportedAttachments: [CableAttachment]? = nil
     var supportedPositions: [ExercisePosition]? = nil
+    /// Whether this exercise can be performed unilaterally (one arm/leg at a time).
+    var supportsUnilateral: Bool = false
+    /// The default laterality when this exercise is added to a workout.
+    var defaultLaterality: Laterality = .bilateral
 }
 
 enum MuscleGroup: String, Codable, CaseIterable {
@@ -24,12 +28,12 @@ enum MuscleGroup: String, Codable, CaseIterable {
     
     var icon: String {
         switch self {
-        case .chest: return "dumbbell.fill"
-        case .back, .lats: return "figure.strengthtraining.traditional"
-        case .shoulders, .traps: return "bolt.fill"
+        case .chest: return "figure.strengthtraining.traditional"
+        case .back, .lats: return "figure.indoor.rowing"
+        case .shoulders, .traps: return "figure.arms.open"
         case .biceps, .triceps, .forearms: return "dumbbell.fill"
-        case .quads, .hamstrings, .glutes, .calves: return "figure.walk"
-        case .abs: return "flame.fill"
+        case .quads, .hamstrings, .glutes, .calves: return "figure.step.training"
+        case .abs: return "figure.core.training"
         }
     }
 }

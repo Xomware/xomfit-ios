@@ -21,7 +21,16 @@ final class WorkoutLoggerViewModel {
     var restTimeRemaining: Double = 0
     var restDuration: Double = 0
     var isRestTimerActive: Bool = false
-    var defaultRestDuration: Double = 90
+
+    /// Default rest duration in seconds. Reactive stored property; syncs to UserDefaults via didSet.
+    var defaultRestDuration: Double = WorkoutLoggerViewModel.loadRestDuration() {
+        didSet { UserDefaults.standard.set(defaultRestDuration, forKey: "restDuration") }
+    }
+
+    private static func loadRestDuration() -> Double {
+        let stored = UserDefaults.standard.double(forKey: "restDuration")
+        return stored > 0 ? stored : 90
+    }
 
     // PR celebration — set when a completed set beats the user's record
     var newPR: PersonalRecord? = nil
@@ -146,12 +155,14 @@ final class WorkoutLoggerViewModel {
                 ))
             }
 
-            builtExercises.append(WorkoutExercise(
+            var we = WorkoutExercise(
                 id: UUID().uuidString,
                 exercise: templateExercise.exercise,
                 sets: sets,
                 notes: templateExercise.notes
-            ))
+            )
+            we.selectedLaterality = templateExercise.exercise.defaultLaterality
+            builtExercises.append(we)
         }
         exercises = builtExercises
         updateLiveActivity()
@@ -179,12 +190,13 @@ final class WorkoutLoggerViewModel {
             ))
         }
 
-        let workoutExercise = WorkoutExercise(
+        var workoutExercise = WorkoutExercise(
             id: UUID().uuidString,
             exercise: exercise,
             sets: sets,
             notes: nil
         )
+        workoutExercise.selectedLaterality = exercise.defaultLaterality
         exercises.append(workoutExercise)
         updateLiveActivity()
     }
@@ -230,6 +242,11 @@ final class WorkoutLoggerViewModel {
     func setPosition(exerciseIndex: Int, position: ExercisePosition) {
         guard exercises.indices.contains(exerciseIndex) else { return }
         exercises[exerciseIndex].selectedPosition = exercises[exerciseIndex].selectedPosition == position ? nil : position
+    }
+
+    func setLaterality(exerciseIndex: Int, laterality: Laterality) {
+        guard exercises.indices.contains(exerciseIndex) else { return }
+        exercises[exerciseIndex].selectedLaterality = laterality
     }
 
     // MARK: - Set Management
@@ -380,6 +397,11 @@ final class WorkoutLoggerViewModel {
 
     func addAnotherSet() {
         addSet(to: completedExerciseIndex)
+        // Point focus at the newly added set so focus mode doesn't jump away
+        if focusMode {
+            focusExerciseIndex = completedExerciseIndex
+            focusSetIndex = exercises[completedExerciseIndex].sets.count - 1
+        }
         showExerciseTransition = false
     }
 
@@ -536,7 +558,11 @@ final class WorkoutLoggerViewModel {
                 id: ex.id,
                 exercise: ex.exercise,
                 sets: doneSets,
-                notes: ex.notes
+                notes: ex.notes,
+                selectedGrip: ex.selectedGrip,
+                selectedAttachment: ex.selectedAttachment,
+                selectedPosition: ex.selectedPosition,
+                selectedLaterality: ex.selectedLaterality
             )
         }
 

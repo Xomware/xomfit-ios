@@ -45,6 +45,23 @@ struct Workout: Codable, Identifiable {
     }
 }
 
+/// How the user is performing the exercise — both sides at once, one side at a time, or alternating sides.
+enum Laterality: String, Codable, CaseIterable, Identifiable {
+    case bilateral    // both arms/legs together (default)
+    case unilateral   // one arm/leg at a time (record weight per side)
+    case alternating  // alternating sides each rep
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .bilateral:   return "Both"
+        case .unilateral:  return "Single"
+        case .alternating: return "Alternating"
+        }
+    }
+}
+
 struct WorkoutExercise: Codable, Identifiable {
     let id: String
     var exercise: Exercise
@@ -53,9 +70,19 @@ struct WorkoutExercise: Codable, Identifiable {
     var selectedGrip: GripType? = nil
     var selectedAttachment: CableAttachment? = nil
     var selectedPosition: ExercisePosition? = nil
-    
+    /// Laterality selection for this exercise instance. Defaults to bilateral.
+    var selectedLaterality: Laterality = .bilateral
+
     var bestSet: WorkoutSet? {
         sets.max(by: { $0.volume < $1.volume })
+    }
+
+    /// Total volume for this exercise. Doubles the multiplier when performing unilaterally or alternating.
+    var totalVolume: Double {
+        let lateralityMultiplier: Double = selectedLaterality == .bilateral ? 1.0 : 2.0
+        return sets.reduce(0) { acc, set in
+            acc + set.weight * Double(set.reps) * (set.weightMode == .perSide ? 2 : 1) * lateralityMultiplier
+        }
     }
 }
 
