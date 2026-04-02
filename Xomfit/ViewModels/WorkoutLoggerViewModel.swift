@@ -615,6 +615,31 @@ final class WorkoutLoggerViewModel {
             try await WorkoutService.shared.saveWorkout(workout)
             // Auto-post to feed after saving
             try await FeedService.shared.postWorkoutToFeed(workout: workout, userId: userId, caption: workout.notes, photoURLs: photoURLs)
+
+            // Update widget data
+            let allWorkouts = await WorkoutService.shared.fetchWorkouts(userId: userId)
+            let weekStart = Calendar.current.date(from: Calendar.current.dateComponents([.yearForWeekOfYear, .weekOfYear], from: Date())) ?? Date()
+            let weekWorkouts = allWorkouts.filter { $0.startTime >= weekStart }
+            let weeklyVolume = weekWorkouts.reduce(0.0) { $0 + $1.totalVolume }
+            let streak = calculateStreak(from: allWorkouts)
+            let latestPR = allWorkouts.flatMap { $0.exercises.flatMap { $0.sets } }
+                .filter { $0.isPersonalRecord }
+                .max(by: { $0.completedAt < $1.completedAt })
+            let prText: String? = if let pr = latestPR,
+                let ex = allWorkouts.flatMap({ $0.exercises }).first(where: { $0.sets.contains(where: { $0.id == pr.id }) }) {
+                "\(ex.exercise.name) \(Int(pr.weight)) lbs"
+            } else {
+                nil
+            }
+            WidgetDataService.shared.updateAfterWorkout(
+                streak: streak,
+                weeklyVolume: weeklyVolume,
+                weeklyWorkouts: weekWorkouts.count,
+                lastWorkoutName: workout.name,
+                lastWorkoutDate: workout.startTime,
+                recentPR: prText
+            )
+
             // Only discard local state after successful save
             isSaving = false
             discardWorkout()
@@ -622,5 +647,18 @@ final class WorkoutLoggerViewModel {
             errorMessage = error.localizedDescription
             isSaving = false
         }
+    }
+
+    private func calculateStreak(from workouts: [Workout]) -> Int {
+        let calendar = Calendar.current
+        let workoutDays = Set(workouts.map { calendar.startOfDay(for: $0.startTime) })
+        var streak = 0
+        var day = calendar.startOfDay(for: Date())
+        while workoutDays.contains(day) {
+            streak += 1
+            guard let prev = calendar.date(byAdding: .day, value: -1, to: day) else { break }
+            day = prev
+        }
+        return streak
     }
 }

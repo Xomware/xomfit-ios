@@ -1,6 +1,7 @@
 import Foundation
 import UserNotifications
 import UIKit
+import Supabase
 
 @MainActor
 @Observable
@@ -45,7 +46,6 @@ final class NotificationService {
     func setDeviceToken(_ tokenData: Data) {
         let token = tokenData.map { String(format: "%02.2hhx", $0) }.joined()
         deviceToken = token
-        // TODO: Send token to backend for push delivery
     }
 
     // MARK: - Preferences
@@ -55,6 +55,25 @@ final class NotificationService {
     func updatePreferences(_ prefs: NotificationPreferences) {
         preferences = prefs
         savePreferences()
+        Task { await syncPreferencesToSupabase(prefs) }
+    }
+
+    private func syncPreferencesToSupabase(_ prefs: NotificationPreferences) async {
+        do {
+            let userId = try await supabase.auth.session.user.id.uuidString.lowercased()
+            try await supabase
+                .from("notification_preferences")
+                .upsert([
+                    "user_id": userId,
+                    "is_enabled": String(isPermissionGranted),
+                    "friend_activity": String(prefs.friendWorkouts),
+                    "personal_records": String(prefs.personalRecords),
+                    "social": String(prefs.likes && prefs.comments && prefs.friendRequests)
+                ], onConflict: "user_id")
+                .execute()
+        } catch {
+            print("[NotificationService] Failed to sync preferences: \(error.localizedDescription)")
+        }
     }
 
     // MARK: - Notifications

@@ -22,6 +22,21 @@ struct SettingsView: View {
                 }
                 .listRowBackground(Theme.surface)
 
+                Section("Notifications") {
+                    NavigationLink {
+                        NotificationPreferencesView()
+                    } label: {
+                        HStack(spacing: Theme.Spacing.md) {
+                            Image(systemName: "bell.fill")
+                                .frame(width: 24)
+                                .foregroundStyle(Theme.accent)
+                            Text("Notification Settings")
+                                .foregroundStyle(Theme.textPrimary)
+                        }
+                    }
+                }
+                .listRowBackground(Theme.surface)
+
                 Section("About") {
                     settingsRow(icon: "info.circle.fill", iconColor: Theme.accent, label: "Version", value: appVersion)
                     settingsRow(icon: "building.2.fill", iconColor: Theme.accent, label: "App", value: Config.appName)
