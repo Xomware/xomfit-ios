@@ -126,7 +126,15 @@ struct ActiveWorkoutView: View {
 
                     VStack {
                         Spacer()
-                        ExerciseTransitionCard(viewModel: viewModel)
+                        ExerciseTransitionCard(
+                            viewModel: viewModel,
+                            onAddExercise: { showExercisePicker = true },
+                            onFinishWorkout: {
+                                Haptics.success()
+                                workoutDescription = ""
+                                showFinishSheet = true
+                            }
+                        )
                             .padding(Theme.Spacing.md)
                             .transition(.move(edge: .bottom).combined(with: .opacity))
                     }
@@ -161,6 +169,19 @@ struct ActiveWorkoutView: View {
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {
                 viewModel.recalculateRestTimer()
+            }
+        }
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Done") {
+                    UIApplication.shared.sendAction(
+                        #selector(UIResponder.resignFirstResponder),
+                        to: nil, from: nil, for: nil
+                    )
+                }
+                .font(.body.weight(.semibold))
+                .foregroundStyle(Theme.accent)
             }
         }
         .sheet(isPresented: $showExercisePicker) {
@@ -594,6 +615,8 @@ private struct ExerciseCard: View {
 
 private struct ExerciseTransitionCard: View {
     let viewModel: WorkoutLoggerViewModel
+    var onAddExercise: (() -> Void)?
+    var onFinishWorkout: (() -> Void)?
     @State private var showRemainingList = false
 
     var body: some View {
@@ -665,6 +688,69 @@ private struct ExerciseTransitionCard: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Move to \(nextEx.exercise.name)")
+            }
+
+            // All exercises complete — prompt to add or finish
+            if viewModel.allExercisesComplete {
+                VStack(spacing: Theme.Spacing.sm) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "trophy.fill")
+                            .font(.body)
+                            .foregroundStyle(Theme.accent)
+                        Text("All exercises complete!")
+                            .font(.subheadline.weight(.bold))
+                            .foregroundStyle(Theme.textPrimary)
+                    }
+
+                    Text("Add another exercise or finish your workout.")
+                        .font(.caption)
+                        .foregroundStyle(Theme.textSecondary)
+
+                    // Add Exercise
+                    if let onAddExercise {
+                        Button {
+                            withAnimation { viewModel.dismissTransition() }
+                            onAddExercise()
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "plus")
+                                    .font(.subheadline.weight(.bold))
+                                Text("Add Exercise")
+                                    .font(.subheadline.weight(.bold))
+                            }
+                            .foregroundStyle(Theme.accent)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(
+                                RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall)
+                                    .stroke(Theme.accent, lineWidth: 1.5)
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
+
+                    // Finish Workout
+                    if let onFinishWorkout {
+                        Button {
+                            withAnimation { viewModel.dismissTransition() }
+                            onFinishWorkout()
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "checkmark")
+                                    .font(.subheadline.weight(.bold))
+                                Text("Finish Workout")
+                                    .font(.subheadline.weight(.bold))
+                            }
+                            .foregroundStyle(.black)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(Theme.accent)
+                            .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.vertical, Theme.Spacing.sm)
             }
 
             // Option 3: Choose Different

@@ -51,9 +51,38 @@ final class WorkoutLoggerViewModel {
     }
 
     /// The next exercise to suggest, if one exists.
+    /// Used by the exercise transition card when all sets of an exercise are done.
     var nextExercise: WorkoutExercise? {
         guard let idx = nextExerciseIndex, exercises.indices.contains(idx) else { return nil }
         return exercises[idx]
+    }
+
+    /// The upcoming exercise shown during rest timer — computed from the current focus position.
+    /// Unlike `nextExercise`, this updates after every set, not just when an exercise completes.
+    var upcomingExercise: WorkoutExercise? {
+        guard exercises.count > 1 else { return nil }
+        // If current exercise still has incomplete sets, no "next" to show
+        let currentEx = exercises.indices.contains(focusExerciseIndex) ? exercises[focusExerciseIndex] : nil
+        let allCurrentDone = currentEx?.sets.allSatisfy { $0.completedAt != Date.distantPast } ?? false
+        guard allCurrentDone else { return nil }
+        // Find next exercise with incomplete sets
+        let afterCurrent = exercises.indices.first { idx in
+            idx > focusExerciseIndex && exercises[idx].sets.contains { $0.completedAt == Date.distantPast }
+        }
+        let beforeCurrent = exercises.indices.first { idx in
+            idx < focusExerciseIndex && exercises[idx].sets.contains { $0.completedAt == Date.distantPast }
+        }
+        if let idx = afterCurrent ?? beforeCurrent {
+            return exercises[idx]
+        }
+        return nil
+    }
+
+    /// True when every set across all exercises is complete.
+    var allExercisesComplete: Bool {
+        !exercises.isEmpty && exercises.allSatisfy { ex in
+            ex.sets.allSatisfy { $0.completedAt != Date.distantPast }
+        }
     }
 
     // Focus mode — large gym-floor view
@@ -508,6 +537,18 @@ final class WorkoutLoggerViewModel {
     private func startLiveActivity() {
         guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
 
+        // End any stale activities to prevent stacking (e.g. cancel + restart)
+        for activity in Activity<XomfitWidgetAttributes>.activities {
+            let finalState = XomfitWidgetAttributes.ContentState(
+                elapsedSeconds: 0,
+                completedSets: 0,
+                totalSets: 0,
+                currentExercise: "Ended",
+                totalExercises: 0
+            )
+            Task { await activity.end(.init(state: finalState, staleDate: nil), dismissalPolicy: .immediate) }
+        }
+
         let attributes = XomfitWidgetAttributes(
             workoutName: workoutName,
             startTime: startTime
@@ -568,7 +609,7 @@ final class WorkoutLoggerViewModel {
 
     func tickLiveActivity() {
         liveActivityUpdateCounter += 1
-        if liveActivityUpdateCounter % 30 == 0 {
+        if liveActivityUpdateCounter % 10 == 0 {
             updateLiveActivity()
         }
     }
