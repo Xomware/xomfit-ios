@@ -375,7 +375,7 @@ struct WorkoutFocusView: View {
                                 .clipShape(.capsule)
                         }
                     }
-                    if let nextEx = viewModel.nextExercise {
+                    if let nextEx = viewModel.upcomingExercise {
                         Text("Next: \(nextEx.exercise.name)")
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(Theme.accent)
@@ -459,7 +459,7 @@ struct WorkoutFocusView: View {
                 .frame(width: 240, height: 240)
 
                 // Next exercise hint
-                if let nextEx = viewModel.nextExercise {
+                if let nextEx = viewModel.upcomingExercise {
                     VStack(spacing: 4) {
                         Text("NEXT UP")
                             .font(.caption2.weight(.bold))
