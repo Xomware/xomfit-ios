@@ -5,17 +5,19 @@ cd "$CI_PRIMARY_REPOSITORY_PATH"
 PBXPROJ="Xomfit.xcodeproj/project.pbxproj"
 
 # 1. Build number — Xcode Cloud auto-increments CI_BUILD_NUMBER
-# Use sed to sync across all targets (app + widget must match)
+# Offset accounts for builds from previous workflow (last was 27)
+BUILD_OFFSET=27
 if [ -n "$CI_BUILD_NUMBER" ]; then
-    echo "Setting build number to $CI_BUILD_NUMBER for all targets"
-    sed -i '' "s/CURRENT_PROJECT_VERSION = [^;]*/CURRENT_PROJECT_VERSION = $CI_BUILD_NUMBER/g" "$PBXPROJ"
+    BUILD_NUMBER=$((CI_BUILD_NUMBER + BUILD_OFFSET))
+    echo "Setting build number to $BUILD_NUMBER for all targets (CI=$CI_BUILD_NUMBER + offset=$BUILD_OFFSET)"
+    sed -i '' "s/CURRENT_PROJECT_VERSION = [^;]*/CURRENT_PROJECT_VERSION = $BUILD_NUMBER/g" "$PBXPROJ"
 fi
 
 # 2. Marketing version — auto-increment based on build number
 # Format: MAJOR.BUILD (e.g., 1.7, 1.8, 1.9...)
 # Set MAJOR via env var when ready for 2.x
 MAJOR="${APP_VERSION_MAJOR:-1}"
-MARKETING_VERSION="${MAJOR}.${CI_BUILD_NUMBER:-0}"
+MARKETING_VERSION="${MAJOR}.${BUILD_NUMBER:-0}"
 echo "Setting marketing version to $MARKETING_VERSION for all targets"
 sed -i '' "s/MARKETING_VERSION = [^;]*/MARKETING_VERSION = $MARKETING_VERSION/g" "$PBXPROJ"
 
