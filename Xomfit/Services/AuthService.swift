@@ -68,7 +68,7 @@ final class AuthService {
     }
 
     private var onboardingKey: String {
-        "xomfit_onboarding_completed_\(currentUser?.id.uuidString ?? "")"
+        "xomfit_onboarding_completed_\(currentUser?.id.uuidString.lowercased() ?? "")"
     }
 
     private func hasCompletedOnboarding() -> Bool {
