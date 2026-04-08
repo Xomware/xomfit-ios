@@ -400,6 +400,15 @@ struct FeedDetailView: View {
             }
             .buttonStyle(.plain)
 
+            Button {
+                shareFeedItem()
+            } label: {
+                Image(systemName: "square.and.arrow.up")
+                    .font(.body)
+                    .foregroundStyle(Theme.textSecondary)
+            }
+            .accessibilityLabel("Share")
+
             Spacer()
         }
     }
@@ -435,6 +444,37 @@ struct FeedDetailView: View {
     }
 
     // MARK: - Actions
+
+    private func shareFeedItem() {
+        let name = localItem.user.displayName.isEmpty ? localItem.user.username : localItem.user.displayName
+        var text = ""
+        switch localItem.activityType {
+        case .workout:
+            if let w = localItem.workoutActivity {
+                text = "\u{1F4AA} \(name) crushed \(w.workoutName)!\n\(w.exerciseCount) exercises \u{00B7} \(w.totalSets) sets \u{00B7} \(Int(w.totalVolume)) lbs"
+                if w.prCount > 0 { text += " \u{00B7} \(w.prCount) PR\(w.prCount > 1 ? "s" : "")! \u{1F3C6}" }
+            }
+        case .personalRecord:
+            if let pr = localItem.prActivity {
+                text = "\u{1F3C6} \(name) hit a new PR!\n\(pr.exerciseName): \(Int(pr.weight)) lbs x \(pr.reps)"
+            }
+        case .milestone:
+            if let m = localItem.milestoneActivity {
+                text = "\u{1F389} \(name) reached a milestone!\n\(m.title) \u{2014} \(m.subtitle)"
+            }
+        case .streak:
+            if let s = localItem.streakActivity {
+                text = "\u{1F525} \(name) is on a \(s.currentStreak)-day streak!"
+            }
+        }
+        text += "\n\nShared from XomFit"
+
+        let controller = UIActivityViewController(activityItems: [text], applicationActivities: nil)
+        if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let root = scene.keyWindow?.rootViewController {
+            root.present(controller, animated: true)
+        }
+    }
 
     private func toggleLike() async {
         let wasLiked = localItem.isLiked

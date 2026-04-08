@@ -476,6 +476,7 @@ final class WorkoutLoggerViewModel {
         restTimeRemaining = defaultRestDuration
         isRestTimerActive = true
         restTimerStartDate = Date()
+        updateLiveActivity()
     }
 
     /// Called when the app returns to foreground. Recalculates rest timer based on wall-clock time elapsed.
@@ -493,6 +494,7 @@ final class WorkoutLoggerViewModel {
     func skipRestTimer() {
         restTimeRemaining = 0
         isRestTimerActive = false
+        updateLiveActivity()
     }
 
     func extendRestTimer(_ seconds: Double = 30) {
@@ -584,7 +586,9 @@ final class WorkoutLoggerViewModel {
             completedSets: completedSets,
             totalSets: totalSets,
             currentExercise: currentExName,
-            totalExercises: exercises.count
+            totalExercises: exercises.count,
+            isResting: isRestTimerActive,
+            restTimeRemaining: Int(self.restTimeRemaining)
         )
 
         Task {
