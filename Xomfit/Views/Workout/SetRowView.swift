@@ -8,6 +8,7 @@ struct SetRowView: View {
     let onComplete: () -> Void
     let onDelete: () -> Void
     let onToggleWeightMode: () -> Void
+    var lateralityLabel: String? = nil
 
     @State private var weightText: String
     @State private var repsText: String
@@ -25,7 +26,8 @@ struct SetRowView: View {
         onRepsChange: @escaping (Int) -> Void,
         onComplete: @escaping () -> Void,
         onDelete: @escaping () -> Void,
-        onToggleWeightMode: @escaping () -> Void = {}
+        onToggleWeightMode: @escaping () -> Void = {},
+        lateralityLabel: String? = nil
     ) {
         self.setNumber = setNumber
         self.workoutSet = workoutSet
@@ -34,6 +36,7 @@ struct SetRowView: View {
         self.onComplete = onComplete
         self.onDelete = onDelete
         self.onToggleWeightMode = onToggleWeightMode
+        self.lateralityLabel = lateralityLabel
 
         let w = workoutSet.weight
         let r = workoutSet.reps
@@ -100,6 +103,13 @@ struct SetRowView: View {
                         onRepsChange(r)
                     }
                 }
+
+            if let label = lateralityLabel {
+                Text(label)
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(Theme.accent)
+                    .frame(width: 30)
+            }
 
             // Complete checkmark button
             Button(action: {

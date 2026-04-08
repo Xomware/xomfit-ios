@@ -39,9 +39,10 @@ struct XomfitWidgetLiveActivity: Widget {
                         .foregroundStyle(Self.accentGreen)
                 }
                 DynamicIslandExpandedRegion(.center) {
-                    Image(systemName: "dumbbell.fill")
-                        .font(.system(size: 16))
-                        .foregroundStyle(Self.accentGreen)
+                    Text(context.state.isResting ? "Resting" : context.state.currentExercise)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(.white.opacity(0.8))
+                        .lineLimit(1)
                 }
                 DynamicIslandExpandedRegion(.bottom) {
                     expandedBottomView(state: context.state)
@@ -51,7 +52,7 @@ struct XomfitWidgetLiveActivity: Widget {
                     .font(.system(size: 12))
                     .foregroundStyle(Self.accentGreen)
             } compactTrailing: {
-                Text(formatTime(context.state.elapsedSeconds))
+                Text(context.state.isResting ? formatTime(context.state.restTimeRemaining) : formatTime(context.state.elapsedSeconds))
                     .font(.system(size: 12, weight: .semibold, design: .monospaced))
                     .foregroundStyle(Self.accentGreen)
             } minimal: {
@@ -77,8 +78,9 @@ struct XomfitWidgetLiveActivity: Widget {
             // Top row: workout name + elapsed time
             HStack {
                 HStack(spacing: 6) {
-                    Text("\u{1F3CB}\u{FE0F}")
+                    Image(systemName: "dumbbell.fill")
                         .font(.system(size: 14))
+                        .foregroundStyle(Self.accentGreen)
                     Text(context.attributes.workoutName)
                         .font(.system(size: 15, weight: .bold))
                         .foregroundStyle(.white)
@@ -94,7 +96,7 @@ struct XomfitWidgetLiveActivity: Widget {
 
             // Middle row: current exercise + set/exercise progress
             HStack(spacing: 0) {
-                Text(state.currentExercise)
+                Text(state.isResting ? "Resting \(formatTime(state.restTimeRemaining))" : state.currentExercise)
                     .font(.system(size: 13, weight: .medium))
                     .foregroundStyle(.white.opacity(0.8))
                     .lineLimit(1)
@@ -142,6 +144,18 @@ struct XomfitWidgetLiveActivity: Widget {
             : 0
 
         VStack(alignment: .leading, spacing: 6) {
+            if state.isResting {
+                HStack {
+                    Image(systemName: "timer")
+                        .font(.system(size: 11))
+                        .foregroundStyle(Self.accentGreen)
+                    Text("Rest: \(formatTime(state.restTimeRemaining))")
+                        .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(Self.accentGreen)
+                    Spacer()
+                }
+            }
+
             HStack(spacing: 0) {
                 Text(state.currentExercise)
                     .font(.system(size: 12, weight: .medium))
