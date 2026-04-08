@@ -92,7 +92,7 @@ final class AuthService {
         self.isAuthenticated = true
     }
 
-    func signUp(email: String, password: String, firstName: String, lastName: String, username: String) async throws {
+    func signUp(email: String, password: String, firstName: String, lastName: String, username: String = "") async throws {
         errorMessage = nil
         let displayName = "\(firstName) \(lastName)".trimmingCharacters(in: .whitespaces)
         let response = try await supabase.auth.signUp(
