@@ -6,7 +6,7 @@ struct XomProgressView: View {
     @State private var viewModel = ProgressViewModel()
 
     private var userId: String {
-        authService.currentUser?.id.uuidString ?? ""
+        authService.currentUser?.id.uuidString.lowercased() ?? ""
     }
 
     var body: some View {

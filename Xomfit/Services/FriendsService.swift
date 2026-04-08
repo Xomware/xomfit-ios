@@ -81,7 +81,7 @@ final class FriendsService {
 
     func sendFriendRequest(fromUserId: String, toUserId: String) async throws {
         let insert = FriendshipInsert(
-            id: UUID().uuidString,
+            id: UUID().uuidString.lowercased(),
             requester_id: fromUserId,
             addressee_id: toUserId,
             status: "pending"
@@ -125,13 +125,33 @@ final class FriendsService {
 
     func searchUsers(query: String, excludeUserId: String? = nil) async throws -> [ProfileRow] {
         guard !query.isEmpty else { return [] }
-        var rows: [ProfileRow] = try await supabase
+
+        // Search by username
+        let byUsername: [ProfileRow] = try await supabase
             .from("profiles")
             .select()
             .ilike("username", pattern: "%\(query)%")
             .limit(20)
             .execute()
             .value
+
+        // Search by display name
+        let byName: [ProfileRow] = try await supabase
+            .from("profiles")
+            .select()
+            .ilike("display_name", pattern: "%\(query)%")
+            .limit(20)
+            .execute()
+            .value
+
+        // Merge and deduplicate
+        var seen = Set<String>()
+        var rows: [ProfileRow] = []
+        for row in byUsername + byName {
+            if seen.insert(row.id).inserted {
+                rows.append(row)
+            }
+        }
 
         if let excludeId = excludeUserId {
             rows = rows.filter { $0.id != excludeId }

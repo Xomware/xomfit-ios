@@ -10,7 +10,7 @@ struct UserSearchView: View {
     @State private var searchTask: Task<Void, Never>?
 
     private var currentUserId: String {
-        authService.currentUser?.id.uuidString ?? ""
+        authService.currentUser?.id.uuidString.lowercased() ?? ""
     }
 
     var body: some View {

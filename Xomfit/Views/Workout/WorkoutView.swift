@@ -19,7 +19,7 @@ struct WorkoutView: View {
     @State private var savedTemplates: [WorkoutTemplate] = []
 
     private var userId: String {
-        authService.currentUser?.id.uuidString ?? ""
+        authService.currentUser?.id.uuidString.lowercased() ?? ""
     }
 
     var body: some View {

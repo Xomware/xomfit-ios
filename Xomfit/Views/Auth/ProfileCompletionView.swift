@@ -13,7 +13,7 @@ struct ProfileCompletionView: View {
     @State private var usernameCheckTask: Task<Void, Never>?
 
     private var userId: String {
-        authService.currentUser?.id.uuidString ?? ""
+        authService.currentUser?.id.uuidString.lowercased() ?? ""
     }
 
     private var isFormValid: Bool {

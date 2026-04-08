@@ -15,7 +15,7 @@ struct FriendsView: View {
     @State private var friendProfiles: [String: ProfileRow] = [:]
 
     private var userId: String {
-        authService.currentUser?.id.uuidString ?? ""
+        authService.currentUser?.id.uuidString.lowercased() ?? ""
     }
 
     var body: some View {

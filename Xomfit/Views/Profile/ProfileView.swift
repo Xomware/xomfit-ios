@@ -9,11 +9,11 @@ struct ProfileView: View {
     var userId: String? = nil
 
     private var resolvedUserId: String {
-        userId ?? authService.currentUser?.id.uuidString ?? ""
+        userId ?? authService.currentUser?.id.uuidString.lowercased() ?? ""
     }
 
     private var currentUserId: String {
-        authService.currentUser?.id.uuidString ?? ""
+        authService.currentUser?.id.uuidString.lowercased() ?? ""
     }
 
     var body: some View {
