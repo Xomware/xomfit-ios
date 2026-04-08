@@ -16,6 +16,7 @@ struct ActiveWorkoutView: View {
     @State private var photoImages: [UIImage] = []
     @State private var timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     @State private var restTimerHapticFired = false
+    @State private var showStartingExercisePicker = false
 
     // Passed in from WorkoutView
     let workoutName: String
@@ -171,19 +172,6 @@ struct ActiveWorkoutView: View {
                 viewModel.recalculateRestTimer()
             }
         }
-        .toolbar {
-            ToolbarItemGroup(placement: .keyboard) {
-                Spacer()
-                Button("Done") {
-                    UIApplication.shared.sendAction(
-                        #selector(UIResponder.resignFirstResponder),
-                        to: nil, from: nil, for: nil
-                    )
-                }
-                .font(.body.weight(.semibold))
-                .foregroundStyle(Theme.accent)
-            }
-        }
         .sheet(isPresented: $showExercisePicker) {
             ExercisePickerView { exercise in
                 viewModel.addExercise(exercise)
@@ -211,6 +199,39 @@ struct ActiveWorkoutView: View {
             )
             .presentationDetents([.large])
             .presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: $showStartingExercisePicker) {
+            NavigationStack {
+                List {
+                    ForEach(Array(viewModel.exercises.enumerated()), id: \.element.id) { idx, exercise in
+                        Button {
+                            viewModel.focusExerciseIndex = idx
+                            viewModel.focusSetIndex = 0
+                            showStartingExercisePicker = false
+                        } label: {
+                            HStack {
+                                Text(exercise.exercise.name)
+                                    .font(.body.weight(.medium))
+                                    .foregroundStyle(Theme.textPrimary)
+                                Spacer()
+                                Text("\(exercise.sets.count) sets")
+                                    .font(.caption)
+                                    .foregroundStyle(Theme.textSecondary)
+                            }
+                        }
+                    }
+                }
+                .navigationTitle("Start With")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("First") {
+                            showStartingExercisePicker = false
+                        }
+                    }
+                }
+            }
+            .presentationDetents([.medium])
         }
     }
 
@@ -248,6 +269,9 @@ struct ActiveWorkoutView: View {
                     viewModel.focusMode.toggle()
                     if viewModel.focusMode {
                         viewModel.syncFocusToCurrentExercise()
+                        if viewModel.exercises.count > 1 {
+                            showStartingExercisePicker = true
+                        }
                     }
                 }
             } label: {
@@ -470,9 +494,11 @@ private struct ExerciseCard: View {
                         }
                     } label: {
                         Image(systemName: "chevron.up")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(Theme.textSecondary)
+                            .font(.subheadline.weight(.bold))
+                            .foregroundStyle(Theme.textPrimary)
                             .frame(width: 44, height: 44)
+                            .background(Theme.surface.opacity(0.5))
+                            .clipShape(Circle())
                             .contentShape(Rectangle())
                     }
                     .accessibilityLabel("Move \(exercise.exercise.name) up")
@@ -485,9 +511,11 @@ private struct ExerciseCard: View {
                         }
                     } label: {
                         Image(systemName: "chevron.down")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(Theme.textSecondary)
+                            .font(.subheadline.weight(.bold))
+                            .foregroundStyle(Theme.textPrimary)
                             .frame(width: 44, height: 44)
+                            .background(Theme.surface.opacity(0.5))
+                            .clipShape(Circle())
                             .contentShape(Rectangle())
                     }
                     .accessibilityLabel("Move \(exercise.exercise.name) down")
@@ -583,7 +611,8 @@ private struct ExerciseCard: View {
                     },
                     onToggleWeightMode: {
                         viewModel.toggleWeightMode(exerciseIndex: exerciseIndex, setIndex: setIdx)
-                    }
+                    },
+                    lateralityLabel: exercise.selectedLaterality != .bilateral ? (exercise.exercise.muscleGroups.contains(where: { [.quads, .hamstrings, .glutes, .calves].contains($0) }) ? "/leg" : "/arm") : nil
                 )
             }
 

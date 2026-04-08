@@ -52,7 +52,7 @@ struct WorkoutFocusView: View {
 
                     exerciseNavigation
 
-                    Spacer()
+                    Spacer().frame(height: viewModel.isRestTimerActive && isRestTimerMinimized ? 100 : 0)
                 }
                 .padding(.horizontal, Theme.Spacing.lg)
 
@@ -229,6 +229,13 @@ struct WorkoutFocusView: View {
                         .foregroundStyle(Theme.textPrimary)
                 }
                 .accessibilityLabel("Reps: \(currentSet.reps). Tap to edit.")
+            }
+
+            if let exercise = viewModel.focusExercise, exercise.selectedLaterality != .bilateral {
+                let isLeg = exercise.exercise.muscleGroups.contains(where: { [.quads, .hamstrings, .glutes, .calves].contains($0) })
+                Text(isLeg ? "per leg" : "per arm")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Theme.accent)
             }
         }
         .frame(maxWidth: .infinity)
