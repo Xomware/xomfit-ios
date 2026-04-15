@@ -143,6 +143,14 @@ struct ActiveWorkoutView: View {
                 }
             }
             .toolbar(.hidden, for: .navigationBar)
+            .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") {
+                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                    }
+                }
+            }
         }
         .onAppear {
             let userId = authService.currentUser?.id.uuidString.lowercased() ?? ""
@@ -203,20 +211,30 @@ struct ActiveWorkoutView: View {
         .sheet(isPresented: $showStartingExercisePicker) {
             NavigationStack {
                 List {
-                    ForEach(Array(viewModel.exercises.enumerated()), id: \.element.id) { idx, exercise in
-                        Button {
-                            viewModel.focusExerciseIndex = idx
-                            viewModel.focusSetIndex = 0
-                            showStartingExercisePicker = false
-                        } label: {
-                            HStack {
-                                Text(exercise.exercise.name)
-                                    .font(.body.weight(.medium))
-                                    .foregroundStyle(Theme.textPrimary)
-                                Spacer()
-                                Text("\(exercise.sets.count) sets")
-                                    .font(.caption)
-                                    .foregroundStyle(Theme.textSecondary)
+                    let incomplete = Array(viewModel.exercises.enumerated()).filter { _, ex in
+                        ex.sets.contains { $0.completedAt == Date.distantPast }
+                    }
+                    if incomplete.isEmpty {
+                        Text("All exercises complete!")
+                            .foregroundStyle(Theme.textSecondary)
+                            .font(Theme.fontBody)
+                    } else {
+                        ForEach(incomplete, id: \.element.id) { idx, exercise in
+                            let remaining = exercise.sets.filter { $0.completedAt == Date.distantPast }.count
+                            Button {
+                                viewModel.focusExerciseIndex = idx
+                                viewModel.focusSetIndex = 0
+                                showStartingExercisePicker = false
+                            } label: {
+                                HStack {
+                                    Text(exercise.exercise.name)
+                                        .font(.body.weight(.medium))
+                                        .foregroundStyle(Theme.textPrimary)
+                                    Spacer()
+                                    Text("\(remaining) sets left")
+                                        .font(.caption)
+                                        .foregroundStyle(Theme.textSecondary)
+                                }
                             }
                         }
                     }
@@ -268,7 +286,15 @@ struct ActiveWorkoutView: View {
                 withAnimation {
                     viewModel.focusMode.toggle()
                     if viewModel.focusMode {
-                        viewModel.syncFocusToCurrentExercise()
+                        // Default to first incomplete exercise
+                        if let firstIncomplete = viewModel.exercises.firstIndex(where: { ex in
+                            ex.sets.contains { $0.completedAt == Date.distantPast }
+                        }) {
+                            viewModel.focusExerciseIndex = firstIncomplete
+                            viewModel.focusSetIndex = 0
+                        } else {
+                            viewModel.syncFocusToCurrentExercise()
+                        }
                         if viewModel.exercises.count > 1 {
                             showStartingExercisePicker = true
                         }
@@ -366,7 +392,9 @@ struct ActiveWorkoutView: View {
     // MARK: - Actions
 
     private func finishWorkout() {
+        guard !viewModel.isSaving else { return }
         guard let user = authService.currentUser else { return }
+        viewModel.isSaving = true
         let userId = user.id.uuidString.lowercased()
         let notes = workoutDescription.trimmingCharacters(in: .whitespacesAndNewlines)
 

@@ -85,6 +85,7 @@ struct WorkoutView: View {
                 }
             }
             .navigationTitle("Workout")
+            .navigationBarTitleDisplayMode(.large)
             .toolbarColorScheme(.dark, for: .navigationBar)
             .task {
                 await loadSections()
