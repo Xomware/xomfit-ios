@@ -94,6 +94,22 @@ final class ProfileViewModel {
 
     var isFeedFiltered: Bool { feedDateRange != .all || !feedMuscleGroups.isEmpty }
 
+    // MARK: - Workouts (profile history)
+    var workouts: [Workout] = []
+
+    var filteredWorkouts: [Workout] {
+        workouts.filter { workout in
+            if let start = feedDateRange.startDate, workout.startTime < start {
+                return false
+            }
+            if !feedMuscleGroups.isEmpty {
+                let groups = workout.exercises.flatMap { $0.exercise.muscleGroups }
+                if feedMuscleGroups.isDisjoint(with: groups) { return false }
+            }
+            return true
+        }
+    }
+
     // MARK: - Calendar
     var workoutDays: [Date: Int] = [:]
 
@@ -168,11 +184,13 @@ final class ProfileViewModel {
         async let feedTask = loadFeed(userId: userId)
         async let friendsTask = loadFriends(userId: userId)
 
-        let workouts = await workoutsTask
-        totalWorkouts = workouts.count
-        totalVolume = workouts.reduce(0) { $0 + $1.totalVolume }
-        loadCalendarData(workouts: workouts)
-        computeMuscleGroupSets(workouts: workouts)
+        let fetchedWorkouts = await workoutsTask
+        workouts = fetchedWorkouts
+        totalWorkouts = fetchedWorkouts.count
+        totalVolume = fetchedWorkouts.reduce(0) { $0 + $1.totalVolume }
+        feedItemCount = fetchedWorkouts.count
+        loadCalendarData(workouts: fetchedWorkouts)
+        computeMuscleGroupSets(workouts: fetchedWorkouts)
 
         await prsTask
         await feedTask
