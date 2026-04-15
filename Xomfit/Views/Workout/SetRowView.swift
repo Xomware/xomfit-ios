@@ -129,15 +129,6 @@ struct SetRowView: View {
         .padding(.vertical, 6)
         .background(isCompleted ? Theme.accent.opacity(0.12) : Color.clear)
         .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
-        .toolbar {
-            ToolbarItemGroup(placement: .keyboard) {
-                Spacer()
-                Button("Done") {
-                    isWeightFocused = false
-                    isRepsFocused = false
-                }
-            }
-        }
         .animation(nil, value: workoutSet.completedAt)
         // Keep local text state in sync if set is reset externally
         .onChange(of: workoutSet.weight) { _, newWeight in

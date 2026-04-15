@@ -500,6 +500,7 @@ final class WorkoutLoggerViewModel {
     func extendRestTimer(_ seconds: Double = 30) {
         restTimeRemaining += seconds
         restDuration += seconds
+        updateLiveActivity()
     }
 
     // MARK: - PR Detection
@@ -581,6 +582,10 @@ final class WorkoutLoggerViewModel {
             ex.sets.contains(where: { $0.completedAt == Date.distantPast })
         })?.exercise.name ?? "Finishing up"
 
+        let restEnd: Date? = isRestTimerActive && restTimeRemaining > 0
+            ? Date().addingTimeInterval(restTimeRemaining)
+            : nil
+
         let state = XomfitWidgetAttributes.ContentState(
             elapsedSeconds: Int(Date().timeIntervalSince(startTime)),
             completedSets: completedSets,
@@ -588,7 +593,8 @@ final class WorkoutLoggerViewModel {
             currentExercise: currentExName,
             totalExercises: exercises.count,
             isResting: isRestTimerActive,
-            restTimeRemaining: Int(self.restTimeRemaining)
+            restTimeRemaining: Int(self.restTimeRemaining),
+            restEndDate: restEnd
         )
 
         Task {
@@ -613,7 +619,10 @@ final class WorkoutLoggerViewModel {
 
     func tickLiveActivity() {
         liveActivityUpdateCounter += 1
-        if liveActivityUpdateCounter % 10 == 0 {
+        // Update frequently during rest transitions, otherwise every 30s
+        // (timer style handles real-time display, we just need state pushes)
+        let interval = isRestTimerActive ? 5 : 30
+        if liveActivityUpdateCounter % interval == 0 {
             updateLiveActivity()
         }
     }
