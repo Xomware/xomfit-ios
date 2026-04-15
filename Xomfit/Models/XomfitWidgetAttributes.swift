@@ -18,6 +18,7 @@ struct XomfitWidgetAttributes: ActivityAttributes {
         var totalExercises: Int
         var isResting: Bool = false
         var restTimeRemaining: Int = 0
+        var restEndDate: Date? = nil
     }
 
     var workoutName: String

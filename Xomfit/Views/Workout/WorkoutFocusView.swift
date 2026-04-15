@@ -26,34 +26,41 @@ struct WorkoutFocusView: View {
                 VStack(spacing: Theme.Spacing.lg) {
                     Spacer().frame(height: Theme.Spacing.sm)
 
-                    exerciseHeader(exercise: exercise)
+                    // Exercise content — animated slide on exercise change
+                    VStack(spacing: Theme.Spacing.lg) {
+                        exerciseHeader(exercise: exercise)
 
-                    // Variant config (grip, attachment, position, laterality) — shown when available
-                    if exercise.exercise.supportedGrips != nil ||
-                       exercise.exercise.supportedAttachments != nil ||
-                       exercise.exercise.supportedPositions != nil ||
-                       exercise.exercise.supportsUnilateral {
-                        ExerciseConfigRow(
-                            exercise: exercise,
-                            onGripChanged: { grip in viewModel.setGrip(exerciseIndex: viewModel.focusExerciseIndex, grip: grip) },
-                            onAttachmentChanged: { att in viewModel.setAttachment(exerciseIndex: viewModel.focusExerciseIndex, attachment: att) },
-                            onPositionChanged: { pos in viewModel.setPosition(exerciseIndex: viewModel.focusExerciseIndex, position: pos) },
-                            onLateralityChanged: { lat in viewModel.setLaterality(exerciseIndex: viewModel.focusExerciseIndex, laterality: lat) }
-                        )
+                        // Variant config (grip, attachment, position, laterality) — shown when available
+                        if exercise.exercise.supportedGrips != nil ||
+                           exercise.exercise.supportedAttachments != nil ||
+                           exercise.exercise.supportedPositions != nil ||
+                           exercise.exercise.supportsUnilateral {
+                            ExerciseConfigRow(
+                                exercise: exercise,
+                                onGripChanged: { grip in viewModel.setGrip(exerciseIndex: viewModel.focusExerciseIndex, grip: grip) },
+                                onAttachmentChanged: { att in viewModel.setAttachment(exerciseIndex: viewModel.focusExerciseIndex, attachment: att) },
+                                onPositionChanged: { pos in viewModel.setPosition(exerciseIndex: viewModel.focusExerciseIndex, position: pos) },
+                                onLateralityChanged: { lat in viewModel.setLaterality(exerciseIndex: viewModel.focusExerciseIndex, laterality: lat) }
+                            )
+                        }
+
+                        setIndicator(exercise: exercise)
+
+                        weightDisplay(currentSet: currentSet)
+
+                        repsDisplay(currentSet: currentSet)
+
+                        doneButton(currentSet: currentSet)
                     }
-
-                    setIndicator(exercise: exercise)
-
-                    weightDisplay(currentSet: currentSet)
-
-                    repsDisplay(currentSet: currentSet)
-
-                    doneButton(currentSet: currentSet)
+                    .id(viewModel.focusExerciseIndex)
+                    .transition(.push(from: .trailing))
+                    .animation(.easeInOut(duration: 0.3), value: viewModel.focusExerciseIndex)
 
                     exerciseNavigation
 
                     Spacer().frame(height: viewModel.isRestTimerActive && isRestTimerMinimized ? 100 : 0)
                 }
+                .safeAreaPadding(.top)
                 .padding(.horizontal, Theme.Spacing.lg)
 
                 // Rest timer overlay

@@ -153,6 +153,7 @@ struct ProfileView: View {
                         .background(Theme.background)
                 }
             }
+            .padding(.bottom, 100) // Clear floating tab bar
         }
     }
 
@@ -162,14 +163,12 @@ struct ProfileView: View {
     private var tabContent: some View {
         switch viewModel.selectedTab {
         case .feed:
-            ProfileFeedView(
-                feedItems: $viewModel.feedItems,
-                filteredItems: viewModel.filteredFeedItems,
+            ProfileWorkoutListView(
+                workouts: viewModel.filteredWorkouts,
+                allWorkouts: viewModel.workouts,
                 isFiltered: viewModel.isFeedFiltered,
                 dateRange: $viewModel.feedDateRange,
-                muscleGroups: $viewModel.feedMuscleGroups,
-                userId: resolvedUserId,
-                currentUserId: currentUserId
+                muscleGroups: $viewModel.feedMuscleGroups
             )
         case .calendar:
             ProfileCalendarView(workoutDays: viewModel.workoutDays, userId: resolvedUserId)

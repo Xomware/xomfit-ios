@@ -34,9 +34,10 @@ struct XomfitWidgetLiveActivity: Widget {
                         .lineLimit(1)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    Text(formatTime(context.state.elapsedSeconds))
+                    Text(context.attributes.startTime, style: .timer)
                         .font(.system(size: 14, weight: .semibold, design: .monospaced))
                         .foregroundStyle(Self.accentGreen)
+                        .multilineTextAlignment(.trailing)
                 }
                 DynamicIslandExpandedRegion(.center) {
                     Text(context.state.isResting ? "Resting" : context.state.currentExercise)
@@ -52,9 +53,17 @@ struct XomfitWidgetLiveActivity: Widget {
                     .font(.system(size: 12))
                     .foregroundStyle(Self.accentGreen)
             } compactTrailing: {
-                Text(context.state.isResting ? formatTime(context.state.restTimeRemaining) : formatTime(context.state.elapsedSeconds))
-                    .font(.system(size: 12, weight: .semibold, design: .monospaced))
-                    .foregroundStyle(Self.accentGreen)
+                if context.state.isResting, let endDate = context.state.restEndDate {
+                    Text(timerInterval: Date.now...endDate, countsDown: true)
+                        .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(Self.accentGreen)
+                        .multilineTextAlignment(.trailing)
+                } else {
+                    Text(context.attributes.startTime, style: .timer)
+                        .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(Self.accentGreen)
+                        .multilineTextAlignment(.trailing)
+                }
             } minimal: {
                 Image(systemName: "dumbbell.fill")
                     .font(.system(size: 12))
@@ -89,17 +98,28 @@ struct XomfitWidgetLiveActivity: Widget {
 
                 Spacer()
 
-                Text(formatTime(state.elapsedSeconds))
+                Text(context.attributes.startTime, style: .timer)
                     .font(.system(size: 15, weight: .semibold, design: .monospaced))
                     .foregroundStyle(Self.accentGreen)
+                    .multilineTextAlignment(.trailing)
             }
 
             // Middle row: current exercise + set/exercise progress
             HStack(spacing: 0) {
-                Text(state.isResting ? "Resting \(formatTime(state.restTimeRemaining))" : state.currentExercise)
+                if state.isResting, let endDate = state.restEndDate {
+                    HStack(spacing: 4) {
+                        Text("Resting")
+                        Text(timerInterval: Date.now...endDate, countsDown: true)
+                    }
                     .font(.system(size: 13, weight: .medium))
                     .foregroundStyle(.white.opacity(0.8))
                     .lineLimit(1)
+                } else {
+                    Text(state.currentExercise)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(.white.opacity(0.8))
+                        .lineLimit(1)
+                }
 
                 Text("  \u{2022}  ")
                     .foregroundStyle(.white.opacity(0.4))
@@ -144,12 +164,15 @@ struct XomfitWidgetLiveActivity: Widget {
             : 0
 
         VStack(alignment: .leading, spacing: 6) {
-            if state.isResting {
+            if state.isResting, let endDate = state.restEndDate {
                 HStack {
                     Image(systemName: "timer")
                         .font(.system(size: 11))
                         .foregroundStyle(Self.accentGreen)
-                    Text("Rest: \(formatTime(state.restTimeRemaining))")
+                    Text("Rest:")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(Self.accentGreen)
+                    Text(timerInterval: Date.now...endDate, countsDown: true)
                         .font(.system(size: 12, weight: .semibold, design: .monospaced))
                         .foregroundStyle(Self.accentGreen)
                     Spacer()
