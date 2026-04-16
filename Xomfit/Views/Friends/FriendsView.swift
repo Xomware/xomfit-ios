@@ -97,7 +97,11 @@ struct FriendsView: View {
         .padding(Theme.Spacing.sm)
         .padding(.horizontal, Theme.Spacing.sm)
         .background(Theme.surface)
-        .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
+        .clipShape(.rect(cornerRadius: Theme.Radius.sm))
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.Radius.sm)
+                .strokeBorder(Theme.hairline, lineWidth: 0.5)
+        )
         .padding(.horizontal, Theme.Spacing.md)
         .padding(.vertical, Theme.Spacing.sm)
     }
@@ -292,14 +296,10 @@ private struct SearchResultRow: View {
 
     var body: some View {
         HStack(spacing: Theme.Spacing.md) {
-            ZStack {
-                Circle()
-                    .fill(Theme.accent.opacity(0.2))
-                    .frame(width: 40, height: 40)
-                Text(String(profile.displayName.prefix(2)).uppercased())
-                    .font(.subheadline.weight(.bold))
-                    .foregroundStyle(Theme.accent)
-            }
+            XomAvatar(
+                name: profile.displayName.isEmpty ? profile.username : profile.displayName,
+                size: 40
+            )
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(profile.displayName)
@@ -307,7 +307,7 @@ private struct SearchResultRow: View {
                     .foregroundStyle(Theme.textPrimary)
                 Text("@\(profile.username)")
                     .font(Theme.fontCaption)
-                    .foregroundStyle(Theme.textSecondary)
+                    .foregroundStyle(Theme.textTertiary)
             }
 
             Spacer()
@@ -323,8 +323,12 @@ private struct SearchResultRow: View {
                         .foregroundStyle(requested ? Theme.textSecondary : .black)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 7)
-                        .background(requested ? Theme.surface : Theme.accent)
-                        .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
+                        .background(requested ? Theme.surfaceElevated : Theme.accent)
+                        .clipShape(.rect(cornerRadius: Theme.Radius.xs))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: Theme.Radius.xs)
+                                .strokeBorder(requested ? Theme.hairline : .clear, lineWidth: 0.5)
+                        )
                 }
                 .disabled(requested)
                 .buttonStyle(.plain)
@@ -360,14 +364,7 @@ private struct PendingRequestRow: View {
 
     var body: some View {
         HStack(spacing: Theme.Spacing.md) {
-            ZStack {
-                Circle()
-                    .fill(Theme.accent.opacity(0.2))
-                    .frame(width: 40, height: 40)
-                Text(requesterInitials)
-                    .font(.subheadline.weight(.bold))
-                    .foregroundStyle(Theme.accent)
-            }
+            XomAvatar(name: requesterName, size: 40)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(requesterName)
@@ -376,7 +373,7 @@ private struct PendingRequestRow: View {
                 if let profile = requesterProfile {
                     Text("@\(profile.username)")
                         .font(Theme.fontCaption)
-                        .foregroundStyle(Theme.textSecondary)
+                        .foregroundStyle(Theme.textTertiary)
                         .lineLimit(1)
                 }
             }
@@ -393,7 +390,7 @@ private struct PendingRequestRow: View {
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
                 .background(Theme.accent)
-                .clipShape(.rect(cornerRadius: 6))
+                .clipShape(.rect(cornerRadius: Theme.Radius.xs))
                 .buttonStyle(.plain)
 
                 Button("Decline") {
@@ -404,8 +401,8 @@ private struct PendingRequestRow: View {
                 .foregroundStyle(Theme.destructive)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
-                .background(Theme.destructive.opacity(0.15))
-                .clipShape(.rect(cornerRadius: 6))
+                .background(Theme.destructive.opacity(0.12))
+                .clipShape(.rect(cornerRadius: Theme.Radius.xs))
                 .buttonStyle(.plain)
             }
         }
@@ -429,25 +426,9 @@ private struct FriendListRow: View {
         return String(friendId.prefix(8))
     }
 
-    private var friendInitials: String {
-        let name = friendName
-        let parts = name.split(separator: " ")
-        if parts.count >= 2 {
-            return String(parts[0].prefix(1) + parts[1].prefix(1)).uppercased()
-        }
-        return String(name.prefix(2)).uppercased()
-    }
-
     var body: some View {
         HStack(spacing: Theme.Spacing.md) {
-            ZStack {
-                Circle()
-                    .fill(Theme.accent.opacity(0.2))
-                    .frame(width: 40, height: 40)
-                Text(friendInitials)
-                    .font(.subheadline.weight(.bold))
-                    .foregroundStyle(Theme.accent)
-            }
+            XomAvatar(name: friendName, size: 40)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(friendName)
@@ -457,11 +438,11 @@ private struct FriendListRow: View {
                 if let profile = friendProfile {
                     Text("@\(profile.username)")
                         .font(Theme.fontCaption)
-                        .foregroundStyle(Theme.textSecondary)
+                        .foregroundStyle(Theme.textTertiary)
                 } else {
                     Text(friend.status == "accepted" ? "Friends" : "Pending")
                         .font(Theme.fontCaption)
-                        .foregroundStyle(Theme.textSecondary)
+                        .foregroundStyle(Theme.textTertiary)
                 }
             }
 

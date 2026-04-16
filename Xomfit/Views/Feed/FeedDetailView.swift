@@ -101,7 +101,7 @@ struct FeedDetailView: View {
             }
 
             if let activity = localItem.workoutActivity {
-                Divider().background(Theme.textSecondary.opacity(0.2))
+                XomDivider()
 
                 VStack(alignment: .leading, spacing: 6) {
                     Text(activity.workoutName)
@@ -130,13 +130,13 @@ struct FeedDetailView: View {
                     }
                 }
 
-                Divider().background(Theme.textSecondary.opacity(0.2))
+                XomDivider()
 
                 // Real exercise data from DB
                 exerciseSection
             }
 
-            Divider().background(Theme.textSecondary.opacity(0.2))
+            XomDivider()
 
             actionBar
         }
@@ -292,77 +292,30 @@ struct FeedDetailView: View {
 
     private var headerRow: some View {
         HStack(spacing: Theme.Spacing.sm) {
-            ZStack {
-                Circle()
-                    .fill(Theme.accent.opacity(0.2))
-                    .frame(width: 44, height: 44)
-                Text(avatarInitials)
-                    .font(.subheadline.weight(.bold))
-                    .foregroundStyle(Theme.accent)
-            }
+            XomAvatar(
+                name: localItem.user.displayName.isEmpty ? localItem.user.username : localItem.user.displayName,
+                size: 48
+            )
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(localItem.user.displayName.isEmpty ? localItem.user.username : localItem.user.displayName)
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Theme.textPrimary)
-                Text(localItem.createdAt.timeAgo)
+                Text("\(activityTypeLabel) · \(localItem.createdAt.timeAgo)")
                     .font(Theme.fontSmall)
-                    .foregroundStyle(Theme.textSecondary)
+                    .foregroundStyle(Theme.textTertiary)
             }
 
             Spacer()
-
-            activityBadge
         }
     }
 
-    private var avatarInitials: String {
-        let name = localItem.user.displayName.isEmpty ? localItem.user.username : localItem.user.displayName
-        let parts = name.split(separator: " ")
-        if parts.count >= 2 {
-            return String(parts[0].prefix(1) + parts[1].prefix(1)).uppercased()
-        }
-        return String(name.prefix(2)).uppercased()
-    }
-
-    private var activityBadge: some View {
-        HStack(spacing: 4) {
-            Image(systemName: badgeIcon)
-                .font(.caption2.weight(.semibold))
-            Text(badgeLabel)
-                .font(Theme.fontSmall)
-        }
-        .foregroundStyle(badgeColor)
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(badgeColor.opacity(0.15))
-        .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
-    }
-
-    private var badgeIcon: String {
+    private var activityTypeLabel: String {
         switch localItem.activityType {
-        case .workout: return "figure.strengthtraining.traditional"
-        case .personalRecord: return "trophy.fill"
-        case .milestone: return "star.fill"
-        case .streak: return "flame.fill"
-        }
-    }
-
-    private var badgeLabel: String {
-        switch localItem.activityType {
-        case .workout: return "Workout"
-        case .personalRecord: return "PR"
-        case .milestone: return "Milestone"
-        case .streak: return "Streak"
-        }
-    }
-
-    private var badgeColor: Color {
-        switch localItem.activityType {
-        case .workout: return Theme.accent
-        case .personalRecord: return Theme.prGold
-        case .milestone: return Theme.badgeMilestone
-        case .streak: return Theme.badgeStreak
+        case .workout:        "Workout"
+        case .personalRecord: "Personal Record"
+        case .milestone:      "Milestone"
+        case .streak:         "Streak"
         }
     }
 

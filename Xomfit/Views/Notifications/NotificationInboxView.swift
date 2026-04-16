@@ -58,19 +58,11 @@ struct NotificationInboxView: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: Theme.Spacing.md) {
-            Image(systemName: "bell.slash")
-                .font(.system(size: 40))
-                .foregroundStyle(Theme.textSecondary)
-            Text("No notifications yet")
-                .font(Theme.fontHeadline)
-                .foregroundStyle(Theme.textPrimary)
-            Text("You'll see likes, comments, friend requests, and more here.")
-                .font(Theme.fontBody)
-                .foregroundStyle(Theme.textSecondary)
-                .multilineTextAlignment(.center)
-        }
-        .padding(Theme.Spacing.lg)
+        XomEmptyState(
+            icon: "bell.slash",
+            title: "No notifications yet",
+            subtitle: "You'll see likes, comments, friend requests, and more here."
+        )
     }
 }
 
@@ -102,7 +94,7 @@ private struct NotificationRow: View {
 
                 Text(notification.createdAt.timeAgo)
                     .font(Theme.fontSmall)
-                    .foregroundStyle(Theme.textSecondary)
+                    .foregroundStyle(Theme.textTertiary)
             }
 
             Spacer()

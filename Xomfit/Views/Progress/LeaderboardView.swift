@@ -14,7 +14,7 @@ struct LeaderboardView: View {
 
             VStack(spacing: 0) {
                 filterBar
-                Divider().background(Theme.textSecondary.opacity(0.2))
+                XomDivider()
 
                 if viewModel.isLoading {
                     Spacer()
@@ -113,16 +113,15 @@ struct LeaderboardView: View {
             // Muscle group filter
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
-                    filterChip(label: "All", isSelected: viewModel.selectedMuscleGroup == nil) {
-                        viewModel.selectedMuscleGroup = nil
+                    Button { viewModel.selectedMuscleGroup = nil } label: {
+                        XomBadge("All", variant: .interactive, isActive: viewModel.selectedMuscleGroup == nil)
                     }
+                    .buttonStyle(.plain)
                     ForEach(MuscleGroup.allCases) { group in
-                        filterChip(
-                            label: group.displayName,
-                            isSelected: viewModel.selectedMuscleGroup == group
-                        ) {
-                            viewModel.selectedMuscleGroup = group
+                        Button { viewModel.selectedMuscleGroup = group } label: {
+                            XomBadge(group.displayName, variant: .interactive, isActive: viewModel.selectedMuscleGroup == group)
                         }
+                        .buttonStyle(.plain)
                     }
                 }
             }
@@ -147,9 +146,8 @@ struct LeaderboardView: View {
                 ForEach(viewModel.entries) { entry in
                     leaderboardRow(entry: entry)
                     if entry.id != viewModel.entries.last?.id {
-                        Divider()
-                            .background(Theme.textSecondary.opacity(0.15))
-                            .padding(.horizontal, Theme.Spacing.md)
+                        XomDivider()
+                            .padding(.leading, 60)
                     }
                 }
             }
@@ -194,7 +192,7 @@ struct LeaderboardView: View {
                 .frame(height: height)
                 .overlay(
                     Text("#\(entry.rank)")
-                        .font(.title3.weight(.black))
+                        .font(Theme.fontDisplay)
                         .foregroundStyle(entry.rank == 1 ? Theme.accent : Theme.textSecondary)
                 )
         }
@@ -205,37 +203,47 @@ struct LeaderboardView: View {
 
     private func leaderboardRow(entry: LeaderboardEntry) -> some View {
         let isCurrentUser = entry.userId == userId
-        return HStack(spacing: Theme.Spacing.sm) {
-            // Rank
-            Text("\(entry.rank)")
-                .font(.body.weight(.bold).monospacedDigit())
-                .foregroundStyle(entry.rank <= 3 ? Theme.accent : Theme.textSecondary)
-                .frame(width: 30, alignment: .center)
-
-            XomAvatar(name: entry.displayName, size: 36)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(entry.displayName)
-                    .font(.subheadline.weight(isCurrentUser ? .bold : .medium))
-                    .foregroundStyle(isCurrentUser ? Theme.accent : Theme.textPrimary)
-                    .lineLimit(1)
-
-                if entry.rankChange != 0 {
-                    Text(entry.rankChangeSymbol)
-                        .font(.caption2.weight(.semibold))
-                        .foregroundStyle(entry.rankChange > 0 ? .green : Theme.destructive)
-                }
+        return HStack(spacing: 0) {
+            // Current-user leading accent stripe
+            if isCurrentUser {
+                Rectangle()
+                    .fill(Theme.accent)
+                    .frame(width: 3)
             }
 
-            Spacer()
+            HStack(spacing: Theme.Spacing.sm) {
+                // Rank number at fontNumberLarge
+                Text("\(entry.rank)")
+                    .font(Theme.fontNumberLarge)
+                    .foregroundStyle(entry.rank <= 3 ? Theme.accent : Theme.textSecondary)
+                    .frame(width: 36, alignment: .center)
 
-            Text(entry.scoreFormatted)
-                .font(.subheadline.weight(.bold).monospacedDigit())
-                .foregroundStyle(Theme.textPrimary)
+                XomAvatar(name: entry.displayName, size: 40)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(entry.displayName)
+                        .font(.subheadline.weight(isCurrentUser ? .bold : .medium))
+                        .foregroundStyle(isCurrentUser ? Theme.textPrimary : Theme.textPrimary)
+                        .lineLimit(1)
+
+                    if entry.rankChange != 0 {
+                        Text(entry.rankChangeSymbol)
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(entry.rankChange > 0 ? Theme.accent : Theme.destructive)
+                    }
+                }
+
+                Spacer()
+
+                Text(entry.scoreFormatted)
+                    .font(Theme.fontNumberMedium)
+                    .foregroundStyle(Theme.textPrimary)
+            }
+            .padding(.horizontal, Theme.Spacing.md)
+            .padding(.vertical, 12)
+            .frame(maxWidth: .infinity)
         }
-        .padding(.horizontal, Theme.Spacing.md)
-        .padding(.vertical, 12)
-        .background(isCurrentUser ? Theme.accent.opacity(0.08) : .clear)
+        .background(isCurrentUser ? Theme.accent.opacity(0.06) : .clear)
     }
 
     // MARK: - Helpers
@@ -262,19 +270,6 @@ struct LeaderboardView: View {
             .background(Theme.surface)
             .clipShape(.capsule)
         }
-    }
-
-    private func filterChip(label: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(label)
-                .font(.caption2.weight(.semibold))
-                .foregroundStyle(isSelected ? .black : Theme.textSecondary)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(isSelected ? Theme.accent : Theme.surfaceSecondary)
-                .clipShape(.capsule)
-        }
-        .buttonStyle(.plain)
     }
 
     private func metricIcon(_ metric: LeaderboardMetric) -> String {

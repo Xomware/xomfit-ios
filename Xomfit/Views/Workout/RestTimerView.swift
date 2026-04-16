@@ -1,12 +1,16 @@
 import SwiftUI
 
 /// Horizontal rest timer banner shown between sets.
-/// Circular countdown ring on the left, time display and controls on the right.
+/// Circular conic-gradient progress ring on the left, display-sized countdown, and controls.
 struct RestTimerView: View {
     let restTimeRemaining: Double
     let restDuration: Double
     let onSkip: () -> Void
     let onExtend: () -> Void
+
+    @State private var breatheScale: CGFloat = 1.0
+    @State private var completionFlash: Bool = false
+    @State private var prevRemaining: Double = 0
 
     private var isOvertime: Bool {
         restTimeRemaining <= 0
@@ -37,37 +41,30 @@ struct RestTimerView: View {
 
     var body: some View {
         HStack(spacing: Theme.Spacing.md) {
-            // Circular countdown ring
+            // Conic-gradient progress ring
             ZStack {
-                Circle()
-                    .stroke(
-                        Theme.textSecondary.opacity(0.3),
-                        lineWidth: 5
-                    )
-
-                Circle()
-                    .trim(from: 0, to: progress)
-                    .stroke(
-                        ringColor,
-                        style: StrokeStyle(lineWidth: 5, lineCap: .round)
-                    )
-                    .rotationEffect(.degrees(-90))
-                    .animation(.linear(duration: 1), value: progress)
+                RestTimerRingView(progress: progress, color: ringColor, lineWidth: 5)
 
                 Text(timeString)
-                    .font(.body.weight(.bold).monospaced())
+                    .font(Theme.fontDisplay)
+                    .foregroundStyle(isOvertime ? Theme.destructive : Theme.textPrimary)
+                    .scaleEffect(breatheScale)
+                    .animation(
+                        .easeInOut(duration: 1.0).repeatForever(autoreverses: true),
+                        value: breatheScale
+                    )
                     .monospacedDigit()
-                    .foregroundStyle(isOvertime ? Theme.destructive : Theme.accent)
             }
-            .frame(width: 64, height: 64)
+            .frame(width: 80, height: 80)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(isOvertime ? "Rest timer, \(timeString) overtime" : "Rest timer, \(timeString) remaining")
+            .onAppear {
+                breatheScale = 1.02
+            }
 
             // Label + controls
             VStack(alignment: .leading, spacing: 8) {
-                Text("Rest")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(Theme.textSecondary)
+                XomMetricLabel("Rest")
 
                 HStack(spacing: 10) {
                     Button {
@@ -79,9 +76,13 @@ struct RestTimerView: View {
                             .foregroundStyle(Theme.textPrimary)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 7)
-                            .background(Theme.textSecondary.opacity(0.2))
+                            .background(Theme.surfaceElevated)
                             .clipShape(.capsule)
+                            .overlay(
+                                Capsule().strokeBorder(Theme.hairline, lineWidth: 0.5)
+                            )
                     }
+                    .buttonStyle(.plain)
                     .accessibilityLabel("Skip rest timer")
 
                     Button {
@@ -93,9 +94,10 @@ struct RestTimerView: View {
                             .foregroundStyle(Theme.accent)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 7)
-                            .background(Theme.accent.opacity(0.12))
+                            .background(Theme.accentMuted)
                             .clipShape(.capsule)
                     }
+                    .buttonStyle(.plain)
                     .accessibilityLabel("Add 30 seconds to rest timer")
                 }
             }
@@ -103,7 +105,32 @@ struct RestTimerView: View {
             Spacer()
         }
         .padding(Theme.Spacing.md)
-        .background(Theme.surface)
+        .background(.ultraThinMaterial)
         .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.cornerRadius)
+                .strokeBorder(Theme.hairline, lineWidth: 0.5)
+        )
+        .overlay(
+            // Completion flourish: accent flash at T=0
+            RoundedRectangle(cornerRadius: Theme.cornerRadius)
+                .fill(Theme.accent.opacity(completionFlash ? 0.15 : 0))
+                .allowsHitTesting(false)
+        )
+        .onAppear {
+            prevRemaining = restTimeRemaining
+        }
+        .onChange(of: restTimeRemaining) { _, newValue in
+            // Fire flourish exactly once when timer crosses zero
+            if prevRemaining > 0 && newValue <= 0 && !completionFlash {
+                withAnimation(.easeIn(duration: 0.2)) {
+                    completionFlash = true
+                }
+                withAnimation(.easeOut(duration: 0.4).delay(0.2)) {
+                    completionFlash = false
+                }
+            }
+            prevRemaining = newValue
+        }
     }
 }

@@ -19,6 +19,10 @@ struct SetRowView: View {
         workoutSet.completedAt != Date.distantPast
     }
 
+    private var isPR: Bool {
+        workoutSet.isPersonalRecord
+    }
+
     init(
         setNumber: Int,
         workoutSet: WorkoutSet,
@@ -45,92 +49,130 @@ struct SetRowView: View {
     }
 
     var body: some View {
-        HStack(spacing: Theme.Spacing.sm) {
-            // Delete button (visible, since swipeActions don't work outside List)
-            Button(action: onDelete) {
-                Image(systemName: "minus.circle.fill")
-                    .foregroundStyle(Theme.destructive)
-                    .font(.headline)
+        HStack(spacing: 0) {
+            // PR indicator: 3pt gold leading stripe (only when it's a PR)
+            if isPR {
+                Rectangle()
+                    .fill(Theme.prGold)
+                    .frame(width: 3)
+                    .clipShape(.rect(topLeadingRadius: 3, bottomLeadingRadius: 3))
             }
-            .buttonStyle(.plain)
-            .frame(width: 30)
-            .accessibilityLabel("Delete set \(setNumber)")
 
-            // Set number
-            Text("\(setNumber)")
-                .font(.subheadline.weight(.bold).monospaced())
-                .foregroundStyle(isCompleted ? Theme.accent : Theme.textSecondary)
-                .frame(width: 24, alignment: .center)
+            HStack(spacing: Theme.Spacing.sm) {
+                // Delete button
+                Button(action: onDelete) {
+                    Image(systemName: "minus.circle.fill")
+                        .foregroundStyle(Theme.destructive)
+                        .font(.headline)
+                }
+                .buttonStyle(.plain)
+                .frame(width: 30)
+                .accessibilityLabel("Delete set \(setNumber)")
 
-            // Weight field
-            TextField("0", text: $weightText)
-                .keyboardType(.decimalPad)
-                .multilineTextAlignment(.center)
-                .padding(.vertical, 8)
-                .padding(.horizontal, 6)
-                .background(Theme.surface)
-                .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
-                .foregroundStyle(isCompleted ? Theme.accent : Theme.textPrimary)
-                .frame(maxWidth: .infinity)
-                .focused($isWeightFocused)
-                .onChange(of: weightText) { _, newValue in
-                    if let w = Double(newValue) {
-                        onWeightChange(w)
-                    }
+                // PR trophy icon (replaces tinted row background)
+                if isPR {
+                    Image(systemName: "trophy.fill")
+                        .font(.caption2)
+                        .foregroundStyle(Theme.prGold)
+                        .frame(width: 16)
+                } else {
+                    // Set number
+                    Text("\(setNumber)")
+                        .font(.subheadline.weight(.bold).monospaced())
+                        .foregroundStyle(isCompleted ? Theme.accent : Theme.textSecondary)
+                        .frame(width: 24, alignment: .center)
                 }
 
-            Button(action: onToggleWeightMode) {
-                Text(workoutSet.weightMode == .perSide ? "lbs ×2  ×" : "lbs  ×")
-                    .font(Theme.fontCaption)
-                    .foregroundStyle(workoutSet.weightMode == .perSide ? Theme.accent : Theme.textSecondary)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(workoutSet.weightMode == .perSide ? "Per side weight, tap to switch to total" : "Total weight, tap to switch to per side")
-
-            // Reps field
-            TextField("0", text: $repsText)
-                .keyboardType(.numberPad)
-                .multilineTextAlignment(.center)
-                .padding(.vertical, 8)
-                .padding(.horizontal, 6)
-                .background(Theme.surface)
-                .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
-                .foregroundStyle(isCompleted ? Theme.accent : Theme.textPrimary)
-                .frame(maxWidth: .infinity)
-                .focused($isRepsFocused)
-                .onChange(of: repsText) { _, newValue in
-                    if let r = Int(newValue) {
-                        onRepsChange(r)
+                // Weight field
+                TextField("0", text: $weightText)
+                    .keyboardType(.decimalPad)
+                    .multilineTextAlignment(.center)
+                    .font(Theme.fontNumberMedium)
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 6)
+                    .background(Theme.surfaceElevated)
+                    .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall)
+                            .strokeBorder(isWeightFocused ? Theme.hairlineStrong : Theme.hairline, lineWidth: 0.5)
+                    )
+                    .foregroundStyle(isCompleted ? Theme.accent : Theme.textPrimary)
+                    .frame(maxWidth: .infinity)
+                    .focused($isWeightFocused)
+                    .onChange(of: weightText) { _, newValue in
+                        if let w = Double(newValue) {
+                            onWeightChange(w)
+                        }
                     }
+
+                Button(action: onToggleWeightMode) {
+                    Text(workoutSet.weightMode == .perSide ? "lbs ×2  ×" : "lbs  ×")
+                        .font(Theme.fontCaption)
+                        .foregroundStyle(workoutSet.weightMode == .perSide ? Theme.accent : Theme.textSecondary)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(workoutSet.weightMode == .perSide ? "Per side weight, tap to switch to total" : "Total weight, tap to switch to per side")
+
+                // Reps field
+                TextField("0", text: $repsText)
+                    .keyboardType(.numberPad)
+                    .multilineTextAlignment(.center)
+                    .font(Theme.fontNumberMedium)
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 6)
+                    .background(Theme.surfaceElevated)
+                    .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall)
+                            .strokeBorder(isRepsFocused ? Theme.hairlineStrong : Theme.hairline, lineWidth: 0.5)
+                    )
+                    .foregroundStyle(isCompleted ? Theme.accent : Theme.textPrimary)
+                    .frame(maxWidth: .infinity)
+                    .focused($isRepsFocused)
+                    .onChange(of: repsText) { _, newValue in
+                        if let r = Int(newValue) {
+                            onRepsChange(r)
+                        }
+                    }
+
+                if let label = lateralityLabel {
+                    Text(label)
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(Theme.accent)
+                        .frame(width: 30)
                 }
 
-            if let label = lateralityLabel {
-                Text(label)
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(Theme.accent)
-                    .frame(width: 30)
-            }
-
-            // Complete checkmark button
-            Button(action: {
-                Haptics.success()
-                onComplete()
-            }) {
-                Image(systemName: isCompleted ? "checkmark.circle.fill" : "checkmark.circle")
-                    .font(.title2)
-                    .foregroundStyle(isCompleted ? Theme.accent : Theme.textSecondary.opacity(0.6))
+                // Complete checkmark — accent fill when done, 28pt target
+                Button(action: {
+                    Haptics.success()
+                    onComplete()
+                }) {
+                    ZStack {
+                        Circle()
+                            .fill(isCompleted ? Theme.accent : Theme.surfaceElevated)
+                            .frame(width: 28, height: 28)
+                            .overlay(
+                                Circle().strokeBorder(isCompleted ? Color.clear : Theme.hairlineStrong, lineWidth: 0.5)
+                            )
+                        if isCompleted {
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundStyle(.black)
+                        }
+                    }
                     .frame(width: 44, height: 44)
                     .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(isCompleted ? "Mark set \(setNumber) incomplete" : "Complete set \(setNumber)")
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel(isCompleted ? "Mark set \(setNumber) incomplete" : "Complete set \(setNumber)")
+            .padding(.horizontal, Theme.Spacing.md)
+            .padding(.vertical, 6)
         }
-        .padding(.horizontal, Theme.Spacing.md)
-        .padding(.vertical, 6)
-        .background(isCompleted ? Theme.accent.opacity(0.12) : Color.clear)
+        .frame(minHeight: 52)
+        .background(isCompleted ? Theme.accent.opacity(0.08) : Color.clear)
         .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
         .animation(nil, value: workoutSet.completedAt)
-        // Keep local text state in sync if set is reset externally
         .onChange(of: workoutSet.weight) { _, newWeight in
             let formatted = newWeight > 0 ? newWeight.formattedWeight : ""
             if weightText != formatted { weightText = formatted }

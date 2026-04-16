@@ -82,11 +82,11 @@ struct LoginView: View {
 
                         // Divider
                         HStack {
-                            Rectangle().fill(Theme.textSecondary.opacity(0.3)).frame(height: 1)
+                            Rectangle().fill(Theme.hairline).frame(height: 0.5)
                             Text("or")
                                 .font(Theme.fontCaption)
-                                .foregroundStyle(Theme.textSecondary)
-                            Rectangle().fill(Theme.textSecondary.opacity(0.3)).frame(height: 1)
+                                .foregroundStyle(Theme.textTertiary)
+                            Rectangle().fill(Theme.hairline).frame(height: 0.5)
                         }
                         .padding(.horizontal, Theme.Spacing.lg)
 
@@ -104,6 +104,10 @@ struct LoginView: View {
                                     .background(Theme.surface)
                                     .clipShape(.rect(cornerRadius: Theme.cornerRadius))
                                     .foregroundStyle(Theme.textPrimary)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: Theme.cornerRadius)
+                                            .strokeBorder(Theme.hairline, lineWidth: 0.5)
+                                    )
                             }
 
                             VStack(alignment: .leading, spacing: 6) {
@@ -115,6 +119,10 @@ struct LoginView: View {
                                     .background(Theme.surface)
                                     .clipShape(.rect(cornerRadius: Theme.cornerRadius))
                                     .foregroundStyle(Theme.textPrimary)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: Theme.cornerRadius)
+                                            .strokeBorder(Theme.hairline, lineWidth: 0.5)
+                                    )
                             }
 
                             Button {

@@ -30,7 +30,7 @@ struct XomProgressView: View {
                         LeaderboardView()
                     } label: {
                         Image(systemName: "trophy.fill")
-                            .foregroundStyle(Theme.accent)
+                            .foregroundStyle(Theme.textPrimary)
                     }
                     .accessibilityLabel("Leaderboard")
                 }
@@ -93,11 +93,34 @@ private struct SummaryCardsView: View {
 
     var body: some View {
         LazyVGrid(columns: columns, spacing: Theme.Spacing.sm) {
-            StatCard(icon: "dumbbell.fill", value: "\(totalWorkouts)", label: "Workouts")
-            StatCard(icon: "flame.fill", value: "\(currentStreak)", label: "Day Streak")
+            CountUpStatCard(icon: "dumbbell.fill", count: totalWorkouts, label: "Workouts", iconColor: Theme.accent)
+            CountUpStatCard(icon: "flame.fill", count: currentStreak, label: "Day Streak", iconColor: Theme.streak)
             StatCard(icon: "scalemass.fill", value: formattedVolume, label: "Volume")
-            StatCard(icon: "trophy.fill", value: "\(totalPRs)", label: "PRs")
+            CountUpStatCard(icon: "trophy.fill", count: totalPRs, label: "PRs", iconColor: Theme.prGold)
         }
+    }
+}
+
+private struct CountUpStatCard: View {
+    let icon: String
+    let count: Int
+    let label: String
+    let iconColor: Color
+
+    var body: some View {
+        XomCard(padding: Theme.Spacing.sm) {
+            VStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.headline)
+                    .foregroundStyle(iconColor)
+                CountUpNumber(target: count)
+                XomMetricLabel(label)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, Theme.Spacing.xs)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(label): \(count)")
     }
 }
 
@@ -107,22 +130,10 @@ private struct StatCard: View {
     let label: String
 
     var body: some View {
-        VStack(spacing: 6) {
-            Image(systemName: icon)
-                .font(.headline)
-                .foregroundStyle(Theme.accent)
-
-            Text(value)
-                .font(.title3.weight(.bold))
-                .foregroundStyle(Theme.textPrimary)
-
-            Text(label)
-                .font(Theme.fontSmall)
-                .foregroundStyle(Theme.textSecondary)
+        XomCard(padding: Theme.Spacing.sm) {
+            XomStat(value, label: label, icon: icon, iconColor: Theme.accent)
+                .padding(.vertical, Theme.Spacing.xs)
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, Theme.Spacing.md)
-        .cardStyle()
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(label): \(value)")
     }
@@ -170,13 +181,7 @@ private struct LiftProgressionChart: View {
                     Button {
                         withAnimation(.xomChill) { timeframe = tf }
                     } label: {
-                        Text(tf.rawValue)
-                            .font(.caption2.weight(.semibold))
-                            .foregroundStyle(timeframe == tf ? .black : Theme.textSecondary)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(timeframe == tf ? Theme.accent : Theme.surfaceSecondary)
-                            .clipShape(.capsule)
+                        XomBadge(tf.rawValue, variant: .interactive, isActive: timeframe == tf)
                     }
                     .buttonStyle(.plain)
                 }
@@ -207,17 +212,17 @@ private struct LiftProgressionChart: View {
                 .chartYAxis {
                     AxisMarks(position: .leading) { _ in
                         AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
-                            .foregroundStyle(Theme.textSecondary.opacity(0.3))
+                            .foregroundStyle(Theme.hairline)
                         AxisValueLabel()
-                            .foregroundStyle(Theme.textSecondary)
+                            .foregroundStyle(Theme.textTertiary)
                     }
                 }
                 .chartXAxis {
                     AxisMarks { _ in
                         AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
-                            .foregroundStyle(Theme.textSecondary.opacity(0.3))
+                            .foregroundStyle(Theme.hairline)
                         AxisValueLabel()
-                            .foregroundStyle(Theme.textSecondary)
+                            .foregroundStyle(Theme.textTertiary)
                     }
                 }
                 .frame(height: 200)
@@ -244,22 +249,28 @@ private struct WeeklyVolumeChart: View {
                         x: .value("Week", item.label),
                         y: .value("Volume", item.volume)
                     )
-                    .foregroundStyle(Theme.accent)
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [Theme.accent, Theme.accentMuted],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
                     .cornerRadius(4)
                 }
             }
             .chartYAxis {
                 AxisMarks(position: .leading) { _ in
                     AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
-                        .foregroundStyle(Theme.textSecondary.opacity(0.3))
+                        .foregroundStyle(Theme.hairline)
                     AxisValueLabel()
-                        .foregroundStyle(Theme.textSecondary)
+                        .foregroundStyle(Theme.textTertiary)
                 }
             }
             .chartXAxis {
                 AxisMarks { _ in
                     AxisValueLabel()
-                        .foregroundStyle(Theme.textSecondary)
+                        .foregroundStyle(Theme.textTertiary)
                 }
             }
             .frame(height: 180)
@@ -285,22 +296,28 @@ private struct MuscleGroupChart: View {
                         x: .value("Sets", item.sets),
                         y: .value("Muscle", item.group)
                     )
-                    .foregroundStyle(Theme.accent)
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [Theme.accent, Theme.accentMuted],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
                     .cornerRadius(4)
                 }
             }
             .chartXAxis {
                 AxisMarks { _ in
                     AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
-                        .foregroundStyle(Theme.textSecondary.opacity(0.3))
+                        .foregroundStyle(Theme.hairline)
                     AxisValueLabel()
-                        .foregroundStyle(Theme.textSecondary)
+                        .foregroundStyle(Theme.textTertiary)
                 }
             }
             .chartYAxis {
                 AxisMarks { _ in
                     AxisValueLabel()
-                        .foregroundStyle(Theme.textSecondary)
+                        .foregroundStyle(Theme.textTertiary)
                 }
             }
             .frame(height: CGFloat(max(data.count, 1)) * 32)

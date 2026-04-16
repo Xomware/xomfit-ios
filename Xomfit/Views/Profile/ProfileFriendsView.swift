@@ -24,8 +24,7 @@ struct ProfileFriendsView: View {
                     .buttonStyle(.plain)
 
                     if friend.id != friends.last?.id {
-                        Divider()
-                            .background(Theme.textSecondary.opacity(0.2))
+                        XomDivider()
                             .padding(.leading, 60)
                     }
                 }
@@ -42,17 +41,9 @@ struct ProfileFriendsView: View {
         let profile = friendProfiles[otherUserId(friend)]
         let name = profile?.displayName ?? otherUserId(friend)
         let username = profile?.username ?? ""
-        let initials = friendInitials(name: name, fallback: username)
 
         return HStack(spacing: Theme.Spacing.md) {
-            ZStack {
-                Circle()
-                    .fill(Theme.accent.opacity(0.2))
-                    .frame(width: 40, height: 40)
-                Text(initials)
-                    .font(.subheadline.weight(.bold))
-                    .foregroundStyle(Theme.accent)
-            }
+            XomAvatar(name: name, size: 40)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(name)
@@ -95,14 +86,4 @@ struct ProfileFriendsView: View {
         .accessibilityLabel("No friends yet")
     }
 
-    // MARK: - Helpers
-
-    private func friendInitials(name: String, fallback: String) -> String {
-        let source = name.isEmpty ? fallback : name
-        let parts = source.split(separator: " ")
-        if parts.count >= 2 {
-            return String(parts[0].prefix(1) + parts[1].prefix(1)).uppercased()
-        }
-        return String(source.prefix(2)).uppercased()
-    }
 }

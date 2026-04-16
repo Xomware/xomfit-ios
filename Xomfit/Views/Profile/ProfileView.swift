@@ -147,7 +147,7 @@ struct ProfileView: View {
                 // Tab picker (pinned) + tab content
                 Section {
                     tabContent
-                        .padding(.top, Theme.Spacing.sm)
+                        .padding(.top, Theme.Spacing.md)
                 } header: {
                     ProfileTabPicker(selectedTab: Bindable(viewModel).selectedTab)
                         .background(Theme.background)
@@ -163,12 +163,14 @@ struct ProfileView: View {
     private var tabContent: some View {
         switch viewModel.selectedTab {
         case .feed:
-            ProfileWorkoutListView(
-                workouts: viewModel.filteredWorkouts,
-                allWorkouts: viewModel.workouts,
+            ProfileFeedView(
+                feedItems: Bindable(viewModel).feedItems,
+                filteredItems: viewModel.filteredFeedItems,
                 isFiltered: viewModel.isFeedFiltered,
-                dateRange: $viewModel.feedDateRange,
-                muscleGroups: $viewModel.feedMuscleGroups
+                dateRange: Bindable(viewModel).feedDateRange,
+                muscleGroups: Bindable(viewModel).feedMuscleGroups,
+                userId: resolvedUserId,
+                currentUserId: currentUserId
             )
         case .calendar:
             ProfileCalendarView(workoutDays: viewModel.workoutDays, userId: resolvedUserId)
@@ -195,7 +197,7 @@ struct ProfileView: View {
                     showEditSheet = true
                 } label: {
                     Image(systemName: "pencil")
-                        .foregroundStyle(Theme.textSecondary)
+                        .foregroundStyle(Theme.textPrimary)
                 }
                 .accessibilityLabel("Edit Profile")
 
@@ -204,7 +206,7 @@ struct ProfileView: View {
                         .hideTabBar()
                 } label: {
                     Image(systemName: "gearshape.fill")
-                        .foregroundStyle(Theme.textSecondary)
+                        .foregroundStyle(Theme.textPrimary)
                 }
                 .accessibilityLabel("Settings")
             }

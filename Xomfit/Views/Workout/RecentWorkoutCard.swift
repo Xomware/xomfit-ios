@@ -41,6 +41,10 @@ struct RecentWorkoutCard: View {
             .frame(width: 160, alignment: .leading)
             .background(Theme.surface)
             .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+            .overlay(
+                RoundedRectangle(cornerRadius: Theme.cornerRadius)
+                    .strokeBorder(Theme.hairline, lineWidth: 0.5)
+            )
         }
         .buttonStyle(PressableCardStyle())
         .accessibilityLabel("\(workout.name), \(workout.startTime.timeAgo), \(workout.exercises.count) exercises, \(workout.durationString)")

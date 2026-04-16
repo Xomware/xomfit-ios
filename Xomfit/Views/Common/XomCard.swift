@@ -1,8 +1,22 @@
 import SwiftUI
 
+// MARK: - XomCard Variant
+
+enum XomCardVariant {
+    /// Standard card — hairline border, surface fill, no shadow.
+    case base
+    /// Slightly elevated — surfaceElevated fill, hairlineStrong border.
+    case elevated
+    /// Full-bleed hero card — xl radius, surfaceElevated fill, hairlineStrong border.
+    case hero
+}
+
+// MARK: - XomCard
+
 struct XomCard<Content: View>: View {
     let padding: CGFloat
     let isPressable: Bool
+    let variant: XomCardVariant
     @ViewBuilder let content: Content
 
     @State private var isPressed = false
@@ -10,27 +24,23 @@ struct XomCard<Content: View>: View {
     init(
         padding: CGFloat = Theme.Spacing.md,
         isPressable: Bool = false,
+        variant: XomCardVariant = .base,
         @ViewBuilder content: () -> Content
     ) {
         self.padding = padding
         self.isPressable = isPressable
+        self.variant = variant
         self.content = content()
     }
 
     var body: some View {
         content
             .padding(padding)
-            .background(
-                RoundedRectangle(cornerRadius: Theme.cornerRadius)
-                    .fill(Theme.glassFill)
-                    .background(
-                        RoundedRectangle(cornerRadius: Theme.cornerRadius)
-                            .fill(Theme.surface)
-                    )
-            )
+            .background(fillColor)
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
             .overlay(
-                RoundedRectangle(cornerRadius: Theme.cornerRadius)
-                    .strokeBorder(Theme.glassBorder, lineWidth: 0.5)
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .strokeBorder(borderColor, lineWidth: 0.5)
             )
             .scaleEffect(isPressable && isPressed ? 0.97 : 1)
             .animation(.xomSnappy, value: isPressed)
@@ -41,6 +51,28 @@ struct XomCard<Content: View>: View {
                         .onEnded { _ in isPressed = false }
                 )
             }
+    }
+
+    private var fillColor: Color {
+        switch variant {
+        case .base:     Theme.surface
+        case .elevated: Theme.surfaceElevated
+        case .hero:     Theme.surfaceElevated
+        }
+    }
+
+    private var borderColor: Color {
+        switch variant {
+        case .base: Theme.hairline
+        case .elevated, .hero: Theme.hairlineStrong
+        }
+    }
+
+    private var cornerRadius: CGFloat {
+        switch variant {
+        case .base, .elevated: Theme.Radius.md
+        case .hero: Theme.Radius.xl
+        }
     }
 }
 

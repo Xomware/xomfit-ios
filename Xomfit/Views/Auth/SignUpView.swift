@@ -54,6 +54,10 @@ struct SignUpView: View {
                                 .background(Theme.surface)
                                 .clipShape(.rect(cornerRadius: Theme.cornerRadius))
                                 .foregroundStyle(Theme.textPrimary)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: Theme.cornerRadius)
+                                        .strokeBorder(Theme.hairline, lineWidth: 0.5)
+                                )
                         }
 
                         VStack(alignment: .leading, spacing: 6) {
@@ -65,25 +69,23 @@ struct SignUpView: View {
                                 .background(Theme.surface)
                                 .clipShape(.rect(cornerRadius: Theme.cornerRadius))
                                 .foregroundStyle(Theme.textPrimary)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: Theme.cornerRadius)
+                                        .strokeBorder(Theme.hairline, lineWidth: 0.5)
+                                )
                         }
 
                         Button {
                             signUp()
                         } label: {
-                            ZStack {
-                                RoundedRectangle(cornerRadius: Theme.cornerRadius)
-                                    .fill(Theme.accent)
-                                if isLoading {
-                                    ProgressView()
-                                        .tint(.black)
-                                } else {
-                                    Text("Create Account")
-                                        .font(.body.weight(.bold))
-                                        .foregroundStyle(.black)
-                                }
+                            if isLoading {
+                                ProgressView()
+                                    .tint(.black)
+                            } else {
+                                Text("Create Account")
                             }
-                            .frame(height: 52)
                         }
+                        .buttonStyle(AccentButtonStyle())
                         .disabled(isLoading || !formValid)
                         .opacity((isLoading || !formValid) ? 0.6 : 1)
                         .padding(.top, Theme.Spacing.sm)
@@ -134,6 +136,10 @@ struct SignUpView: View {
                 .background(Theme.surface)
                 .clipShape(.rect(cornerRadius: Theme.cornerRadius))
                 .foregroundStyle(Theme.textPrimary)
+                .overlay(
+                    RoundedRectangle(cornerRadius: Theme.cornerRadius)
+                        .strokeBorder(Theme.hairline, lineWidth: 0.5)
+                )
         }
     }
 

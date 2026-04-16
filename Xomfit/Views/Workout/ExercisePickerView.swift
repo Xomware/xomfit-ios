@@ -54,36 +54,42 @@ struct ExercisePickerView: View {
                 Theme.background.ignoresSafeArea()
 
                 VStack(spacing: 0) {
-                    // Search bar
+                    // Search bar — hairline border, surface fill, textTertiary placeholder
                     HStack {
                         Image(systemName: "magnifyingglass")
-                            .foregroundStyle(Theme.textSecondary)
+                            .foregroundStyle(Theme.textTertiary)
                         TextField("Search exercises...", text: $searchText)
                             .foregroundStyle(Theme.textPrimary)
                             .autocorrectionDisabled()
                         if !searchText.isEmpty {
                             Button { searchText = "" } label: {
                                 Image(systemName: "xmark.circle.fill")
-                                    .foregroundStyle(Theme.textSecondary)
+                                    .foregroundStyle(Theme.textTertiary)
                             }
                         }
                     }
                     .padding(Theme.Spacing.md)
                     .background(Theme.surface)
                     .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: Theme.cornerRadius)
+                            .strokeBorder(Theme.hairline, lineWidth: 0.5)
+                    )
                     .padding(.horizontal, Theme.Spacing.md)
                     .padding(.vertical, Theme.Spacing.sm)
 
-                    // Muscle group filter chips
+                    // Muscle group filter chips — XomBadge interactive
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: Theme.Spacing.sm) {
-                            FilterChip(label: "All", isSelected: selectedMuscleGroup == nil) {
-                                selectedMuscleGroup = nil
+                            Button { selectedMuscleGroup = nil } label: {
+                                XomBadge("All", variant: .interactive, isActive: selectedMuscleGroup == nil)
                             }
+                            .buttonStyle(.plain)
                             ForEach(MuscleGroup.allCases, id: \.self) { mg in
-                                FilterChip(label: mg.displayName, isSelected: selectedMuscleGroup == mg) {
-                                    selectedMuscleGroup = selectedMuscleGroup == mg ? nil : mg
+                                Button { selectedMuscleGroup = selectedMuscleGroup == mg ? nil : mg } label: {
+                                    XomBadge(mg.displayName, variant: .interactive, isActive: selectedMuscleGroup == mg)
                                 }
+                                .buttonStyle(.plain)
                             }
                         }
                         .padding(.horizontal, Theme.Spacing.md)
@@ -93,13 +99,15 @@ struct ExercisePickerView: View {
                     // Equipment filter chips
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: Theme.Spacing.sm) {
-                            FilterChip(label: "All Equipment", isSelected: selectedEquipment == nil) {
-                                selectedEquipment = nil
+                            Button { selectedEquipment = nil } label: {
+                                XomBadge("All Equipment", variant: .interactive, isActive: selectedEquipment == nil)
                             }
+                            .buttonStyle(.plain)
                             ForEach(Equipment.allCases, id: \.self) { eq in
-                                FilterChip(label: eq.displayName, isSelected: selectedEquipment == eq) {
-                                    selectedEquipment = selectedEquipment == eq ? nil : eq
+                                Button { selectedEquipment = selectedEquipment == eq ? nil : eq } label: {
+                                    XomBadge(eq.displayName, variant: .interactive, isActive: selectedEquipment == eq)
                                 }
+                                .buttonStyle(.plain)
                             }
                         }
                         .padding(.horizontal, Theme.Spacing.md)
@@ -168,24 +176,6 @@ struct ExercisePickerView: View {
 
 // MARK: - Sub-views
 
-private struct FilterChip: View {
-    let label: String
-    let isSelected: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            Text(label)
-                .font(Theme.fontSmall)
-                .foregroundStyle(isSelected ? .black : Theme.textSecondary)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(isSelected ? Theme.accent : Theme.surface)
-                .clipShape(.rect(cornerRadius: 20))
-        }
-    }
-}
-
 private struct ExerciseRow: View {
     let exercise: Exercise
     let onTap: () -> Void
@@ -197,29 +187,17 @@ private struct ExerciseRow: View {
                     .font(.title3)
                     .foregroundStyle(Theme.accent)
                     .frame(width: 36, height: 36)
-                    .background(Theme.accent.opacity(0.1))
+                    .background(Theme.accentMuted)
                     .clipShape(.rect(cornerRadius: 8))
 
-                VStack(alignment: .leading, spacing: 3) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text(exercise.name)
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(Theme.textPrimary)
-                    HStack(spacing: 6) {
-                        Text(exercise.equipment.displayName)
-                            .font(Theme.fontSmall)
-                            .foregroundStyle(Theme.textSecondary)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(Theme.surfaceSecondary)
-                            .clipShape(.rect(cornerRadius: 4))
+                    HStack(spacing: 4) {
+                        XomBadge(exercise.equipment.displayName, variant: .secondary)
                         ForEach(exercise.muscleGroups.prefix(2), id: \.self) { mg in
-                            Text(mg.displayName)
-                                .font(Theme.fontSmall)
-                                .foregroundStyle(Theme.textSecondary)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(Theme.surfaceSecondary)
-                                .clipShape(.rect(cornerRadius: 4))
+                            XomBadge(mg.displayName, variant: .secondary)
                         }
                     }
                 }
@@ -227,6 +205,7 @@ private struct ExerciseRow: View {
                 Image(systemName: "plus.circle")
                     .foregroundStyle(Theme.accent)
             }
+            .frame(minHeight: 48)
             .padding(.vertical, 4)
         }
         .buttonStyle(.plain)

@@ -84,13 +84,7 @@ struct WorkoutDetailView: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 6) {
                         ForEach(workout.muscleGroups, id: \.self) { mg in
-                            Text(mg.displayName)
-                                .font(Theme.fontSmall)
-                                .foregroundStyle(Theme.textSecondary)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .background(Theme.surfaceSecondary)
-                                .clipShape(.rect(cornerRadius: 6))
+                            XomBadge(mg.displayName, variant: .secondary)
                         }
                     }
                 }
@@ -225,14 +219,7 @@ struct WorkoutDetailView: View {
     // MARK: - Helpers
 
     private func summaryStatView(value: String, label: String, highlight: Bool = false) -> some View {
-        VStack(spacing: 2) {
-            Text(value)
-                .font(.body.weight(.bold))
-                .foregroundStyle(highlight ? Theme.prGold : Theme.textPrimary)
-            Text(label)
-                .font(Theme.fontSmall)
-                .foregroundStyle(Theme.textSecondary)
-        }
+        XomStat(value, label: label, iconColor: highlight ? Theme.prGold : Theme.accent)
     }
 
     private func formatWeight(_ value: Double) -> String {
