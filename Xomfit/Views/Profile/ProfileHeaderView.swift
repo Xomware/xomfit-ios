@@ -20,42 +20,44 @@ struct ProfileHeaderView: View {
     var body: some View {
         VStack(spacing: Theme.Spacing.md) {
             // Top row: avatar + stats
-            HStack(alignment: .center, spacing: Theme.Spacing.lg) {
-                XomAvatar(name: displayName.isEmpty ? username : displayName, size: 96)
+            HStack(alignment: .center, spacing: Theme.Spacing.md) {
+                XomAvatar(name: displayName.isEmpty ? username : displayName, size: 72)
                     .accessibilityLabel("Profile avatar")
 
-                Spacer()
-
-                statColumn(value: feedItemCount, label: "Posts") {
-                    onStatTapped(.feed)
-                }
-                NavigationLink {
-                    FriendsListView(
-                        friends: friends,
-                        friendProfiles: friendProfiles,
-                        currentUserId: currentUserId
-                    )
-                    .hideTabBar()
-                } label: {
-                    VStack(spacing: 2) {
-                        Text("\(friendCount)")
-                            .font(Theme.fontNumberLarge)
-                            .foregroundStyle(Theme.textPrimary)
-                        XomMetricLabel("Friends")
+                HStack(spacing: Theme.Spacing.sm) {
+                    statColumn(value: feedItemCount, label: "Posts") {
+                        onStatTapped(.feed)
                     }
-                    .frame(minWidth: 44, minHeight: 44)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("\(friendCount) Friends")
-                .accessibilityAddTraits(.isButton)
+                    NavigationLink {
+                        FriendsListView(
+                            friends: friends,
+                            friendProfiles: friendProfiles,
+                            currentUserId: currentUserId
+                        )
+                        .hideTabBar()
+                    } label: {
+                        VStack(spacing: 2) {
+                            Text("\(friendCount)")
+                                .font(Theme.fontNumberLarge)
+                                .foregroundStyle(Theme.textPrimary)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.6)
+                            XomMetricLabel("Friends")
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                        }
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("\(friendCount) Friends")
+                    .accessibilityAddTraits(.isButton)
 
-                statColumn(value: prCount, label: "PRs") {
-                    onStatTapped(.stats)
+                    statColumn(value: prCount, label: "PRs") {
+                        onStatTapped(.stats)
+                    }
                 }
-
-                Spacer()
+                .frame(maxWidth: .infinity)
             }
-            .padding(.horizontal, Theme.Spacing.sm)
 
             // Name + username + bio
             VStack(alignment: .leading, spacing: 4) {
@@ -101,9 +103,13 @@ struct ProfileHeaderView: View {
                 Text("\(value)")
                     .font(Theme.fontNumberLarge)
                     .foregroundStyle(Theme.textPrimary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
                 XomMetricLabel(label)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
             }
-            .frame(minWidth: 44, minHeight: 44)
+            .frame(maxWidth: .infinity, minHeight: 44)
         }
         .buttonStyle(.plain)
         .accessibilityLabel("\(value) \(label)")

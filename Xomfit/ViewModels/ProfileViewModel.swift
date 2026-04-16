@@ -188,7 +188,6 @@ final class ProfileViewModel {
         workouts = fetchedWorkouts
         totalWorkouts = fetchedWorkouts.count
         totalVolume = fetchedWorkouts.reduce(0) { $0 + $1.totalVolume }
-        feedItemCount = fetchedWorkouts.count
         loadCalendarData(workouts: fetchedWorkouts)
         computeMuscleGroupSets(workouts: fetchedWorkouts)
 

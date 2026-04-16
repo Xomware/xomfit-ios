@@ -46,14 +46,18 @@ struct RestTimerView: View {
                 RestTimerRingView(progress: progress, color: ringColor, lineWidth: 5)
 
                 Text(timeString)
-                    .font(Theme.fontDisplay)
+                    .font(.system(size: 22, weight: .heavy, design: .rounded))
+                    .monospacedDigit()
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
+                    .allowsTightening(true)
                     .foregroundStyle(isOvertime ? Theme.destructive : Theme.textPrimary)
                     .scaleEffect(breatheScale)
                     .animation(
                         .easeInOut(duration: 1.0).repeatForever(autoreverses: true),
                         value: breatheScale
                     )
-                    .monospacedDigit()
+                    .padding(.horizontal, 6)
             }
             .frame(width: 80, height: 80)
             .accessibilityElement(children: .ignore)
