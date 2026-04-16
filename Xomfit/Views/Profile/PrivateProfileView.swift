@@ -12,66 +12,48 @@ struct PrivateProfileView: View {
             Spacer()
 
             // Avatar
-            ZStack {
-                Circle()
-                    .fill(Theme.accent.opacity(0.2))
-                    .frame(width: 70, height: 70)
-                Text(initials)
-                    .font(.title2.weight(.bold))
-                    .foregroundStyle(Theme.accent)
-            }
+            XomAvatar(name: displayName.isEmpty ? username : initials, size: 80)
 
             // Name
             VStack(spacing: 4) {
                 if !displayName.isEmpty {
                     Text(displayName)
-                        .font(.title3.weight(.bold))
+                        .font(Theme.fontTitle2)
                         .foregroundStyle(Theme.textPrimary)
                 }
                 if !username.isEmpty {
                     Text("@\(username)")
-                        .font(Theme.fontCaption)
-                        .foregroundStyle(Theme.textSecondary)
+                        .font(Theme.fontSubheadline)
+                        .foregroundStyle(Theme.textTertiary)
                 }
             }
 
             // Lock icon + message
             VStack(spacing: Theme.Spacing.sm) {
                 Image(systemName: "lock.fill")
-                    .font(.title)
+                    .font(.system(size: 36, weight: .semibold))
                     .foregroundStyle(Theme.textSecondary)
 
                 Text("This account is private")
-                    .font(Theme.fontBody)
-                    .foregroundStyle(Theme.textSecondary)
+                    .font(Theme.fontHeadline)
+                    .foregroundStyle(Theme.textPrimary)
 
                 Text("Send a friend request to see their activity.")
-                    .font(Theme.fontCaption)
+                    .font(Theme.fontBody)
                     .foregroundStyle(Theme.textSecondary)
                     .multilineTextAlignment(.center)
             }
 
             // Action button
             if friendshipStatus == .none {
-                Button(action: onSendRequest) {
-                    Text("Send Friend Request")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(Theme.background)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 44)
-                        .background(Theme.accent)
-                        .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+                XomButton("Send Friend Request", variant: .primary, icon: "person.badge.plus") {
+                    onSendRequest()
                 }
                 .padding(.horizontal, Theme.Spacing.lg)
                 .accessibilityLabel("Send friend request to \(displayName)")
             } else if friendshipStatus == .pending {
-                Text("Friend Request Sent")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Theme.textSecondary)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 44)
-                    .background(Theme.surface)
-                    .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+                XomButton("Request Sent", variant: .ghost) {}
+                    .disabled(true)
                     .padding(.horizontal, Theme.Spacing.lg)
             }
 

@@ -30,30 +30,30 @@ struct ProfileStatsView: View {
 
     private var statsCards: some View {
         HStack(spacing: Theme.Spacing.sm) {
-            statCard(icon: "dumbbell.fill", value: "\(totalWorkouts)", label: "Workouts", color: Theme.accent)
-            statCard(icon: "scalemass.fill", value: totalVolume, label: "Volume", color: Theme.accent)
-            statCard(icon: "trophy.fill", value: "\(totalPRs)", label: "PRs", color: Theme.prGold)
+            countUpStatCard(icon: "dumbbell.fill", count: totalWorkouts, label: "Workouts", iconColor: Theme.accent)
+            XomCard(padding: Theme.Spacing.sm) {
+                XomStat(totalVolume, label: "Volume", icon: "scalemass.fill", iconColor: Theme.accent)
+                    .padding(.vertical, Theme.Spacing.xs)
+            }
+            .accessibilityLabel("\(totalVolume) Volume")
+            countUpStatCard(icon: "trophy.fill", count: totalPRs, label: "PRs", iconColor: Theme.prGold)
         }
     }
 
-    private func statCard(icon: String, value: String, label: String, color: Color) -> some View {
-        VStack(spacing: 6) {
-            Image(systemName: icon)
-                .font(.headline)
-                .foregroundStyle(color)
-            Text(value)
-                .font(.headline.weight(.bold))
-                .foregroundStyle(Theme.textPrimary)
-            Text(label)
-                .font(Theme.fontSmall)
-                .foregroundStyle(Theme.textSecondary)
+    private func countUpStatCard(icon: String, count: Int, label: String, iconColor: Color) -> some View {
+        XomCard(padding: Theme.Spacing.sm) {
+            VStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.headline)
+                    .foregroundStyle(iconColor)
+                CountUpNumber(target: count)
+                XomMetricLabel(label)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, Theme.Spacing.xs)
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, Theme.Spacing.md)
-        .background(Theme.surface)
-        .clipShape(.rect(cornerRadius: Theme.cornerRadius))
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(value) \(label)")
+        .accessibilityLabel("\(count) \(label)")
     }
 
     // MARK: - Heatmap Section

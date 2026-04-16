@@ -27,9 +27,10 @@ struct PRListView: View {
                 List {
                     ForEach(grouped, id: \.0) { exerciseName, records in
                         Section {
-                            ForEach(records) { pr in
-                                PRRow(pr: pr)
+                            ForEach(Array(records.enumerated()), id: \.element.id) { index, pr in
+                                PRRow(pr: pr, rank: index + 1)
                                     .listRowBackground(Theme.surface)
+                                    .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: Theme.Spacing.md))
                             }
                         } header: {
                             Text(exerciseName)
@@ -51,19 +52,11 @@ struct PRListView: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: Theme.Spacing.md) {
-            Image(systemName: "trophy")
-                .font(.system(size: 48))
-                .foregroundStyle(Theme.textSecondary)
-            Text("No PRs yet")
-                .font(Theme.fontHeadline)
-                .foregroundStyle(Theme.textPrimary)
-            Text("Complete sets during workouts to track your personal records")
-                .font(Theme.fontBody)
-                .foregroundStyle(Theme.textSecondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, Theme.Spacing.lg)
-        }
+        XomEmptyState(
+            icon: "trophy",
+            title: "No PRs yet",
+            subtitle: "Complete sets during workouts to track your personal records"
+        )
     }
 
     private func loadPRs() {
@@ -83,6 +76,9 @@ struct PRListView: View {
 
 private struct PRRow: View {
     let pr: PersonalRecord
+    let rank: Int
+
+    private var isTopThree: Bool { rank <= 3 }
 
     private var dateString: String {
         let formatter = DateFormatter()
@@ -97,36 +93,48 @@ private struct PRRow: View {
     }
 
     var body: some View {
-        HStack(spacing: Theme.Spacing.md) {
-            Image(systemName: "trophy.fill")
-                .foregroundStyle(Theme.prGold)
-                .font(.title3)
-                .frame(width: 28)
-
-            VStack(alignment: .leading, spacing: 3) {
-                Text("\(pr.weight.formattedWeight) lbs × \(pr.reps) reps")
-                    .font(.subheadline.weight(.bold))
-                    .foregroundStyle(Theme.textPrimary)
-                Text(dateString)
-                    .font(Theme.fontCaption)
-                    .foregroundStyle(Theme.textSecondary)
+        HStack(spacing: 0) {
+            // Leading gold stripe for top-3
+            if isTopThree {
+                Rectangle()
+                    .fill(Theme.prGold)
+                    .frame(width: 3)
             }
 
-            Spacer()
+            HStack(spacing: Theme.Spacing.md) {
+                Image(systemName: "trophy.fill")
+                    .foregroundStyle(isTopThree ? Theme.prGold : Theme.textTertiary)
+                    .font(.subheadline)
+                    .frame(width: 24)
 
-            VStack(alignment: .trailing, spacing: 3) {
-                if let pct = improvementPercent {
-                    Text(pct)
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(Theme.accent)
-                }
-                if let prev = pr.previousBest {
-                    Text("Prev: \(prev.formattedWeight)")
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("\(pr.weight.formattedWeight) lbs \u{00D7} \(pr.reps) reps")
+                        .font(Theme.fontNumberMedium)
+                        .foregroundStyle(Theme.textPrimary)
+                    Text(dateString)
                         .font(Theme.fontSmall)
-                        .foregroundStyle(Theme.textSecondary)
+                        .foregroundStyle(Theme.textTertiary)
+                }
+
+                Spacer()
+
+                VStack(alignment: .trailing, spacing: 3) {
+                    if let pct = improvementPercent {
+                        Text(pct)
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(Theme.accent)
+                    }
+                    if let prev = pr.previousBest {
+                        Text("Prev: \(prev.formattedWeight)")
+                            .font(Theme.fontSmall)
+                            .foregroundStyle(Theme.textTertiary)
+                    }
                 }
             }
+            .padding(.horizontal, Theme.Spacing.md)
+            .padding(.vertical, 10)
         }
-        .padding(.vertical, 4)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(pr.weight.formattedWeight) lbs by \(pr.reps) reps on \(dateString)")
     }
 }

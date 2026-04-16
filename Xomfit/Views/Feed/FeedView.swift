@@ -53,7 +53,7 @@ struct FeedView: View {
                         } label: {
                             ZStack(alignment: .topTrailing) {
                                 Image(systemName: "bell")
-                                    .foregroundStyle(Theme.accent)
+                                    .foregroundStyle(Theme.textPrimary)
                                 if NotificationService.shared.unreadCount > 0 {
                                     Circle()
                                         .fill(Theme.destructive)
@@ -68,7 +68,7 @@ struct FeedView: View {
                             showUserSearch = true
                         } label: {
                             Image(systemName: "magnifyingglass")
-                                .foregroundStyle(Theme.accent)
+                                .foregroundStyle(Theme.textPrimary)
                         }
                         .accessibilityLabel("Search users")
 
@@ -77,7 +77,7 @@ struct FeedView: View {
                                 .hideTabBar()
                         } label: {
                             Image(systemName: "person.badge.plus")
-                                .foregroundStyle(Theme.accent)
+                                .foregroundStyle(Theme.textPrimary)
                         }
                     }
                 }
@@ -116,7 +116,7 @@ struct FeedView: View {
 
     private var feedList: some View {
         ScrollView {
-            LazyVStack(spacing: 12) {
+            LazyVStack(spacing: Theme.Spacing.md) {
                 ForEach(Array(viewModel.filteredFeedItems.enumerated()), id: \.element.id) { index, item in
                     FeedItemCard(
                         item: item,

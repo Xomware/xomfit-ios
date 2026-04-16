@@ -50,12 +50,11 @@ struct XomButton: View {
             .foregroundStyle(foregroundColor)
             .frame(maxWidth: .infinity)
             .padding(.vertical, Theme.Spacing.md)
-            .background(backgroundColor)
+            .background(backgroundLayer)
             .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
             .overlay(borderOverlay)
-            .shadow(color: shadowColor, radius: isPressed ? 4 : 8, x: 0, y: isPressed ? 2 : 4)
         }
-        .scaleEffect(isPressed ? 0.94 : 1)
+        .scaleEffect(isPressed ? 0.98 : 1)
         .animation(.xomSnappy, value: isPressed)
         .simultaneousGesture(
             DragGesture(minimumDistance: 0)
@@ -68,19 +67,31 @@ struct XomButton: View {
 
     private var foregroundColor: Color {
         switch variant {
-        case .primary: .black
-        case .secondary: Theme.accent
+        case .primary:     .black
+        case .secondary:   Theme.accent
         case .destructive: .white
-        case .ghost: Theme.accent
+        case .ghost:       Theme.accent
         }
     }
 
-    private var backgroundColor: Color {
+    @ViewBuilder
+    private var backgroundLayer: some View {
         switch variant {
-        case .primary: Theme.accent
-        case .secondary: Theme.glassFill
-        case .destructive: Theme.destructive
-        case .ghost: .clear
+        case .primary:
+            ZStack {
+                Theme.accent
+                LinearGradient(
+                    colors: [Color.white.opacity(0.10), Color.clear],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            }
+        case .secondary:
+            Theme.surfaceElevated
+        case .destructive:
+            Theme.destructive
+        case .ghost:
+            Color.clear
         }
     }
 
@@ -97,12 +108,18 @@ struct XomButton: View {
             EmptyView()
         }
     }
+}
 
-    private var shadowColor: Color {
-        switch variant {
-        case .primary: Theme.accent.opacity(0.3)
-        case .destructive: Theme.destructive.opacity(0.3)
-        default: .clear
-        }
+// MARK: - Preview
+
+#Preview {
+    VStack(spacing: 16) {
+        XomButton("Start Workout", variant: .primary) {}
+        XomButton("Edit Profile", variant: .secondary) {}
+        XomButton("Delete", variant: .destructive) {}
+        XomButton("Skip", variant: .ghost) {}
+        XomButton("Loading...", isLoading: true) {}
     }
+    .padding()
+    .background(Theme.background)
 }

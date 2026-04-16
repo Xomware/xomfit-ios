@@ -32,7 +32,7 @@ struct ProfileFeedView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 60)
             } else {
-                LazyVStack(spacing: Theme.Spacing.sm) {
+                LazyVStack(spacing: Theme.Spacing.md) {
                     ForEach(filteredItems) { item in
                         NavigationLink {
                             FeedDetailView(item: item, userId: currentUserId)
@@ -73,17 +73,13 @@ struct ProfileFeedView: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: Theme.Spacing.sm) {
-            Image(systemName: "text.page")
-                .font(.largeTitle)
-                .foregroundStyle(Theme.textSecondary)
-            Text("No posts yet")
-                .font(Theme.fontBody)
-                .foregroundStyle(Theme.textSecondary)
-        }
+        XomEmptyState(
+            symbolStack: ["text.page", "dumbbell.fill"],
+            title: "No posts yet",
+            subtitle: "Workouts, PRs, and milestones will appear here.",
+            floatingLoop: true
+        )
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 60)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("No posts yet")
+        .padding(.vertical, 40)
     }
 }

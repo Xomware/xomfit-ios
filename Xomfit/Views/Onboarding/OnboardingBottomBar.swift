@@ -18,12 +18,12 @@ struct OnboardingBottomBar: View {
             HStack(spacing: Theme.Spacing.sm) {
                 ForEach(0..<totalPages, id: \.self) { index in
                     Circle()
-                        .fill(index == currentPage ? Theme.accent : Theme.glassFill)
+                        .fill(index == currentPage ? Theme.accent : Theme.surfaceElevated)
                         .frame(width: 8, height: 8)
                         .overlay(
                             Circle()
                                 .strokeBorder(
-                                    index == currentPage ? Theme.accent : Theme.glassBorder,
+                                    index == currentPage ? Theme.accent : Theme.hairline,
                                     lineWidth: 0.5
                                 )
                         )

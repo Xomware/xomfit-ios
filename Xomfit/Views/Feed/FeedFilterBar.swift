@@ -26,62 +26,49 @@ struct FeedFilterBar: View {
     @Binding var selectedMuscleGroups: Set<MuscleGroup>
 
     var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                // Date range chips
-                ForEach(FeedDateRange.allCases) { range in
-                    filterChip(
-                        label: range.rawValue,
-                        isSelected: selectedDateRange == range
-                    ) {
-                        withAnimation(.xomChill) { selectedDateRange = range }
-                    }
-                }
-
-                // Divider
-                Rectangle()
-                    .fill(Theme.textSecondary.opacity(0.3))
-                    .frame(width: 1, height: 20)
-
-                // Muscle group chips
-                ForEach(MuscleGroup.allCases) { group in
-                    filterChip(
-                        icon: group.icon,
-                        label: group.displayName,
-                        isSelected: selectedMuscleGroups.contains(group)
-                    ) {
-                        withAnimation(.xomChill) {
-                            if selectedMuscleGroups.contains(group) {
-                                selectedMuscleGroups.remove(group)
-                            } else {
-                                selectedMuscleGroups.insert(group)
-                            }
+        VStack(spacing: 0) {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    // Date range chips
+                    ForEach(FeedDateRange.allCases) { range in
+                        let isActive = selectedDateRange == range
+                        Button {
+                            withAnimation(.xomChill) { selectedDateRange = range }
+                        } label: {
+                            XomBadge(range.rawValue, variant: .interactive, isActive: isActive)
                         }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("\(range.rawValue)\(isActive ? ", selected" : "")")
+                    }
+
+                    // Vertical hairline separator
+                    Rectangle()
+                        .fill(Theme.hairline)
+                        .frame(width: 0.5, height: 20)
+
+                    // Muscle group chips
+                    ForEach(MuscleGroup.allCases) { group in
+                        let isActive = selectedMuscleGroups.contains(group)
+                        Button {
+                            withAnimation(.xomChill) {
+                                if selectedMuscleGroups.contains(group) {
+                                    selectedMuscleGroups.remove(group)
+                                } else {
+                                    selectedMuscleGroups.insert(group)
+                                }
+                            }
+                        } label: {
+                            XomBadge(group.displayName, icon: group.icon, variant: .interactive, isActive: isActive)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("\(group.displayName)\(isActive ? ", selected" : "")")
                     }
                 }
+                .padding(.horizontal, Theme.Spacing.md)
             }
-            .padding(.horizontal, Theme.Spacing.md)
-        }
-        .padding(.vertical, 8)
-    }
+            .padding(.vertical, 8)
 
-    private func filterChip(icon: String? = nil, label: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            HStack(spacing: 4) {
-                if let icon {
-                    Image(systemName: icon)
-                        .font(.caption2)
-                }
-                Text(label)
-                    .font(.caption.weight(.semibold))
-            }
-            .foregroundStyle(isSelected ? .black : Theme.textSecondary)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
-            .background(isSelected ? Theme.accent : Theme.surfaceSecondary)
-            .clipShape(.capsule)
+            XomDivider()
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel("\(label)\(isSelected ? ", selected" : "")")
     }
 }

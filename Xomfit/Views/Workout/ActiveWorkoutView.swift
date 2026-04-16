@@ -88,23 +88,14 @@ struct ActiveWorkoutView: View {
                 if !viewModel.focusMode {
                     VStack {
                         Spacer()
-                        Button {
+                        XomButton("Add Exercise", variant: .primary, icon: "plus") {
                             showExercisePicker = true
-                        } label: {
-                            HStack(spacing: 8) {
-                                Image(systemName: "plus")
-                                    .font(.body.weight(.bold))
-                                Text("Add Exercise")
-                                    .font(.subheadline.weight(.bold))
-                            }
-                            .foregroundStyle(.black)
-                            .padding(.horizontal, Theme.Spacing.lg)
-                            .padding(.vertical, 14)
-                            .background(Theme.accent)
-                            .clipShape(.rect(cornerRadius: 28))
-                            .shadow(color: Theme.accent.opacity(0.4), radius: 8, x: 0, y: 4)
                         }
-                        .padding(.bottom, Theme.Spacing.lg)
+                        .padding(.horizontal, Theme.Spacing.xl)
+                        .padding(.vertical, Theme.Spacing.sm)
+                        .background(.ultraThinMaterial)
+                        .clipShape(.rect(cornerRadius: Theme.Radius.xl))
+                        .padding(.bottom, Theme.Spacing.md)
                     }
                 }
 
@@ -149,7 +140,12 @@ struct ActiveWorkoutView: View {
                     Button("Done") {
                         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                     }
+                    .foregroundStyle(Theme.accent)
                 }
+            }
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                // Empty — just ensures keyboard inset is respected; actual toolbar is above
+                Color.clear.frame(height: 0)
             }
         }
         .onAppear {
@@ -269,13 +265,14 @@ struct ActiveWorkoutView: View {
 
             Spacer()
 
-            // Timer
-            VStack(spacing: 2) {
+            // Timer — fontNumberLarge monospaced + metric label
+            VStack(spacing: 1) {
                 Text(viewModel.workoutName)
                     .font(.subheadline.weight(.bold))
                     .foregroundStyle(Theme.textPrimary)
+                    .lineLimit(1)
                 Text(viewModel.durationString)
-                    .font(.caption.weight(.medium).monospaced())
+                    .font(Theme.fontNumberMedium)
                     .foregroundStyle(Theme.accent)
             }
 
@@ -343,12 +340,15 @@ struct ActiveWorkoutView: View {
 
     private var restTimerConfig: some View {
         HStack {
-            Image(systemName: "timer")
-                .foregroundStyle(Theme.accent)
-            Text("Rest Timer")
-                .font(Theme.fontBody)
-                .foregroundStyle(Theme.textPrimary)
+            XomBadge(
+                "Rest Timer",
+                icon: "timer",
+                color: viewModel.defaultRestDuration > 0 ? Theme.accent : Theme.textSecondary,
+                variant: .display
+            )
+
             Spacer()
+
             Menu {
                 Button("Off") { viewModel.defaultRestDuration = 0 }
                 Button("30s") { viewModel.defaultRestDuration = 30 }
@@ -357,13 +357,12 @@ struct ActiveWorkoutView: View {
                 Button("120s") { viewModel.defaultRestDuration = 120 }
                 Button("180s") { viewModel.defaultRestDuration = 180 }
             } label: {
-                Text(viewModel.defaultRestDuration > 0 ? "\(Int(viewModel.defaultRestDuration))s" : "Off")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Theme.accent)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(Theme.accent.opacity(0.12))
-                    .clipShape(.capsule)
+                XomBadge(
+                    viewModel.defaultRestDuration > 0 ? "\(Int(viewModel.defaultRestDuration))s" : "Off",
+                    color: viewModel.defaultRestDuration > 0 ? Theme.accent : Theme.textSecondary,
+                    variant: .interactive,
+                    isActive: viewModel.defaultRestDuration > 0
+                )
             }
         }
         .padding(.horizontal, Theme.Spacing.md)
@@ -373,17 +372,14 @@ struct ActiveWorkoutView: View {
     // MARK: - Empty State
 
     private var emptyState: some View {
-        VStack(spacing: Theme.Spacing.md) {
+        VStack {
             Spacer()
-            Image(systemName: "figure.strengthtraining.traditional")
-                .font(.system(size: 48))
-                .foregroundStyle(Theme.textSecondary)
-            Text("No exercises yet")
-                .font(Theme.fontHeadline)
-                .foregroundStyle(Theme.textPrimary)
-            Text("Tap \"Add Exercise\" to get started")
-                .font(Theme.fontBody)
-                .foregroundStyle(Theme.textSecondary)
+            XomEmptyState(
+                symbolStack: ["dumbbell.fill", "figure.strengthtraining.traditional"],
+                title: "No exercises yet",
+                subtitle: "Tap \"Add Exercise\" to get started.",
+                floatingLoop: true
+            )
             Spacer()
             Spacer()
         }

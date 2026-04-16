@@ -154,13 +154,17 @@ final class WorkoutService {
 
     // MARK: - Save
 
-    func saveWorkout(_ workout: Workout) async throws {
+    /// Saves a workout. Always writes to local cache; attempts Supabase write and queues for retry on failure.
+    /// Returns `true` if the Supabase write succeeded, `false` if it was queued. Never throws.
+    @discardableResult
+    func saveWorkout(_ workout: Workout) async -> Bool {
         // Save to UserDefaults first (instant, always works)
         saveToCache(workout)
 
         // Push to Supabase (async, non-blocking on failure)
         do {
             try await saveToSupabase(workout)
+            return true
         } catch {
             print("[WorkoutService] Supabase save failed, queuing for retry: \(error.localizedDescription)")
             if let data = try? JSONEncoder().encode(workout),
@@ -172,6 +176,7 @@ final class WorkoutService {
                     payload: payload
                 ))
             }
+            return false
         }
     }
 

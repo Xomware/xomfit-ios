@@ -666,9 +666,12 @@ final class WorkoutLoggerViewModel {
         )
 
         do {
-            try await WorkoutService.shared.saveWorkout(workout)
-            // Auto-post to feed after saving
-            try await FeedService.shared.postWorkoutToFeed(workout: workout, userId: userId, caption: workout.notes, photoURLs: photoURLs)
+            // Only post to feed if the workout actually persisted to Supabase.
+            // Prevents orphan feed items (posts with no matching workout row).
+            let persisted = await WorkoutService.shared.saveWorkout(workout)
+            if persisted {
+                try await FeedService.shared.postWorkoutToFeed(workout: workout, userId: userId, caption: workout.notes, photoURLs: photoURLs)
+            }
 
             // Update widget data
             let allWorkouts = await WorkoutService.shared.fetchWorkouts(userId: userId)

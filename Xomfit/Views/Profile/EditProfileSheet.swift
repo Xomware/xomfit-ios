@@ -90,5 +90,6 @@ struct EditProfileSheet: View {
                 }
             }
         }
+        .presentationCornerRadius(Theme.Radius.lg)
     }
 }

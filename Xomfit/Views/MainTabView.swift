@@ -15,8 +15,13 @@ struct MainTabView: View {
                 default: FeedView()
                 }
             }
-            .transition(.opacity)
-            .animation(.xomChill, value: selectedTab)
+            .transition(
+                .asymmetric(
+                    insertion: .opacity.combined(with: .offset(y: 8)),
+                    removal: .opacity
+                )
+            )
+            .animation(.spring(response: 0.4, dampingFraction: 0.82), value: selectedTab)
         }
         .safeAreaInset(edge: .bottom) {
             if tabBarVisible {
@@ -98,18 +103,20 @@ private struct FloatingTabBar: View {
         .padding(.top, 12)
         .safeAreaPadding(.bottom)
         .background(
-            Rectangle()
-                .fill(Theme.background)
-                .overlay(alignment: .top) {
-                    UnevenRoundedRectangle(
-                        topLeadingRadius: 24,
-                        bottomLeadingRadius: 0,
-                        bottomTrailingRadius: 0,
-                        topTrailingRadius: 24
-                    )
-                    .strokeBorder(Theme.glassBorder, lineWidth: 0.5)
-                }
-                .ignoresSafeArea(.container, edges: .bottom)
+            UnevenRoundedRectangle(
+                topLeadingRadius: Theme.Radius.lg,
+                bottomLeadingRadius: 0,
+                bottomTrailingRadius: 0,
+                topTrailingRadius: Theme.Radius.lg
+            )
+            .fill(.ultraThinMaterial)
+            .overlay(alignment: .top) {
+                // Single 0.5pt top hairline
+                Rectangle()
+                    .fill(Theme.hairline)
+                    .frame(height: 0.5)
+            }
+            .ignoresSafeArea(.container, edges: .bottom)
         )
     }
 }

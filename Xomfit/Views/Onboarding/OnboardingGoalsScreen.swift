@@ -94,17 +94,13 @@ private struct GoalCard: View {
             .padding(Theme.Spacing.md)
             .frame(minHeight: 160)
             .background(
-                RoundedRectangle(cornerRadius: Theme.cornerRadius)
-                    .fill(isSelected ? Theme.accent.opacity(0.08) : Theme.glassFill)
-                    .background(
-                        RoundedRectangle(cornerRadius: Theme.cornerRadius)
-                            .fill(Theme.surface)
-                    )
+                RoundedRectangle(cornerRadius: Theme.Radius.md)
+                    .fill(isSelected ? Theme.accent.opacity(0.08) : Theme.surface)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: Theme.cornerRadius)
+                RoundedRectangle(cornerRadius: Theme.Radius.md)
                     .strokeBorder(
-                        isSelected ? Theme.accent : Theme.glassBorder,
+                        isSelected ? Theme.accent : Theme.hairline,
                         lineWidth: isSelected ? 1.5 : 0.5
                     )
             )

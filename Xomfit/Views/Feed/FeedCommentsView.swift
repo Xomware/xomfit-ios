@@ -129,37 +129,33 @@ private struct CommentRow: View {
     let comment: FeedComment
 
     var body: some View {
-        HStack(alignment: .top, spacing: Theme.Spacing.sm) {
-            ZStack {
-                Circle()
-                    .fill(Theme.accent.opacity(0.15))
-                    .frame(width: 34, height: 34)
-                Text(initials)
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(Theme.accent)
-            }
+        VStack(spacing: 0) {
+            HStack(alignment: .top, spacing: Theme.Spacing.sm) {
+                XomAvatar(
+                    name: comment.user?.displayName ?? "User",
+                    size: 32
+                )
 
-            VStack(alignment: .leading, spacing: 3) {
-                HStack(spacing: 6) {
-                    Text(comment.user?.displayName ?? "User")
-                        .font(.caption.weight(.semibold))
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 6) {
+                        Text(comment.user?.displayName ?? "User")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(Theme.textPrimary)
+                        Text(comment.createdAt.timeAgo)
+                            .font(Theme.fontSmall)
+                            .foregroundStyle(Theme.textTertiary)
+                    }
+                    Text(comment.text)
+                        .font(Theme.fontBody)
                         .foregroundStyle(Theme.textPrimary)
-                    Text(comment.createdAt.timeAgo)
-                        .font(Theme.fontSmall)
-                        .foregroundStyle(Theme.textSecondary)
                 }
-                Text(comment.text)
-                    .font(Theme.fontBody)
-                    .foregroundStyle(Theme.textPrimary)
+
+                Spacer()
             }
+            .padding(.vertical, 10)
+            .accessibilityElement(children: .combine)
 
-            Spacer()
+            XomDivider()
         }
-        .accessibilityElement(children: .combine)
-    }
-
-    private var initials: String {
-        let name = comment.user?.displayName ?? "U"
-        return String(name.prefix(2)).uppercased()
     }
 }

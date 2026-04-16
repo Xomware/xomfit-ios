@@ -21,16 +21,18 @@ struct NotificationPreferencesView: View {
                         prefToggle("Social", icon: "bubble.left.and.bubble.right.fill", isOn: prefs.social)
                         prefToggle("Friend Activity", icon: "figure.strengthtraining.traditional", isOn: prefs.friendActivity)
                     } header: {
-                        Text("Social")
+                        XomMetricLabel("Social")
                     }
+                    .listRowSeparatorTint(Theme.hairline)
 
                     Section {
                         prefToggle("Personal Records", icon: "trophy.fill", isOn: prefs.personalRecords)
                         prefToggle("Workout Reminders", icon: "alarm.fill", isOn: prefs.workoutReminders)
                         prefToggle("Challenges", icon: "flag.fill", isOn: prefs.challenges)
                     } header: {
-                        Text("Activity")
+                        XomMetricLabel("Activity")
                     }
+                    .listRowSeparatorTint(Theme.hairline)
                 }
                 .scrollContentBackground(.hidden)
             }

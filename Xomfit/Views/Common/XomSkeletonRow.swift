@@ -37,14 +37,14 @@ struct XomSkeletonRow: View {
             // Header row
             HStack(spacing: Theme.Spacing.sm) {
                 Circle()
-                    .fill(Theme.surfaceSecondary)
+                    .fill(Theme.surfaceElevated)
                     .frame(width: 40, height: 40)
                 VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                     RoundedRectangle(cornerRadius: 4)
-                        .fill(Theme.surfaceSecondary)
+                        .fill(Theme.surfaceElevated)
                         .frame(width: 120, height: 14)
                     RoundedRectangle(cornerRadius: 4)
-                        .fill(Theme.surfaceSecondary)
+                        .fill(Theme.surfaceElevated)
                         .frame(width: 80, height: 10)
                 }
                 Spacer()
@@ -52,17 +52,17 @@ struct XomSkeletonRow: View {
 
             // Content area
             RoundedRectangle(cornerRadius: 8)
-                .fill(Theme.surfaceSecondary)
+                .fill(Theme.surfaceElevated)
                 .frame(height: 16)
             RoundedRectangle(cornerRadius: 8)
-                .fill(Theme.surfaceSecondary)
+                .fill(Theme.surfaceElevated)
                 .frame(width: 200, height: 16)
 
             // Stats row
             HStack(spacing: Theme.Spacing.md) {
                 ForEach(0..<3, id: \.self) { _ in
                     RoundedRectangle(cornerRadius: 8)
-                        .fill(Theme.surfaceSecondary)
+                        .fill(Theme.surfaceElevated)
                         .frame(height: 40)
                 }
             }
@@ -71,7 +71,7 @@ struct XomSkeletonRow: View {
             HStack {
                 ForEach(0..<3, id: \.self) { _ in
                     RoundedRectangle(cornerRadius: 4)
-                        .fill(Theme.surfaceSecondary)
+                        .fill(Theme.surfaceElevated)
                         .frame(width: 60, height: 20)
                 }
                 Spacer()
@@ -87,15 +87,15 @@ struct XomSkeletonRow: View {
     private var profileHeaderSkeleton: some View {
         VStack(spacing: Theme.Spacing.md) {
             Circle()
-                .fill(Theme.surfaceSecondary)
-                .frame(width: 80, height: 80)
+                .fill(Theme.surfaceElevated)
+                .frame(width: 96, height: 96)
 
             VStack(spacing: Theme.Spacing.xs) {
                 RoundedRectangle(cornerRadius: 4)
-                    .fill(Theme.surfaceSecondary)
+                    .fill(Theme.surfaceElevated)
                     .frame(width: 140, height: 18)
                 RoundedRectangle(cornerRadius: 4)
-                    .fill(Theme.surfaceSecondary)
+                    .fill(Theme.surfaceElevated)
                     .frame(width: 100, height: 14)
             }
 
@@ -103,10 +103,10 @@ struct XomSkeletonRow: View {
                 ForEach(0..<3, id: \.self) { _ in
                     VStack(spacing: Theme.Spacing.xs) {
                         RoundedRectangle(cornerRadius: 4)
-                            .fill(Theme.surfaceSecondary)
+                            .fill(Theme.surfaceElevated)
                             .frame(width: 40, height: 20)
                         RoundedRectangle(cornerRadius: 4)
-                            .fill(Theme.surfaceSecondary)
+                            .fill(Theme.surfaceElevated)
                             .frame(width: 50, height: 12)
                     }
                 }
@@ -118,10 +118,10 @@ struct XomSkeletonRow: View {
     private var statSkeleton: some View {
         VStack(spacing: Theme.Spacing.xs) {
             RoundedRectangle(cornerRadius: 4)
-                .fill(Theme.surfaceSecondary)
+                .fill(Theme.surfaceElevated)
                 .frame(width: 50, height: 24)
             RoundedRectangle(cornerRadius: 4)
-                .fill(Theme.surfaceSecondary)
+                .fill(Theme.surfaceElevated)
                 .frame(width: 60, height: 12)
         }
         .frame(maxWidth: .infinity)

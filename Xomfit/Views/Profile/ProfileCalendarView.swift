@@ -149,11 +149,12 @@ struct ProfileCalendarView: View {
         return Theme.textSecondary
     }
 
-    private func cellBackground(count: Int, isToday: Bool) -> Color {
-        if count >= 2 { return Theme.accent }
-        if count == 1 { return Theme.accent.opacity(0.4) }
-        if isToday { return Theme.accent.opacity(0.1) }
-        return .clear
+    private func cellBackground(count: Int, isToday: Bool) -> some ShapeStyle {
+        if count >= 2 { return AnyShapeStyle(Theme.accent) }
+        if count == 1 { return AnyShapeStyle(Theme.accent.opacity(0.4)) }
+        if isToday { return AnyShapeStyle(Theme.accent.opacity(0.1)) }
+        // Empty day: subtle surface fill + hairline for grid density
+        return AnyShapeStyle(Theme.surface)
     }
 
     // MARK: - Helpers

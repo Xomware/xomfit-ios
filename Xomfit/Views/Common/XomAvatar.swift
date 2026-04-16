@@ -4,20 +4,23 @@ struct XomAvatar: View {
     let name: String
     let size: CGFloat
     let imageURL: URL?
-    let showBorder: Bool
+    /// When non-nil, draws a ring in this color. Pass `Theme.accent` for a standard accent ring.
+    let ringColor: Color?
     let isOnline: Bool
 
     init(
         name: String,
-        size: CGFloat = 40,
+        size: CGFloat = 44,
         imageURL: URL? = nil,
-        showBorder: Bool = false,
-        isOnline: Bool = false
+        ringColor: Color? = nil,
+        isOnline: Bool = false,
+        // Legacy param — maps to ringColor for backwards compat
+        showBorder: Bool = false
     ) {
         self.name = name
         self.size = size
         self.imageURL = imageURL
-        self.showBorder = showBorder
+        self.ringColor = showBorder ? Theme.accent : ringColor
         self.isOnline = isOnline
     }
 
@@ -42,7 +45,7 @@ struct XomAvatar: View {
 
             if isOnline {
                 Circle()
-                    .fill(Theme.energy)
+                    .fill(Theme.accent)
                     .frame(width: size * 0.28, height: size * 0.28)
                     .overlay(
                         Circle().stroke(Theme.background, lineWidth: 2)
@@ -51,9 +54,9 @@ struct XomAvatar: View {
             }
         }
         .overlay {
-            if showBorder {
+            if let ringColor {
                 Circle()
-                    .strokeBorder(Theme.accent, lineWidth: 2)
+                    .strokeBorder(ringColor, lineWidth: 2)
                     .frame(width: size, height: size)
             }
         }
@@ -61,11 +64,11 @@ struct XomAvatar: View {
 
     private var initialsView: some View {
         Circle()
-            .fill(Theme.surfaceSecondary)
+            .fill(Theme.surfaceElevated)
             .frame(width: size, height: size)
             .overlay(
                 Text(initials)
-                    .font(.system(size: size * 0.38, weight: .semibold))
+                    .font(.system(size: size * 0.36, weight: .semibold))
                     .foregroundStyle(Theme.textPrimary)
             )
     }
@@ -77,4 +80,16 @@ struct XomAvatar: View {
         }
         return String(name.prefix(2)).uppercased()
     }
+}
+
+// MARK: - Preview
+
+#Preview {
+    HStack(spacing: 16) {
+        XomAvatar(name: "Dom Giordano", size: 44)
+        XomAvatar(name: "Dom Giordano", size: 96, ringColor: Theme.accent)
+        XomAvatar(name: "Dom Giordano", size: 48, isOnline: true)
+    }
+    .padding()
+    .background(Theme.background)
 }

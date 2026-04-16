@@ -4,78 +4,106 @@ import SwiftUI
 // MARK: - Design Tokens
 
 enum Theme {
-    // MARK: - Colors (60-30-10 rule)
+    // MARK: - Colors (neutral near-black ramp, single accent, role-split semantics)
 
-    /// 10% — Brand accent (CTAs, selected states, links)
-    static let accent = Color(hex: "33FF66")
-    /// 60% — Primary background
-    static let background = Color(hex: "0A0A0F")
-    /// 30% — Cards, modals, sheets
-    static let surface = Color(hex: "1A1A2E")
-    /// Deeper surface for nested containers
-    static let surfaceSecondary = Color(hex: "16213E")
-    /// Workout start, PRs, success states
-    static let energy = Color(hex: "00C46A")
-    /// Calories, heart rate zones, warnings
-    static let alert = Color(hex: "FF6B35")
-    /// Delete, destructive actions
-    static let destructive = Color(hex: "FF4444")
-    /// PR badges, streaks
-    static let prGold = Color(hex: "FFD700")
+    /// 60% — App background. Warm-neutral near-black, removes blue cast.
+    static let background        = Color(hex: "0B0B0E")
+    /// 30% — Cards. Pure luminance lift from background, same hue family.
+    static let surface           = Color(hex: "17171C")
+    /// Sheets / modals / elevated containers.
+    static let surfaceElevated   = Color(hex: "1F1F26")
+    /// DEPRECATED alias — keep for one release, migrate callers, then remove.
+    static let surfaceSecondary  = Color(hex: "1F1F26")
 
-    static let textPrimary = Color.white
-    static let textSecondary = Color(hex: "9CA3AF")
+    /// 10% — Primary accent (CTAs, selected states only). Desaturated from 33FF66.
+    static let accent            = Color(hex: "2FE562")
+    /// Tinted fill for accent-utility use (selected tab bg, accent chip bg).
+    static let accentMuted       = Color(hex: "2FE562").opacity(0.18)
 
-    // Glass morphism
-    static let glassFill = Color.white.opacity(0.06)
-    static let glassBorder = Color.white.opacity(0.1)
-    static let glassHighlight = Color.white.opacity(0.15)
+    /// Text — off-white, neutral greys (not blue-greys).
+    static let textPrimary       = Color(hex: "F5F5F7")
+    static let textSecondary     = Color(hex: "9A9AA3")
+    static let textTertiary      = Color(hex: "6B6B72")
 
-    // Activity badge colors
-    static let badgeWorkout = accent
-    static let badgePR = prGold
-    static let badgeMilestone = Color(hex: "AA66FF")
-    static let badgeStreak = Color(hex: "FF6633")
+    /// Semantic colors — all desaturated a notch vs prior values.
+    static let prGold            = Color(hex: "F5C84B")
+    static let milestone         = Color(hex: "9B7BFF")
+    static let streak            = Color(hex: "FF7A45")
+    static let alert             = Color(hex: "FF8A4C")
+    static let destructive       = Color(hex: "FF5E5E")
+    /// Kept for API compat; points to accent. Callers should migrate to `accent`.
+    static let energy            = accent
 
-    // MARK: - Spacing (8pt grid)
+    // MARK: - Hairlines
+
+    static let hairline          = Color.white.opacity(0.08)
+    static let hairlineStrong    = Color.white.opacity(0.12)
+
+    // Glass morphism — kept for callsite compat; prefer hairline tokens going forward
+    static let glassFill         = Color.white.opacity(0.04)
+    static let glassBorder       = Color.white.opacity(0.08)
+    static let glassHighlight    = Color.white.opacity(0.12)
+
+    // MARK: - Activity badge tokens
+
+    static let badgeWorkout      = accent
+    static let badgePR           = prGold
+    static let badgeMilestone    = milestone
+    static let badgeStreak       = streak
+
+    // MARK: - Spacing (8pt grid + section rhythm)
 
     enum Spacing {
-        static let xs: CGFloat = 4
-        static let sm: CGFloat = 8
-        static let md: CGFloat = 16
-        static let lg: CGFloat = 24
-        static let xl: CGFloat = 32
+        static let hairline: CGFloat = 0.5
+        static let xs:  CGFloat = 4
+        static let sm:  CGFloat = 8
+        static let md:  CGFloat = 16
+        static let lg:  CGFloat = 24
+        static let xl:  CGFloat = 32
         static let xxl: CGFloat = 48
+        static let section: CGFloat = 40
     }
 
     // MARK: - Corner Radius
 
-    static let cornerRadius: CGFloat = 16
-    static let cornerRadiusSmall: CGFloat = 10
+    enum Radius {
+        static let xs: CGFloat = 6
+        static let sm: CGFloat = 10
+        static let md: CGFloat = 16
+        static let lg: CGFloat = 22
+        static let xl: CGFloat = 28
+    }
+
+    /// DEPRECATED — use Radius.md
+    static let cornerRadius      = Radius.md
+    /// DEPRECATED — use Radius.sm
+    static let cornerRadiusSmall = Radius.sm
 
     // Legacy spacing aliases (prefer Spacing.*)
     static let paddingSmall: CGFloat = 8
     static let paddingMedium: CGFloat = 16
     static let paddingLarge: CGFloat = 24
 
-    // MARK: - Typography (Dynamic Type — never hard-code sizes)
+    // MARK: - Typography
 
-    /// Hero numbers: PRs, distances, big stats
-    static let fontDisplay: Font = .largeTitle.weight(.black).width(.condensed)
-    /// Screen titles
-    static let fontLargeTitle: Font = .largeTitle.weight(.bold)
-    /// Section titles, card headlines
-    static let fontTitle: Font = .title.weight(.bold)
-    /// Card titles, emphasized labels
-    static let fontHeadline: Font = .title3.weight(.semibold)
-    /// Body text, descriptions, feed text
-    static let fontBody: Font = .body
-    /// Secondary info, workout types
+    /// Hero display number — PRs, volume totals, hero metrics.
+    static let fontDisplay: Font = .system(size: 44, weight: .heavy, design: .rounded).monospacedDigit()
+    /// Secondary hero number — stat columns, card titles with numbers.
+    static let fontNumberLarge: Font = .system(size: 28, weight: .bold, design: .rounded).monospacedDigit()
+    /// Inline numbers — set rows, feed stat pills.
+    static let fontNumberMedium: Font = .system(size: 17, weight: .semibold, design: .rounded).monospacedDigit()
+
+    static let fontLargeTitle: Font  = .largeTitle.weight(.bold)
+    static let fontTitle: Font       = .title.weight(.bold)
+    static let fontTitle2: Font      = .title2.weight(.semibold)
+    static let fontHeadline: Font    = .title3.weight(.semibold)
+    static let fontBody: Font        = .body
     static let fontSubheadline: Font = .subheadline
-    /// Timestamps, metadata, labels
-    static let fontCaption: Font = .caption
-    /// Micro-labels, badges
-    static let fontSmall: Font = .caption2.weight(.medium)
+    static let fontCaption: Font     = .caption
+    static let fontSmall: Font       = .caption2.weight(.medium)
+
+    /// Uppercase + 0.5 kerning metric label. Apply via XomMetricLabel or .metricLabel() modifier.
+    static let fontMetricLabel: Font = .caption.weight(.semibold)
 }
 
 // MARK: - Animation Tokens
@@ -202,7 +230,7 @@ enum Haptics {
     }
 }
 
-// MARK: - Glass Card Modifier
+// MARK: - Glass Card Modifier (kept for callsite compat)
 
 struct GlassCardStyle: ViewModifier {
     func body(content: Content) -> some View {
@@ -210,15 +238,11 @@ struct GlassCardStyle: ViewModifier {
             .padding(Theme.Spacing.md)
             .background(
                 RoundedRectangle(cornerRadius: Theme.cornerRadius)
-                    .fill(Theme.glassFill)
-                    .background(
+                    .fill(Theme.surface)
+                    .overlay(
                         RoundedRectangle(cornerRadius: Theme.cornerRadius)
-                            .fill(Theme.surface)
+                            .strokeBorder(Theme.hairline, lineWidth: 0.5)
                     )
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: Theme.cornerRadius)
-                    .strokeBorder(Theme.glassBorder, lineWidth: 0.5)
             )
     }
 }
@@ -238,16 +262,16 @@ extension View {
 
     func glassStyle() -> some View {
         self
-            .background(Theme.glassFill)
+            .background(Theme.surfaceElevated)
             .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall))
             .overlay(
                 RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall)
-                    .strokeBorder(Theme.glassBorder, lineWidth: 0.5)
+                    .strokeBorder(Theme.hairline, lineWidth: 0.5)
             )
     }
 }
 
-// MARK: - Shimmer Modifier
+// MARK: - Shimmer Modifier (soft diagonal sweep)
 
 struct ShimmerModifier: ViewModifier {
     @State private var phase: CGFloat = 0
@@ -256,14 +280,14 @@ struct ShimmerModifier: ViewModifier {
         content
             .overlay(
                 LinearGradient(
-                    colors: [.clear, Color.white.opacity(0.1), .clear],
-                    startPoint: .init(x: phase - 0.5, y: 0.5),
-                    endPoint: .init(x: phase + 0.5, y: 0.5)
+                    colors: [.clear, Color.white.opacity(0.06), .clear],
+                    startPoint: .init(x: phase - 0.5, y: phase - 0.5),
+                    endPoint: .init(x: phase + 0.5, y: phase + 0.5)
                 )
             )
             .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
             .onAppear {
-                withAnimation(.linear(duration: 1.5).repeatForever(autoreverses: false)) {
+                withAnimation(.linear(duration: 1.8).repeatForever(autoreverses: false)) {
                     phase = 1.5
                 }
             }
@@ -302,7 +326,7 @@ struct StaggeredAppearance: ViewModifier {
     }
 }
 
-// MARK: - Button Styles
+// MARK: - Button Styles (legacy — prefer XomButton)
 
 struct AccentButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
@@ -311,15 +335,19 @@ struct AccentButtonStyle: ButtonStyle {
             .foregroundStyle(.black)
             .frame(maxWidth: .infinity)
             .padding(.vertical, Theme.Spacing.md)
-            .background(Theme.accent)
-            .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
-            .shadow(
-                color: Theme.accent.opacity(0.3),
-                radius: configuration.isPressed ? 4 : 8,
-                x: 0,
-                y: configuration.isPressed ? 2 : 4
+            .background(
+                RoundedRectangle(cornerRadius: Theme.cornerRadius)
+                    .fill(Theme.accent)
+                    .overlay(
+                        LinearGradient(
+                            colors: [Color.white.opacity(0.08), Color.clear],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
+                    )
             )
-            .scaleEffect(configuration.isPressed ? 0.94 : 1)
+            .scaleEffect(configuration.isPressed ? 0.98 : 1)
             .animation(.xomSnappy, value: configuration.isPressed)
     }
 }
@@ -331,13 +359,13 @@ struct GhostButtonStyle: ButtonStyle {
             .foregroundStyle(Theme.accent)
             .frame(maxWidth: .infinity)
             .padding(.vertical, Theme.Spacing.md)
-            .background(Theme.glassFill)
+            .background(Theme.surfaceElevated)
             .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
             .overlay(
                 RoundedRectangle(cornerRadius: Theme.cornerRadius)
                     .strokeBorder(Theme.accent.opacity(0.5), lineWidth: 1)
             )
-            .scaleEffect(configuration.isPressed ? 0.94 : 1)
+            .scaleEffect(configuration.isPressed ? 0.98 : 1)
             .animation(.xomSnappy, value: configuration.isPressed)
     }
 }

@@ -15,14 +15,17 @@ struct SettingsView: View {
             Theme.background.ignoresSafeArea()
 
             List {
-                Section("Account") {
+                Section {
                     if let email = authService.currentUser?.email {
                         settingsRow(icon: "envelope.fill", iconColor: Theme.accent, label: "Email", value: email)
                     }
+                } header: {
+                    XomMetricLabel("Account")
                 }
                 .listRowBackground(Theme.surface)
+                .listRowSeparatorTint(Theme.hairline)
 
-                Section("Notifications") {
+                Section {
                     NavigationLink {
                         NotificationPreferencesView()
                     } label: {
@@ -34,14 +37,21 @@ struct SettingsView: View {
                                 .foregroundStyle(Theme.textPrimary)
                         }
                     }
+                    .tint(Theme.textTertiary)
+                } header: {
+                    XomMetricLabel("Notifications")
                 }
                 .listRowBackground(Theme.surface)
+                .listRowSeparatorTint(Theme.hairline)
 
-                Section("About") {
+                Section {
                     settingsRow(icon: "info.circle.fill", iconColor: Theme.accent, label: "Version", value: appVersion)
                     settingsRow(icon: "building.2.fill", iconColor: Theme.accent, label: "App", value: Config.appName)
+                } header: {
+                    XomMetricLabel("About")
                 }
                 .listRowBackground(Theme.surface)
+                .listRowSeparatorTint(Theme.hairline)
 
                 Section {
                     Button(role: .destructive) {
@@ -56,6 +66,7 @@ struct SettingsView: View {
                         }
                     }
                     .listRowBackground(Theme.surface)
+                    .listRowSeparatorTint(Theme.hairline)
                 }
             }
             .listStyle(.insetGrouped)
@@ -83,7 +94,7 @@ struct SettingsView: View {
                 .foregroundStyle(Theme.textPrimary)
             Spacer()
             Text(value)
-                .foregroundStyle(Theme.textSecondary)
+                .foregroundStyle(Theme.textTertiary)
                 .font(Theme.fontCaption)
         }
     }

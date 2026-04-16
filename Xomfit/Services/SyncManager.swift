@@ -59,8 +59,7 @@ final class SyncManager {
             case .saveWorkout:
                 guard let data = op.payload.data(using: .utf8),
                       let workout = try? JSONDecoder().decode(Workout.self, from: data) else { return false }
-                try await WorkoutService.shared.saveWorkout(workout)
-                return true
+                return await WorkoutService.shared.saveWorkout(workout)
 
             case .postFeedItem:
                 // Feed posts are embedded in workout save — skip standalone retry

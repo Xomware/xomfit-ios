@@ -38,6 +38,10 @@ struct TemplateCardView: View {
             .frame(width: 160, alignment: .leading)
             .background(Theme.surface)
             .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+            .overlay(
+                RoundedRectangle(cornerRadius: Theme.cornerRadius)
+                    .strokeBorder(Theme.hairline, lineWidth: 0.5)
+            )
         }
         .buttonStyle(PressableCardStyle())
         .accessibilityLabel("\(template.name) template, \(template.exercises.count) exercises, about \(template.estimatedDuration) minutes")

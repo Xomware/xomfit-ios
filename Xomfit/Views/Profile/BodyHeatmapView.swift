@@ -68,27 +68,26 @@ struct BodyHeatmapView: View {
         .padding(.horizontal, Theme.Spacing.sm)
         .padding(.vertical, 10)
         .background(heatColor(for: sets))
-        .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
+        .clipShape(.rect(cornerRadius: Theme.Radius.xs))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(name): \(sets) sets")
     }
 
     // MARK: - Heat Color
 
-    /// Maps set count to intensity color:
-    /// 0 = card background (not hit), 1-3 = green (light), 4-8 = yellow, 9-15 = orange, 16+ = red
+    /// Maps set count to accent luminance intensity — single-hue ramp.
     private func heatColor(for sets: Int) -> Color {
         switch sets {
         case 0:
             return Theme.surface
         case 1...3:
-            return Theme.accent.opacity(0.3)
+            return Theme.accent.opacity(0.15)
         case 4...8:
-            return Color.yellow.opacity(0.3)
+            return Theme.accent.opacity(0.35)
         case 9...15:
-            return Color.orange.opacity(0.3)
+            return Theme.accent.opacity(0.60)
         default:
-            return Theme.destructive.opacity(0.3)
+            return Theme.accent.opacity(0.85)
         }
     }
 
@@ -97,10 +96,10 @@ struct BodyHeatmapView: View {
     private var heatmapLegend: some View {
         HStack(spacing: Theme.Spacing.sm) {
             legendItem(color: Theme.surface, label: "None")
-            legendItem(color: Theme.accent.opacity(0.3), label: "Light")
-            legendItem(color: Color.yellow.opacity(0.3), label: "Some")
-            legendItem(color: Color.orange.opacity(0.3), label: "Moderate")
-            legendItem(color: Theme.destructive.opacity(0.3), label: "Heavy")
+            legendItem(color: Theme.accent.opacity(0.15), label: "Light")
+            legendItem(color: Theme.accent.opacity(0.35), label: "Some")
+            legendItem(color: Theme.accent.opacity(0.60), label: "Moderate")
+            legendItem(color: Theme.accent.opacity(0.85), label: "Heavy")
         }
         .frame(maxWidth: .infinity)
     }
