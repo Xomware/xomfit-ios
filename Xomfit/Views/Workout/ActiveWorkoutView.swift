@@ -31,8 +31,10 @@ struct ActiveWorkoutView: View {
                     // Header bar
                     headerBar
 
-                    // Rest timer config
-                    restTimerConfig
+                    // Rest timer config — hidden when rest timer is running (redundant with the active card)
+                    if !viewModel.isRestTimerActive && !viewModel.focusMode {
+                        restTimerConfig
+                    }
 
                     if viewModel.focusMode {
                         // Focus mode — large gym-floor view
@@ -265,16 +267,43 @@ struct ActiveWorkoutView: View {
 
             Spacer()
 
-            // Timer — fontNumberLarge monospaced + metric label
-            VStack(spacing: 1) {
-                Text(viewModel.workoutName)
-                    .font(.subheadline.weight(.bold))
-                    .foregroundStyle(Theme.textPrimary)
-                    .lineLimit(1)
-                Text(viewModel.durationString)
-                    .font(Theme.fontNumberMedium)
+            // Timer cluster — total time prominent + rest timer chip so both stay visible
+            // around the Dynamic Island. Name is secondary (can be hidden by island).
+            VStack(spacing: 2) {
+                HStack(spacing: 6) {
+                    HStack(spacing: 3) {
+                        Image(systemName: "clock.fill")
+                            .font(.caption2)
+                        Text(viewModel.durationString)
+                            .font(Theme.fontNumberMedium)
+                    }
                     .foregroundStyle(Theme.accent)
+
+                    if viewModel.isRestTimerActive {
+                        let isOvertime = viewModel.restTimeRemaining <= 0
+                        HStack(spacing: 3) {
+                            Image(systemName: "timer")
+                                .font(.caption2)
+                            Text(headerRestString)
+                                .font(Theme.fontNumberMedium)
+                        }
+                        .foregroundStyle(isOvertime ? Theme.destructive : Theme.textPrimary)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 2)
+                        .background(
+                            Capsule()
+                                .fill((isOvertime ? Theme.destructive : Theme.accent).opacity(0.15))
+                        )
+                        .transition(.scale.combined(with: .opacity))
+                    }
+                }
+
+                Text(viewModel.workoutName)
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(Theme.textTertiary)
+                    .lineLimit(1)
             }
+            .animation(.xomChill, value: viewModel.isRestTimerActive)
 
             Spacer()
 
@@ -332,8 +361,19 @@ struct ActiveWorkoutView: View {
             .disabled(viewModel.isSaving)
         }
         .padding(.horizontal, Theme.Spacing.md)
-        .padding(.vertical, Theme.Spacing.md)
+        .padding(.top, Theme.Spacing.sm)
+        .padding(.bottom, Theme.Spacing.md)
         .background(Theme.surface)
+    }
+
+    /// Compact rest countdown string for the header chip (matches RestTimerView format).
+    private var headerRestString: String {
+        let remaining = viewModel.restTimeRemaining
+        let total = Int(abs(remaining))
+        let mins = total / 60
+        let secs = total % 60
+        let prefix = remaining < 0 ? "-" : ""
+        return prefix + String(format: "%d:%02d", mins, secs)
     }
 
     // MARK: - Rest Timer Config

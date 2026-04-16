@@ -161,12 +161,23 @@ struct FeedDetailView: View {
                     Spacer()
                 }
                 .padding(.vertical, Theme.Spacing.md)
-            } else if let workout = fetchedWorkout {
+            } else if let workout = fetchedWorkout, !workout.exercises.isEmpty {
                 ForEach(Array(workout.exercises.enumerated()), id: \.element.id) { index, exercise in
                     realExerciseCard(exercise: exercise, index: index + 1)
                 }
+
+                // If DB has fewer exercises than the feed snapshot, show the missing
+                // ones as summary rows (handles partial-save data).
+                if let activity = localItem.workoutActivity,
+                   activity.exercises.count > workout.exercises.count {
+                    let dbNames = Set(workout.exercises.map { $0.exercise.name.lowercased() })
+                    let missing = activity.exercises.filter { !dbNames.contains($0.name.lowercased()) }
+                    ForEach(missing) { exercise in
+                        fallbackExerciseRow(exercise: exercise)
+                    }
+                }
             } else if let activity = localItem.workoutActivity {
-                // Fallback to summary data if fetch failed
+                // Fallback to summary data if fetch failed or workout has no exercises
                 ForEach(activity.exercises) { exercise in
                     fallbackExerciseRow(exercise: exercise)
                 }
@@ -175,46 +186,33 @@ struct FeedDetailView: View {
     }
 
     private func realExerciseCard(exercise: WorkoutExercise, index: Int) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
+        let totalVolume = exercise.sets.reduce(0.0) { $0 + ($1.weight * Double($1.reps)) }
+
+        return VStack(alignment: .leading, spacing: 0) {
             DisclosureGroup {
-                VStack(alignment: .leading, spacing: 0) {
-                    HStack(spacing: 0) {
-                        Text("SET")
-                            .frame(width: 36, alignment: .leading)
-                        Text("WEIGHT")
-                            .frame(maxWidth: .infinity, alignment: .trailing)
-                        Text("REPS")
-                            .frame(width: 50, alignment: .trailing)
-                    }
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(Theme.textSecondary)
-                    .padding(.top, Theme.Spacing.sm)
-
+                VStack(alignment: .leading, spacing: 6) {
                     ForEach(Array(exercise.sets.enumerated()), id: \.element.id) { setIndex, workoutSet in
-                        HStack(spacing: 0) {
+                        HStack(spacing: Theme.Spacing.sm) {
                             Text("\(setIndex + 1)")
-                                .frame(width: 36, alignment: .leading)
+                                .font(.caption.weight(.semibold).monospaced())
                                 .foregroundStyle(Theme.textSecondary)
+                                .frame(width: 20, alignment: .leading)
 
-                            Text("\(workoutSet.weight.formattedWeight) lbs")
-                                .frame(maxWidth: .infinity, alignment: .trailing)
-                                .foregroundStyle(Theme.textPrimary)
-
-                            Text("\(workoutSet.reps)")
-                                .frame(width: 50, alignment: .trailing)
+                            Text("\(workoutSet.reps) × \(workoutSet.weight.formattedWeight)lb")
+                                .font(.subheadline.weight(.semibold).monospaced())
                                 .foregroundStyle(Theme.textPrimary)
 
                             if workoutSet.isPersonalRecord {
                                 Image(systemName: "trophy.fill")
                                     .font(.caption2)
                                     .foregroundStyle(Theme.prGold)
-                                    .padding(.leading, 6)
                             }
+
+                            Spacer()
                         }
-                        .font(.subheadline.weight(.medium).monospaced())
-                        .padding(.vertical, 4)
                     }
                 }
+                .padding(.top, Theme.Spacing.sm)
             } label: {
                 HStack(spacing: Theme.Spacing.sm) {
                     Text("\(index)")
@@ -224,15 +222,18 @@ struct FeedDetailView: View {
                         .background(Theme.accent.opacity(0.12))
                         .clipShape(.rect(cornerRadius: 6))
 
-                    Text(exercise.exercise.name)
-                        .font(.subheadline.weight(.bold))
-                        .foregroundStyle(Theme.textPrimary)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(exercise.exercise.name)
+                            .font(.subheadline.weight(.bold))
+                            .foregroundStyle(Theme.textPrimary)
+                            .lineLimit(1)
+
+                        Text("\(exercise.sets.count) set\(exercise.sets.count == 1 ? "" : "s") · \(formatVolume(totalVolume))")
+                            .font(Theme.fontCaption)
+                            .foregroundStyle(Theme.textSecondary)
+                    }
 
                     Spacer()
-
-                    Text("\(exercise.sets.count) sets")
-                        .font(Theme.fontCaption)
-                        .foregroundStyle(Theme.textSecondary)
 
                     if exercise.sets.contains(where: { $0.isPersonalRecord }) {
                         HStack(spacing: 3) {
