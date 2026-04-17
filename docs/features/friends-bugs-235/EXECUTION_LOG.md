@@ -11,7 +11,7 @@
 - [x] **Phase 3** — ProfileHeaderView + PrivateProfileView + ProfileView (direction-aware + confirmation dialogs)
 - [x] **Phase 4** — FriendsView + new FriendsViewModel
 - [x] **Phase 5** — OnboardingFriendsScreen unified state
-- [ ] **Phase 6** — Cleanup (delete legacy models + grep audit)
+- [x] **Phase 6** — Cleanup (delete legacy models + grep audit)
 - [ ] Manual test pass (T1-T13)
 - [ ] Open PR against `develop` with `Closes #235`
 
@@ -72,4 +72,15 @@
 - New `actionView(for:relation:)` `@ViewBuilder` renders the per-relation button states using the same primary/ghost/disabled pill styling as `FriendsView.SearchResultRow` (Phase 4): `.none` → primary "Add"; `.outgoingPending` → ghost "Sent" → opens shared `.confirmationDialog`; `.incomingPending` → stacked Accept primary + Decline destructive text button; `.friends` → disabled "Friends" pill; `.blocked` → `EmptyView` (rows also filtered at the `ForEach` level).
 - Top-level `VStack` now owns a `.confirmationDialog` (keyed on `showCancelDialog`/`cancelTargetId`) and a `.alert` bound to `errorMessage` via a nil-binding bridge.
 - All action buttons carry `.accessibilityLabel` for VoiceOver parity with `FriendsView`.
+- Build: `xcodebuild -scheme Xomfit -destination 'platform=iOS Simulator,name=iPhone 17' build` → **BUILD SUCCEEDED**.
+
+### 2026-04-17 — Phase 6 complete
+- Pre-deletion grep audit:
+  - `grep "Friendship" | grep -v "FriendshipRelation" | grep -v "friendshipId"` → only matches inside `Xomfit/Models/Friendship.swift` (to be deleted) plus legitimate hits inside `Xomfit/Services/FriendsService.swift` for its local private structs `FriendshipInsert` / `FriendshipStatusUpdate` (not the legacy `Friendship` struct type). Clean.
+  - `grep "FriendRequest"` → only matches inside `Xomfit/Models/FriendRequest.swift` (to be deleted) plus legitimate service method names (`sendFriendRequest`, `cancelFriendRequest`, `acceptFriendRequest`, `declineFriendRequest`). No references to the legacy `FriendRequest` struct type outside the file. Clean.
+  - `grep "ProfileFriendshipStatus"` → **0 matches**.
+  - `grep "friendshipStatus"` → **0 matches**.
+- Deleted: `Xomfit/Models/Friendship.swift`, `Xomfit/Models/FriendRequest.swift`.
+- Post-deletion `sendFriendRequest` call-site audit: all 4 call sites (FriendsViewModel L111, ProfileViewModel L329, OnboardingFriendsScreen L295, and ProfileView via ProfileViewModel) capture the returned friendship id and handle `FriendError.alreadyExists`.
+- pbxproj: **no edit needed** — `PBXFileSystemSynchronizedRootGroup` auto-discovery handled the deletions.
 - Build: `xcodebuild -scheme Xomfit -destination 'platform=iOS Simulator,name=iPhone 17' build` → **BUILD SUCCEEDED**.
