@@ -10,12 +10,20 @@ struct ProfileHeaderView: View {
     let feedItemCount: Int
     let friendCount: Int
     let prCount: Int
-    let friendshipStatus: ProfileFriendshipStatus
+    let relation: FriendshipRelation
     let friends: [FriendRow]
     let friendProfiles: [String: ProfileRow]
     let currentUserId: String
     let onStatTapped: (ProfileTab) -> Void
-    let onActionTapped: () -> Void
+    let onEditProfile: () -> Void
+    let onAddFriend: () -> Void
+    let onCancelRequest: () -> Void
+    let onAcceptRequest: () -> Void
+    let onDeclineRequest: () -> Void
+    let onRemoveFriend: () -> Void
+
+    @State private var showCancelDialog = false
+    @State private var showRemoveDialog = false
 
     var body: some View {
         VStack(spacing: Theme.Spacing.md) {
@@ -121,27 +129,65 @@ struct ProfileHeaderView: View {
     private var actionButton: some View {
         Group {
             if isOwnProfile {
-                XomButton("Edit Profile", variant: .secondary, action: {
+                XomButton("Edit Profile", variant: .secondary) {
                     Haptics.light()
-                    onActionTapped()
-                })
+                    onEditProfile()
+                }
             } else {
-                switch friendshipStatus {
+                switch relation {
                 case .none:
-                    XomButton("Add Friend", variant: .primary, icon: "person.badge.plus", action: {
+                    XomButton("Add Friend", variant: .primary, icon: "person.badge.plus") {
                         Haptics.light()
-                        onActionTapped()
-                    })
-                case .pending:
-                    XomButton("Requested", variant: .ghost, action: {
+                        onAddFriend()
+                    }
+
+                case .outgoingPending:
+                    XomButton("Sent", variant: .ghost) {
                         Haptics.light()
-                        onActionTapped()
-                    })
+                        showCancelDialog = true
+                    }
+                    .confirmationDialog(
+                        "Cancel friend request?",
+                        isPresented: $showCancelDialog,
+                        titleVisibility: .visible
+                    ) {
+                        Button("Cancel Request", role: .destructive) {
+                            onCancelRequest()
+                        }
+                        Button("Keep", role: .cancel) {}
+                    }
+
+                case .incomingPending:
+                    VStack(spacing: Theme.Spacing.sm) {
+                        XomButton("Accept", variant: .primary, icon: "checkmark") {
+                            Haptics.light()
+                            onAcceptRequest()
+                        }
+                        XomButton("Decline", variant: .ghost) {
+                            Haptics.light()
+                            onDeclineRequest()
+                        }
+                    }
+
                 case .friends:
-                    XomButton("Friends", variant: .secondary, icon: "checkmark", action: {
+                    XomButton("Friends", variant: .secondary, icon: "checkmark") {
                         Haptics.light()
-                        onActionTapped()
-                    })
+                        showRemoveDialog = true
+                    }
+                    .confirmationDialog(
+                        "Remove friend?",
+                        isPresented: $showRemoveDialog,
+                        titleVisibility: .visible
+                    ) {
+                        Button("Remove Friend", role: .destructive) {
+                            onRemoveFriend()
+                        }
+                        Button("Keep", role: .cancel) {}
+                    }
+
+                case .blocked:
+                    XomButton("Unavailable", variant: .ghost) {}
+                        .disabled(true)
                 }
             }
         }
