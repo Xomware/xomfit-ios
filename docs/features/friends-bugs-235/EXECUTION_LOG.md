@@ -10,7 +10,7 @@
 - [x] **Phase 2** — ProfileViewModel (replace `ProfileFriendshipStatus` with `FriendshipRelation`)
 - [x] **Phase 3** — ProfileHeaderView + PrivateProfileView + ProfileView (direction-aware + confirmation dialogs)
 - [x] **Phase 4** — FriendsView + new FriendsViewModel
-- [ ] **Phase 5** — OnboardingFriendsScreen unified state
+- [x] **Phase 5** — OnboardingFriendsScreen unified state
 - [ ] **Phase 6** — Cleanup (delete legacy models + grep audit)
 - [ ] Manual test pass (T1-T13)
 - [ ] Open PR against `develop` with `Closes #235`
@@ -63,3 +63,13 @@
 - All buttons have `.accessibilityLabel` for VoiceOver; 300ms search debounce preserved.
 - pbxproj: **no edit needed** — `grep -c "ProfileViewModel.swift" Xomfit.xcodeproj/project.pbxproj` → `0` and the project uses `PBXFileSystemSynchronizedRootGroup` (7 occurrences). New Swift files auto-discover.
 - Build: `xcodebuild -scheme Xomfit -destination 'platform=iOS Simulator,name=iPhone 17' build` → **BUILD SUCCEEDED** (no warnings from new files).
+
+### 2026-04-17 — Phase 5 complete
+- `OnboardingFriendsScreen.swift`: removed `@State sentRequests: Set<String>`. Added `@State relations: [String: FriendshipRelation]`, `errorMessage`, `cancelTargetId`, `showCancelDialog`.
+- `debouncedSearch(_:)` now calls `FriendsService.shared.batchRelations` right after `searchUsers` to pre-hydrate row buttons, and surfaces any caught error via `errorMessage` (previously silently swallowed). Clearing the search query also resets `relations`.
+- Rewrote `sendRequest(to:)` with optimistic `FriendshipRelation.outgoingPending(friendshipId: "pending")` placeholder → real id on success; catches `FriendError.alreadyExists` and reflects the actual relation; on other errors reverts to `.none` and surfaces `errorMessage`.
+- Added `cancelRequest(targetId:friendshipId:)`, `acceptRequest(_:friendshipId:)`, `declineRequest(_:friendshipId:)` mirroring the error-handling pattern. Cancel short-circuits local state back to `.none` when `friendshipId == "pending"` (no server row to DELETE yet).
+- New `actionView(for:relation:)` `@ViewBuilder` renders the per-relation button states using the same primary/ghost/disabled pill styling as `FriendsView.SearchResultRow` (Phase 4): `.none` → primary "Add"; `.outgoingPending` → ghost "Sent" → opens shared `.confirmationDialog`; `.incomingPending` → stacked Accept primary + Decline destructive text button; `.friends` → disabled "Friends" pill; `.blocked` → `EmptyView` (rows also filtered at the `ForEach` level).
+- Top-level `VStack` now owns a `.confirmationDialog` (keyed on `showCancelDialog`/`cancelTargetId`) and a `.alert` bound to `errorMessage` via a nil-binding bridge.
+- All action buttons carry `.accessibilityLabel` for VoiceOver parity with `FriendsView`.
+- Build: `xcodebuild -scheme Xomfit -destination 'platform=iOS Simulator,name=iPhone 17' build` → **BUILD SUCCEEDED**.

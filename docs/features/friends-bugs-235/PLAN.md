@@ -293,7 +293,7 @@ New `FriendsViewModel` (`@Observable @MainActor`):
 - [x] **Phase 2** — Replace `ProfileFriendshipStatus` with `FriendshipRelation` in `ProfileViewModel`; add cancel/accept/decline/remove methods. Commit: `#235 switch ProfileViewModel to FriendshipRelation`.
 - [x] **Phase 3** — Update `ProfileHeaderView`, `PrivateProfileView`, `ProfileView` to use relation + discrete callbacks + confirmation dialogs. Commit: `#235 direction-aware profile header with cancel/remove confirmation dialogs`.
 - [x] **Phase 4** — Extract `FriendsViewModel`; rebuild `FriendsView` with Requests (Incoming + Sent) + Friends sections; make `SearchResultRow` stateless and relation-driven; surface search errors. Commit: `#235 restructure FriendsView with FriendsViewModel and hydrated search`.
-- [ ] **Phase 5** — Unify `OnboardingFriendsScreen` with `batchRelations`; surface swallowed errors. Commit: `#235 hydrate onboarding friend search with real relations and surface errors`.
+- [x] **Phase 5** — Unify `OnboardingFriendsScreen` with `batchRelations`; surface swallowed errors. Commit: `#235 hydrate onboarding friend search with real relations and surface errors`.
 - [ ] **Phase 6** — Delete legacy `Friendship.swift` + `FriendRequest.swift`; final grep audit. Commit: `#235 remove legacy Friendship/FriendRequest models after FriendshipRelation migration`.
 - [ ] Manual test pass against the Test Plan below.
 - [ ] Open PR against `develop` with `Closes #235`.
