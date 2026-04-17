@@ -37,20 +37,23 @@ struct ProfileView: View {
 
             if viewModel.isLoading {
                 profileSkeleton
-            } else if !viewModel.isOwnProfile && viewModel.isPrivate && viewModel.friendshipStatus != .friends {
+            } else if !viewModel.isOwnProfile && viewModel.isPrivate && !viewModel.isFriendsRelation {
                 PrivateProfileView(
                     displayName: viewModel.displayName,
                     username: viewModel.username,
                     initials: viewModel.initials,
-                    friendshipStatus: viewModel.friendshipStatus,
-                    onSendRequest: {
+                    relation: viewModel.relation,
+                    onAddFriend: {
                         Task {
                             await viewModel.sendFriendRequest(
                                 fromUserId: currentUserId,
                                 toUserId: resolvedUserId
                             )
                         }
-                    }
+                    },
+                    onCancelRequest: { Task { await viewModel.cancelRequest() } },
+                    onAcceptRequest: { Task { await viewModel.acceptIncoming() } },
+                    onDeclineRequest: { Task { await viewModel.declineIncoming() } }
                 )
             } else {
                 mainScrollContent
@@ -120,7 +123,7 @@ struct ProfileView: View {
                     feedItemCount: viewModel.feedItemCount,
                     friendCount: viewModel.friendCount,
                     prCount: viewModel.totalPRs,
-                    friendshipStatus: viewModel.friendshipStatus,
+                    relation: viewModel.relation,
                     friends: viewModel.friends,
                     friendProfiles: viewModel.friendProfiles,
                     currentUserId: resolvedUserId,
@@ -129,19 +132,22 @@ struct ProfileView: View {
                             viewModel.selectedTab = tab
                         }
                     },
-                    onActionTapped: {
-                        if viewModel.isOwnProfile {
-                            viewModel.beginEditing()
-                            showEditSheet = true
-                        } else if viewModel.friendshipStatus == .none {
-                            Task {
-                                await viewModel.sendFriendRequest(
-                                    fromUserId: currentUserId,
-                                    toUserId: resolvedUserId
-                                )
-                            }
+                    onEditProfile: {
+                        viewModel.beginEditing()
+                        showEditSheet = true
+                    },
+                    onAddFriend: {
+                        Task {
+                            await viewModel.sendFriendRequest(
+                                fromUserId: currentUserId,
+                                toUserId: resolvedUserId
+                            )
                         }
-                    }
+                    },
+                    onCancelRequest: { Task { await viewModel.cancelRequest() } },
+                    onAcceptRequest: { Task { await viewModel.acceptIncoming() } },
+                    onDeclineRequest: { Task { await viewModel.declineIncoming() } },
+                    onRemoveFriend: { Task { await viewModel.removeFriend() } }
                 )
 
                 // Tab picker (pinned) + tab content

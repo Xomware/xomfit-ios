@@ -6,7 +6,10 @@ struct OnboardingFriendsScreen: View {
     @Environment(AuthService.self) private var authService
     @State private var searchQuery = ""
     @State private var searchResults: [ProfileRow] = []
-    @State private var sentRequests: Set<String> = []
+    @State private var relations: [String: FriendshipRelation] = [:]
+    @State private var errorMessage: String?
+    @State private var cancelTargetId: String?
+    @State private var showCancelDialog = false
     @State private var isSearching = false
     @State private var searchTask: Task<Void, Never>?
 
@@ -45,6 +48,7 @@ struct OnboardingFriendsScreen: View {
                     Button {
                         searchQuery = ""
                         searchResults = []
+                        relations = [:]
                     } label: {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundStyle(Theme.textSecondary)
@@ -85,7 +89,10 @@ struct OnboardingFriendsScreen: View {
                         }
                         .padding(.top, Theme.Spacing.xxl)
                     } else {
-                        ForEach(searchResults, id: \.id) { user in
+                        ForEach(searchResults.filter { user in
+                            if case .blocked = relations[user.id] ?? .none { return false }
+                            return true
+                        }, id: \.id) { user in
                             userRow(user)
                         }
                     }
@@ -100,14 +107,39 @@ struct OnboardingFriendsScreen: View {
             }
             .padding(.horizontal, Theme.Spacing.lg)
         }
+        .confirmationDialog(
+            "Cancel friend request?",
+            isPresented: $showCancelDialog,
+            titleVisibility: .visible
+        ) {
+            Button("Cancel Request", role: .destructive) {
+                if let id = cancelTargetId,
+                   case .outgoingPending(let fid) = relations[id] ?? .none {
+                    cancelRequest(targetId: id, friendshipId: fid)
+                }
+                cancelTargetId = nil
+            }
+            Button("Keep", role: .cancel) {
+                cancelTargetId = nil
+            }
+        }
+        .alert("Error", isPresented: Binding(
+            get: { errorMessage != nil },
+            set: { if !$0 { errorMessage = nil } }
+        )) {
+            Button("OK") { errorMessage = nil }
+        } message: {
+            Text(errorMessage ?? "")
+        }
     }
 
     // MARK: - User Row
 
+    @ViewBuilder
     private func userRow(_ user: ProfileRow) -> some View {
-        let isSent = sentRequests.contains(user.id)
+        let relation = relations[user.id] ?? .none
 
-        return HStack(spacing: Theme.Spacing.sm) {
+        HStack(spacing: Theme.Spacing.sm) {
             XomAvatar(
                 name: user.displayName.isEmpty ? user.username : user.displayName,
                 size: 40
@@ -124,24 +156,92 @@ struct OnboardingFriendsScreen: View {
 
             Spacer()
 
-            Button {
-                guard !isSent else { return }
-                Haptics.light()
-                sendRequest(to: user.id)
-            } label: {
-                Text(isSent ? "Sent" : "Add")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(isSent ? Theme.textSecondary : .black)
-                    .padding(.horizontal, Theme.Spacing.md)
-                    .padding(.vertical, Theme.Spacing.xs)
-                    .background(isSent ? Theme.surface : Theme.accent)
-                    .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
-            }
-            .disabled(isSent)
+            actionView(for: user, relation: relation)
         }
         .padding(Theme.Spacing.sm)
         .background(Theme.surface)
         .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
+    }
+
+    @ViewBuilder
+    private func actionView(for user: ProfileRow, relation: FriendshipRelation) -> some View {
+        switch relation {
+        case .none:
+            Button {
+                Haptics.light()
+                sendRequest(to: user.id)
+            } label: {
+                pill(text: "Add", style: .primary)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Add friend")
+
+        case .outgoingPending:
+            Button {
+                Haptics.light()
+                cancelTargetId = user.id
+                showCancelDialog = true
+            } label: {
+                pill(text: "Sent", style: .ghost)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Cancel friend request")
+
+        case .incomingPending(let friendshipId):
+            VStack(spacing: 6) {
+                Button {
+                    Haptics.success()
+                    acceptRequest(user.id, friendshipId: friendshipId)
+                } label: {
+                    pill(text: "Accept", style: .primary)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Accept friend request")
+
+                Button {
+                    Haptics.light()
+                    declineRequest(user.id, friendshipId: friendshipId)
+                } label: {
+                    Text("Decline")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(Theme.destructive)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Decline friend request")
+            }
+
+        case .friends:
+            pill(text: "Friends", style: .disabled)
+
+        case .blocked:
+            // Row is filtered out upstream; render nothing defensively.
+            EmptyView()
+        }
+    }
+
+    private enum PillStyle { case primary, ghost, disabled }
+
+    private func pill(text: String, style: PillStyle) -> some View {
+        let foreground: Color = {
+            switch style {
+            case .primary: return .black
+            case .ghost, .disabled: return Theme.textSecondary
+            }
+        }()
+        let background: Color = {
+            switch style {
+            case .primary: return Theme.accent
+            case .ghost, .disabled: return Theme.surfaceElevated
+            }
+        }()
+
+        return Text(text)
+            .font(.caption.weight(.bold))
+            .foregroundStyle(foreground)
+            .padding(.horizontal, Theme.Spacing.md)
+            .padding(.vertical, Theme.Spacing.xs)
+            .background(background)
+            .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
     }
 
     // MARK: - Search
@@ -151,6 +251,7 @@ struct OnboardingFriendsScreen: View {
         let trimmed = query.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty else {
             searchResults = []
+            relations = [:]
             return
         }
 
@@ -166,27 +267,80 @@ struct OnboardingFriendsScreen: View {
                 )
                 guard !Task.isCancelled else { return }
                 searchResults = results
+                let ids = results.map { $0.id }
+                let fetched = try await FriendsService.shared.batchRelations(
+                    currentUserId: userId,
+                    otherUserIds: ids
+                )
+                guard !Task.isCancelled else { return }
+                relations = fetched
             } catch {
                 guard !Task.isCancelled else { return }
+                errorMessage = error.localizedDescription
             }
             isSearching = false
         }
     }
 
+    // MARK: - Mutations
+
     private func sendRequest(to targetId: String) {
+        // Optimistic
+        let placeholder = FriendshipRelation.outgoingPending(friendshipId: "pending")
         _ = withAnimation(.xomConfident) {
-            sentRequests.insert(targetId)
+            relations[targetId] = placeholder
         }
         Task {
             do {
-                try await FriendsService.shared.sendFriendRequest(
+                let newId = try await FriendsService.shared.sendFriendRequest(
                     fromUserId: userId,
                     toUserId: targetId
                 )
+                relations[targetId] = .outgoingPending(friendshipId: newId)
+            } catch FriendError.alreadyExists(let existing) {
+                relations[targetId] = existing
             } catch {
                 _ = withAnimation {
-                    sentRequests.remove(targetId)
+                    relations[targetId] = FriendshipRelation.none
                 }
+                errorMessage = error.localizedDescription
+            }
+        }
+    }
+
+    private func cancelRequest(targetId: String, friendshipId: String) {
+        guard friendshipId != "pending" else {
+            relations[targetId] = .none
+            return
+        }
+        Task {
+            do {
+                try await FriendsService.shared.cancelFriendRequest(friendshipId: friendshipId)
+                relations[targetId] = .none
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+        }
+    }
+
+    private func acceptRequest(_ targetId: String, friendshipId: String) {
+        Task {
+            do {
+                try await FriendsService.shared.acceptFriendRequest(friendshipId: friendshipId)
+                relations[targetId] = .friends(friendshipId: friendshipId)
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+        }
+    }
+
+    private func declineRequest(_ targetId: String, friendshipId: String) {
+        Task {
+            do {
+                try await FriendsService.shared.declineFriendRequest(friendshipId: friendshipId)
+                relations[targetId] = .none
+            } catch {
+                errorMessage = error.localizedDescription
             }
         }
     }

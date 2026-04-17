@@ -3,44 +3,38 @@ import SwiftUI
 struct FriendsView: View {
     @Environment(AuthService.self) private var authService
 
-    @State private var friends: [FriendRow] = []
-    @State private var pendingRequests: [FriendRow] = []
-    @State private var searchResults: [ProfileRow] = []
-    @State private var searchQuery = ""
-    @State private var isSearching = false
-    @State private var isLoading = false
-    @State private var errorMessage: String?
+    @State private var vm = FriendsViewModel()
     @State private var searchTask: Task<Void, Never>?
-    @State private var requesterProfiles: [String: ProfileRow] = [:]
-    @State private var friendProfiles: [String: ProfileRow] = [:]
 
     private var userId: String {
         authService.currentUser?.id.uuidString.lowercased() ?? ""
     }
 
     var body: some View {
-        ZStack {
+        @Bindable var vm = vm
+
+        return ZStack {
             Theme.background.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 // Search bar
-                searchBar
+                searchBar(bindable: $vm.searchQuery)
 
-                if isLoading {
+                if vm.isLoading && vm.searchQuery.isEmpty {
                     Spacer()
                     XomFitLoaderPulse()
                     Spacer()
                 } else {
                     List {
-                        // Search results (shown when querying)
-                        if !searchQuery.isEmpty {
+                        if !vm.searchQuery.isEmpty {
                             searchResultsSection
                         } else {
-                            // Pending requests
-                            if !pendingRequests.isEmpty {
-                                pendingRequestsSection
+                            if !vm.incomingRequests.isEmpty {
+                                incomingRequestsSection
                             }
-                            // Friends list
+                            if !vm.outgoingRequests.isEmpty {
+                                outgoingRequestsSection
+                            }
                             friendsSection
                         }
                     }
@@ -52,46 +46,50 @@ struct FriendsView: View {
         .navigationTitle("Friends")
         .navigationBarTitleDisplayMode(.large)
         .toolbarColorScheme(.dark, for: .navigationBar)
-        .onAppear { loadData() }
-        .refreshable { loadData() }
-        .alert("Error", isPresented: .constant(errorMessage != nil)) {
-            Button("OK") { errorMessage = nil }
+        .task { await vm.loadAll(userId: userId) }
+        .refreshable { await vm.loadAll(userId: userId) }
+        .alert("Error", isPresented: Binding(
+            get: { vm.errorMessage != nil },
+            set: { if !$0 { vm.errorMessage = nil } }
+        )) {
+            Button("OK") { vm.errorMessage = nil }
         } message: {
-            Text(errorMessage ?? "")
+            Text(vm.errorMessage ?? "")
         }
     }
 
     // MARK: - Search Bar
 
-    private var searchBar: some View {
+    private func searchBar(bindable query: Binding<String>) -> some View {
         HStack {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(Theme.textSecondary)
-            TextField("Search by username", text: $searchQuery)
+            TextField("Search by username", text: query)
                 .foregroundStyle(Theme.textPrimary)
                 .autocorrectionDisabled()
                 .textInputAutocapitalization(.never)
-                .onChange(of: searchQuery) { _, newValue in
+                .onChange(of: query.wrappedValue) { _, newValue in
                     searchTask?.cancel()
-                    guard !newValue.isEmpty else {
-                        searchResults = []
+                    let trimmed = newValue.trimmingCharacters(in: .whitespaces)
+                    guard !trimmed.isEmpty else {
+                        vm.clearSearch()
                         return
                     }
                     searchTask = Task {
-                        // Small debounce
                         try? await Task.sleep(nanoseconds: 300_000_000)
                         guard !Task.isCancelled else { return }
-                        await performSearch(query: newValue)
+                        await vm.performSearch(query: trimmed, userId: userId)
                     }
                 }
-            if !searchQuery.isEmpty {
+            if !query.wrappedValue.isEmpty {
                 Button {
-                    searchQuery = ""
-                    searchResults = []
+                    query.wrappedValue = ""
+                    vm.clearSearch()
                 } label: {
                     Image(systemName: "xmark.circle.fill")
                         .foregroundStyle(Theme.textSecondary)
                 }
+                .accessibilityLabel("Clear search")
             }
         }
         .padding(Theme.Spacing.sm)
@@ -111,27 +109,50 @@ struct FriendsView: View {
     @ViewBuilder
     private var searchResultsSection: some View {
         Section {
-            if isSearching {
+            if vm.isSearching {
                 HStack {
                     Spacer()
                     ProgressView().tint(Theme.accent)
                     Spacer()
                 }
                 .listRowBackground(Theme.surface)
-            } else if searchResults.filter({ $0.id != userId }).isEmpty {
-                Text("No users found for \"\(searchQuery)\"")
-                    .foregroundStyle(Theme.textSecondary)
-                    .font(Theme.fontBody)
-                    .listRowBackground(Theme.surface)
             } else {
-                ForEach(searchResults.filter { $0.id != userId }, id: \.id) { profile in
-                    SearchResultRow(
-                        profile: profile,
-                        isCurrentUser: false
-                    ) {
-                        sendRequest(toUserId: profile.id)
+                let visible = vm.searchResults.filter { profile in
+                    if case .blocked = vm.searchRelations[profile.id] ?? .none { return false }
+                    return true
+                }
+
+                if visible.isEmpty {
+                    Text("No users found for \"\(vm.searchQuery)\"")
+                        .foregroundStyle(Theme.textSecondary)
+                        .font(Theme.fontBody)
+                        .listRowBackground(Theme.surface)
+                } else {
+                    ForEach(visible, id: \.id) { profile in
+                        SearchResultRow(
+                            profile: profile,
+                            relation: vm.searchRelations[profile.id] ?? .none,
+                            onAdd: {
+                                Task { await vm.sendRequest(fromUserId: userId, toUserId: profile.id) }
+                            },
+                            onCancel: {
+                                if case .outgoingPending(let fid) = vm.searchRelations[profile.id] ?? .none {
+                                    Task { await vm.cancelRequest(friendshipId: fid, otherUserId: profile.id) }
+                                }
+                            },
+                            onAccept: {
+                                if case .incomingPending(let fid) = vm.searchRelations[profile.id] ?? .none {
+                                    Task { await vm.acceptRequest(friendshipId: fid, otherUserId: profile.id, userId: userId) }
+                                }
+                            },
+                            onDecline: {
+                                if case .incomingPending(let fid) = vm.searchRelations[profile.id] ?? .none {
+                                    Task { await vm.declineRequest(friendshipId: fid, otherUserId: profile.id) }
+                                }
+                            }
+                        )
+                        .listRowBackground(Theme.surface)
                     }
-                    .listRowBackground(Theme.surface)
                 }
             }
         } header: {
@@ -143,19 +164,23 @@ struct FriendsView: View {
     }
 
     @ViewBuilder
-    private var pendingRequestsSection: some View {
+    private var incomingRequestsSection: some View {
         Section {
-            ForEach(pendingRequests, id: \.id) { request in
+            ForEach(vm.incomingRequests, id: \.id) { req in
                 PendingRequestRow(
-                    request: request,
-                    requesterProfile: requesterProfiles[request.requesterId],
-                    onAccept: { acceptRequest(request) },
-                    onDecline: { declineRequest(request) }
+                    request: req,
+                    requesterProfile: vm.requesterProfiles[req.requesterId],
+                    onAccept: {
+                        Task { await vm.acceptRequest(friendshipId: req.id, otherUserId: req.requesterId, userId: userId) }
+                    },
+                    onDecline: {
+                        Task { await vm.declineRequest(friendshipId: req.id, otherUserId: req.requesterId) }
+                    }
                 )
                 .listRowBackground(Theme.surface)
             }
         } header: {
-            Text("Friend Requests")
+            Text("Incoming")
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(Theme.accent)
                 .textCase(nil)
@@ -163,124 +188,52 @@ struct FriendsView: View {
     }
 
     @ViewBuilder
-    private var friendsSection: some View {
+    private var outgoingRequestsSection: some View {
         Section {
-            if friends.isEmpty {
-                Text("No friends yet. Search to add people!")
-                    .foregroundStyle(Theme.textSecondary)
-                    .font(Theme.fontBody)
-                    .listRowBackground(Theme.surface)
-            } else {
-                ForEach(friends, id: \.id) { friend in
-                    let friendId = friend.requesterId == userId ? friend.addresseeId : friend.requesterId
-                    FriendListRow(
-                        friend: friend,
-                        currentUserId: userId,
-                        friendProfile: friendProfiles[friendId]
-                    ) {
-                        removeFriend(friend)
+            ForEach(vm.outgoingRequests, id: \.id) { req in
+                OutgoingRequestRow(
+                    request: req,
+                    addresseeProfile: vm.addresseeProfiles[req.addresseeId],
+                    onCancel: {
+                        Task { await vm.cancelRequest(friendshipId: req.id, otherUserId: req.addresseeId) }
                     }
-                    .listRowBackground(Theme.surface)
-                }
+                )
+                .listRowBackground(Theme.surface)
             }
         } header: {
-            Text("Friends (\(friends.count))")
+            Text("Sent")
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(Theme.textSecondary)
                 .textCase(nil)
         }
     }
 
-    // MARK: - Data Loading
-
-    private func loadData() {
-        guard !userId.isEmpty else { return }
-        isLoading = true
-        Task {
-            do {
-                async let friendsResult = FriendsService.shared.fetchFriends(userId: userId)
-                async let pendingResult = FriendsService.shared.fetchPendingRequests(userId: userId)
-                (friends, pendingRequests) = try await (friendsResult, pendingResult)
-
-                // Fetch profiles for pending request senders
-                for request in pendingRequests {
-                    if requesterProfiles[request.requesterId] == nil {
-                        if let profile = try? await ProfileService.shared.fetchProfile(userId: request.requesterId) {
-                            requesterProfiles[request.requesterId] = profile
-                        }
-                    }
-                }
-
-                // Fetch profiles for friends
-                for friend in friends {
+    @ViewBuilder
+    private var friendsSection: some View {
+        Section {
+            if vm.friends.isEmpty {
+                Text("No friends yet. Search to add people!")
+                    .foregroundStyle(Theme.textSecondary)
+                    .font(Theme.fontBody)
+                    .listRowBackground(Theme.surface)
+            } else {
+                ForEach(vm.friends, id: \.id) { friend in
                     let friendId = friend.requesterId == userId ? friend.addresseeId : friend.requesterId
-                    if friendProfiles[friendId] == nil {
-                        if let profile = try? await ProfileService.shared.fetchProfile(userId: friendId) {
-                            friendProfiles[friendId] = profile
-                        }
+                    FriendListRow(
+                        friend: friend,
+                        currentUserId: userId,
+                        friendProfile: vm.friendProfiles[friendId]
+                    ) {
+                        Task { await vm.removeFriend(friendshipId: friend.id, otherUserId: friendId) }
                     }
+                    .listRowBackground(Theme.surface)
                 }
-            } catch {
-                errorMessage = error.localizedDescription
             }
-            isLoading = false
-        }
-    }
-
-    private func performSearch(query: String) async {
-        isSearching = true
-        do {
-            searchResults = try await FriendsService.shared.searchUsers(query: query, excludeUserId: userId)
-        } catch {
-            searchResults = []
-        }
-        isSearching = false
-    }
-
-    private func sendRequest(toUserId: String) {
-        Task {
-            do {
-                try await FriendsService.shared.sendFriendRequest(
-                    fromUserId: userId,
-                    toUserId: toUserId
-                )
-            } catch {
-                errorMessage = error.localizedDescription
-            }
-        }
-    }
-
-    private func acceptRequest(_ request: FriendRow) {
-        Task {
-            do {
-                try await FriendsService.shared.acceptFriendRequest(friendshipId: request.id)
-                pendingRequests.removeAll { $0.id == request.id }
-                loadData()
-            } catch {
-                errorMessage = error.localizedDescription
-            }
-        }
-    }
-
-    private func declineRequest(_ request: FriendRow) {
-        Task {
-            do {
-                try await FriendsService.shared.declineFriendRequest(friendshipId: request.id)
-                pendingRequests.removeAll { $0.id == request.id }
-            } catch {
-                errorMessage = error.localizedDescription
-            }
-        }
-    }
-
-    private func removeFriend(_ friend: FriendRow) {
-        Task {
-            do {
-                try await FriendsService.shared.removeFriend(friendshipId: friend.id)
-                friends.removeAll { $0.id == friend.id }
-            } catch {
-                errorMessage = error.localizedDescription
-            }
+        } header: {
+            Text("Friends (\(vm.friends.count))")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(Theme.textSecondary)
+                .textCase(nil)
         }
     }
 }
@@ -289,10 +242,13 @@ struct FriendsView: View {
 
 private struct SearchResultRow: View {
     let profile: ProfileRow
-    let isCurrentUser: Bool
+    let relation: FriendshipRelation
     let onAdd: () -> Void
+    let onCancel: () -> Void
+    let onAccept: () -> Void
+    let onDecline: () -> Void
 
-    @State private var requested = false
+    @State private var showCancelDialog = false
 
     var body: some View {
         HStack(spacing: Theme.Spacing.md) {
@@ -312,33 +268,109 @@ private struct SearchResultRow: View {
 
             Spacer()
 
-            if !isCurrentUser {
-                Button {
-                    Haptics.success()
-                    requested = true
-                    onAdd()
-                } label: {
-                    Text(requested ? "Sent" : "Add")
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(requested ? Theme.textSecondary : .black)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 7)
-                        .background(requested ? Theme.surfaceElevated : Theme.accent)
-                        .clipShape(.rect(cornerRadius: Theme.Radius.xs))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: Theme.Radius.xs)
-                                .strokeBorder(requested ? Theme.hairline : .clear, lineWidth: 0.5)
-                        )
-                }
-                .disabled(requested)
-                .buttonStyle(.plain)
-            }
+            actionView
         }
         .padding(.vertical, 4)
+        .confirmationDialog(
+            "Cancel friend request?",
+            isPresented: $showCancelDialog,
+            titleVisibility: .visible
+        ) {
+            Button("Cancel Request", role: .destructive) {
+                Haptics.light()
+                onCancel()
+            }
+            Button("Keep", role: .cancel) {}
+        }
+    }
+
+    @ViewBuilder
+    private var actionView: some View {
+        switch relation {
+        case .none:
+            Button {
+                Haptics.success()
+                onAdd()
+            } label: {
+                pill(text: "Add", style: .primary)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Add friend")
+
+        case .outgoingPending:
+            Button {
+                Haptics.light()
+                showCancelDialog = true
+            } label: {
+                pill(text: "Sent", style: .ghost)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Cancel friend request")
+
+        case .incomingPending:
+            VStack(spacing: 6) {
+                Button {
+                    Haptics.success()
+                    onAccept()
+                } label: {
+                    pill(text: "Accept", style: .primary)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Accept friend request")
+
+                Button {
+                    Haptics.light()
+                    onDecline()
+                } label: {
+                    Text("Decline")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(Theme.destructive)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Decline friend request")
+            }
+
+        case .friends:
+            pill(text: "Friends", style: .disabled)
+
+        case .blocked:
+            // Row is filtered out upstream; render nothing defensively.
+            EmptyView()
+        }
+    }
+
+    private enum PillStyle { case primary, ghost, disabled }
+
+    private func pill(text: String, style: PillStyle) -> some View {
+        let foreground: Color = {
+            switch style {
+            case .primary: return .black
+            case .ghost, .disabled: return Theme.textSecondary
+            }
+        }()
+        let background: Color = {
+            switch style {
+            case .primary: return Theme.accent
+            case .ghost, .disabled: return Theme.surfaceElevated
+            }
+        }()
+        let borderColor: Color = (style == .primary) ? .clear : Theme.hairline
+
+        return Text(text)
+            .font(.caption.weight(.bold))
+            .foregroundStyle(foreground)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 7)
+            .background(background)
+            .clipShape(.rect(cornerRadius: Theme.Radius.xs))
+            .overlay(
+                RoundedRectangle(cornerRadius: Theme.Radius.xs)
+                    .strokeBorder(borderColor, lineWidth: 0.5)
+            )
     }
 }
 
-// MARK: - Pending Request Row
+// MARK: - Pending (Incoming) Request Row
 
 private struct PendingRequestRow: View {
     let request: FriendRow
@@ -351,15 +383,6 @@ private struct PendingRequestRow: View {
             return profile.displayName.isEmpty ? profile.username : profile.displayName
         }
         return String(request.requesterId.prefix(8))
-    }
-
-    private var requesterInitials: String {
-        let name = requesterName
-        let parts = name.split(separator: " ")
-        if parts.count >= 2 {
-            return String(parts[0].prefix(1) + parts[1].prefix(1)).uppercased()
-        }
-        return String(name.prefix(2)).uppercased()
     }
 
     var body: some View {
@@ -392,6 +415,7 @@ private struct PendingRequestRow: View {
                 .background(Theme.accent)
                 .clipShape(.rect(cornerRadius: Theme.Radius.xs))
                 .buttonStyle(.plain)
+                .accessibilityLabel("Accept friend request")
 
                 Button("Decline") {
                     Haptics.light()
@@ -404,9 +428,72 @@ private struct PendingRequestRow: View {
                 .background(Theme.destructive.opacity(0.12))
                 .clipShape(.rect(cornerRadius: Theme.Radius.xs))
                 .buttonStyle(.plain)
+                .accessibilityLabel("Decline friend request")
             }
         }
         .padding(.vertical, 4)
+    }
+}
+
+// MARK: - Outgoing Request Row
+
+private struct OutgoingRequestRow: View {
+    let request: FriendRow
+    let addresseeProfile: ProfileRow?
+    let onCancel: () -> Void
+
+    @State private var showCancelDialog = false
+
+    private var addresseeName: String {
+        if let profile = addresseeProfile {
+            return profile.displayName.isEmpty ? profile.username : profile.displayName
+        }
+        return String(request.addresseeId.prefix(8))
+    }
+
+    var body: some View {
+        HStack(spacing: Theme.Spacing.md) {
+            XomAvatar(name: addresseeName, size: 40)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(addresseeName)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Theme.textPrimary)
+                if let profile = addresseeProfile {
+                    Text("@\(profile.username)")
+                        .font(Theme.fontCaption)
+                        .foregroundStyle(Theme.textTertiary)
+                        .lineLimit(1)
+                }
+            }
+
+            Spacer()
+
+            Button("Cancel") {
+                Haptics.light()
+                showCancelDialog = true
+            }
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(Theme.destructive)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(Theme.destructive.opacity(0.12))
+            .clipShape(.rect(cornerRadius: Theme.Radius.xs))
+            .buttonStyle(.plain)
+            .accessibilityLabel("Cancel outgoing friend request")
+        }
+        .padding(.vertical, 4)
+        .confirmationDialog(
+            "Cancel friend request?",
+            isPresented: $showCancelDialog,
+            titleVisibility: .visible
+        ) {
+            Button("Cancel Request", role: .destructive) {
+                Haptics.light()
+                onCancel()
+            }
+            Button("Keep", role: .cancel) {}
+        }
     }
 }
 
