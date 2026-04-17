@@ -9,7 +9,7 @@
 - [x] **Phase 1** — Service + Model Layer (`FriendshipRelation` enum, new service methods, hardened `sendFriendRequest`)
 - [x] **Phase 2** — ProfileViewModel (replace `ProfileFriendshipStatus` with `FriendshipRelation`)
 - [x] **Phase 3** — ProfileHeaderView + PrivateProfileView + ProfileView (direction-aware + confirmation dialogs)
-- [ ] **Phase 4** — FriendsView + new FriendsViewModel
+- [x] **Phase 4** — FriendsView + new FriendsViewModel
 - [ ] **Phase 5** — OnboardingFriendsScreen unified state
 - [ ] **Phase 6** — Cleanup (delete legacy models + grep audit)
 - [ ] Manual test pass (T1-T13)
@@ -50,3 +50,16 @@
 - Grep audit: `grep -rn 'ProfileFriendshipStatus\|friendshipStatus' Xomfit/` returns zero matches.
 - `XomButton` variants (`.primary`, `.secondary`, `.ghost`, `.destructive`) exist in `Xomfit/Views/Common/XomButton.swift` and were used as-is — no adaptation needed.
 - Build: `xcodebuild -scheme Xomfit -destination 'platform=iOS Simulator,name=iPhone 17' build` → **BUILD SUCCEEDED**.
+
+### 2026-04-17 — Phase 4 complete
+- Created `Xomfit/ViewModels/FriendsViewModel.swift` (`@MainActor @Observable`) owning friends list, incoming/outgoing requests, profile caches (friend/requester/addressee), search state (`searchQuery`, `searchResults`, `searchRelations`, `isSearching`), and `errorMessage`.
+- `loadAll(userId:)` parallel-fetches friends + incoming + outgoing via `async let`, then hydrates profile caches per list. `performSearch(query:userId:)` calls `FriendsService.searchUsers` then `batchRelations` to pre-color each row. `clearSearch()` helper resets search state when the query empties.
+- Mutation methods (`sendRequest`, `cancelRequest`, `acceptRequest`, `declineRequest`, `removeFriend`) all update `searchRelations[otherUserId]` locally so the search row reflects state without a refetch. `sendRequest` also appends a synthetic `FriendRow` to `outgoingRequests` + caches the searched profile as the addressee so the Sent section renders immediately; catches `FriendError.alreadyExists` and reconciles the actual relation from the error payload.
+- Rewrote `Xomfit/Views/Friends/FriendsView.swift`: view holds `@State private var vm = FriendsViewModel()` + `searchTask`; uses `.task` + `.refreshable` to call `loadAll`; alert is `nil`-binding-bridged to `vm.errorMessage`; search `TextField` bound to `$vm.searchQuery` via `@Bindable` and debounces 300ms before calling `performSearch`; empty query calls `vm.clearSearch()`.
+- Section structure: **three separate top-level sections** — "Incoming" (conditional), "Sent" (conditional), "Friends (count)" (always, shows empty-state text if `friends.isEmpty`). Deviated from the plan's nested "Requests → Incoming/Sent" wrapper in favor of three sibling sections — cleaner for SwiftUI `List` and matches the plan's "pragmatic interpretation" note.
+- `SearchResultRow` is now stateless (no `@State requested`) — takes `relation` + four callbacks + local `@State showCancelDialog` for the cancel confirmation. Renders: `.none` → primary "Add", `.outgoingPending` → ghost "Sent" → dialog → Cancel Request, `.incomingPending` → vertical Accept primary + small Decline destructive, `.friends` → disabled "Friends" pill, `.blocked` → `EmptyView` (rows also filtered upstream).
+- New file-local `OutgoingRequestRow` mirrors `PendingRequestRow` layout with a single destructive "Cancel" button wrapped in the same `.confirmationDialog` pattern.
+- Blocked users filtered out of `searchResults` in the `ForEach` via `filter { ... if case .blocked = ... }`.
+- All buttons have `.accessibilityLabel` for VoiceOver; 300ms search debounce preserved.
+- pbxproj: **no edit needed** — `grep -c "ProfileViewModel.swift" Xomfit.xcodeproj/project.pbxproj` → `0` and the project uses `PBXFileSystemSynchronizedRootGroup` (7 occurrences). New Swift files auto-discover.
+- Build: `xcodebuild -scheme Xomfit -destination 'platform=iOS Simulator,name=iPhone 17' build` → **BUILD SUCCEEDED** (no warnings from new files).
