@@ -473,21 +473,4 @@ final class ProfileViewModel {
         workoutDays = days
     }
 
-    // MARK: - Temporary compatibility shims (removed in Phase 3)
-
-    var friendshipStatus: ProfileFriendshipStatus {
-        switch relation {
-        case .none, .blocked: return .none
-        case .outgoingPending, .incomingPending: return .pending
-        case .friends: return .friends
-        }
-    }
-}
-
-// MARK: - Temporary compatibility shims (removed in Phase 3)
-
-enum ProfileFriendshipStatus {
-    case none
-    case pending
-    case friends
 }

@@ -8,7 +8,7 @@
 
 - [x] **Phase 1** — Service + Model Layer (`FriendshipRelation` enum, new service methods, hardened `sendFriendRequest`)
 - [x] **Phase 2** — ProfileViewModel (replace `ProfileFriendshipStatus` with `FriendshipRelation`)
-- [ ] **Phase 3** — ProfileHeaderView + PrivateProfileView + ProfileView (direction-aware + confirmation dialogs)
+- [x] **Phase 3** — ProfileHeaderView + PrivateProfileView + ProfileView (direction-aware + confirmation dialogs)
 - [ ] **Phase 4** — FriendsView + new FriendsViewModel
 - [ ] **Phase 5** — OnboardingFriendsScreen unified state
 - [ ] **Phase 6** — Cleanup (delete legacy models + grep audit)
@@ -40,4 +40,13 @@
 - Rewrote `sendFriendRequest(fromUserId:toUserId:)` to capture the returned friendship id and assign `relation = .outgoingPending(friendshipId: newId)`; catches `FriendError.alreadyExists` and reflects the actual state.
 - Added new `@MainActor` mutation methods: `cancelRequest()`, `acceptIncoming()`, `declineIncoming()`, `removeFriend()` — each guards on the matching `relation` case, calls the corresponding service, and sets `errorMessage` on failure.
 - Added temporary back-compat shims so Phase 3 views still compile: file-scope `enum ProfileFriendshipStatus { case none, pending, friends }` (restored at bottom of file, outside the class — matches original placement) + in-class computed `var friendshipStatus: ProfileFriendshipStatus` that maps `relation` to the legacy tri-state. Both will be removed in Phase 3.
+- Build: `xcodebuild -scheme Xomfit -destination 'platform=iOS Simulator,name=iPhone 17' build` → **BUILD SUCCEEDED**.
+
+### 2026-04-17 — Phase 3 complete
+- `ProfileHeaderView.swift`: swapped `friendshipStatus: ProfileFriendshipStatus` prop for `relation: FriendshipRelation`. Replaced single `onActionTapped` with 6 discrete callbacks (`onEditProfile`, `onAddFriend`, `onCancelRequest`, `onAcceptRequest`, `onDeclineRequest`, `onRemoveFriend`). Added `@State showCancelDialog` / `showRemoveDialog` for destructive confirmation flows. Rewrote `actionButton` to branch on `relation`: `.none` → primary "Add Friend"; `.outgoingPending` → ghost "Sent" → cancel confirmation dialog; `.incomingPending` → primary Accept + ghost Decline stacked; `.friends` → secondary checkmark → remove confirmation dialog; `.blocked` → disabled ghost "Unavailable".
+- `PrivateProfileView.swift`: same prop swap (no edit/remove callbacks since unreachable). `.none` / `.outgoingPending` / `.incomingPending` branches mirror the header; `.friends` defensively disabled; `.blocked` disabled ghost.
+- `ProfileView.swift`: replaced `viewModel.friendshipStatus != .friends` with `!viewModel.isFriendsRelation`. Updated `PrivateProfileView` and `ProfileHeaderView` call sites to pass `relation: viewModel.relation` plus the discrete callbacks, each wrapping the matching VM method in `Task { await }`.
+- `ProfileViewModel.swift`: deleted the Phase 2 back-compat shims — both the in-class `var friendshipStatus: ProfileFriendshipStatus` computed property and the file-scope `enum ProfileFriendshipStatus` block at the bottom of the file.
+- Grep audit: `grep -rn 'ProfileFriendshipStatus\|friendshipStatus' Xomfit/` returns zero matches.
+- `XomButton` variants (`.primary`, `.secondary`, `.ghost`, `.destructive`) exist in `Xomfit/Views/Common/XomButton.swift` and were used as-is — no adaptation needed.
 - Build: `xcodebuild -scheme Xomfit -destination 'platform=iOS Simulator,name=iPhone 17' build` → **BUILD SUCCEEDED**.
