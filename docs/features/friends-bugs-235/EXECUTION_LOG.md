@@ -7,7 +7,7 @@
 ## Phase Status
 
 - [x] **Phase 1** — Service + Model Layer (`FriendshipRelation` enum, new service methods, hardened `sendFriendRequest`)
-- [ ] **Phase 2** — ProfileViewModel (replace `ProfileFriendshipStatus` with `FriendshipRelation`)
+- [x] **Phase 2** — ProfileViewModel (replace `ProfileFriendshipStatus` with `FriendshipRelation`)
 - [ ] **Phase 3** — ProfileHeaderView + PrivateProfileView + ProfileView (direction-aware + confirmation dialogs)
 - [ ] **Phase 4** — FriendsView + new FriendsViewModel
 - [ ] **Phase 5** — OnboardingFriendsScreen unified state
@@ -31,3 +31,13 @@
 - Hardened `sendFriendRequest(fromUserId:toUserId:)` → now returns `String` (new friendship id) with `@discardableResult`; pre-checks `relation(...)` and throws `FriendError.alreadyExists(relation:)` if anything but `.none` is found.
 - `fetchFriends` left accepted-only (correct for its purpose per plan).
 - Build: `xcodebuild -scheme Xomfit -destination 'platform=iOS Simulator,name=iPhone 17' build` → **BUILD SUCCEEDED** (iPhone 16 sim not installed locally; used iPhone 17 — iOS 26.2).
+
+### 2026-04-17 — Phase 2 complete
+- `ProfileViewModel.swift`: removed `ProfileFriendshipStatus` enum from its original top-of-file location; replaced stored `friendshipStatus: ProfileFriendshipStatus` with `relation: FriendshipRelation = .none`.
+- Added derived `isFriendsRelation: Bool` computed property.
+- Renamed private `loadFriendshipStatus(currentUserId:targetUserId:)` → `loadRelation(...)`; new body delegates to `FriendsService.shared.relation(...)` and falls back to `.none` on error.
+- Updated `loadAll(...)` privacy gate to use `loadRelation` + `!isFriendsRelation`.
+- Rewrote `sendFriendRequest(fromUserId:toUserId:)` to capture the returned friendship id and assign `relation = .outgoingPending(friendshipId: newId)`; catches `FriendError.alreadyExists` and reflects the actual state.
+- Added new `@MainActor` mutation methods: `cancelRequest()`, `acceptIncoming()`, `declineIncoming()`, `removeFriend()` — each guards on the matching `relation` case, calls the corresponding service, and sets `errorMessage` on failure.
+- Added temporary back-compat shims so Phase 3 views still compile: file-scope `enum ProfileFriendshipStatus { case none, pending, friends }` (restored at bottom of file, outside the class — matches original placement) + in-class computed `var friendshipStatus: ProfileFriendshipStatus` that maps `relation` to the legacy tri-state. Both will be removed in Phase 3.
+- Build: `xcodebuild -scheme Xomfit -destination 'platform=iOS Simulator,name=iPhone 17' build` → **BUILD SUCCEEDED**.

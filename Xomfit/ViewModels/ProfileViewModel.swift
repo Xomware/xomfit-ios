@@ -27,14 +27,6 @@ enum ProfileTab: String, CaseIterable, Identifiable {
     }
 }
 
-// MARK: - Friendship Status (profile context)
-
-enum ProfileFriendshipStatus {
-    case none
-    case pending
-    case friends
-}
-
 // MARK: - ProfileViewModel
 
 @MainActor
@@ -119,9 +111,14 @@ final class ProfileViewModel {
 
     // MARK: - Profile context
     var isOwnProfile: Bool = true
-    var friendshipStatus: ProfileFriendshipStatus = .none
+    var relation: FriendshipRelation = .none
     var friendCount: Int = 0
     var feedItemCount: Int = 0
+
+    var isFriendsRelation: Bool {
+        if case .friends = relation { return true }
+        return false
+    }
 
     // MARK: - State
     var isLoading: Bool = false
@@ -169,10 +166,10 @@ final class ProfileViewModel {
 
         // For other users, check friendship status
         if !isOwnProfile {
-            await loadFriendshipStatus(currentUserId: currentUserId, targetUserId: userId)
+            await loadRelation(currentUserId: currentUserId, targetUserId: userId)
 
             // If private and not friends, stop here
-            if isPrivate && friendshipStatus != .friends {
+            if isPrivate && !isFriendsRelation {
                 isLoading = false
                 return
             }
@@ -329,8 +326,54 @@ final class ProfileViewModel {
 
     func sendFriendRequest(fromUserId: String, toUserId: String) async {
         do {
-            try await FriendsService.shared.sendFriendRequest(fromUserId: fromUserId, toUserId: toUserId)
-            friendshipStatus = .pending
+            let newId = try await FriendsService.shared.sendFriendRequest(
+                fromUserId: fromUserId,
+                toUserId: toUserId
+            )
+            relation = .outgoingPending(friendshipId: newId)
+        } catch FriendError.alreadyExists(let existing) {
+            // DB/concurrent-race fallback — reflect the actual state
+            relation = existing
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func cancelRequest() async {
+        guard case .outgoingPending(let id) = relation else { return }
+        do {
+            try await FriendsService.shared.cancelFriendRequest(friendshipId: id)
+            relation = .none
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func acceptIncoming() async {
+        guard case .incomingPending(let id) = relation else { return }
+        do {
+            try await FriendsService.shared.acceptFriendRequest(friendshipId: id)
+            relation = .friends(friendshipId: id)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func declineIncoming() async {
+        guard case .incomingPending(let id) = relation else { return }
+        do {
+            try await FriendsService.shared.declineFriendRequest(friendshipId: id)
+            relation = .none
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func removeFriend() async {
+        guard case .friends(let id) = relation else { return }
+        do {
+            try await FriendsService.shared.removeFriend(friendshipId: id)
+            relation = .none
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -378,21 +421,14 @@ final class ProfileViewModel {
         }
     }
 
-    private func loadFriendshipStatus(currentUserId: String, targetUserId: String) async {
+    private func loadRelation(currentUserId: String, targetUserId: String) async {
         do {
-            let allFriendships = try await FriendsService.shared.fetchFriends(userId: currentUserId)
-            let match = allFriendships.first(where: {
-                ($0.requesterId == currentUserId && $0.addresseeId == targetUserId) ||
-                ($0.requesterId == targetUserId && $0.addresseeId == currentUserId)
-            })
-            if let match {
-                friendshipStatus = match.status == "accepted" ? .friends : .pending
-                return
-            }
-
-            friendshipStatus = .none
+            relation = try await FriendsService.shared.relation(
+                currentUserId: currentUserId,
+                otherUserId: targetUserId
+            )
         } catch {
-            friendshipStatus = .none
+            relation = .none
         }
     }
 
@@ -436,4 +472,22 @@ final class ProfileViewModel {
         }
         workoutDays = days
     }
+
+    // MARK: - Temporary compatibility shims (removed in Phase 3)
+
+    var friendshipStatus: ProfileFriendshipStatus {
+        switch relation {
+        case .none, .blocked: return .none
+        case .outgoingPending, .incomingPending: return .pending
+        case .friends: return .friends
+        }
+    }
+}
+
+// MARK: - Temporary compatibility shims (removed in Phase 3)
+
+enum ProfileFriendshipStatus {
+    case none
+    case pending
+    case friends
 }

@@ -290,7 +290,7 @@ New `FriendsViewModel` (`@Observable @MainActor`):
 ## Implementation Steps
 
 - [x] **Phase 1** — Add `FriendshipRelation`, new service methods, harden `sendFriendRequest`. Commit: `#235 add FriendshipRelation enum and direction-aware friend service methods`.
-- [ ] **Phase 2** — Replace `ProfileFriendshipStatus` with `FriendshipRelation` in `ProfileViewModel`; add cancel/accept/decline/remove methods. Commit: `#235 switch ProfileViewModel to FriendshipRelation`.
+- [x] **Phase 2** — Replace `ProfileFriendshipStatus` with `FriendshipRelation` in `ProfileViewModel`; add cancel/accept/decline/remove methods. Commit: `#235 switch ProfileViewModel to FriendshipRelation`.
 - [ ] **Phase 3** — Update `ProfileHeaderView`, `PrivateProfileView`, `ProfileView` to use relation + discrete callbacks + confirmation dialogs. Commit: `#235 direction-aware profile header with cancel/remove confirmation dialogs`.
 - [ ] **Phase 4** — Extract `FriendsViewModel`; rebuild `FriendsView` with Requests (Incoming + Sent) + Friends sections; make `SearchResultRow` stateless and relation-driven; surface search errors. Commit: `#235 restructure FriendsView with FriendsViewModel and hydrated search`.
 - [ ] **Phase 5** — Unify `OnboardingFriendsScreen` with `batchRelations`; surface swallowed errors. Commit: `#235 hydrate onboarding friend search with real relations and surface errors`.
