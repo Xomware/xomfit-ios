@@ -61,6 +61,7 @@ struct WorkoutFocusView: View {
                     Spacer().frame(height: viewModel.isRestTimerActive && isRestTimerMinimized ? 100 : 0)
                 }
                 .safeAreaPadding(.top)
+                .padding(.top, Theme.Spacing.sm)
                 .padding(.horizontal, Theme.Spacing.lg)
 
                 // Rest timer overlay

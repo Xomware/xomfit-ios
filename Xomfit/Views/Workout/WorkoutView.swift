@@ -2,11 +2,10 @@ import SwiftUI
 
 struct WorkoutView: View {
     @Environment(AuthService.self) private var authService
+    @Environment(WorkoutLoggerViewModel.self) private var workoutSession
 
-    @State private var showActiveWorkout = false
     @State private var showNameEntry = false
     @State private var pendingWorkoutName = ""
-    @State private var selectedTemplate: WorkoutTemplate?
     @State private var showTemplateList = false
     @State private var showBuilder = false
     @State private var previewTemplate: WorkoutTemplate?
@@ -90,28 +89,20 @@ struct WorkoutView: View {
             .task {
                 await loadSections()
             }
+            .onChange(of: workoutSession.isPresented) { _, isPresented in
+                if !isPresented {
+                    Task { await loadSections() }
+                }
+            }
         }
         .alert("Name Your Workout", isPresented: $showNameEntry) {
             TextField("e.g. Push Day", text: $pendingWorkoutName)
-            Button("Start") { showActiveWorkout = true }
+            Button("Start") {
+                let name = pendingWorkoutName.isEmpty ? "Workout" : pendingWorkoutName
+                workoutSession.startWorkout(name: name, userId: userId)
+                workoutSession.isPresented = true
+            }
             Button("Cancel", role: .cancel) {}
-        }
-        .fullScreenCover(isPresented: $showActiveWorkout, onDismiss: {
-            Task { await loadSections() }
-        }) {
-            ActiveWorkoutView(
-                workoutName: pendingWorkoutName.isEmpty ? "Workout" : pendingWorkoutName
-            )
-            .environment(authService)
-        }
-        .fullScreenCover(item: $selectedTemplate, onDismiss: {
-            Task { await loadSections() }
-        }) { template in
-            ActiveWorkoutView(
-                workoutName: template.name,
-                template: template
-            )
-            .environment(authService)
         }
         .sheet(isPresented: $showBuilder, onDismiss: {
             templateRefreshId = UUID()
@@ -121,7 +112,9 @@ struct WorkoutView: View {
         }
         .sheet(item: $previewTemplate) { template in
             TemplateDetailView(template: template) {
-                selectedTemplate = template
+                previewTemplate = nil
+                workoutSession.startFromTemplate(template, userId: userId)
+                workoutSession.isPresented = true
             }
         }
         .sheet(isPresented: $showTemplateList) {
@@ -155,7 +148,10 @@ struct WorkoutView: View {
             Button {
                 Haptics.medium()
                 UserDefaults.standard.set(true, forKey: "xomfit_first_workout_started")
-                selectedTemplate = WorkoutTemplate.builtIn.first(where: { $0.id == "tpl-fb-a" })
+                if let template = WorkoutTemplate.builtIn.first(where: { $0.id == "tpl-fb-a" }) {
+                    workoutSession.startFromTemplate(template, userId: userId)
+                    workoutSession.isPresented = true
+                }
             } label: {
                 HStack(spacing: 8) {
                     Image(systemName: "play.fill")

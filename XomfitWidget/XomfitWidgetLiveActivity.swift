@@ -19,6 +19,10 @@ struct XomfitWidgetLiveActivity: Widget {
     private static let accentGreen = Color(red: 0.2, green: 1.0, blue: 0.4)     // #33FF66
     private static let darkBackground = Color(red: 0.039, green: 0.039, blue: 0.059) // #0A0A0F
 
+    private func restColor(_ state: XomfitWidgetAttributes.ContentState) -> Color {
+        state.isOvertime ? .red : Self.accentGreen
+    }
+
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: XomfitWidgetAttributes.self) { context in
             // Lock screen / banner UI
@@ -56,7 +60,7 @@ struct XomfitWidgetLiveActivity: Widget {
                 if context.state.isResting, let endDate = context.state.restEndDate {
                     Text(timerInterval: Date.now...endDate, countsDown: true)
                         .font(.system(size: 12, weight: .semibold, design: .monospaced))
-                        .foregroundStyle(Self.accentGreen)
+                        .foregroundStyle(restColor(context.state))
                         .multilineTextAlignment(.trailing)
                 } else {
                     Text(context.attributes.startTime, style: .timer)
@@ -70,7 +74,7 @@ struct XomfitWidgetLiveActivity: Widget {
                     .foregroundStyle(Self.accentGreen)
             }
             .widgetURL(URL(string: "xomfit://workout"))
-            .keylineTint(Self.accentGreen)
+            .keylineTint(restColor(context.state))
         }
     }
 
@@ -112,7 +116,7 @@ struct XomfitWidgetLiveActivity: Widget {
                         Text(timerInterval: Date.now...endDate, countsDown: true)
                     }
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.8))
+                    .foregroundStyle(restColor(state))
                     .lineLimit(1)
                 } else {
                     Text(state.currentExercise)
@@ -168,13 +172,13 @@ struct XomfitWidgetLiveActivity: Widget {
                 HStack {
                     Image(systemName: "timer")
                         .font(.system(size: 11))
-                        .foregroundStyle(Self.accentGreen)
+                        .foregroundStyle(restColor(state))
                     Text("Rest:")
                         .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(Self.accentGreen)
+                        .foregroundStyle(restColor(state))
                     Text(timerInterval: Date.now...endDate, countsDown: true)
                         .font(.system(size: 12, weight: .semibold, design: .monospaced))
-                        .foregroundStyle(Self.accentGreen)
+                        .foregroundStyle(restColor(state))
                     Spacer()
                 }
             }

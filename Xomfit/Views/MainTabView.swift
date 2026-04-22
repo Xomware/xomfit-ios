@@ -1,10 +1,18 @@
 import SwiftUI
 
 struct MainTabView: View {
+    @Environment(AuthService.self) private var authService
+    @Environment(WorkoutLoggerViewModel.self) private var workoutSession
+
     @State private var selectedTab = 0
     @State private var tabBarVisible = true
+    @State private var tickId = UUID()
+
+    private let resumeTimer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     var body: some View {
+        @Bindable var workoutSession = workoutSession
+
         ZStack {
             Group {
                 switch selectedTab {
@@ -24,10 +32,38 @@ struct MainTabView: View {
             .animation(.spring(response: 0.4, dampingFraction: 0.82), value: selectedTab)
         }
         .safeAreaInset(edge: .bottom) {
-            if tabBarVisible {
-                FloatingTabBar(selectedTab: $selectedTab)
+            VStack(spacing: Theme.Spacing.sm) {
+                if workoutSession.isActive && !workoutSession.isPresented {
+                    WorkoutResumeBar(
+                        workoutName: workoutSession.workoutName,
+                        durationString: workoutSession.durationString,
+                        tickId: tickId,
+                        onTap: {
+                            withAnimation(.spring(response: 0.35, dampingFraction: 0.82)) {
+                                workoutSession.isPresented = true
+                            }
+                        }
+                    )
                     .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+
+                if tabBarVisible {
+                    FloatingTabBar(selectedTab: $selectedTab)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
             }
+            .animation(.spring(response: 0.4, dampingFraction: 0.82), value: workoutSession.isActive)
+            .animation(.spring(response: 0.4, dampingFraction: 0.82), value: workoutSession.isPresented)
+        }
+        .onReceive(resumeTimer) { _ in
+            if workoutSession.isActive && !workoutSession.isPresented {
+                tickId = UUID()
+            }
+        }
+        .fullScreenCover(isPresented: $workoutSession.isPresented) {
+            ActiveWorkoutView()
+                .environment(authService)
+                .environment(workoutSession)
         }
         .environment(\.tabBarVisible, $tabBarVisible)
     }
@@ -60,6 +96,67 @@ struct HideTabBar: ViewModifier {
 extension View {
     func hideTabBar() -> some View {
         modifier(HideTabBar())
+    }
+}
+
+// MARK: - Workout Resume Bar
+
+/// Compact "Workout in progress" pill shown above the tab bar when a workout is active
+/// but the active workout cover is dismissed. Tap to re-present the cover.
+private struct WorkoutResumeBar: View {
+    let workoutName: String
+    let durationString: String
+    /// Drives re-render of the duration string every second. Owner updates this.
+    let tickId: UUID
+    let onTap: () -> Void
+
+    var body: some View {
+        Button {
+            Haptics.light()
+            onTap()
+        } label: {
+            HStack(spacing: Theme.Spacing.sm) {
+                Image(systemName: "dumbbell.fill")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Theme.accent)
+                    .frame(width: 28, height: 28)
+                    .background(Theme.accent.opacity(0.15))
+                    .clipShape(Circle())
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(workoutName.isEmpty ? "Workout" : workoutName)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Theme.textPrimary)
+                        .lineLimit(1)
+                    Text(durationString)
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(Theme.textSecondary)
+                        .monospacedDigit()
+                        .id(tickId)
+                }
+
+                Spacer(minLength: 0)
+
+                Image(systemName: "chevron.up")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(Theme.textSecondary)
+            }
+            .padding(.horizontal, Theme.Spacing.md)
+            .padding(.vertical, 10)
+            .background(
+                RoundedRectangle(cornerRadius: Theme.Radius.lg)
+                    .fill(.ultraThinMaterial)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: Theme.Radius.lg)
+                            .stroke(Theme.hairline, lineWidth: 0.5)
+                    )
+            )
+            .padding(.horizontal, Theme.Spacing.md)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Resume workout \(workoutName.isEmpty ? "Workout" : workoutName)")
+        .accessibilityHint("Reopens the active workout screen")
     }
 }
 
