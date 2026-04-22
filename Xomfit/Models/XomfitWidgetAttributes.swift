@@ -19,6 +19,7 @@ struct XomfitWidgetAttributes: ActivityAttributes {
         var isResting: Bool = false
         var restTimeRemaining: Int = 0
         var restEndDate: Date? = nil
+        var isOvertime: Bool = false
     }
 
     var workoutName: String

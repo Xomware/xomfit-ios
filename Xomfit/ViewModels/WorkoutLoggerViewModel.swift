@@ -586,6 +586,8 @@ final class WorkoutLoggerViewModel {
             ? Date().addingTimeInterval(restTimeRemaining)
             : nil
 
+        let overtime = isRestTimerActive && restTimeRemaining <= 0
+
         let state = XomfitWidgetAttributes.ContentState(
             elapsedSeconds: Int(Date().timeIntervalSince(startTime)),
             completedSets: completedSets,
@@ -594,7 +596,8 @@ final class WorkoutLoggerViewModel {
             totalExercises: exercises.count,
             isResting: isRestTimerActive,
             restTimeRemaining: Int(self.restTimeRemaining),
-            restEndDate: restEnd
+            restEndDate: restEnd,
+            isOvertime: overtime
         )
 
         Task {
