@@ -312,16 +312,8 @@ struct ActiveWorkoutView: View {
                 withAnimation {
                     viewModel.focusMode.toggle()
                     if viewModel.focusMode {
-                        // Default to first incomplete exercise
-                        if let firstIncomplete = viewModel.exercises.firstIndex(where: { ex in
-                            ex.sets.contains { $0.completedAt == Date.distantPast }
-                        }) {
-                            viewModel.focusExerciseIndex = firstIncomplete
-                            viewModel.focusSetIndex = 0
-                        } else {
-                            viewModel.syncFocusToCurrentExercise()
-                        }
-                        if viewModel.exercises.count > 1 {
+                        viewModel.syncFocusToCurrentExercise()
+                        if viewModel.completedSets == 0 && viewModel.exercises.count > 1 {
                             showStartingExercisePicker = true
                         }
                     }
