@@ -3,10 +3,10 @@ import PhotosUI
 
 struct ActiveWorkoutView: View {
     @Environment(AuthService.self) private var authService
+    @Environment(WorkoutLoggerViewModel.self) private var viewModel
     @Environment(\.dismiss) private var dismiss
     @Environment(\.scenePhase) private var scenePhase
 
-    @State private var viewModel = WorkoutLoggerViewModel()
     @State private var showExercisePicker = false
     @State private var showDiscardAlert = false
     @State private var showFinishSheet = false
@@ -18,11 +18,9 @@ struct ActiveWorkoutView: View {
     @State private var restTimerHapticFired = false
     @State private var showStartingExercisePicker = false
 
-    // Passed in from WorkoutView
-    let workoutName: String
-    var template: WorkoutTemplate? = nil
-
     var body: some View {
+        @Bindable var viewModel = viewModel
+
         NavigationStack {
             ZStack {
                 Theme.background.ignoresSafeArea()
@@ -148,14 +146,6 @@ struct ActiveWorkoutView: View {
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 // Empty — just ensures keyboard inset is respected; actual toolbar is above
                 Color.clear.frame(height: 0)
-            }
-        }
-        .onAppear {
-            let userId = authService.currentUser?.id.uuidString.lowercased() ?? ""
-            if let template {
-                viewModel.startFromTemplate(template, userId: userId)
-            } else {
-                viewModel.startWorkout(name: workoutName, userId: userId)
             }
         }
         .onReceive(timer) { _ in
@@ -312,16 +302,8 @@ struct ActiveWorkoutView: View {
                 withAnimation {
                     viewModel.focusMode.toggle()
                     if viewModel.focusMode {
-                        // Default to first incomplete exercise
-                        if let firstIncomplete = viewModel.exercises.firstIndex(where: { ex in
-                            ex.sets.contains { $0.completedAt == Date.distantPast }
-                        }) {
-                            viewModel.focusExerciseIndex = firstIncomplete
-                            viewModel.focusSetIndex = 0
-                        } else {
-                            viewModel.syncFocusToCurrentExercise()
-                        }
-                        if viewModel.exercises.count > 1 {
+                        viewModel.syncFocusToCurrentExercise()
+                        if viewModel.completedSets == 0 && viewModel.exercises.count > 1 {
                             showStartingExercisePicker = true
                         }
                     }
@@ -361,7 +343,7 @@ struct ActiveWorkoutView: View {
             .disabled(viewModel.isSaving)
         }
         .padding(.horizontal, Theme.Spacing.md)
-        .padding(.top, Theme.Spacing.sm)
+        .padding(.top, Theme.Spacing.md)
         .padding(.bottom, Theme.Spacing.md)
         .background(Theme.surface)
     }
