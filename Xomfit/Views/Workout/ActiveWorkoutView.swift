@@ -353,7 +353,7 @@ struct ActiveWorkoutView: View {
             .disabled(viewModel.isSaving)
         }
         .padding(.horizontal, Theme.Spacing.md)
-        .padding(.top, Theme.Spacing.sm)
+        .padding(.top, Theme.Spacing.md)
         .padding(.bottom, Theme.Spacing.md)
         .background(Theme.surface)
     }
