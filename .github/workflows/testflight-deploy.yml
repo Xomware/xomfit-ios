@@ -93,8 +93,7 @@ jobs:
             -authenticationKeyPath "$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_API_KEY_ID}.p8" \
             MARKETING_VERSION=${{ steps.version.outputs.marketing }} \
             CURRENT_PROJECT_VERSION=${{ steps.version.outputs.build }} \
-            IPHONEOS_DEPLOYMENT_TARGET=18.0 \
-            CODE_SIGN_IDENTITY="Apple Distribution"
+            IPHONEOS_DEPLOYMENT_TARGET=18.0
 
       - name: Create ExportOptions.plist
         env:
