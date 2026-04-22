@@ -14,6 +14,7 @@ final class WorkoutLoggerViewModel {
     var exercises: [WorkoutExercise] = []
     var startTime = Date()
     var isActive = false
+    var isPresented: Bool = false
     var isSaving = false
     var errorMessage: String?
     var location: String = ""
@@ -150,6 +151,7 @@ final class WorkoutLoggerViewModel {
         workoutName = ""
         exercises = []
         isActive = false
+        isPresented = false
         isSaving = false
         errorMessage = nil
         newPR = nil

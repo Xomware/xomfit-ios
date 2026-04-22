@@ -4,6 +4,7 @@ import SwiftUI
 struct XomFitApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @State private var authService = AuthService()
+    @State private var workoutSession = WorkoutLoggerViewModel()
 
     var body: some Scene {
         WindowGroup {
@@ -22,6 +23,7 @@ struct XomFitApp: App {
                 } else if authService.isAuthenticated {
                     MainTabView()
                         .environment(authService)
+                        .environment(workoutSession)
                         .task {
                             await NotificationService.shared.requestPermission()
                         }
@@ -42,6 +44,12 @@ struct XomFitApp: App {
             }
             .preferredColorScheme(.dark)
             .onOpenURL { url in
+                if url.scheme == "xomfit", url.host == "workout" {
+                    if workoutSession.isActive {
+                        workoutSession.isPresented = true
+                    }
+                    return
+                }
                 Task {
                     try? await supabase.auth.session(from: url)
                 }
