@@ -154,6 +154,42 @@ extension Exercise {
         "ex-side-plank":              "figure.core.training",
         "ex-copenhagen-plank":        "figure.core.training",
         "ex-suitcase-deadlift":       "figure.strengthtraining.traditional",
+
+        // MARK: Machine & Cable Extras (#261)
+        "ex-smith-bench-press":         "gearshape.fill",
+        "ex-smith-incline-press":       "gearshape.fill",
+        "ex-smith-shoulder-press":      "gearshape.fill",
+        "ex-smith-row":                 "gearshape.fill",
+        "ex-iso-lateral-row":           "gearshape.fill",
+        "ex-iso-lateral-chest-press":   "gearshape.fill",
+        "ex-belt-squat":                "gearshape.fill",
+        "ex-cable-crossover":           "figure.arms.open",
+        "ex-cable-pull-through":        "arrow.up.and.down",
+        "ex-cable-upright-row":         "arrow.up.and.down",
+        "ex-cable-shrug":               "arrow.up.and.down",
+        "ex-trap-bar-deadlift":         "figure.strengthtraining.traditional",
+        "ex-zercher-squat":             "figure.strengthtraining.traditional",
+        "ex-good-morning":              "figure.strengthtraining.traditional",
+        "ex-box-squat":                 "figure.strengthtraining.traditional",
+        "ex-kb-swing":                  "figure.strengthtraining.functional",
+        "ex-kb-goblet-squat":           "figure.strengthtraining.functional",
+
+        // MARK: Bodyweight Extras (#261)
+        "ex-pike-pushup":               "figure.strengthtraining.functional",
+        "ex-diamond-pushup":            "figure.strengthtraining.functional",
+        "ex-decline-pushup":            "figure.strengthtraining.functional",
+        "ex-inverted-row":              "figure.indoor.rowing",
+        "ex-band-pullover":             "circle.dashed",
+        "ex-glute-bridge":              "figure.strengthtraining.functional",
+        "ex-side-lying-hip-abduction":  "figure.strengthtraining.functional",
+        "ex-nordic-curl":               "figure.strengthtraining.functional",
+        "ex-reverse-hyper":             "figure.strengthtraining.functional",
+        "ex-glute-ham-raise":           "gearshape.fill",
+
+        // MARK: Mobility / Stretching (#261)
+        "ex-worlds-greatest-stretch":   "figure.flexibility",
+        "ex-cat-cow":                   "figure.flexibility",
+        "ex-90-90-hip-stretch":         "figure.flexibility",
     ]
 
     /// Resolved SF Symbol name for this exercise.

@@ -3,7 +3,7 @@ import Foundation
 /// Complete exercise database for XomFit
 /// Organized by muscle group with form tips
 struct ExerciseDatabase {
-    static let all: [Exercise] = chest + back + shoulders + legs + arms + core + unilateral
+    static let all: [Exercise] = chest + back + shoulders + legs + arms + core + unilateral + machineAndCableExtras + bodyweightExtras + mobility
     
     // MARK: - Chest
     static let chest: [Exercise] = [
@@ -590,6 +590,128 @@ struct ExerciseDatabase {
                  description: "Deadlift holding weight on one side only to challenge core anti-lateral-flexion.",
                  tips: ["Hold the dumbbell at your side like a suitcase", "Stand tall, resist leaning toward the weight", "Same mechanics as a regular deadlift"],
                  supportsUnilateral: true, defaultLaterality: .unilateral),
+    ]
+
+    // MARK: - Machine & Cable Extras (added in #261)
+    static let machineAndCableExtras: [Exercise] = [
+        // Smith machine variations
+        Exercise(id: "ex-smith-bench-press", name: "Smith Machine Bench Press", muscleGroups: [.chest, .triceps, .shoulders], equipment: .machine, category: .compound,
+                 description: "Flat bench press on the Smith machine — guided bar path lets you push closer to failure safely.",
+                 tips: ["Set bench so bar lines up with mid-chest", "Unrack by twisting the hooks off", "Don't bounce the bar off your chest"]),
+        Exercise(id: "ex-smith-incline-press", name: "Smith Machine Incline Press", muscleGroups: [.chest, .shoulders, .triceps], equipment: .machine, category: .compound,
+                 description: "Incline bench press on the Smith machine for upper chest with a fixed bar path.",
+                 tips: ["Set bench to 30-45 degrees", "Bar should line up over upper chest", "Drive feet into the floor for stability"]),
+        Exercise(id: "ex-smith-shoulder-press", name: "Smith Machine Shoulder Press", muscleGroups: [.shoulders, .triceps], equipment: .machine, category: .compound,
+                 description: "Seated overhead press on the Smith machine for controlled shoulder work.",
+                 tips: ["Adjust seat so the bar starts at chin level", "Press to full lockout overhead", "Brace core to avoid arching"],
+                 supportedPositions: [.seated, .standing]),
+        Exercise(id: "ex-smith-row", name: "Smith Machine Bent-Over Row", muscleGroups: [.back, .lats], equipment: .machine, category: .compound,
+                 description: "Bent-over row with the Smith machine for a stable bar path and heavier loading.",
+                 tips: ["Hinge at the hips to roughly 45 degrees", "Pull the bar to your lower ribs", "Keep your back flat throughout"],
+                 supportedGrips: [.overhand, .underhand]),
+
+        // Hammer Strength / iso-lateral plate-loaded
+        Exercise(id: "ex-iso-lateral-row", name: "Hammer Strength Iso-Lateral Row", muscleGroups: [.back, .lats, .biceps], equipment: .machine, category: .compound,
+                 description: "Plate-loaded iso-lateral row that lets each side work independently for balanced back development.",
+                 tips: ["Adjust chest pad so arms fully extend", "Pull elbows back and squeeze shoulder blades", "Can be done bilaterally or one arm at a time"],
+                 supportsUnilateral: true),
+        Exercise(id: "ex-iso-lateral-chest-press", name: "Hammer Strength Iso-Lateral Chest Press", muscleGroups: [.chest, .triceps, .shoulders], equipment: .machine, category: .compound,
+                 description: "Plate-loaded iso-lateral chest press for independent left/right pressing.",
+                 tips: ["Adjust seat so handles align with mid-chest", "Press without locking out elbows", "Squeeze chest at full extension"],
+                 supportsUnilateral: true),
+
+        // Belt squat
+        Exercise(id: "ex-belt-squat", name: "Belt Squat", muscleGroups: [.quads, .glutes], equipment: .machine, category: .compound,
+                 description: "Squat loaded with a belt around the hips — heavy leg work without spinal compression.",
+                 tips: ["Stand on the platform with belt around your waist", "Keep torso upright throughout", "Sit back and down through full range of motion"]),
+
+        // Cable variations
+        Exercise(id: "ex-cable-crossover", name: "Cable Crossover", muscleGroups: [.chest], equipment: .cable, category: .isolation,
+                 description: "Mid-height cable fly bringing handles together in front of the chest.",
+                 tips: ["Set pulleys at chest height", "Slight forward lean", "Bring handles together and pause for a squeeze"],
+                 supportedAttachments: [.dHandle]),
+        Exercise(id: "ex-cable-pull-through", name: "Cable Pull-Through", muscleGroups: [.glutes, .hamstrings], equipment: .cable, category: .compound,
+                 description: "Hip hinge facing away from a low cable for posterior chain work.",
+                 tips: ["Set cable at the lowest pulley", "Hinge at the hips, don't squat", "Squeeze glutes hard at the top"],
+                 supportedAttachments: [.rope]),
+        Exercise(id: "ex-cable-upright-row", name: "Cable Upright Row", muscleGroups: [.shoulders, .traps], equipment: .cable, category: .compound,
+                 description: "Upright row using a low cable for constant tension on shoulders and traps.",
+                 tips: ["Use a wider grip to reduce shoulder impingement", "Pull to upper chest height", "Lead with elbows"],
+                 supportedAttachments: [.straightBar, .rope]),
+        Exercise(id: "ex-cable-shrug", name: "Cable Shrug", muscleGroups: [.traps], equipment: .cable, category: .isolation,
+                 description: "Cable shrug for constant tension trap development.",
+                 tips: ["Use a straight bar at the lowest pulley", "Shrug straight up", "Pause at the top for a count"],
+                 supportedAttachments: [.straightBar]),
+
+        // Free-weight extras
+        Exercise(id: "ex-trap-bar-deadlift", name: "Trap Bar Deadlift", muscleGroups: [.quads, .glutes, .hamstrings, .back, .traps], equipment: .barbell, category: .compound,
+                 description: "Deadlift performed with a hex/trap bar — easier on the lower back, more quad-dominant than conventional.",
+                 tips: ["Stand inside the bar with feet shoulder width", "Grip handles at your sides", "Drive through the floor with neutral spine"]),
+        Exercise(id: "ex-zercher-squat", name: "Zercher Squat", muscleGroups: [.quads, .glutes, .abs], equipment: .barbell, category: .compound,
+                 description: "Squat with the bar held in the crooks of the elbows — brutal on the core and upper back.",
+                 tips: ["Hold bar in crooks of elbows, hands together", "Keep elbows up and torso upright", "Use a pad or sleeve for elbow comfort"]),
+        Exercise(id: "ex-good-morning", name: "Good Morning", muscleGroups: [.hamstrings, .glutes, .back], equipment: .barbell, category: .compound,
+                 description: "Hip-hinge with bar on the back for hamstring and posterior chain strength.",
+                 tips: ["Bar high on traps", "Soft knees, hinge at the hips", "Stop when torso is parallel to floor"]),
+        Exercise(id: "ex-box-squat", name: "Box Squat", muscleGroups: [.quads, .glutes, .hamstrings], equipment: .barbell, category: .compound,
+                 description: "Squat to a box for fixed depth and explosive concentric strength.",
+                 tips: ["Sit back fully onto the box — don't crash down", "Pause briefly without losing tightness", "Drive up explosively"]),
+
+        // Kettlebell extras
+        Exercise(id: "ex-kb-swing", name: "Kettlebell Swing", muscleGroups: [.glutes, .hamstrings, .back], equipment: .kettlebell, category: .compound,
+                 description: "Two-handed kettlebell swing — explosive hip hinge for posterior chain power.",
+                 tips: ["Hinge at the hips, don't squat", "Snap hips through to drive the bell up", "Bell finishes at chest/eye height, not overhead"]),
+        Exercise(id: "ex-kb-goblet-squat", name: "Kettlebell Goblet Squat", muscleGroups: [.quads, .glutes], equipment: .kettlebell, category: .compound,
+                 description: "Goblet squat holding a kettlebell at chest height.",
+                 tips: ["Hold kettlebell by the horns at chest", "Elbows inside knees at the bottom", "Keep torso upright"]),
+    ]
+
+    // MARK: - Bodyweight Extras (added in #261)
+    static let bodyweightExtras: [Exercise] = [
+        Exercise(id: "ex-pike-pushup", name: "Pike Pushup", muscleGroups: [.shoulders, .triceps], equipment: .bodyweight, category: .compound,
+                 description: "Pushup with hips piked high to shift load to the shoulders — bodyweight overhead press progression.",
+                 tips: ["Form an inverted V with your body", "Lower the top of your head toward the floor", "Elevate feet to increase difficulty"]),
+        Exercise(id: "ex-diamond-pushup", name: "Diamond Pushup", muscleGroups: [.triceps, .chest], equipment: .bodyweight, category: .compound,
+                 description: "Close-stance pushup with hands forming a diamond — tricep-focused bodyweight press.",
+                 tips: ["Form a diamond with thumbs and index fingers", "Keep elbows close to your ribs", "Lower chest to your hands"]),
+        Exercise(id: "ex-decline-pushup", name: "Decline Pushup", muscleGroups: [.chest, .shoulders, .triceps], equipment: .bodyweight, category: .compound,
+                 description: "Pushup with feet elevated on a bench or box for upper chest emphasis.",
+                 tips: ["Feet on bench, hands on floor", "Keep core braced", "Lower chest to the floor"]),
+        Exercise(id: "ex-inverted-row", name: "Inverted Row", muscleGroups: [.back, .lats, .biceps], equipment: .bodyweight, category: .compound,
+                 description: "Bodyweight horizontal row under a fixed bar — great pull-up progression and mid-back builder.",
+                 tips: ["Set a bar at hip height", "Hang underneath with arms extended", "Pull chest to the bar, body in a straight line"]),
+        Exercise(id: "ex-band-pullover", name: "Band Pullover", muscleGroups: [.lats, .chest], equipment: .bands, category: .isolation,
+                 description: "Lat-focused pullover using a resistance band anchored overhead.",
+                 tips: ["Anchor the band overhead and grab with both hands", "Keep arms nearly straight", "Pull the band down to your thighs with your lats"]),
+        Exercise(id: "ex-glute-bridge", name: "Glute Bridge", muscleGroups: [.glutes, .hamstrings], equipment: .bodyweight, category: .compound,
+                 description: "Bodyweight bridge driving hips up — foundational glute activation drill.",
+                 tips: ["Lie on your back, knees bent, feet flat", "Drive hips up by squeezing glutes", "Pause at the top, don't hyperextend"]),
+        Exercise(id: "ex-side-lying-hip-abduction", name: "Side-Lying Hip Abduction", muscleGroups: [.glutes], equipment: .bodyweight, category: .isolation,
+                 description: "Lying on your side, raise the top leg straight up to target the glute medius.",
+                 tips: ["Keep top leg straight and toes pointed slightly down", "Raise leg slowly with no swinging", "Squeeze the side glute at the top"],
+                 supportsUnilateral: true, defaultLaterality: .unilateral),
+        Exercise(id: "ex-nordic-curl", name: "Nordic Hamstring Curl", muscleGroups: [.hamstrings], equipment: .bodyweight, category: .isolation,
+                 description: "Kneeling, lower yourself slowly with feet anchored — eccentric hamstring builder.",
+                 tips: ["Anchor feet under a bench or pads", "Lower yourself slowly using only your hamstrings", "Catch with your hands and push back up"]),
+        Exercise(id: "ex-reverse-hyper", name: "Reverse Hyperextension", muscleGroups: [.glutes, .hamstrings, .back], equipment: .bodyweight, category: .isolation,
+                 description: "Hip extension on a bench or reverse hyper machine for glutes and lower back.",
+                 tips: ["Hips hang off the bench, hold the front", "Squeeze glutes to lift legs to parallel", "Don't hyperextend the lower back"]),
+        Exercise(id: "ex-glute-ham-raise", name: "Glute Ham Raise", muscleGroups: [.hamstrings, .glutes, .calves], equipment: .machine, category: .compound,
+                 description: "GHR machine hamstring raise — knee flexion + hip extension for full hamstring development.",
+                 tips: ["Set the pad just under your hips", "Lower under control with arms crossed", "Drive yourself back up using your hamstrings"]),
+    ]
+
+    // MARK: - Mobility / Stretching (added in #261)
+    static let mobility: [Exercise] = [
+        Exercise(id: "ex-worlds-greatest-stretch", name: "World's Greatest Stretch", muscleGroups: [.hamstrings, .glutes, .back, .shoulders], equipment: .bodyweight, category: .stretching,
+                 description: "Multi-plane mobility flow combining a lunge, thoracic rotation, and hip opener.",
+                 tips: ["Step into a deep lunge", "Drop opposite hand to the floor", "Rotate top arm up toward the ceiling, then alternate"]),
+        Exercise(id: "ex-cat-cow", name: "Cat-Cow", muscleGroups: [.back, .abs], equipment: .bodyweight, category: .stretching,
+                 description: "Spinal flexion and extension drill on hands and knees.",
+                 tips: ["Start in a tabletop position", "Inhale: drop belly, lift chest and tailbone", "Exhale: round spine and tuck chin"]),
+        Exercise(id: "ex-90-90-hip-stretch", name: "90/90 Hip Stretch", muscleGroups: [.glutes, .hamstrings], equipment: .bodyweight, category: .stretching,
+                 description: "Seated hip mobility drill with both legs at 90-degree angles.",
+                 tips: ["Front leg bent at 90 degrees, back leg also at 90", "Sit tall and lean forward over the front shin", "Switch sides for equal time"]),
     ]
 
     // MARK: - Search
