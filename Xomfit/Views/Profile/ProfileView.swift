@@ -188,6 +188,11 @@ struct ProfileView: View {
                 recentPRs: viewModel.recentPRs,
                 muscleGroupSetsThisWeek: viewModel.muscleGroupSetsThisWeek,
                 muscleGroupSetsThisMonth: viewModel.muscleGroupSetsThisMonth,
+                volumeTrend: viewModel.volumeTrend30d,
+                workoutsPerWeek: viewModel.workoutsPerWeek4w,
+                avgWorkoutsPerWeek: viewModel.avgWorkoutsPerWeek,
+                topExercises: viewModel.topExercisesByVolume,
+                prOfTheMonth: viewModel.prOfTheMonth,
                 currentStreak: viewModel.currentStreak,
                 longestStreak: viewModel.longestStreak
             )
