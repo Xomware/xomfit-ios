@@ -8,6 +8,7 @@ struct WorkoutView: View {
     @State private var pendingWorkoutName = ""
     @State private var showTemplateList = false
     @State private var showBuilder = false
+    @State private var showLogPastWorkout = false
     @State private var previewTemplate: WorkoutTemplate?
     @State private var templateRefreshId = UUID()
     @State private var recentWorkouts: [Workout] = []
@@ -44,17 +45,31 @@ struct WorkoutView: View {
                             .padding(.horizontal, Theme.Spacing.md)
                             .padding(.top, Theme.Spacing.md)
 
-                            // Build Workout
-                            Button {
-                                Haptics.light()
-                                showBuilder = true
-                            } label: {
-                                HStack(spacing: 10) {
-                                    Image(systemName: "hammer.fill")
-                                    Text("Build Workout")
+                            // Build Workout + Log Past Workout (side-by-side)
+                            HStack(spacing: Theme.Spacing.sm) {
+                                Button {
+                                    Haptics.light()
+                                    showBuilder = true
+                                } label: {
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "hammer.fill")
+                                        Text("Build")
+                                    }
                                 }
+                                .buttonStyle(GhostButtonStyle())
+
+                                Button {
+                                    Haptics.light()
+                                    showLogPastWorkout = true
+                                } label: {
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "calendar.badge.clock")
+                                        Text("Log Past")
+                                    }
+                                }
+                                .buttonStyle(GhostButtonStyle())
+                                .accessibilityLabel("Log a past workout")
                             }
-                            .buttonStyle(GhostButtonStyle())
                             .padding(.horizontal, Theme.Spacing.md)
 
                             // First workout guide for new users
@@ -109,6 +124,11 @@ struct WorkoutView: View {
             Task { await loadSections() }
         }) {
             WorkoutBuilderView()
+        }
+        .sheet(isPresented: $showLogPastWorkout, onDismiss: {
+            Task { await loadSections() }
+        }) {
+            LogPastWorkoutView()
         }
         .sheet(item: $previewTemplate) { template in
             TemplateDetailView(template: template) {
