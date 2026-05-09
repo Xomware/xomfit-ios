@@ -1,7 +1,17 @@
 import SwiftUI
 
+/// Layout style for `TemplateCardView`.
+///
+/// `.compact` keeps the legacy fixed-width card used inside horizontal carousels.
+/// `.row` expands to fill its container, intended for vertical lists.
+enum TemplateCardStyle {
+    case compact
+    case row
+}
+
 struct TemplateCardView: View {
     let template: WorkoutTemplate
+    var style: TemplateCardStyle = .compact
     let onSelect: () -> Void
 
     var body: some View {
@@ -20,7 +30,7 @@ struct TemplateCardView: View {
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(template.name)
-                        .font(.caption.weight(.bold))
+                        .font(style == .row ? .subheadline.weight(.bold) : .caption.weight(.bold))
                         .foregroundStyle(Theme.textPrimary)
                         .lineLimit(1)
 
@@ -28,14 +38,28 @@ struct TemplateCardView: View {
                         Text("\(template.exercises.count) ex")
                         Text("~\(template.estimatedDuration)m")
                             .foregroundStyle(Theme.accent)
+                        if style == .row && !template.description.isEmpty {
+                            Text("•")
+                                .foregroundStyle(Theme.textTertiary)
+                            Text(template.description)
+                                .lineLimit(1)
+                        }
                     }
                     .font(Theme.fontSmall)
                     .foregroundStyle(Theme.textSecondary)
                 }
+
+                if style == .row {
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.right")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(Theme.textTertiary)
+                }
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 10)
-            .frame(width: 160, alignment: .leading)
+            .frame(maxWidth: style == .row ? .infinity : nil, alignment: .leading)
+            .frame(width: style == .row ? nil : 160, alignment: .leading)
             .background(Theme.surface)
             .clipShape(.rect(cornerRadius: Theme.cornerRadius))
             .overlay(
