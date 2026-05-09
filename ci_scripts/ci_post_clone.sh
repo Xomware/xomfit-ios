@@ -32,6 +32,8 @@ enum Config {
     static let supabaseURL = "${SUPABASE_URL}"
     static let supabaseAnonKey = "${SUPABASE_ANON_KEY}"
 
+    static let anthropicAPIKey = "${ANTHROPIC_API_KEY:-YOUR_ANTHROPIC_API_KEY}"
+
     static let oauthScheme = "xomfit"
     static let oauthCallbackURL = "xomfit://login-callback"
 
@@ -47,6 +49,10 @@ enum Config {
 
     static var isConfigured: Bool {
         return !supabaseURL.contains("YOUR_") && !supabaseAnonKey.contains("YOUR_")
+    }
+
+    static var hasAnthropicKey: Bool {
+        return !anthropicAPIKey.contains("YOUR_") && !anthropicAPIKey.isEmpty
     }
 }
 EOF

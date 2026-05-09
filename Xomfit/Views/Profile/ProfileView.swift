@@ -198,6 +198,15 @@ struct ProfileView: View {
     private var ownProfileToolbar: some ToolbarContent {
         ToolbarItem(placement: .topBarTrailing) {
             HStack(spacing: 16) {
+                NavigationLink {
+                    AICoachView()
+                        .hideTabBar()
+                } label: {
+                    Image(systemName: "sparkles")
+                        .foregroundStyle(Theme.accent)
+                }
+                .accessibilityLabel("AI Coach")
+
                 Button {
                     viewModel.beginEditing()
                     showEditSheet = true

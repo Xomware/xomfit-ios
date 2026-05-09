@@ -4,6 +4,10 @@ struct SettingsView: View {
     @Environment(AuthService.self) private var authService
     @State private var showSignOutConfirm = false
 
+    /// Anthropic API key override (per-user). v1: stored via @AppStorage —
+    /// not secure. TODO: migrate to Keychain.
+    @AppStorage("aiCoach.anthropicAPIKey") private var anthropicAPIKey: String = ""
+
     private var appVersion: String {
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
         let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
@@ -40,6 +44,43 @@ struct SettingsView: View {
                     .tint(Theme.textTertiary)
                 } header: {
                     XomMetricLabel("Notifications")
+                }
+                .listRowBackground(Theme.surface)
+                .listRowSeparatorTint(Theme.hairline)
+
+                Section {
+                    NavigationLink {
+                        AICoachView()
+                            .hideTabBar()
+                    } label: {
+                        HStack(spacing: Theme.Spacing.md) {
+                            Image(systemName: "sparkles")
+                                .frame(width: 24)
+                                .foregroundStyle(Theme.accent)
+                            Text("AI Coach")
+                                .foregroundStyle(Theme.textPrimary)
+                        }
+                    }
+                    .tint(Theme.textTertiary)
+
+                    HStack(spacing: Theme.Spacing.md) {
+                        Image(systemName: "key.fill")
+                            .frame(width: 24)
+                            .foregroundStyle(Theme.accent)
+                        SecureField("Anthropic API Key", text: $anthropicAPIKey)
+                            .foregroundStyle(Theme.textPrimary)
+                            .font(Theme.fontBody)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                            .accessibilityLabel("Anthropic API Key")
+                            .accessibilityHint("Stored on this device only")
+                    }
+                } header: {
+                    XomMetricLabel("AI Coach")
+                } footer: {
+                    Text("Stored on this device only. Get a key at console.anthropic.com.")
+                        .font(Theme.fontCaption)
+                        .foregroundStyle(Theme.textTertiary)
                 }
                 .listRowBackground(Theme.surface)
                 .listRowSeparatorTint(Theme.hairline)
