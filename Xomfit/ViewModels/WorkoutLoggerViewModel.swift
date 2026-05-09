@@ -438,6 +438,47 @@ final class WorkoutLoggerViewModel {
         focusSetIndex = 0
     }
 
+    // MARK: - Current-Exercise Pill Accessors (#253)
+    //
+    // These additive computed properties drive the persistent "current exercise"
+    // pill in `ActiveWorkoutView`. They never mutate state and are safe to call
+    // even when `focusExerciseIndex` is out of bounds.
+
+    /// Name of the exercise currently in focus, or `nil` when there is no valid focus.
+    var currentExerciseName: String? {
+        focusExercise?.exercise.name
+    }
+
+    /// 1-based set number of the focused set, clamped to `[1, totalSets]`.
+    /// Returns `1` when there is no focused exercise (caller should branch on `currentExerciseName`).
+    var currentSetNumber: Int {
+        let total = currentExerciseTotalSets
+        guard total > 0 else { return 1 }
+        return min(max(focusSetIndex + 1, 1), total)
+    }
+
+    /// Total number of sets in the focused exercise. `0` when no exercise in focus.
+    var currentExerciseTotalSets: Int {
+        focusExercise?.sets.count ?? 0
+    }
+
+    /// Free navigation jump used by the exercise-jumper sheet (#253).
+    ///
+    /// Distinct from `moveToExercise(index:)`, which is part of the post-set
+    /// transition-card flow. `jumpToExercise` deliberately does NOT toggle
+    /// `showExerciseTransition` — the user is mid-workout and explicitly chose
+    /// to switch exercises, not completing one.
+    func jumpToExercise(index: Int) {
+        guard exercises.indices.contains(index) else { return }
+        focusExerciseIndex = index
+        // Land on the first incomplete set; fall back to set 0 when fully complete.
+        if let setIdx = exercises[index].sets.firstIndex(where: { $0.completedAt == Date.distantPast }) {
+            focusSetIndex = setIdx
+        } else {
+            focusSetIndex = 0
+        }
+    }
+
     /// Sync focus indices to the first incomplete exercise/set. Called when entering focus mode from list mode.
     func syncFocusToCurrentExercise() {
         // Find first exercise with an incomplete set
