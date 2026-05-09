@@ -14,6 +14,15 @@ struct SettingsView: View {
         return "\(version) (\(build))"
     }
 
+    /// Short summary of the current fitness questionnaire state for the row trailing label.
+    private var fitnessGoalsSummary: String {
+        let profile = UserFitnessProfile.current
+        guard profile.completedAt != nil, let goal = profile.primaryGoal else {
+            return "Not set"
+        }
+        return goal.title
+    }
+
     var body: some View {
         ZStack {
             Theme.background.ignoresSafeArea()
@@ -50,6 +59,7 @@ struct SettingsView: View {
 
                 Section {
                     NavigationLink {
+<<<<<<< HEAD
                         AICoachView()
                             .hideTabBar()
                     } label: {
@@ -81,6 +91,29 @@ struct SettingsView: View {
                     Text("Stored on this device only. Get a key at console.anthropic.com.")
                         .font(Theme.fontCaption)
                         .foregroundStyle(Theme.textTertiary)
+=======
+                        FitnessQuestionnaireView(mode: .edit)
+                            .navigationTitle("Fitness Goals")
+                            .navigationBarTitleDisplayMode(.inline)
+                            .hideTabBar()
+                    } label: {
+                        HStack(spacing: Theme.Spacing.md) {
+                            Image(systemName: "target")
+                                .frame(width: 24)
+                                .foregroundStyle(Theme.accent)
+                            Text("Fitness Goals")
+                                .foregroundStyle(Theme.textPrimary)
+                            Spacer()
+                            Text(fitnessGoalsSummary)
+                                .font(Theme.fontCaption)
+                                .foregroundStyle(Theme.textTertiary)
+                                .lineLimit(1)
+                        }
+                    }
+                    .tint(Theme.textTertiary)
+                } header: {
+                    XomMetricLabel("Training")
+>>>>>>> origin/master
                 }
                 .listRowBackground(Theme.surface)
                 .listRowSeparatorTint(Theme.hairline)
