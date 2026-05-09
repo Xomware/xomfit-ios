@@ -23,6 +23,18 @@ struct XomfitWidgetLiveActivity: Widget {
         state.isOvertime ? .red : Self.accentGreen
     }
 
+    /// Static "Paused" label used in place of live timers when the workout is paused.
+    @ViewBuilder
+    private func pausedLabel(font: Font) -> some View {
+        HStack(spacing: 3) {
+            Image(systemName: "pause.fill")
+                .font(font)
+            Text("Paused")
+                .font(font)
+        }
+        .foregroundStyle(.white.opacity(0.85))
+    }
+
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: XomfitWidgetAttributes.self) { context in
             // Lock screen / banner UI
@@ -38,13 +50,17 @@ struct XomfitWidgetLiveActivity: Widget {
                         .lineLimit(1)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    Text(context.attributes.startTime, style: .timer)
-                        .font(.system(size: 14, weight: .semibold, design: .monospaced))
-                        .foregroundStyle(Self.accentGreen)
-                        .multilineTextAlignment(.trailing)
+                    if context.state.isPaused {
+                        pausedLabel(font: .system(size: 14, weight: .semibold))
+                    } else {
+                        Text(context.attributes.startTime, style: .timer)
+                            .font(.system(size: 14, weight: .semibold, design: .monospaced))
+                            .foregroundStyle(Self.accentGreen)
+                            .multilineTextAlignment(.trailing)
+                    }
                 }
                 DynamicIslandExpandedRegion(.center) {
-                    Text(context.state.isResting ? "Resting" : context.state.currentExercise)
+                    Text(centerText(for: context.state))
                         .font(.system(size: 13, weight: .medium))
                         .foregroundStyle(.white.opacity(0.8))
                         .lineLimit(1)
@@ -57,7 +73,9 @@ struct XomfitWidgetLiveActivity: Widget {
                     .font(.system(size: 12))
                     .foregroundStyle(Self.accentGreen)
             } compactTrailing: {
-                if context.state.isResting, let endDate = context.state.restEndDate {
+                if context.state.isPaused {
+                    pausedLabel(font: .system(size: 12, weight: .semibold))
+                } else if context.state.isResting, let endDate = context.state.restEndDate {
                     Text(timerInterval: Date.now...endDate, countsDown: true)
                         .font(.system(size: 12, weight: .semibold, design: .monospaced))
                         .foregroundStyle(restColor(context.state))
@@ -69,7 +87,11 @@ struct XomfitWidgetLiveActivity: Widget {
                         .multilineTextAlignment(.trailing)
                 }
             } minimal: {
-                if context.state.isResting, let endDate = context.state.restEndDate {
+                if context.state.isPaused {
+                    Image(systemName: "pause.fill")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.85))
+                } else if context.state.isResting, let endDate = context.state.restEndDate {
                     Text(timerInterval: Date.now...endDate, countsDown: true)
                         .font(.system(size: 11, weight: .semibold, design: .monospaced))
                         .foregroundStyle(restColor(context.state))
@@ -112,15 +134,24 @@ struct XomfitWidgetLiveActivity: Widget {
 
                 Spacer()
 
-                Text(context.attributes.startTime, style: .timer)
-                    .font(.system(size: 15, weight: .semibold, design: .monospaced))
-                    .foregroundStyle(Self.accentGreen)
-                    .multilineTextAlignment(.trailing)
+                if state.isPaused {
+                    pausedLabel(font: .system(size: 15, weight: .semibold))
+                } else {
+                    Text(context.attributes.startTime, style: .timer)
+                        .font(.system(size: 15, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(Self.accentGreen)
+                        .multilineTextAlignment(.trailing)
+                }
             }
 
             // Middle row: current exercise + set/exercise progress
             HStack(spacing: 0) {
-                if state.isResting, let endDate = state.restEndDate {
+                if state.isPaused {
+                    Text("Paused")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(.white.opacity(0.85))
+                        .lineLimit(1)
+                } else if state.isResting, let endDate = state.restEndDate {
                     HStack(spacing: 4) {
                         Text("Resting")
                         Text(timerInterval: Date.now...endDate, countsDown: true)
@@ -178,7 +209,17 @@ struct XomfitWidgetLiveActivity: Widget {
             : 0
 
         VStack(alignment: .leading, spacing: 6) {
-            if state.isResting, let endDate = state.restEndDate {
+            if state.isPaused {
+                HStack {
+                    Image(systemName: "pause.fill")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.white.opacity(0.85))
+                    Text("Paused")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.85))
+                    Spacer()
+                }
+            } else if state.isResting, let endDate = state.restEndDate {
                 HStack {
                     Image(systemName: "timer")
                         .font(.system(size: 11))
@@ -214,6 +255,12 @@ struct XomfitWidgetLiveActivity: Widget {
     }
 
     // MARK: - Helpers
+
+    private func centerText(for state: XomfitWidgetAttributes.ContentState) -> String {
+        if state.isPaused { return "Paused" }
+        if state.isResting { return "Resting" }
+        return state.currentExercise
+    }
 
     private func formatTime(_ totalSeconds: Int) -> String {
         let hours = totalSeconds / 3600

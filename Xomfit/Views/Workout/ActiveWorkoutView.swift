@@ -297,6 +297,24 @@ struct ActiveWorkoutView: View {
 
             Spacer()
 
+            // Pause / Resume toggle — freezes elapsed time + rest timer
+            Button {
+                Haptics.light()
+                withAnimation(.xomChill) {
+                    viewModel.togglePause()
+                }
+            } label: {
+                Image(systemName: viewModel.isPaused ? "play.circle.fill" : "pause.circle.fill")
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(viewModel.isPaused ? Theme.accent : Theme.textPrimary)
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
+            }
+            .accessibilityLabel(viewModel.isPaused ? "Resume workout" : "Pause workout")
+            .accessibilityHint(viewModel.isPaused
+                ? "Resumes the elapsed timer and rest countdown"
+                : "Freezes the elapsed timer and rest countdown")
+
             // Focus mode toggle
             Button {
                 withAnimation {
