@@ -507,6 +507,23 @@ private struct ExerciseCard: View {
     let viewModel: WorkoutLoggerViewModel
 
     @State private var showDetails = false
+    @State private var showSupersetActionSheet = false
+
+    private var isInSuperset: Bool {
+        viewModel.exercises.indices.contains(exerciseIndex)
+            && viewModel.exercises[exerciseIndex].supersetGroupId != nil
+    }
+
+    private var supersetLetter: String? {
+        viewModel.supersetLetter(forExercise: exerciseIndex)
+    }
+
+    private var canGroupWithNext: Bool {
+        guard exerciseIndex + 1 < viewModel.exercises.count else { return false }
+        return viewModel.exercises[exerciseIndex].supersetGroupId == nil
+            || viewModel.exercises[exerciseIndex].supersetGroupId
+                != viewModel.exercises[exerciseIndex + 1].supersetGroupId
+    }
 
     @ViewBuilder
     var body: some View {
@@ -516,9 +533,21 @@ private struct ExerciseCard: View {
             // Exercise header
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(exercise.exercise.name)
-                        .font(.body.weight(.bold))
-                        .foregroundStyle(Theme.textPrimary)
+                    HStack(spacing: 6) {
+                        if let letter = supersetLetter {
+                            Text("Superset \(letter)")
+                                .font(.caption2.weight(.black))
+                                .foregroundStyle(.black)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Theme.accent)
+                                .clipShape(.capsule)
+                                .accessibilityLabel("Superset \(letter)")
+                        }
+                        Text(exercise.exercise.name)
+                            .font(.body.weight(.bold))
+                            .foregroundStyle(Theme.textPrimary)
+                    }
                     HStack(spacing: 4) {
                         ForEach(exercise.exercise.muscleGroups.prefix(2), id: \.self) { mg in
                             Text(mg.displayName)
@@ -673,6 +702,9 @@ private struct ExerciseCard: View {
                     onToggleWeightMode: {
                         viewModel.toggleWeightMode(exerciseIndex: exerciseIndex, setIndex: setIdx)
                     },
+                    onAddDropSet: {
+                        viewModel.addDropSet(exerciseIndex: exerciseIndex, parentSetIndex: setIdx)
+                    },
                     lateralityLabel: exercise.selectedLaterality != .bilateral ? (exercise.exercise.muscleGroups.contains(where: { [.quads, .hamstrings, .glutes, .calves].contains($0) }) ? "/leg" : "/arm") : nil
                 )
             }
@@ -696,7 +728,45 @@ private struct ExerciseCard: View {
         }
         .padding(Theme.Spacing.md)
         .background(Theme.surface)
+        .overlay(alignment: .leading) {
+            // Vertical accent bar marking superset members
+            if isInSuperset {
+                Rectangle()
+                    .fill(Theme.accent)
+                    .frame(width: 4)
+                    .accessibilityHidden(true)
+            }
+        }
         .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+        .onLongPressGesture(minimumDuration: 0.5) {
+            // Only present the menu when there is something actionable
+            guard isInSuperset || canGroupWithNext else { return }
+            Haptics.selection()
+            showSupersetActionSheet = true
+        }
+        .confirmationDialog(
+            exercise.exercise.name,
+            isPresented: $showSupersetActionSheet,
+            titleVisibility: .visible
+        ) {
+            if isInSuperset {
+                Button("Ungroup Superset", role: .destructive) {
+                    Haptics.light()
+                    viewModel.toggleSupersetWithNext(exerciseIndex: exerciseIndex)
+                }
+            }
+            if canGroupWithNext {
+                Button("Group with Next Exercise") {
+                    Haptics.success()
+                    viewModel.toggleSupersetWithNext(exerciseIndex: exerciseIndex)
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text(isInSuperset
+                 ? "This exercise is part of a superset."
+                 : "Group this exercise with the next one for back-to-back sets.")
+        }
         .sheet(isPresented: $showDetails) {
             ExerciseDetailSheet(exercise: exercise.exercise)
         }
