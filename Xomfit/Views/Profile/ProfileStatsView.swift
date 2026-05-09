@@ -7,6 +7,10 @@ struct ProfileStatsView: View {
     let recentPRs: [PersonalRecord]
     let muscleGroupSetsThisWeek: [String: Int]
     let muscleGroupSetsThisMonth: [String: Int]
+    /// Current consecutive-day workout streak (#250).
+    var currentStreak: Int = 0
+    /// Longest streak across history (#250).
+    var longestStreak: Int = 0
 
     @State private var heatmapFilter: HeatmapTimeFilter = .week
 
@@ -19,6 +23,7 @@ struct ProfileStatsView: View {
 
     var body: some View {
         VStack(spacing: Theme.Spacing.sm) {
+            StreakCard(currentStreak: currentStreak, longestStreak: longestStreak)
             statsCards
             heatmapSection
             prSection

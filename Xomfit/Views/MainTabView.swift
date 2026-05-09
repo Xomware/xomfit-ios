@@ -7,6 +7,8 @@ struct MainTabView: View {
     @State private var selectedTab = 0
     @State private var tabBarVisible = true
     @State private var tickId = UUID()
+    /// App-open streak / new-PR celebration toast (#250). Cleared after auto-dismiss.
+    @State private var launchBadgeToast: Toast?
 
     private let resumeTimer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
@@ -65,6 +67,17 @@ struct MainTabView: View {
             ActiveWorkoutView()
                 .environment(authService)
                 .environment(workoutSession)
+        }
+        .toast($launchBadgeToast)
+        .task {
+            // App-open streak / PR badge (#250).
+            // Show at most one toast per launch; surface ~1s in so it
+            // doesn't collide with the tab bar's mount animation.
+            guard let userId = authService.currentUser?.id.uuidString.lowercased() else { return }
+            let workouts = WorkoutService.shared.fetchWorkoutsFromCache(userId: userId)
+            guard let badge = BadgeToastService.badgeForLaunch(workouts: workouts) else { return }
+            try? await Task.sleep(for: .seconds(1))
+            launchBadgeToast = Toast(style: .success, message: badge.message)
         }
         .environment(\.tabBarVisible, $tabBarVisible)
     }

@@ -798,7 +798,9 @@ private struct ExerciseCard: View {
                     onToggleWeightMode: {
                         viewModel.toggleWeightMode(exerciseIndex: exerciseIndex, setIndex: setIdx)
                     },
-                    lateralityLabel: exercise.selectedLaterality != .bilateral ? (exercise.exercise.muscleGroups.contains(where: { [.quads, .hamstrings, .glutes, .calves].contains($0) }) ? "/leg" : "/arm") : nil
+                    lateralityLabel: exercise.selectedLaterality != .bilateral ? (exercise.exercise.muscleGroups.contains(where: { [.quads, .hamstrings, .glutes, .calves].contains($0) }) ? "/leg" : "/arm") : nil,
+                    lastSet: viewModel.lastSetForExercise(exercise.exercise.id),
+                    personalRecord: viewModel.personalRecordForExercise(exercise.exercise.id)
                 )
             }
 

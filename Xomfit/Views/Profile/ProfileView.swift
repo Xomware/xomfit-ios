@@ -187,7 +187,9 @@ struct ProfileView: View {
                 totalPRs: viewModel.totalPRs,
                 recentPRs: viewModel.recentPRs,
                 muscleGroupSetsThisWeek: viewModel.muscleGroupSetsThisWeek,
-                muscleGroupSetsThisMonth: viewModel.muscleGroupSetsThisMonth
+                muscleGroupSetsThisMonth: viewModel.muscleGroupSetsThisMonth,
+                currentStreak: viewModel.currentStreak,
+                longestStreak: viewModel.longestStreak
             )
         }
     }
