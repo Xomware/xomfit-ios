@@ -227,6 +227,44 @@ final class WorkoutService {
             .sorted { $0.startTime > $1.startTime }
     }
 
+    // MARK: - Friends Feed
+
+    /// Fan out across the current user's accepted friends and merge their recent workouts.
+    /// Sorted by `startTime` desc; capped at `limit` results.
+    /// Failures from individual friend fetches are logged and skipped — never throws.
+    func fetchFriendsRecentWorkouts(currentUserId: String, limit: Int = 30) async -> [Workout] {
+        guard !currentUserId.isEmpty else { return [] }
+
+        let friendIds: [String]
+        do {
+            let rows = try await FriendsService.shared.fetchFriends(userId: currentUserId)
+            friendIds = rows.map { $0.requesterId == currentUserId ? $0.addresseeId : $0.requesterId }
+        } catch {
+            print("[WorkoutService] fetchFriendsRecentWorkouts: friend list failed: \(error.localizedDescription)")
+            return []
+        }
+
+        guard !friendIds.isEmpty else { return [] }
+
+        let merged: [Workout] = await withTaskGroup(of: [Workout].self) { group in
+            for friendId in friendIds {
+                group.addTask {
+                    await WorkoutService.shared.fetchWorkouts(userId: friendId)
+                }
+            }
+            var collected: [Workout] = []
+            for await batch in group {
+                collected.append(contentsOf: batch)
+            }
+            return collected
+        }
+
+        return merged
+            .sorted { $0.startTime > $1.startTime }
+            .prefix(limit)
+            .map { $0 }
+    }
+
     // MARK: - Delete
 
     func deleteWorkout(id: String) async {
