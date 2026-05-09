@@ -176,6 +176,16 @@ final class ProfileViewModel {
         return "\(Int(totalVolume))"
     }
 
+    /// Current consecutive-day workout streak (#250). 0 if today/yesterday have no workouts.
+    var currentStreak: Int {
+        WorkoutInsights.currentStreak(workouts: workouts)
+    }
+
+    /// Longest historical streak across all workouts (#250). Used as the streak-card subtitle.
+    var longestStreak: Int {
+        WorkoutInsights.longestStreak(workouts: workouts)
+    }
+
     // MARK: - Load All
 
     func loadAll(userId: String, currentUserId: String) async {

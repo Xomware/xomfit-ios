@@ -8,6 +8,7 @@ struct WorkoutView: View {
     @State private var pendingWorkoutName = ""
     @State private var showTemplateList = false
     @State private var showBuilder = false
+    @State private var showLogPastWorkout = false
     @State private var previewTemplate: WorkoutTemplate?
     @State private var templateRefreshId = UUID()
     @State private var recentWorkouts: [Workout] = []
@@ -16,6 +17,22 @@ struct WorkoutView: View {
     }
     @State private var myTemplates: [WorkoutTemplate] = []
     @State private var savedTemplates: [WorkoutTemplate] = []
+
+    // MARK: - Warmup flow (#261)
+
+    /// Persisted preference: "" = ask each time, "yes" = always warm up, "no" = always skip.
+    @AppStorage("warmupOptIn") private var warmupOptIn: String = ""
+    /// Default warmup length in minutes — kept here so we can tweak via settings later.
+    @AppStorage("warmupMinutes") private var warmupMinutes: Int = 6
+
+    /// Captured action that runs after the warmup (or immediately if skipped).
+    @State private var pendingStart: (() -> Void)?
+    /// Stretches we'll show during the warmup, computed before presenting the sheet.
+    @State private var pendingStretches: [Stretch] = []
+    /// Whether to ask the user about warming up right now.
+    @State private var showWarmupPrompt = false
+    /// Whether to present the warmup sheet right now.
+    @State private var showWarmup = false
 
     private var userId: String {
         authService.currentUser?.id.uuidString.lowercased() ?? ""
@@ -43,18 +60,42 @@ struct WorkoutView: View {
                             .buttonStyle(AccentButtonStyle())
                             .padding(.horizontal, Theme.Spacing.md)
                             .padding(.top, Theme.Spacing.md)
-
-                            // Build Workout
-                            Button {
-                                Haptics.light()
-                                showBuilder = true
-                            } label: {
-                                HStack(spacing: 10) {
-                                    Image(systemName: "hammer.fill")
-                                    Text("Build Workout")
+                            .simultaneousGesture(
+                                LongPressGesture(minimumDuration: 0.6).onEnded { _ in
+                                    // Long-press resets the warmup preference so the prompt shows again.
+                                    Haptics.medium()
+                                    warmupOptIn = ""
+                                    pendingWorkoutName = ""
+                                    showNameEntry = true
                                 }
+                            )
+                            .accessibilityHint("Long press to reset warmup preference")
+
+                            // Build Workout + Log Past Workout (side-by-side)
+                            HStack(spacing: Theme.Spacing.sm) {
+                                Button {
+                                    Haptics.light()
+                                    showBuilder = true
+                                } label: {
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "hammer.fill")
+                                        Text("Build")
+                                    }
+                                }
+                                .buttonStyle(GhostButtonStyle())
+
+                                Button {
+                                    Haptics.light()
+                                    showLogPastWorkout = true
+                                } label: {
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "calendar.badge.clock")
+                                        Text("Log Past")
+                                    }
+                                }
+                                .buttonStyle(GhostButtonStyle())
+                                .accessibilityLabel("Log a past workout")
                             }
-                            .buttonStyle(GhostButtonStyle())
                             .padding(.horizontal, Theme.Spacing.md)
 
                             // First workout guide for new users
@@ -99,10 +140,40 @@ struct WorkoutView: View {
             TextField("e.g. Push Day", text: $pendingWorkoutName)
             Button("Start") {
                 let name = pendingWorkoutName.isEmpty ? "Workout" : pendingWorkoutName
-                workoutSession.startWorkout(name: name, userId: userId)
-                workoutSession.isPresented = true
+                requestStart(stretches: StretchDatabase.defaultRoutine(target: TimeInterval(warmupMinutes * 60))) {
+                    workoutSession.startWorkout(name: name, userId: userId)
+                    workoutSession.isPresented = true
+                }
             }
             Button("Cancel", role: .cancel) {}
+        }
+        .confirmationDialog(
+            "Warm up first?",
+            isPresented: $showWarmupPrompt,
+            titleVisibility: .visible
+        ) {
+            Button("Yes, \(warmupMinutes) min") {
+                warmupOptIn = "yes"
+                showWarmup = true
+            }
+            Button("No, skip") {
+                warmupOptIn = "no"
+                runPendingStartImmediately()
+            }
+            Button("Just this once", role: .cancel) {
+                // Don't persist a preference — start without warmup but ask again next time.
+                runPendingStartImmediately()
+            }
+        } message: {
+            Text("A 5-10 minute stretch routine helps loosen up before lifting.")
+        }
+        .fullScreenCover(isPresented: $showWarmup) {
+            WarmupView(
+                stretches: pendingStretches.isEmpty ? StretchDatabase.defaultRoutine() : pendingStretches,
+                totalDuration: warmupMinutes * 60
+            ) {
+                runPendingStartImmediately()
+            }
         }
         .sheet(isPresented: $showBuilder, onDismiss: {
             templateRefreshId = UUID()
@@ -110,11 +181,18 @@ struct WorkoutView: View {
         }) {
             WorkoutBuilderView()
         }
+        .sheet(isPresented: $showLogPastWorkout, onDismiss: {
+            Task { await loadSections() }
+        }) {
+            LogPastWorkoutView()
+        }
         .sheet(item: $previewTemplate) { template in
             TemplateDetailView(template: template) {
                 previewTemplate = nil
-                workoutSession.startFromTemplate(template, userId: userId)
-                workoutSession.isPresented = true
+                requestStart(stretches: StretchDatabase.suggestedStretches(for: template, target: TimeInterval(warmupMinutes * 60))) {
+                    workoutSession.startFromTemplate(template, userId: userId)
+                    workoutSession.isPresented = true
+                }
             }
         }
         .sheet(isPresented: $showTemplateList) {
@@ -149,8 +227,10 @@ struct WorkoutView: View {
                 Haptics.medium()
                 UserDefaults.standard.set(true, forKey: "xomfit_first_workout_started")
                 if let template = WorkoutTemplate.builtIn.first(where: { $0.id == "tpl-fb-a" }) {
-                    workoutSession.startFromTemplate(template, userId: userId)
-                    workoutSession.isPresented = true
+                    requestStart(stretches: StretchDatabase.suggestedStretches(for: template, target: TimeInterval(warmupMinutes * 60))) {
+                        workoutSession.startFromTemplate(template, userId: userId)
+                        workoutSession.isPresented = true
+                    }
                 }
             } label: {
                 HStack(spacing: 8) {
@@ -279,6 +359,44 @@ struct WorkoutView: View {
             }
         }
         .padding(.vertical, Theme.Spacing.sm)
+    }
+
+    // MARK: - Warmup gating (#261)
+
+    /// Entry point used by every "start workout" path. Either prompts the user about
+    /// warming up first, presents the warmup, or runs the start action directly,
+    /// depending on the user's saved preference.
+    private func requestStart(stretches: [Stretch], action: @escaping () -> Void) {
+        pendingStart = action
+        pendingStretches = stretches
+
+        switch warmupOptIn {
+        case "yes":
+            // User opted into warmups — present the warmup sheet.
+            // Defer slightly so any presenting sheet has time to dismiss.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                showWarmup = true
+            }
+        case "no":
+            // User opted out — start immediately.
+            runPendingStartImmediately()
+        default:
+            // First time (or user reset via long-press) — ask.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                showWarmupPrompt = true
+            }
+        }
+    }
+
+    /// Run the captured pending start action and clear it.
+    private func runPendingStartImmediately() {
+        let action = pendingStart
+        pendingStart = nil
+        pendingStretches = []
+        // Slight delay so any prompt/sheet dismissal lands cleanly before the workout cover.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            action?()
+        }
     }
 
     // MARK: - Data Loading
