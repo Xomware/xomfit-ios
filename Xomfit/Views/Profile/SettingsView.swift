@@ -10,6 +10,15 @@ struct SettingsView: View {
         return "\(version) (\(build))"
     }
 
+    /// Short summary of the current fitness questionnaire state for the row trailing label.
+    private var fitnessGoalsSummary: String {
+        let profile = UserFitnessProfile.current
+        guard profile.completedAt != nil, let goal = profile.primaryGoal else {
+            return "Not set"
+        }
+        return goal.title
+    }
+
     var body: some View {
         ZStack {
             Theme.background.ignoresSafeArea()
@@ -40,6 +49,33 @@ struct SettingsView: View {
                     .tint(Theme.textTertiary)
                 } header: {
                     XomMetricLabel("Notifications")
+                }
+                .listRowBackground(Theme.surface)
+                .listRowSeparatorTint(Theme.hairline)
+
+                Section {
+                    NavigationLink {
+                        FitnessQuestionnaireView(mode: .edit)
+                            .navigationTitle("Fitness Goals")
+                            .navigationBarTitleDisplayMode(.inline)
+                            .hideTabBar()
+                    } label: {
+                        HStack(spacing: Theme.Spacing.md) {
+                            Image(systemName: "target")
+                                .frame(width: 24)
+                                .foregroundStyle(Theme.accent)
+                            Text("Fitness Goals")
+                                .foregroundStyle(Theme.textPrimary)
+                            Spacer()
+                            Text(fitnessGoalsSummary)
+                                .font(Theme.fontCaption)
+                                .foregroundStyle(Theme.textTertiary)
+                                .lineLimit(1)
+                        }
+                    }
+                    .tint(Theme.textTertiary)
+                } header: {
+                    XomMetricLabel("Training")
                 }
                 .listRowBackground(Theme.surface)
                 .listRowSeparatorTint(Theme.hairline)
