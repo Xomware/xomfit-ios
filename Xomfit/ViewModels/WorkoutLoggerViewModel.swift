@@ -25,6 +25,12 @@ final class WorkoutLoggerViewModel {
     var restDuration: Double = 0
     var isRestTimerActive: Bool = false
 
+    // Pause state — freezes elapsed timer + rest countdown without ending the workout.
+    // In-memory only (not persisted).
+    var isPaused: Bool = false
+    var pausedAt: Date? = nil
+    var totalPausedDuration: TimeInterval = 0
+
     /// Default rest duration in seconds. Reactive stored property; syncs to UserDefaults via didSet.
     var defaultRestDuration: Double = WorkoutLoggerViewModel.loadRestDuration() {
         didSet { UserDefaults.standard.set(defaultRestDuration, forKey: "restDuration") }
@@ -101,7 +107,13 @@ final class WorkoutLoggerViewModel {
     // MARK: - Computed
 
     var duration: TimeInterval {
-        Date().timeIntervalSince(startTime)
+        var elapsed = Date().timeIntervalSince(startTime) - totalPausedDuration
+        // If currently paused, also subtract the in-progress paused interval so the
+        // displayed time stays frozen at the moment of pausing.
+        if isPaused, let pausedAt {
+            elapsed -= Date().timeIntervalSince(pausedAt)
+        }
+        return max(0, elapsed)
     }
 
     var durationString: String {
@@ -142,6 +154,9 @@ final class WorkoutLoggerViewModel {
         focusMode = false
         focusExerciseIndex = 0
         focusSetIndex = 0
+        isPaused = false
+        pausedAt = nil
+        totalPausedDuration = 0
         skipRestTimer()
         startLiveActivity()
     }
@@ -163,6 +178,9 @@ final class WorkoutLoggerViewModel {
         focusMode = false
         focusExerciseIndex = 0
         focusSetIndex = 0
+        isPaused = false
+        pausedAt = nil
+        totalPausedDuration = 0
         location = ""
         rating = 0
         skipRestTimer()
@@ -482,14 +500,15 @@ final class WorkoutLoggerViewModel {
     }
 
     /// Called when the app returns to foreground. Recalculates rest timer based on wall-clock time elapsed.
+    /// Skipped while paused — the countdown is frozen.
     func recalculateRestTimer() {
-        guard isRestTimerActive, let startDate = restTimerStartDate else { return }
+        guard isRestTimerActive, !isPaused, let startDate = restTimerStartDate else { return }
         let elapsed = Date().timeIntervalSince(startDate)
         restTimeRemaining = restDuration - elapsed
     }
 
     func tickRestTimer() {
-        guard isRestTimerActive else { return }
+        guard isRestTimerActive, !isPaused else { return }
         restTimeRemaining -= 1
     }
 
@@ -502,6 +521,33 @@ final class WorkoutLoggerViewModel {
     func extendRestTimer(_ seconds: Double = 30) {
         restTimeRemaining += seconds
         restDuration += seconds
+        updateLiveActivity()
+    }
+
+    // MARK: - Pause / Resume
+
+    /// Freeze (or resume) the elapsed-time counter and the rest-timer countdown without
+    /// ending the workout. Pause state is in-memory only — not persisted.
+    func togglePause() {
+        if isPaused {
+            // Resume: account for the time spent paused
+            if let pausedAt {
+                let pausedFor = Date().timeIntervalSince(pausedAt)
+                totalPausedDuration += pausedFor
+
+                // Roll the rest timer's start anchor forward by the paused duration so
+                // recalculateRestTimer() and Live Activity restEndDate math stay correct.
+                if let start = restTimerStartDate {
+                    restTimerStartDate = start.addingTimeInterval(pausedFor)
+                }
+            }
+            pausedAt = nil
+            isPaused = false
+        } else {
+            // Pause
+            pausedAt = Date()
+            isPaused = true
+        }
         updateLiveActivity()
     }
 
@@ -584,14 +630,16 @@ final class WorkoutLoggerViewModel {
             ex.sets.contains(where: { $0.completedAt == Date.distantPast })
         })?.exercise.name ?? "Finishing up"
 
-        let restEnd: Date? = isRestTimerActive && restTimeRemaining > 0
+        // While paused, suppress restEndDate so the widget renders a static "Paused" pill
+        // instead of an active countdown.
+        let restEnd: Date? = (isRestTimerActive && restTimeRemaining > 0 && !isPaused)
             ? Date().addingTimeInterval(restTimeRemaining)
             : nil
 
-        let overtime = isRestTimerActive && restTimeRemaining <= 0
+        let overtime = isRestTimerActive && restTimeRemaining <= 0 && !isPaused
 
         let state = XomfitWidgetAttributes.ContentState(
-            elapsedSeconds: Int(Date().timeIntervalSince(startTime)),
+            elapsedSeconds: Int(duration),
             completedSets: completedSets,
             totalSets: totalSets,
             currentExercise: currentExName,
@@ -599,7 +647,8 @@ final class WorkoutLoggerViewModel {
             isResting: isRestTimerActive,
             restTimeRemaining: Int(self.restTimeRemaining),
             restEndDate: restEnd,
-            isOvertime: overtime
+            isOvertime: overtime,
+            isPaused: isPaused
         )
 
         Task {

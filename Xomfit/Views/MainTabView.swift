@@ -37,6 +37,7 @@ struct MainTabView: View {
                     WorkoutResumeBar(
                         workoutName: workoutSession.workoutName,
                         durationString: workoutSession.durationString,
+                        isPaused: workoutSession.isPaused,
                         tickId: tickId,
                         onTap: {
                             withAnimation(.spring(response: 0.35, dampingFraction: 0.82)) {
@@ -106,6 +107,7 @@ extension View {
 private struct WorkoutResumeBar: View {
     let workoutName: String
     let durationString: String
+    let isPaused: Bool
     /// Drives re-render of the duration string every second. Owner updates this.
     let tickId: UUID
     let onTap: () -> Void
@@ -116,7 +118,7 @@ private struct WorkoutResumeBar: View {
             onTap()
         } label: {
             HStack(spacing: Theme.Spacing.sm) {
-                Image(systemName: "dumbbell.fill")
+                Image(systemName: isPaused ? "pause.fill" : "dumbbell.fill")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Theme.accent)
                     .frame(width: 28, height: 28)
@@ -128,11 +130,17 @@ private struct WorkoutResumeBar: View {
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(Theme.textPrimary)
                         .lineLimit(1)
-                    Text(durationString)
-                        .font(.caption.weight(.medium))
-                        .foregroundStyle(Theme.textSecondary)
-                        .monospacedDigit()
-                        .id(tickId)
+                    if isPaused {
+                        Text("Paused")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(Theme.textSecondary)
+                    } else {
+                        Text(durationString)
+                            .font(.caption.weight(.medium))
+                            .foregroundStyle(Theme.textSecondary)
+                            .monospacedDigit()
+                            .id(tickId)
+                    }
                 }
 
                 Spacer(minLength: 0)
@@ -155,7 +163,9 @@ private struct WorkoutResumeBar: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Resume workout \(workoutName.isEmpty ? "Workout" : workoutName)")
+        .accessibilityLabel(isPaused
+            ? "Paused workout \(workoutName.isEmpty ? "Workout" : workoutName)"
+            : "Resume workout \(workoutName.isEmpty ? "Workout" : workoutName)")
         .accessibilityHint("Reopens the active workout screen")
     }
 }
