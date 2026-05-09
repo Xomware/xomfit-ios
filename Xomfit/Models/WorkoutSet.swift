@@ -15,6 +15,11 @@ struct WorkoutSet: Codable, Identifiable, Hashable {
     var completedAt: Date
     var weightMode: WeightMode = .total
 
+    // MARK: - Drop Set
+    /// True when this set is a drop set following a parent set without rest.
+    /// Drop sets immediately follow their parent in the sets array.
+    var isDropSet: Bool = false
+
     // MARK: - Form Check Video (optional attachment)
     var videoLocalURL: URL?       // locally saved clip after recording
     var videoRemoteURL: URL?      // uploaded to Supabase Storage

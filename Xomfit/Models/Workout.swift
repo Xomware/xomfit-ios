@@ -74,6 +74,9 @@ struct WorkoutExercise: Codable, Identifiable {
     var selectedPosition: ExercisePosition? = nil
     /// Laterality selection for this exercise instance. Defaults to bilateral.
     var selectedLaterality: Laterality = .bilateral
+    /// When non-nil, this exercise is part of a superset group.
+    /// All exercises sharing the same UUID are performed back-to-back (1 set of A → 1 set of B → rest → ...).
+    var supersetGroupId: UUID? = nil
 
     var bestSet: WorkoutSet? {
         sets.max(by: { $0.volume < $1.volume })

@@ -8,6 +8,7 @@ struct SetRowView: View {
     let onComplete: () -> Void
     let onDelete: () -> Void
     let onToggleWeightMode: () -> Void
+    let onAddDropSet: (() -> Void)?
     var lateralityLabel: String? = nil
     /// Most recent set the user has logged for this exercise from history.
     /// Drives the "Last: 135×8" hint below the row. nil = first time doing this exercise.
@@ -27,6 +28,10 @@ struct SetRowView: View {
 
     private var isPR: Bool {
         workoutSet.isPersonalRecord
+    }
+
+    private var isDropSet: Bool {
+        workoutSet.isDropSet
     }
 
     /// Live "did this completed set just beat the prior PR?" check.
@@ -53,6 +58,7 @@ struct SetRowView: View {
         onComplete: @escaping () -> Void,
         onDelete: @escaping () -> Void,
         onToggleWeightMode: @escaping () -> Void = {},
+        onAddDropSet: (() -> Void)? = nil,
         lateralityLabel: String? = nil,
         lastSet: WorkoutSet? = nil,
         personalRecord: WorkoutSet? = nil
@@ -64,6 +70,7 @@ struct SetRowView: View {
         self.onComplete = onComplete
         self.onDelete = onDelete
         self.onToggleWeightMode = onToggleWeightMode
+        self.onAddDropSet = onAddDropSet
         self.lateralityLabel = lateralityLabel
         self.lastSet = lastSet
         self.personalRecord = personalRecord
@@ -80,8 +87,12 @@ struct SetRowView: View {
             if hasHints || beatsPriorPR {
                 hintRow
             }
+            if isCompleted, !isDropSet, let onAddDropSet {
+                addDropSetButton(onAddDropSet)
+            }
         }
-        .frame(minHeight: 52)
+        .padding(.leading, isDropSet ? Theme.Spacing.lg : 0)
+        .frame(minHeight: isDropSet ? 44 : 52)
         .background(isCompleted ? Theme.accent.opacity(0.08) : Color.clear)
         .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
         .animation(nil, value: workoutSet.completedAt)
@@ -112,20 +123,27 @@ struct SetRowView: View {
                 Button(action: onDelete) {
                     Image(systemName: "minus.circle.fill")
                         .foregroundStyle(Theme.destructive)
-                        .font(.headline)
+                        .font(isDropSet ? .subheadline : .headline)
                 }
                 .buttonStyle(.plain)
                 .frame(width: 30)
                 .accessibilityLabel("Delete set \(setNumber)")
 
-                // PR trophy icon (replaces tinted row background)
+                // PR trophy / DROP badge / set number
                 if isPR {
                     Image(systemName: "trophy.fill")
                         .font(.caption2)
                         .foregroundStyle(Theme.prGold)
                         .frame(width: 16)
+                } else if isDropSet {
+                    Text("DROP")
+                        .font(.system(size: 9, weight: .black))
+                        .foregroundStyle(Theme.accent)
+                        .padding(.horizontal, 4)
+                        .padding(.vertical, 1)
+                        .background(Theme.accent.opacity(0.18))
+                        .clipShape(.capsule)
                 } else {
-                    // Set number
                     Text("\(setNumber)")
                         .font(.subheadline.weight(.bold).monospaced())
                         .foregroundStyle(isCompleted ? Theme.accent : Theme.textSecondary)
@@ -136,8 +154,8 @@ struct SetRowView: View {
                 TextField("0", text: $weightText)
                     .keyboardType(.decimalPad)
                     .multilineTextAlignment(.center)
-                    .font(Theme.fontNumberMedium)
-                    .padding(.vertical, 8)
+                    .font(isDropSet ? .footnote.weight(.semibold).monospacedDigit() : Theme.fontNumberMedium)
+                    .padding(.vertical, isDropSet ? 6 : 8)
                     .padding(.horizontal, 6)
                     .background(Theme.surfaceElevated)
                     .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
@@ -166,8 +184,8 @@ struct SetRowView: View {
                 TextField("0", text: $repsText)
                     .keyboardType(.numberPad)
                     .multilineTextAlignment(.center)
-                    .font(Theme.fontNumberMedium)
-                    .padding(.vertical, 8)
+                    .font(isDropSet ? .footnote.weight(.semibold).monospacedDigit() : Theme.fontNumberMedium)
+                    .padding(.vertical, isDropSet ? 6 : 8)
                     .padding(.horizontal, 6)
                     .background(Theme.surfaceElevated)
                     .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
@@ -191,7 +209,7 @@ struct SetRowView: View {
                         .frame(width: 30)
                 }
 
-                // Complete checkmark — accent fill when done, 28pt target
+                // Complete checkmark
                 Button(action: {
                     Haptics.success()
                     onComplete()
@@ -216,7 +234,7 @@ struct SetRowView: View {
                 .accessibilityLabel(isCompleted ? "Mark set \(setNumber) incomplete" : "Complete set \(setNumber)")
             }
             .padding(.horizontal, Theme.Spacing.md)
-            .padding(.vertical, 6)
+            .padding(.vertical, isDropSet ? 4 : 6)
         }
     }
 
@@ -271,5 +289,29 @@ struct SetRowView: View {
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(label) \(value)")
+    }
+
+    // MARK: - Drop set button
+
+    private func addDropSetButton(_ action: @escaping () -> Void) -> some View {
+        Button {
+            Haptics.light()
+            action()
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: "arrow.down.right")
+                    .font(.caption2.weight(.bold))
+                Text("drop set")
+                    .font(.caption2.weight(.semibold))
+            }
+            .foregroundStyle(Theme.accent)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3)
+            .background(Theme.accent.opacity(0.10))
+            .clipShape(.capsule)
+        }
+        .buttonStyle(.plain)
+        .padding(.leading, Theme.Spacing.xl + 30)
+        .accessibilityLabel("Add drop set after set \(setNumber)")
     }
 }

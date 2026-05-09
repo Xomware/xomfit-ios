@@ -357,9 +357,36 @@ final class WorkoutLoggerViewModel {
             exercises[exerciseIndex].sets[setIndex].isPersonalRecord = false
         } else {
             exercises[exerciseIndex].sets[setIndex].completedAt = Date()
-            // Start rest timer
-            let exerciseCategory = exercises[exerciseIndex].exercise.category
-            startRestTimer(for: exerciseCategory)
+
+            // Decide whether to start the rest timer based on superset / drop-set context.
+            //
+            // Skip rest when:
+            //   - The next set on this exercise is a drop set (parent → drop chain stays back-to-back)
+            //   - This exercise is mid-superset and another member still has a set queued for this round
+            let nextSetIsDropSet: Bool = {
+                let nextIdx = setIndex + 1
+                let sets = exercises[exerciseIndex].sets
+                return sets.indices.contains(nextIdx) && sets[nextIdx].isDropSet
+            }()
+
+            let supersetSiblingIndex = nextSupersetMember(after: exerciseIndex, currentSetIndex: setIndex)
+            let inSupersetRound = supersetSiblingIndex != nil
+
+            let shouldStartRest = !nextSetIsDropSet && !inSupersetRound
+            if shouldStartRest {
+                let exerciseCategory = exercises[exerciseIndex].exercise.category
+                startRestTimer(for: exerciseCategory)
+            }
+
+            // Auto-advance focus for supersets — jump to the sibling exercise's matching set
+            if let siblingIdx = supersetSiblingIndex {
+                focusExerciseIndex = siblingIdx
+                if let nextIncomplete = exercises[siblingIdx].sets.firstIndex(where: { $0.completedAt == Date.distantPast }) {
+                    focusSetIndex = nextIncomplete
+                } else {
+                    focusSetIndex = 0
+                }
+            }
             // Fire PR check asynchronously — non-blocking
             let set = exercises[exerciseIndex].sets[setIndex]
             let exercise = exercises[exerciseIndex].exercise
@@ -393,7 +420,11 @@ final class WorkoutLoggerViewModel {
                     return RemainingExercise(index: idx, name: ex.exercise.name)
                 }
 
-                showExerciseTransition = true
+                // Suppress the transition card while still mid-superset round — the focus
+                // already advanced to the next member, so no card needed.
+                if !inSupersetRound {
+                    showExerciseTransition = true
+                }
             }
         }
         updateLiveActivity()
@@ -410,6 +441,122 @@ final class WorkoutLoggerViewModel {
               exercises[exerciseIndex].sets.indices.contains(setIndex) else { return }
         exercises[exerciseIndex].sets[setIndex].weightMode =
             exercises[exerciseIndex].sets[setIndex].weightMode == .total ? .perSide : .total
+    }
+
+    // MARK: - Supersets
+
+    /// Returns the indices of all exercises sharing this superset group.
+    func supersetMembers(groupId: UUID) -> [Int] {
+        exercises.indices.filter { exercises[$0].supersetGroupId == groupId }
+    }
+
+    /// Returns the indices of all exercises in the same superset as `exerciseIndex`,
+    /// or nil if it isn't part of a superset.
+    func supersetMembers(forExercise exerciseIndex: Int) -> [Int]? {
+        guard exercises.indices.contains(exerciseIndex),
+              let groupId = exercises[exerciseIndex].supersetGroupId else { return nil }
+        return supersetMembers(groupId: groupId)
+    }
+
+    /// Position label inside the group ("A", "B", "C", ...) — used by UI badges.
+    /// Wraps to "AA", "BB", ... after Z; the alphabet covers any realistic group size.
+    func supersetLetter(forExercise exerciseIndex: Int) -> String? {
+        guard let members = supersetMembers(forExercise: exerciseIndex),
+              let pos = members.firstIndex(of: exerciseIndex) else { return nil }
+        let alphabet = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
+                        "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
+        return alphabet[pos % alphabet.count]
+    }
+
+    /// Toggles a superset across the given exercise indices.
+    /// - If the indices already share the same group, they are ungrouped.
+    /// - Otherwise they all get a new shared group id.
+    /// Requires at least 2 valid indices.
+    func toggleSuperset(exerciseIndices: [Int]) {
+        let validIndices = exerciseIndices.filter { exercises.indices.contains($0) }
+        guard validIndices.count >= 2 else { return }
+
+        let groupIds = Set(validIndices.map { exercises[$0].supersetGroupId })
+        if groupIds.count == 1, let onlyId = groupIds.first, onlyId != nil {
+            // All share the same group — ungroup them
+            for idx in validIndices {
+                exercises[idx].supersetGroupId = nil
+            }
+        } else {
+            let newGroupId = UUID()
+            for idx in validIndices {
+                exercises[idx].supersetGroupId = newGroupId
+            }
+        }
+    }
+
+    /// Convenience: group `exerciseIndex` with the next exercise in the list, or
+    /// (if it already has a group) ungroup the entire group.
+    func toggleSupersetWithNext(exerciseIndex: Int) {
+        guard exercises.indices.contains(exerciseIndex) else { return }
+
+        if let members = supersetMembers(forExercise: exerciseIndex) {
+            for idx in members {
+                exercises[idx].supersetGroupId = nil
+            }
+            return
+        }
+
+        let nextIndex = exerciseIndex + 1
+        guard exercises.indices.contains(nextIndex) else { return }
+        toggleSuperset(exerciseIndices: [exerciseIndex, nextIndex])
+    }
+
+    /// During an in-progress superset round, find the next member that still
+    /// owes a set at `currentSetIndex`. Returns nil when the current member
+    /// finished the round (or it isn't a superset).
+    private func nextSupersetMember(after exerciseIndex: Int, currentSetIndex: Int) -> Int? {
+        guard let members = supersetMembers(forExercise: exerciseIndex),
+              members.count > 1,
+              let pos = members.firstIndex(of: exerciseIndex) else { return nil }
+
+        // Iterate ring starting just after the current member
+        for offset in 1..<members.count {
+            let candidate = members[(pos + offset) % members.count]
+            let sets = exercises[candidate].sets
+            // Match the same round (same set index) when possible — fall back to any incomplete set.
+            if sets.indices.contains(currentSetIndex),
+               sets[currentSetIndex].completedAt == Date.distantPast {
+                return candidate
+            }
+            if sets.contains(where: { $0.completedAt == Date.distantPast }) {
+                return candidate
+            }
+        }
+        return nil
+    }
+
+    // MARK: - Drop Sets
+
+    /// Insert a drop set immediately after `parentSetIndex`. The drop set inherits
+    /// reps from the parent and uses 80% of the parent's weight as a reasonable starting point.
+    func addDropSet(exerciseIndex: Int, parentSetIndex: Int) {
+        guard exercises.indices.contains(exerciseIndex),
+              exercises[exerciseIndex].sets.indices.contains(parentSetIndex) else { return }
+
+        let parent = exercises[exerciseIndex].sets[parentSetIndex]
+        let droppedWeight = (parent.weight * 0.8).rounded(.toNearestOrEven)
+        let dropSet = WorkoutSet(
+            id: UUID().uuidString,
+            exerciseId: parent.exerciseId,
+            weight: max(droppedWeight, 0),
+            reps: parent.reps,
+            rpe: nil,
+            isPersonalRecord: false,
+            completedAt: Date.distantPast,
+            weightMode: parent.weightMode,
+            isDropSet: true
+        )
+
+        // Insert right after the parent. If the parent is itself a drop set, the new
+        // drop set still slots immediately after — keeping the chain contiguous.
+        let insertIndex = parentSetIndex + 1
+        exercises[exerciseIndex].sets.insert(dropSet, at: insertIndex)
     }
 
     // MARK: - Focus Mode Navigation
