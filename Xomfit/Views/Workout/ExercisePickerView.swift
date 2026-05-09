@@ -180,6 +180,8 @@ private struct ExerciseRow: View {
     let exercise: Exercise
     let onTap: () -> Void
 
+    @State private var showDetails = false
+
     var body: some View {
         Button(action: onTap) {
             HStack(spacing: Theme.Spacing.md) {
@@ -202,6 +204,20 @@ private struct ExerciseRow: View {
                     }
                 }
                 Spacer()
+
+                Button {
+                    Haptics.selection()
+                    showDetails = true
+                } label: {
+                    Image(systemName: "info.circle")
+                        .font(.title3)
+                        .foregroundStyle(Theme.textSecondary)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Show details for \(exercise.name)")
+
                 Image(systemName: "plus.circle")
                     .foregroundStyle(Theme.accent)
             }
@@ -209,5 +225,8 @@ private struct ExerciseRow: View {
             .padding(.vertical, 4)
         }
         .buttonStyle(.plain)
+        .sheet(isPresented: $showDetails) {
+            ExerciseDetailSheet(exercise: exercise)
+        }
     }
 }

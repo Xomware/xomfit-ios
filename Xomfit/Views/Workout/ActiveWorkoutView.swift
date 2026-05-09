@@ -506,6 +506,8 @@ private struct ExerciseCard: View {
     let exerciseIndex: Int
     let viewModel: WorkoutLoggerViewModel
 
+    @State private var showDetails = false
+
     @ViewBuilder
     var body: some View {
         if viewModel.exercises.indices.contains(exerciseIndex) {
@@ -529,6 +531,19 @@ private struct ExerciseCard: View {
                         }
                     }
                 }
+
+                Button {
+                    Haptics.selection()
+                    showDetails = true
+                } label: {
+                    Image(systemName: "info.circle")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Theme.textSecondary)
+                        .frame(width: 32, height: 32)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Show details for \(exercise.exercise.name)")
 
                 Spacer()
 
@@ -682,6 +697,9 @@ private struct ExerciseCard: View {
         .padding(Theme.Spacing.md)
         .background(Theme.surface)
         .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+        .sheet(isPresented: $showDetails) {
+            ExerciseDetailSheet(exercise: exercise.exercise)
+        }
         }
     }
 }
