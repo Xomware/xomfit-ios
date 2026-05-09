@@ -69,9 +69,19 @@ struct XomfitWidgetLiveActivity: Widget {
                         .multilineTextAlignment(.trailing)
                 }
             } minimal: {
-                Image(systemName: "dumbbell.fill")
-                    .font(.system(size: 12))
-                    .foregroundStyle(Self.accentGreen)
+                if context.state.isResting, let endDate = context.state.restEndDate {
+                    Text(timerInterval: Date.now...endDate, countsDown: true)
+                        .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(restColor(context.state))
+                        .multilineTextAlignment(.center)
+                        .monospacedDigit()
+                } else {
+                    Text(context.attributes.startTime, style: .timer)
+                        .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(Self.accentGreen)
+                        .multilineTextAlignment(.center)
+                        .monospacedDigit()
+                }
             }
             .widgetURL(URL(string: "xomfit://workout"))
             .keylineTint(restColor(context.state))
