@@ -4,79 +4,123 @@ struct WorkoutView: View {
     @Environment(AuthService.self) private var authService
     @Environment(WorkoutLoggerViewModel.self) private var workoutSession
 
-    @State private var viewModel = WorkoutTabViewModel()
-
     @State private var showNameEntry = false
     @State private var pendingWorkoutName = ""
+    @State private var showTemplateList = false
     @State private var showBuilder = false
+    @State private var showLogPastWorkout = false
     @State private var previewTemplate: WorkoutTemplate?
-    @State private var friendWorkoutDetail: Workout?
-
+    @State private var templateRefreshId = UUID()
+    @State private var recentWorkouts: [Workout] = []
     private var hasStartedFirstWorkout: Bool {
         UserDefaults.standard.bool(forKey: "xomfit_first_workout_started")
     }
+    @State private var myTemplates: [WorkoutTemplate] = []
+    @State private var savedTemplates: [WorkoutTemplate] = []
+
+    // MARK: - Warmup flow (#261)
+
+    /// Persisted preference: "" = ask each time, "yes" = always warm up, "no" = always skip.
+    @AppStorage("warmupOptIn") private var warmupOptIn: String = ""
+    /// Default warmup length in minutes — kept here so we can tweak via settings later.
+    @AppStorage("warmupMinutes") private var warmupMinutes: Int = 6
+
+    /// Captured action that runs after the warmup (or immediately if skipped).
+    @State private var pendingStart: (() -> Void)?
+    /// Stretches we'll show during the warmup, computed before presenting the sheet.
+    @State private var pendingStretches: [Stretch] = []
+    /// Whether to ask the user about warming up right now.
+    @State private var showWarmupPrompt = false
+    /// Whether to present the warmup sheet right now.
+    @State private var showWarmup = false
 
     private var userId: String {
         authService.currentUser?.id.uuidString.lowercased() ?? ""
     }
 
     var body: some View {
-        @Bindable var viewModel = viewModel
-
-        return NavigationStack {
+        NavigationStack {
             ZStack {
                 Theme.background.ignoresSafeArea()
 
-                ScrollView {
-                    VStack(spacing: Theme.Spacing.sm) {
-                        // Top-level CTAs — preserved per #257 coordination
-                        Button {
-                            Haptics.light()
-                            pendingWorkoutName = ""
-                            showNameEntry = true
-                        } label: {
-                            HStack(spacing: 10) {
-                                Image(systemName: "play.fill")
-                                Text("Start Workout")
+                VStack(spacing: 0) {
+                    ScrollView {
+                        VStack(spacing: Theme.Spacing.sm) {
+                            // Start Workout CTA
+                            Button {
+                                Haptics.light()
+                                pendingWorkoutName = ""
+                                showNameEntry = true
+                            } label: {
+                                HStack(spacing: 10) {
+                                    Image(systemName: "play.fill")
+                                    Text("Start Workout")
+                                }
+                            }
+                            .buttonStyle(AccentButtonStyle())
+                            .padding(.horizontal, Theme.Spacing.md)
+                            .padding(.top, Theme.Spacing.md)
+                            .simultaneousGesture(
+                                LongPressGesture(minimumDuration: 0.6).onEnded { _ in
+                                    // Long-press resets the warmup preference so the prompt shows again.
+                                    Haptics.medium()
+                                    warmupOptIn = ""
+                                    pendingWorkoutName = ""
+                                    showNameEntry = true
+                                }
+                            )
+                            .accessibilityHint("Long press to reset warmup preference")
+
+                            // Build Workout + Log Past Workout (side-by-side)
+                            HStack(spacing: Theme.Spacing.sm) {
+                                Button {
+                                    Haptics.light()
+                                    showBuilder = true
+                                } label: {
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "hammer.fill")
+                                        Text("Build")
+                                    }
+                                }
+                                .buttonStyle(GhostButtonStyle())
+
+                                Button {
+                                    Haptics.light()
+                                    showLogPastWorkout = true
+                                } label: {
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "calendar.badge.clock")
+                                        Text("Log Past")
+                                    }
+                                }
+                                .buttonStyle(GhostButtonStyle())
+                                .accessibilityLabel("Log a past workout")
+                            }
+                            .padding(.horizontal, Theme.Spacing.md)
+
+                            // First workout guide for new users
+                            if recentWorkouts.isEmpty && !hasStartedFirstWorkout {
+                                firstWorkoutCard
+                            }
+
+                            // Quick Start templates
+                            templateSection
+
+                            // Recent workouts
+                            if !recentWorkouts.isEmpty {
+                                recentSection
+                            }
+
+                            // My Workouts (custom templates)
+                            if !myTemplates.isEmpty {
+                                myWorkoutsSection
+                            }
+
+                            // Saved Workouts
+                            if !savedTemplates.isEmpty {
+                                savedSection
                             }
                         }
-                        .buttonStyle(AccentButtonStyle())
-                        .padding(.horizontal, Theme.Spacing.md)
-                        .padding(.top, Theme.Spacing.md)
-
-                        Button {
-                            Haptics.light()
-                            showBuilder = true
-                        } label: {
-                            HStack(spacing: 10) {
-                                Image(systemName: "hammer.fill")
-                                Text("Build Workout")
-                            }
-                        }
-                        .buttonStyle(GhostButtonStyle())
-                        .padding(.horizontal, Theme.Spacing.md)
-
-                        // First-workout onboarding card — preserved
-                        if viewModel.recent.isEmpty && !hasStartedFirstWorkout {
-                            firstWorkoutCard
-                        }
-
-                        // Filter bar — applies to whichever tab is active
-                        WorkoutFilterBar(filter: $viewModel.filter)
-
-                        // Tab segmented control
-                        Picker("Workout Tab", selection: $viewModel.selectedTab) {
-                            ForEach(WorkoutTab.allCases) { tab in
-                                Text(tab.displayName).tag(tab)
-                            }
-                        }
-                        .pickerStyle(.segmented)
-                        .padding(.horizontal, Theme.Spacing.md)
-                        .accessibilityLabel("Workout tab")
-
-                        // Tab content
-                        tabContent
-                            .padding(.bottom, Theme.Spacing.xl)
                     }
                 }
             }
@@ -84,201 +128,82 @@ struct WorkoutView: View {
             .navigationBarTitleDisplayMode(.large)
             .toolbarColorScheme(.dark, for: .navigationBar)
             .task {
-                await viewModel.load(userId: userId)
+                await loadSections()
             }
             .onChange(of: workoutSession.isPresented) { _, isPresented in
                 if !isPresented {
-                    Task { await viewModel.load(userId: userId) }
+                    Task { await loadSections() }
                 }
-            }
-        }
-        .sheet(item: $friendWorkoutDetail) { workout in
-            NavigationStack {
-                WorkoutDetailView(workout: workout)
-                    .toolbar {
-                        ToolbarItem(placement: .cancellationAction) {
-                            Button("Close") { friendWorkoutDetail = nil }
-                                .foregroundStyle(Theme.accent)
-                        }
-                    }
             }
         }
         .alert("Name Your Workout", isPresented: $showNameEntry) {
             TextField("e.g. Push Day", text: $pendingWorkoutName)
             Button("Start") {
                 let name = pendingWorkoutName.isEmpty ? "Workout" : pendingWorkoutName
-                workoutSession.startWorkout(name: name, userId: userId)
-                workoutSession.isPresented = true
+                requestStart(stretches: StretchDatabase.defaultRoutine(target: TimeInterval(warmupMinutes * 60))) {
+                    workoutSession.startWorkout(name: name, userId: userId)
+                    workoutSession.isPresented = true
+                }
             }
             Button("Cancel", role: .cancel) {}
         }
+        .confirmationDialog(
+            "Warm up first?",
+            isPresented: $showWarmupPrompt,
+            titleVisibility: .visible
+        ) {
+            Button("Yes, \(warmupMinutes) min") {
+                warmupOptIn = "yes"
+                showWarmup = true
+            }
+            Button("No, skip") {
+                warmupOptIn = "no"
+                runPendingStartImmediately()
+            }
+            Button("Just this once", role: .cancel) {
+                // Don't persist a preference — start without warmup but ask again next time.
+                runPendingStartImmediately()
+            }
+        } message: {
+            Text("A 5-10 minute stretch routine helps loosen up before lifting.")
+        }
+        .fullScreenCover(isPresented: $showWarmup) {
+            WarmupView(
+                stretches: pendingStretches.isEmpty ? StretchDatabase.defaultRoutine() : pendingStretches,
+                totalDuration: warmupMinutes * 60
+            ) {
+                runPendingStartImmediately()
+            }
+        }
         .sheet(isPresented: $showBuilder, onDismiss: {
-            Task { await viewModel.load(userId: userId) }
+            templateRefreshId = UUID()
+            Task { await loadSections() }
         }) {
             WorkoutBuilderView()
+        }
+        .sheet(isPresented: $showLogPastWorkout, onDismiss: {
+            Task { await loadSections() }
+        }) {
+            LogPastWorkoutView()
         }
         .sheet(item: $previewTemplate) { template in
             TemplateDetailView(template: template) {
                 previewTemplate = nil
-                workoutSession.startFromTemplate(template, userId: userId)
-                workoutSession.isPresented = true
-            }
-        }
-    }
-
-    // MARK: - Tab Content
-
-    @ViewBuilder
-    private var tabContent: some View {
-        switch viewModel.selectedTab {
-        case .mine:      mineTab
-        case .recent:    recentTab
-        case .templates: templatesTab
-        case .friends:   friendsTab
-        }
-    }
-
-    // MARK: - Mine Tab
-
-    private var mineTab: some View {
-        Group {
-            if viewModel.myTemplates.isEmpty {
-                XomEmptyState(
-                    icon: "star.fill",
-                    title: "No Custom Workouts Yet",
-                    subtitle: "Build a workout to save it here for quick access.",
-                    ctaLabel: "Build Workout",
-                    ctaAction: { showBuilder = true }
-                )
-            } else if viewModel.isEmptyAfterFilter(for: .mine) {
-                noMatchesState
-            } else {
-                LazyVStack(spacing: Theme.Spacing.sm) {
-                    ForEach(Array(viewModel.filteredTemplatesMine.enumerated()), id: \.element.id) { index, template in
-                        TemplateCardView(template: template, style: .row) {
-                            previewTemplate = template
-                        }
-                        .staggeredAppear(index: index)
-                        .contextMenu {
-                            Button(role: .destructive) {
-                                deleteTemplate(template)
-                            } label: {
-                                Label("Delete", systemImage: "trash")
-                            }
-                        }
-                    }
+                requestStart(stretches: StretchDatabase.suggestedStretches(for: template, target: TimeInterval(warmupMinutes * 60))) {
+                    workoutSession.startFromTemplate(template, userId: userId)
+                    workoutSession.isPresented = true
                 }
-                .padding(.horizontal, Theme.Spacing.md)
             }
         }
-    }
-
-    // MARK: - Recent Tab
-
-    private var recentTab: some View {
-        Group {
-            if viewModel.recent.isEmpty {
-                XomEmptyState(
-                    icon: "clock.arrow.circlepath",
-                    title: "No Recent Workouts",
-                    subtitle: "Complete your first workout to see it here.",
-                    ctaLabel: "Start Workout",
-                    ctaAction: {
-                        pendingWorkoutName = ""
-                        showNameEntry = true
-                    }
-                )
-            } else if viewModel.isEmptyAfterFilter(for: .recent) {
-                noMatchesState
-            } else {
-                LazyVStack(spacing: Theme.Spacing.sm) {
-                    ForEach(Array(viewModel.filteredRecent.enumerated()), id: \.element.id) { index, workout in
-                        RecentWorkoutCard(workout: workout, style: .row) {
-                            previewTemplate = templateFromWorkout(workout)
-                        }
-                        .staggeredAppear(index: index)
-                    }
+        .sheet(isPresented: $showTemplateList) {
+            TemplateListView { template in
+                // Dismiss the list first, then show preview after a brief delay
+                showTemplateList = false
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    previewTemplate = template
                 }
-                .padding(.horizontal, Theme.Spacing.md)
             }
         }
-    }
-
-    // MARK: - Templates Tab
-
-    private var templatesTab: some View {
-        Group {
-            if viewModel.builtInTemplates.isEmpty && viewModel.savedTemplates.isEmpty {
-                XomEmptyState(
-                    icon: "list.bullet.rectangle.portrait",
-                    title: "No Templates",
-                    subtitle: "Templates will appear once they load."
-                )
-            } else if viewModel.isEmptyAfterFilter(for: .templates) {
-                noMatchesState
-            } else {
-                LazyVStack(spacing: Theme.Spacing.sm) {
-                    ForEach(Array(viewModel.filteredTemplatesBuiltIn.enumerated()), id: \.element.id) { index, template in
-                        TemplateCardView(template: template, style: .row) {
-                            previewTemplate = template
-                        }
-                        .staggeredAppear(index: index)
-                    }
-                }
-                .padding(.horizontal, Theme.Spacing.md)
-            }
-        }
-    }
-
-    // MARK: - Friends Tab
-
-    private var friendsTab: some View {
-        Group {
-            if viewModel.isLoadingFriends && viewModel.friendWorkouts.isEmpty {
-                VStack(spacing: Theme.Spacing.md) {
-                    XomFitLoaderPulse()
-                    Text("Loading friends' workouts...")
-                        .font(Theme.fontSmall)
-                        .foregroundStyle(Theme.textSecondary)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(Theme.Spacing.xl)
-            } else if viewModel.friendWorkouts.isEmpty {
-                XomEmptyState(
-                    icon: "person.2.fill",
-                    title: "No Friend Activity",
-                    subtitle: "Add friends to see their recent workouts here.",
-                    ctaLabel: nil,
-                    ctaAction: nil
-                )
-            } else if viewModel.isEmptyAfterFilter(for: .friends) {
-                noMatchesState
-            } else {
-                LazyVStack(spacing: Theme.Spacing.sm) {
-                    ForEach(Array(viewModel.filteredFriendWorkouts.enumerated()), id: \.element.id) { index, workout in
-                        RecentWorkoutCard(workout: workout, style: .row) {
-                            friendWorkoutDetail = workout
-                        }
-                        .staggeredAppear(index: index)
-                    }
-                }
-                .padding(.horizontal, Theme.Spacing.md)
-            }
-        }
-    }
-
-    // MARK: - Shared Empty States
-
-    private var noMatchesState: some View {
-        XomEmptyState(
-            icon: "line.3.horizontal.decrease.circle",
-            title: "No Matches",
-            subtitle: "Try clearing the filter to see more results.",
-            ctaLabel: "Clear Filter",
-            ctaAction: {
-                viewModel.filter = WorkoutFilter()
-            }
-        )
     }
 
     // MARK: - First Workout Guide
@@ -302,8 +227,10 @@ struct WorkoutView: View {
                 Haptics.medium()
                 UserDefaults.standard.set(true, forKey: "xomfit_first_workout_started")
                 if let template = WorkoutTemplate.builtIn.first(where: { $0.id == "tpl-fb-a" }) {
-                    workoutSession.startFromTemplate(template, userId: userId)
-                    workoutSession.isPresented = true
+                    requestStart(stretches: StretchDatabase.suggestedStretches(for: template, target: TimeInterval(warmupMinutes * 60))) {
+                        workoutSession.startFromTemplate(template, userId: userId)
+                        workoutSession.isPresented = true
+                    }
                 }
             } label: {
                 HStack(spacing: 8) {
@@ -327,13 +254,159 @@ struct WorkoutView: View {
         .padding(.horizontal, Theme.Spacing.md)
     }
 
-    // MARK: - Helpers
+    // MARK: - Templates
 
-    private func deleteTemplate(_ template: WorkoutTemplate) {
-        guard template.isCustom else { return }
-        Haptics.medium()
-        TemplateService.shared.deleteCustomTemplate(id: template.id)
-        Task { await viewModel.load(userId: userId) }
+    private var templateSection: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            HStack {
+                Text("Quick Start")
+                    .font(.body.weight(.bold))
+                    .foregroundStyle(Theme.textPrimary)
+                Spacer()
+                Button {
+                    showTemplateList = true
+                } label: {
+                    Text("See All")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(Theme.accent)
+                }
+            }
+            .padding(.horizontal, Theme.Spacing.md)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: Theme.Spacing.sm) {
+                    ForEach(Array(TemplateService.shared.allTemplates().prefix(6).enumerated()), id: \.element.id) { index, template in
+                        TemplateCardView(template: template) {
+                            previewTemplate = template
+                        }
+                        .staggeredAppear(index: index)
+                    }
+                }
+                .padding(.horizontal, Theme.Spacing.md)
+                .id(templateRefreshId)
+            }
+        }
+        .padding(.vertical, Theme.Spacing.sm)
+    }
+
+    // MARK: - Recent Workouts
+
+    private var recentSection: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            Text("Recent")
+                .font(.body.weight(.bold))
+                .foregroundStyle(Theme.textPrimary)
+                .padding(.horizontal, Theme.Spacing.md)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: Theme.Spacing.sm) {
+                    ForEach(Array(recentWorkouts.prefix(5).enumerated()), id: \.element.id) { index, workout in
+                        TemplateCardView(template: templateFromWorkout(workout)) {
+                            previewTemplate = templateFromWorkout(workout)
+                        }
+                        .staggeredAppear(index: index)
+                    }
+                }
+                .padding(.horizontal, Theme.Spacing.md)
+            }
+        }
+        .padding(.vertical, Theme.Spacing.sm)
+    }
+
+    // MARK: - My Workouts
+
+    private var myWorkoutsSection: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            Text("My Workouts")
+                .font(.body.weight(.bold))
+                .foregroundStyle(Theme.textPrimary)
+                .padding(.horizontal, Theme.Spacing.md)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: Theme.Spacing.sm) {
+                    ForEach(Array(myTemplates.enumerated()), id: \.element.id) { index, template in
+                        TemplateCardView(template: template) {
+                            previewTemplate = template
+                        }
+                        .staggeredAppear(index: index)
+                    }
+                }
+                .padding(.horizontal, Theme.Spacing.md)
+            }
+        }
+        .padding(.vertical, Theme.Spacing.sm)
+    }
+
+    // MARK: - Saved Workouts
+
+    private var savedSection: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            Text("Saved Workouts")
+                .font(.body.weight(.bold))
+                .foregroundStyle(Theme.textPrimary)
+                .padding(.horizontal, Theme.Spacing.md)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: Theme.Spacing.sm) {
+                    ForEach(Array(savedTemplates.enumerated()), id: \.element.id) { index, template in
+                        TemplateCardView(template: template) {
+                            previewTemplate = template
+                        }
+                        .staggeredAppear(index: index)
+                    }
+                }
+                .padding(.horizontal, Theme.Spacing.md)
+            }
+        }
+        .padding(.vertical, Theme.Spacing.sm)
+    }
+
+    // MARK: - Warmup gating (#261)
+
+    /// Entry point used by every "start workout" path. Either prompts the user about
+    /// warming up first, presents the warmup, or runs the start action directly,
+    /// depending on the user's saved preference.
+    private func requestStart(stretches: [Stretch], action: @escaping () -> Void) {
+        pendingStart = action
+        pendingStretches = stretches
+
+        switch warmupOptIn {
+        case "yes":
+            // User opted into warmups — present the warmup sheet.
+            // Defer slightly so any presenting sheet has time to dismiss.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                showWarmup = true
+            }
+        case "no":
+            // User opted out — start immediately.
+            runPendingStartImmediately()
+        default:
+            // First time (or user reset via long-press) — ask.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                showWarmupPrompt = true
+            }
+        }
+    }
+
+    /// Run the captured pending start action and clear it.
+    private func runPendingStartImmediately() {
+        let action = pendingStart
+        pendingStart = nil
+        pendingStretches = []
+        // Slight delay so any prompt/sheet dismissal lands cleanly before the workout cover.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            action?()
+        }
+    }
+
+    // MARK: - Data Loading
+
+    private func loadSections() async {
+        guard !userId.isEmpty else { return }
+        recentWorkouts = await WorkoutService.shared.fetchWorkouts(userId: userId)
+        let allCustom = TemplateService.shared.allTemplates().filter { $0.isCustom }
+        myTemplates = allCustom.filter { $0.category != .saved }
+        savedTemplates = allCustom.filter { $0.category == .saved }
     }
 
     private func templateFromWorkout(_ workout: Workout) -> WorkoutTemplate {

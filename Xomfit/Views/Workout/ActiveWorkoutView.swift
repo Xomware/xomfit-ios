@@ -17,6 +17,11 @@ struct ActiveWorkoutView: View {
     @State private var timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     @State private var restTimerHapticFired = false
     @State private var showStartingExercisePicker = false
+    /// Mid-workout exercise jumper (#253). Reachable any time via the persistent pill.
+    @State private var showExerciseJumper = false
+    /// Set after `jumpToExercise` runs; consumed by the list-mode `ScrollViewReader`
+    /// to scroll to the picked card, then cleared.
+    @State private var pendingScrollIndex: Int?
 
     var body: some View {
         @Bindable var viewModel = viewModel
@@ -28,6 +33,12 @@ struct ActiveWorkoutView: View {
                 VStack(spacing: 0) {
                     // Header bar
                     headerBar
+
+                    // Persistent current-exercise pill (#253). Sits below the header so it
+                    // doesn't fight any other header controls (pause button, etc.).
+                    if !viewModel.exercises.isEmpty {
+                        currentExercisePill
+                    }
 
                     // Rest timer config — hidden when rest timer is running (redundant with the active card)
                     if !viewModel.isRestTimerActive && !viewModel.focusMode {
@@ -58,24 +69,35 @@ struct ActiveWorkoutView: View {
                         if viewModel.exercises.isEmpty {
                             emptyState
                         } else {
-                            ScrollView {
-                                LazyVStack(spacing: Theme.Spacing.md) {
-                                    ForEach(viewModel.exercises.indices, id: \.self) { exIdx in
-                                        ExerciseCard(
-                                            exerciseIndex: exIdx,
-                                            viewModel: viewModel
-                                        )
+                            ScrollViewReader { proxy in
+                                ScrollView {
+                                    LazyVStack(spacing: Theme.Spacing.md) {
+                                        ForEach(viewModel.exercises.indices, id: \.self) { exIdx in
+                                            ExerciseCard(
+                                                exerciseIndex: exIdx,
+                                                viewModel: viewModel
+                                            )
+                                            .id(exIdx)
+                                        }
                                     }
+                                    .padding(Theme.Spacing.md)
+                                    // Bottom padding so FAB doesn't overlap last card
+                                    .padding(.bottom, 80)
                                 }
-                                .padding(Theme.Spacing.md)
-                                // Bottom padding so FAB doesn't overlap last card
-                                .padding(.bottom, 80)
-                            }
-                            .onTapGesture {
-                                UIApplication.shared.sendAction(
-                                    #selector(UIResponder.resignFirstResponder),
-                                    to: nil, from: nil, for: nil
-                                )
+                                .onTapGesture {
+                                    UIApplication.shared.sendAction(
+                                        #selector(UIResponder.resignFirstResponder),
+                                        to: nil, from: nil, for: nil
+                                    )
+                                }
+                                .onChange(of: pendingScrollIndex) { _, newValue in
+                                    guard let idx = newValue else { return }
+                                    withAnimation(.xomChill) {
+                                        proxy.scrollTo(idx, anchor: .top)
+                                    }
+                                    // Clear after the scroll has been kicked off.
+                                    pendingScrollIndex = nil
+                                }
                             }
                         }
                     }
@@ -196,6 +218,14 @@ struct ActiveWorkoutView: View {
             .presentationDetents([.large])
             .presentationDragIndicator(.visible)
         }
+        .sheet(isPresented: $showExerciseJumper) {
+            ExerciseJumperSheet(viewModel: viewModel) { idx in
+                // Trigger list-mode scroll. In focus mode this is harmless —
+                // `.id(viewModel.focusExerciseIndex)` on the focus view drives
+                // the visual transition independently.
+                pendingScrollIndex = idx
+            }
+        }
         .sheet(isPresented: $showStartingExercisePicker) {
             NavigationStack {
                 List {
@@ -297,6 +327,24 @@ struct ActiveWorkoutView: View {
 
             Spacer()
 
+            // Pause / Resume toggle — freezes elapsed time + rest timer
+            Button {
+                Haptics.light()
+                withAnimation(.xomChill) {
+                    viewModel.togglePause()
+                }
+            } label: {
+                Image(systemName: viewModel.isPaused ? "play.circle.fill" : "pause.circle.fill")
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(viewModel.isPaused ? Theme.accent : Theme.textPrimary)
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
+            }
+            .accessibilityLabel(viewModel.isPaused ? "Resume workout" : "Pause workout")
+            .accessibilityHint(viewModel.isPaused
+                ? "Resumes the elapsed timer and rest countdown"
+                : "Freezes the elapsed timer and rest countdown")
+
             // Focus mode toggle
             Button {
                 withAnimation {
@@ -346,6 +394,83 @@ struct ActiveWorkoutView: View {
         .padding(.top, Theme.Spacing.md)
         .padding(.bottom, Theme.Spacing.md)
         .background(Theme.surface)
+    }
+
+    // MARK: - Current Exercise Pill (#253)
+
+    /// Persistent, tappable indicator of the current exercise + set.
+    /// Sits directly below the header bar (intentionally not inside the headerBar
+    /// to avoid colliding with other header controls).
+    private var currentExercisePill: some View {
+        Button {
+            Haptics.selection()
+            showExerciseJumper = true
+        } label: {
+            HStack(spacing: Theme.Spacing.sm) {
+                Image(systemName: "figure.strengthtraining.traditional")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Theme.accent)
+
+                if viewModel.allExercisesComplete {
+                    Text("All exercises complete")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Theme.textPrimary)
+                        .lineLimit(1)
+                } else if let name = viewModel.currentExerciseName {
+                    Text(name)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Theme.textPrimary)
+                        .lineLimit(1)
+
+                    Text("\u{2022}")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(Theme.textTertiary)
+
+                    Text("Set \(viewModel.currentSetNumber)/\(max(viewModel.currentExerciseTotalSets, 1))")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(Theme.textSecondary)
+                        .lineLimit(1)
+                } else {
+                    Text("—")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Theme.textSecondary)
+                }
+
+                Spacer(minLength: Theme.Spacing.sm)
+
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(Theme.textSecondary)
+            }
+            .padding(.horizontal, Theme.Spacing.md)
+            .padding(.vertical, Theme.Spacing.sm)
+            .frame(minHeight: 44)
+            .frame(maxWidth: .infinity)
+            .background(Theme.surface)
+            .clipShape(.capsule)
+            .overlay(
+                Capsule()
+                    .stroke(Theme.accent.opacity(0.2), lineWidth: 1)
+            )
+            .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal, Theme.Spacing.md)
+        .padding(.top, Theme.Spacing.xs)
+        .accessibilityLabel(pillAccessibilityLabel)
+        .accessibilityHint("Opens the exercise list to switch exercises")
+    }
+
+    /// Voice-over label that names the current exercise + set context.
+    private var pillAccessibilityLabel: String {
+        if viewModel.allExercisesComplete {
+            return "All exercises complete. Tap to switch exercises."
+        }
+        guard let name = viewModel.currentExerciseName else {
+            return "No current exercise. Tap to choose one."
+        }
+        let total = max(viewModel.currentExerciseTotalSets, 1)
+        return "Current exercise: \(name), set \(viewModel.currentSetNumber) of \(total). Tap to switch exercises."
     }
 
     /// Compact rest countdown string for the header chip (matches RestTimerView format).
@@ -507,6 +632,23 @@ private struct ExerciseCard: View {
     let viewModel: WorkoutLoggerViewModel
 
     @State private var showDetails = false
+    @State private var showSupersetActionSheet = false
+
+    private var isInSuperset: Bool {
+        viewModel.exercises.indices.contains(exerciseIndex)
+            && viewModel.exercises[exerciseIndex].supersetGroupId != nil
+    }
+
+    private var supersetLetter: String? {
+        viewModel.supersetLetter(forExercise: exerciseIndex)
+    }
+
+    private var canGroupWithNext: Bool {
+        guard exerciseIndex + 1 < viewModel.exercises.count else { return false }
+        return viewModel.exercises[exerciseIndex].supersetGroupId == nil
+            || viewModel.exercises[exerciseIndex].supersetGroupId
+                != viewModel.exercises[exerciseIndex + 1].supersetGroupId
+    }
 
     @ViewBuilder
     var body: some View {
@@ -516,9 +658,21 @@ private struct ExerciseCard: View {
             // Exercise header
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(exercise.exercise.name)
-                        .font(.body.weight(.bold))
-                        .foregroundStyle(Theme.textPrimary)
+                    HStack(spacing: 6) {
+                        if let letter = supersetLetter {
+                            Text("Superset \(letter)")
+                                .font(.caption2.weight(.black))
+                                .foregroundStyle(.black)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Theme.accent)
+                                .clipShape(.capsule)
+                                .accessibilityLabel("Superset \(letter)")
+                        }
+                        Text(exercise.exercise.name)
+                            .font(.body.weight(.bold))
+                            .foregroundStyle(Theme.textPrimary)
+                    }
                     HStack(spacing: 4) {
                         ForEach(exercise.exercise.muscleGroups.prefix(2), id: \.self) { mg in
                             Text(mg.displayName)
@@ -673,7 +827,12 @@ private struct ExerciseCard: View {
                     onToggleWeightMode: {
                         viewModel.toggleWeightMode(exerciseIndex: exerciseIndex, setIndex: setIdx)
                     },
-                    lateralityLabel: exercise.selectedLaterality != .bilateral ? (exercise.exercise.muscleGroups.contains(where: { [.quads, .hamstrings, .glutes, .calves].contains($0) }) ? "/leg" : "/arm") : nil
+                    onAddDropSet: {
+                        viewModel.addDropSet(exerciseIndex: exerciseIndex, parentSetIndex: setIdx)
+                    },
+                    lateralityLabel: exercise.selectedLaterality != .bilateral ? (exercise.exercise.muscleGroups.contains(where: { [.quads, .hamstrings, .glutes, .calves].contains($0) }) ? "/leg" : "/arm") : nil,
+                    lastSet: viewModel.lastSetForExercise(exercise.exercise.id),
+                    personalRecord: viewModel.personalRecordForExercise(exercise.exercise.id)
                 )
             }
 
@@ -696,7 +855,45 @@ private struct ExerciseCard: View {
         }
         .padding(Theme.Spacing.md)
         .background(Theme.surface)
+        .overlay(alignment: .leading) {
+            // Vertical accent bar marking superset members
+            if isInSuperset {
+                Rectangle()
+                    .fill(Theme.accent)
+                    .frame(width: 4)
+                    .accessibilityHidden(true)
+            }
+        }
         .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+        .onLongPressGesture(minimumDuration: 0.5) {
+            // Only present the menu when there is something actionable
+            guard isInSuperset || canGroupWithNext else { return }
+            Haptics.selection()
+            showSupersetActionSheet = true
+        }
+        .confirmationDialog(
+            exercise.exercise.name,
+            isPresented: $showSupersetActionSheet,
+            titleVisibility: .visible
+        ) {
+            if isInSuperset {
+                Button("Ungroup Superset", role: .destructive) {
+                    Haptics.light()
+                    viewModel.toggleSupersetWithNext(exerciseIndex: exerciseIndex)
+                }
+            }
+            if canGroupWithNext {
+                Button("Group with Next Exercise") {
+                    Haptics.success()
+                    viewModel.toggleSupersetWithNext(exerciseIndex: exerciseIndex)
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text(isInSuperset
+                 ? "This exercise is part of a superset."
+                 : "Group this exercise with the next one for back-to-back sets.")
+        }
         .sheet(isPresented: $showDetails) {
             ExerciseDetailSheet(exercise: exercise.exercise)
         }

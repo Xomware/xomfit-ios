@@ -8,7 +8,14 @@ struct SetRowView: View {
     let onComplete: () -> Void
     let onDelete: () -> Void
     let onToggleWeightMode: () -> Void
+    let onAddDropSet: (() -> Void)?
     var lateralityLabel: String? = nil
+    /// Most recent set the user has logged for this exercise from history.
+    /// Drives the "Last: 135×8" hint below the row. nil = first time doing this exercise.
+    var lastSet: WorkoutSet? = nil
+    /// Heaviest set the user has ever logged for this exercise (history only).
+    /// Drives the "PR: 145×6" hint and the inline "NEW PR" badge when beat.
+    var personalRecord: WorkoutSet? = nil
 
     @State private var weightText: String
     @State private var repsText: String
@@ -23,6 +30,26 @@ struct SetRowView: View {
         workoutSet.isPersonalRecord
     }
 
+    private var isDropSet: Bool {
+        workoutSet.isDropSet
+    }
+
+    /// Live "did this completed set just beat the prior PR?" check.
+    /// Compares against the historical PR (passed in), so we don't false-positive
+    /// after PRService flips `isPersonalRecord` on the row itself.
+    private var beatsPriorPR: Bool {
+        guard isCompleted, workoutSet.weight > 0, workoutSet.reps > 0 else { return false }
+        guard let pr = personalRecord else { return true } // first ever logged set counts as a PR
+        if workoutSet.weight > pr.weight { return true }
+        if workoutSet.weight == pr.weight && workoutSet.reps > pr.reps { return true }
+        return false
+    }
+
+    /// True when we have at least one of last / PR to surface as a subtitle.
+    private var hasHints: Bool {
+        lastSet != nil || personalRecord != nil
+    }
+
     init(
         setNumber: Int,
         workoutSet: WorkoutSet,
@@ -31,7 +58,10 @@ struct SetRowView: View {
         onComplete: @escaping () -> Void,
         onDelete: @escaping () -> Void,
         onToggleWeightMode: @escaping () -> Void = {},
-        lateralityLabel: String? = nil
+        onAddDropSet: (() -> Void)? = nil,
+        lateralityLabel: String? = nil,
+        lastSet: WorkoutSet? = nil,
+        personalRecord: WorkoutSet? = nil
     ) {
         self.setNumber = setNumber
         self.workoutSet = workoutSet
@@ -40,7 +70,10 @@ struct SetRowView: View {
         self.onComplete = onComplete
         self.onDelete = onDelete
         self.onToggleWeightMode = onToggleWeightMode
+        self.onAddDropSet = onAddDropSet
         self.lateralityLabel = lateralityLabel
+        self.lastSet = lastSet
+        self.personalRecord = personalRecord
 
         let w = workoutSet.weight
         let r = workoutSet.reps
@@ -49,6 +82,33 @@ struct SetRowView: View {
     }
 
     var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            mainRow
+            if hasHints || beatsPriorPR {
+                hintRow
+            }
+            if isCompleted, !isDropSet, let onAddDropSet {
+                addDropSetButton(onAddDropSet)
+            }
+        }
+        .padding(.leading, isDropSet ? Theme.Spacing.lg : 0)
+        .frame(minHeight: isDropSet ? 44 : 52)
+        .background(isCompleted ? Theme.accent.opacity(0.08) : Color.clear)
+        .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
+        .animation(nil, value: workoutSet.completedAt)
+        .onChange(of: workoutSet.weight) { _, newWeight in
+            let formatted = newWeight > 0 ? newWeight.formattedWeight : ""
+            if weightText != formatted { weightText = formatted }
+        }
+        .onChange(of: workoutSet.reps) { _, newReps in
+            let formatted = newReps > 0 ? "\(newReps)" : ""
+            if repsText != formatted { repsText = formatted }
+        }
+    }
+
+    // MARK: - Main row (weight / reps / complete)
+
+    private var mainRow: some View {
         HStack(spacing: 0) {
             // PR indicator: 3pt gold leading stripe (only when it's a PR)
             if isPR {
@@ -63,20 +123,27 @@ struct SetRowView: View {
                 Button(action: onDelete) {
                     Image(systemName: "minus.circle.fill")
                         .foregroundStyle(Theme.destructive)
-                        .font(.headline)
+                        .font(isDropSet ? .subheadline : .headline)
                 }
                 .buttonStyle(.plain)
                 .frame(width: 30)
                 .accessibilityLabel("Delete set \(setNumber)")
 
-                // PR trophy icon (replaces tinted row background)
+                // PR trophy / DROP badge / set number
                 if isPR {
                     Image(systemName: "trophy.fill")
                         .font(.caption2)
                         .foregroundStyle(Theme.prGold)
                         .frame(width: 16)
+                } else if isDropSet {
+                    Text("DROP")
+                        .font(.system(size: 9, weight: .black))
+                        .foregroundStyle(Theme.accent)
+                        .padding(.horizontal, 4)
+                        .padding(.vertical, 1)
+                        .background(Theme.accent.opacity(0.18))
+                        .clipShape(.capsule)
                 } else {
-                    // Set number
                     Text("\(setNumber)")
                         .font(.subheadline.weight(.bold).monospaced())
                         .foregroundStyle(isCompleted ? Theme.accent : Theme.textSecondary)
@@ -87,8 +154,8 @@ struct SetRowView: View {
                 TextField("0", text: $weightText)
                     .keyboardType(.decimalPad)
                     .multilineTextAlignment(.center)
-                    .font(Theme.fontNumberMedium)
-                    .padding(.vertical, 8)
+                    .font(isDropSet ? .footnote.weight(.semibold).monospacedDigit() : Theme.fontNumberMedium)
+                    .padding(.vertical, isDropSet ? 6 : 8)
                     .padding(.horizontal, 6)
                     .background(Theme.surfaceElevated)
                     .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
@@ -117,8 +184,8 @@ struct SetRowView: View {
                 TextField("0", text: $repsText)
                     .keyboardType(.numberPad)
                     .multilineTextAlignment(.center)
-                    .font(Theme.fontNumberMedium)
-                    .padding(.vertical, 8)
+                    .font(isDropSet ? .footnote.weight(.semibold).monospacedDigit() : Theme.fontNumberMedium)
+                    .padding(.vertical, isDropSet ? 6 : 8)
                     .padding(.horizontal, 6)
                     .background(Theme.surfaceElevated)
                     .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
@@ -142,7 +209,7 @@ struct SetRowView: View {
                         .frame(width: 30)
                 }
 
-                // Complete checkmark — accent fill when done, 28pt target
+                // Complete checkmark
                 Button(action: {
                     Haptics.success()
                     onComplete()
@@ -167,19 +234,84 @@ struct SetRowView: View {
                 .accessibilityLabel(isCompleted ? "Mark set \(setNumber) incomplete" : "Complete set \(setNumber)")
             }
             .padding(.horizontal, Theme.Spacing.md)
-            .padding(.vertical, 6)
+            .padding(.vertical, isDropSet ? 4 : 6)
         }
-        .frame(minHeight: 52)
-        .background(isCompleted ? Theme.accent.opacity(0.08) : Color.clear)
-        .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
-        .animation(nil, value: workoutSet.completedAt)
-        .onChange(of: workoutSet.weight) { _, newWeight in
-            let formatted = newWeight > 0 ? newWeight.formattedWeight : ""
-            if weightText != formatted { weightText = formatted }
+    }
+
+    // MARK: - Hint row (Last / PR / NEW PR badge)
+
+    private var hintRow: some View {
+        HStack(spacing: Theme.Spacing.sm) {
+            // align under the weight/reps fields, past the delete + set number columns
+            Spacer().frame(width: 30 + Theme.Spacing.sm + 24)
+
+            if let last = lastSet, last.weight > 0, last.reps > 0 {
+                hintChip(
+                    label: "Last",
+                    value: "\(last.weight.formattedWeight)×\(last.reps)",
+                    color: Theme.textSecondary
+                )
+            }
+
+            if let pr = personalRecord, pr.weight > 0, pr.reps > 0 {
+                hintChip(
+                    label: "PR",
+                    value: "\(pr.weight.formattedWeight)×\(pr.reps)",
+                    color: Theme.prGold
+                )
+            }
+
+            if beatsPriorPR {
+                Text("NEW PR")
+                    .font(.caption2.weight(.heavy))
+                    .foregroundStyle(.black)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(Theme.prGold)
+                    .clipShape(.capsule)
+                    .accessibilityLabel("New personal record")
+            }
+
+            Spacer()
         }
-        .onChange(of: workoutSet.reps) { _, newReps in
-            let formatted = newReps > 0 ? "\(newReps)" : ""
-            if repsText != formatted { repsText = formatted }
+        .padding(.horizontal, Theme.Spacing.md)
+        .padding(.bottom, 4)
+    }
+
+    private func hintChip(label: String, value: String, color: Color) -> some View {
+        HStack(spacing: 3) {
+            Text(label)
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(Theme.textTertiary)
+            Text(value)
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(color)
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(label) \(value)")
+    }
+
+    // MARK: - Drop set button
+
+    private func addDropSetButton(_ action: @escaping () -> Void) -> some View {
+        Button {
+            Haptics.light()
+            action()
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: "arrow.down.right")
+                    .font(.caption2.weight(.bold))
+                Text("drop set")
+                    .font(.caption2.weight(.semibold))
+            }
+            .foregroundStyle(Theme.accent)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3)
+            .background(Theme.accent.opacity(0.10))
+            .clipShape(.capsule)
+        }
+        .buttonStyle(.plain)
+        .padding(.leading, Theme.Spacing.xl + 30)
+        .accessibilityLabel("Add drop set after set \(setNumber)")
     }
 }
