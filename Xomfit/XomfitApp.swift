@@ -6,6 +6,11 @@ struct XomFitApp: App {
     @State private var authService = AuthService()
     @State private var workoutSession = WorkoutLoggerViewModel()
 
+    /// Drives the fitness-profile questionnaire (#259). Bumped after dismissal so
+    /// the cover doesn't re-present unless the user explicitly opens it again.
+    @State private var showFitnessQuestionnaire = false
+    @AppStorage("onboardingSkipped") private var onboardingSkipped = false
+
     var body: some Scene {
         WindowGroup {
             Group {
@@ -26,16 +31,25 @@ struct XomFitApp: App {
                         .environment(workoutSession)
                         .task {
                             await NotificationService.shared.requestPermission()
+                            evaluateFitnessQuestionnaireGate()
                         }
                         .sheet(isPresented: Bindable(authService).needsProfileCompletion) {
                             ProfileCompletionView()
                                 .environment(authService)
                                 .interactiveDismissDisabled()
+                                .onDisappear { evaluateFitnessQuestionnaireGate() }
                         }
                         .fullScreenCover(isPresented: Bindable(authService).needsOnboarding) {
                             OnboardingView()
                                 .environment(authService)
                                 .interactiveDismissDisabled()
+                                .onDisappear { evaluateFitnessQuestionnaireGate() }
+                        }
+                        .fullScreenCover(isPresented: $showFitnessQuestionnaire) {
+                            FitnessQuestionnaireView(mode: .onboarding) {
+                                showFitnessQuestionnaire = false
+                            }
+                            .interactiveDismissDisabled()
                         }
                 } else {
                     LoginView()
@@ -55,5 +69,17 @@ struct XomFitApp: App {
                 }
             }
         }
+    }
+
+    /// Decide whether to present the fitness questionnaire on this launch.
+    /// Don't re-prompt once the user finishes it OR explicitly skipped — they can
+    /// always reopen it from Settings -> Fitness Goals.
+    private func evaluateFitnessQuestionnaireGate() {
+        guard authService.isAuthenticated else { return }
+        guard !authService.needsProfileCompletion else { return }
+        guard !authService.needsOnboarding else { return }
+        guard UserFitnessProfile.current.completedAt == nil else { return }
+        guard !onboardingSkipped else { return }
+        showFitnessQuestionnaire = true
     }
 }
