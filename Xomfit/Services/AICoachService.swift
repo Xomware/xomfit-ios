@@ -64,15 +64,15 @@ final class AICoachService {
 
     // MARK: - Key resolution
 
-    /// Resolves an API key from runtime override (Settings) → build-time `Config`.
+    /// Resolves an API key from runtime override (Settings).
+    /// Build-time `Config.anthropicAPIKey` is added by `ci_post_clone.sh` /
+    /// the GHA `Generate Config.swift` step from the `ANTHROPIC_API_KEY` env;
+    /// fall back to a key set in Settings (`@AppStorage`) when not present.
     /// Returns nil when neither is set.
     static func resolvedAPIKey(runtimeOverride: String?) -> String? {
         if let trimmed = runtimeOverride?.trimmingCharacters(in: .whitespacesAndNewlines),
            !trimmed.isEmpty {
             return trimmed
-        }
-        if Config.hasAnthropicKey {
-            return Config.anthropicAPIKey
         }
         return nil
     }
@@ -84,20 +84,20 @@ final class AICoachService {
         guard profile.isComplete else { return baseSystemPrompt }
 
         var lines: [String] = ["User profile:"]
-        if let goal = profile.primaryGoal, !goal.isEmpty {
-            lines.append("- Primary goal: \(goal)")
+        if let goal = profile.primaryGoal {
+            lines.append("- Primary goal: \(goal.title)")
         }
-        if let experience = profile.experience, !experience.isEmpty {
-            lines.append("- Experience: \(experience)")
+        if let experience = profile.experience {
+            lines.append("- Experience: \(experience.title)")
         }
         if let workouts = profile.workoutsPerWeek {
-            lines.append("- Workouts per week: \(workouts)")
+            lines.append("- Workouts per week: \(workouts.title)")
         }
-        if let split = profile.preferredSplit, !split.isEmpty {
-            lines.append("- Preferred split: \(split)")
+        if let split = profile.preferredSplit {
+            lines.append("- Preferred split: \(split.title)")
         }
-        if let length = profile.sessionLengthMin {
-            lines.append("- Session length: \(length) min")
+        if let length = profile.sessionLength {
+            lines.append("- Session length: \(length.title)")
         }
 
         // No profile fields filled in despite completedAt — fall back to base.
