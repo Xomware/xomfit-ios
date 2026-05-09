@@ -255,7 +255,8 @@ final class WorkoutLoggerViewModel {
     }
 
     /// Find the most recent set for an exercise from workout history.
-    private func lastSetForExercise(_ exerciseId: String) -> WorkoutSet? {
+    /// Public for use by `SetRowView` PR-aware suggestions (#250).
+    func lastSetForExercise(_ exerciseId: String) -> WorkoutSet? {
         guard !activeUserId.isEmpty else { return nil }
         let workouts = WorkoutService.shared.fetchWorkoutsFromCache(userId: activeUserId)
         for workout in workouts {
@@ -265,6 +266,23 @@ final class WorkoutLoggerViewModel {
             }
         }
         return nil
+    }
+
+    /// Find the highest-weight set ever performed for an exercise from cached workout history.
+    /// Tie-breaks on reps so `145×6` beats `145×5`. Used by SetRowView for PR hint + new-PR badge (#250).
+    func personalRecordForExercise(_ exerciseId: String) -> WorkoutSet? {
+        guard !activeUserId.isEmpty else { return nil }
+        let workouts = WorkoutService.shared.fetchWorkoutsFromCache(userId: activeUserId)
+        let allSets = workouts
+            .flatMap { $0.exercises }
+            .filter { $0.exercise.id == exerciseId }
+            .flatMap { $0.sets }
+            .filter { $0.weight > 0 && $0.reps > 0 }
+        guard !allSets.isEmpty else { return nil }
+        return allSets.max { lhs, rhs in
+            if lhs.weight != rhs.weight { return lhs.weight < rhs.weight }
+            return lhs.reps < rhs.reps
+        }
     }
 
     func removeExercise(at index: Int) {

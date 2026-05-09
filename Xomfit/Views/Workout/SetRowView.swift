@@ -9,6 +9,12 @@ struct SetRowView: View {
     let onDelete: () -> Void
     let onToggleWeightMode: () -> Void
     var lateralityLabel: String? = nil
+    /// Most recent set the user has logged for this exercise from history.
+    /// Drives the "Last: 135×8" hint below the row. nil = first time doing this exercise.
+    var lastSet: WorkoutSet? = nil
+    /// Heaviest set the user has ever logged for this exercise (history only).
+    /// Drives the "PR: 145×6" hint and the inline "NEW PR" badge when beat.
+    var personalRecord: WorkoutSet? = nil
 
     @State private var weightText: String
     @State private var repsText: String
@@ -23,6 +29,22 @@ struct SetRowView: View {
         workoutSet.isPersonalRecord
     }
 
+    /// Live "did this completed set just beat the prior PR?" check.
+    /// Compares against the historical PR (passed in), so we don't false-positive
+    /// after PRService flips `isPersonalRecord` on the row itself.
+    private var beatsPriorPR: Bool {
+        guard isCompleted, workoutSet.weight > 0, workoutSet.reps > 0 else { return false }
+        guard let pr = personalRecord else { return true } // first ever logged set counts as a PR
+        if workoutSet.weight > pr.weight { return true }
+        if workoutSet.weight == pr.weight && workoutSet.reps > pr.reps { return true }
+        return false
+    }
+
+    /// True when we have at least one of last / PR to surface as a subtitle.
+    private var hasHints: Bool {
+        lastSet != nil || personalRecord != nil
+    }
+
     init(
         setNumber: Int,
         workoutSet: WorkoutSet,
@@ -31,7 +53,9 @@ struct SetRowView: View {
         onComplete: @escaping () -> Void,
         onDelete: @escaping () -> Void,
         onToggleWeightMode: @escaping () -> Void = {},
-        lateralityLabel: String? = nil
+        lateralityLabel: String? = nil,
+        lastSet: WorkoutSet? = nil,
+        personalRecord: WorkoutSet? = nil
     ) {
         self.setNumber = setNumber
         self.workoutSet = workoutSet
@@ -41,6 +65,8 @@ struct SetRowView: View {
         self.onDelete = onDelete
         self.onToggleWeightMode = onToggleWeightMode
         self.lateralityLabel = lateralityLabel
+        self.lastSet = lastSet
+        self.personalRecord = personalRecord
 
         let w = workoutSet.weight
         let r = workoutSet.reps
@@ -49,6 +75,29 @@ struct SetRowView: View {
     }
 
     var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            mainRow
+            if hasHints || beatsPriorPR {
+                hintRow
+            }
+        }
+        .frame(minHeight: 52)
+        .background(isCompleted ? Theme.accent.opacity(0.08) : Color.clear)
+        .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
+        .animation(nil, value: workoutSet.completedAt)
+        .onChange(of: workoutSet.weight) { _, newWeight in
+            let formatted = newWeight > 0 ? newWeight.formattedWeight : ""
+            if weightText != formatted { weightText = formatted }
+        }
+        .onChange(of: workoutSet.reps) { _, newReps in
+            let formatted = newReps > 0 ? "\(newReps)" : ""
+            if repsText != formatted { repsText = formatted }
+        }
+    }
+
+    // MARK: - Main row (weight / reps / complete)
+
+    private var mainRow: some View {
         HStack(spacing: 0) {
             // PR indicator: 3pt gold leading stripe (only when it's a PR)
             if isPR {
@@ -169,17 +218,58 @@ struct SetRowView: View {
             .padding(.horizontal, Theme.Spacing.md)
             .padding(.vertical, 6)
         }
-        .frame(minHeight: 52)
-        .background(isCompleted ? Theme.accent.opacity(0.08) : Color.clear)
-        .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
-        .animation(nil, value: workoutSet.completedAt)
-        .onChange(of: workoutSet.weight) { _, newWeight in
-            let formatted = newWeight > 0 ? newWeight.formattedWeight : ""
-            if weightText != formatted { weightText = formatted }
+    }
+
+    // MARK: - Hint row (Last / PR / NEW PR badge)
+
+    private var hintRow: some View {
+        HStack(spacing: Theme.Spacing.sm) {
+            // align under the weight/reps fields, past the delete + set number columns
+            Spacer().frame(width: 30 + Theme.Spacing.sm + 24)
+
+            if let last = lastSet, last.weight > 0, last.reps > 0 {
+                hintChip(
+                    label: "Last",
+                    value: "\(last.weight.formattedWeight)×\(last.reps)",
+                    color: Theme.textSecondary
+                )
+            }
+
+            if let pr = personalRecord, pr.weight > 0, pr.reps > 0 {
+                hintChip(
+                    label: "PR",
+                    value: "\(pr.weight.formattedWeight)×\(pr.reps)",
+                    color: Theme.prGold
+                )
+            }
+
+            if beatsPriorPR {
+                Text("NEW PR")
+                    .font(.caption2.weight(.heavy))
+                    .foregroundStyle(.black)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(Theme.prGold)
+                    .clipShape(.capsule)
+                    .accessibilityLabel("New personal record")
+            }
+
+            Spacer()
         }
-        .onChange(of: workoutSet.reps) { _, newReps in
-            let formatted = newReps > 0 ? "\(newReps)" : ""
-            if repsText != formatted { repsText = formatted }
+        .padding(.horizontal, Theme.Spacing.md)
+        .padding(.bottom, 4)
+    }
+
+    private func hintChip(label: String, value: String, color: Color) -> some View {
+        HStack(spacing: 3) {
+            Text(label)
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(Theme.textTertiary)
+            Text(value)
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(color)
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(label) \(value)")
     }
 }
