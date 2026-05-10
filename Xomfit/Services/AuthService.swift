@@ -171,6 +171,26 @@ final class AuthService {
         }
     }
 
+    // MARK: - Delete Account
+
+    /// Permanently deletes the user's account. Calls a Supabase RPC named
+    /// `delete_my_account` that is expected to handle row deletion + auth
+    /// user removal server-side. Signs the user out locally on success.
+    ///
+    /// TODO: Confirm the `delete_my_account` Postgres function exists and
+    /// is granted to `authenticated`. If it doesn't, surface the error to
+    /// the user (we never silently no-op an account deletion).
+    func deleteAccount() async throws {
+        errorMessage = nil
+        do {
+            try await supabase.rpc("delete_my_account").execute()
+        } catch {
+            errorMessage = "Could not delete account: \(error.localizedDescription)"
+            throw error
+        }
+        await signOut()
+    }
+
     // MARK: - Sign Out
 
     func signOut() async {

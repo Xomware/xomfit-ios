@@ -9,6 +9,16 @@ import Foundation
 /// so they're trivially testable and safe to call repeatedly from views.
 enum WorkoutInsights {
 
+    /// Returns a `Calendar` configured to respect the user's
+    /// "Week starts on" preference (`@AppStorage("weekStartDay")`).
+    /// 0 = Sunday (default), 1 = Monday.
+    static func userCalendar() -> Calendar {
+        var cal = Calendar.current
+        let weekStartDay = UserDefaults.standard.integer(forKey: "weekStartDay")
+        cal.firstWeekday = weekStartDay == 1 ? 2 : 1
+        return cal
+    }
+
     // MARK: - Streaks
 
     /// Current consecutive-day streak ending today (or yesterday).

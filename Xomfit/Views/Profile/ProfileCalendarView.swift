@@ -7,8 +7,24 @@ struct ProfileCalendarView: View {
     @State private var displayedMonth: Date = Date()
     @State private var selectedDate: IdentifiableDate? = nil
 
-    private let calendar = Calendar.current
-    private let dayOfWeekHeaders = ["S", "M", "T", "W", "T", "F", "S"]
+    /// 0 = Sunday, 1 = Monday. Drives the firstWeekday + header order.
+    @AppStorage("weekStartDay") private var weekStartDay: Int = 0
+
+    /// Calendar configured to honor the user's "Week starts on" preference.
+    private var calendar: Calendar {
+        var cal = Calendar.current
+        // Calendar.firstWeekday: 1 = Sunday, 2 = Monday.
+        cal.firstWeekday = weekStartDay == 1 ? 2 : 1
+        return cal
+    }
+
+    /// Header order rotates so the leading column matches `firstWeekday`.
+    private var dayOfWeekHeaders: [String] {
+        weekStartDay == 1
+            ? ["M", "T", "W", "T", "F", "S", "S"]
+            : ["S", "M", "T", "W", "T", "F", "S"]
+    }
+
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 6), count: 7)
 
     /// Normalize workoutDays keys to startOfDay for reliable matching.
