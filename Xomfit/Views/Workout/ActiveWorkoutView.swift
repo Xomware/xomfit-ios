@@ -23,6 +23,17 @@ struct ActiveWorkoutView: View {
     /// to scroll to the picked card, then cleared.
     @State private var pendingScrollIndex: Int?
 
+    // First-run polish (#310)
+    /// Persisted flag — once dismissed, the active-workout tutorial overlay never re-shows.
+    @AppStorage("xomfit_first_workout_tutorial_seen") private var firstTutorialSeen = false
+    /// Persisted flag — first-ever rest timer toast across the user's history.
+    @AppStorage("xomfit_first_rest_timer_seen") private var firstRestTimerSeen = false
+    /// Drives the tutorial overlay. Lifted to local state so we can animate it
+    /// in/out independently of the AppStorage write.
+    @State private var showFirstTutorial = false
+    /// Single-shot rest timer onboarding toast.
+    @State private var restTimerToast: Toast?
+
     var body: some View {
         @Bindable var viewModel = viewModel
 
@@ -132,6 +143,19 @@ struct ActiveWorkoutView: View {
                     }
                 }
 
+                // First-run tutorial overlay (#310). Sits above the rest of
+                // the workout UI so it's the first thing the user sees on
+                // their first active workout. Persisted by AppStorage so it
+                // never re-shows after dismissal.
+                if showFirstTutorial {
+                    FirstWorkoutTutorial {
+                        withAnimation(.xomConfident) {
+                            showFirstTutorial = false
+                        }
+                        firstTutorialSeen = true
+                    }
+                }
+
                 // Exercise Transition Overlay
                 if viewModel.showExerciseTransition {
                     Color.black.opacity(0.4)
@@ -189,6 +213,16 @@ struct ActiveWorkoutView: View {
         .onChange(of: viewModel.isRestTimerActive) { _, isActive in
             if isActive {
                 restTimerHapticFired = false
+                // First-time rest timer toast (#310). Surface a small explainer
+                // the very first time the rest timer fires, then never again.
+                if !firstRestTimerSeen {
+                    firstRestTimerSeen = true
+                    restTimerToast = Toast(
+                        style: .info,
+                        message: "Rest timer running. +30s adds time, Skip ends it, tap to minimize.",
+                        duration: 5.0
+                    )
+                }
             }
         }
         .onChange(of: scenePhase) { _, newPhase in
@@ -274,6 +308,24 @@ struct ActiveWorkoutView: View {
                 }
             }
             .presentationDetents([.medium])
+        }
+        // First-run rest timer toast (#310). Uses the existing toast pattern
+        // shared with launch streak/PR badges in MainTabView.
+        .toast($restTimerToast)
+        .onAppear {
+            // Show the active-workout tutorial overlay only on the user's
+            // very first active workout. Defer slightly so it lands after
+            // the cover's mount animation finishes (#310).
+            if !firstTutorialSeen && !showFirstTutorial {
+                Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(450))
+                    if !firstTutorialSeen {
+                        withAnimation(.xomConfident) {
+                            showFirstTutorial = true
+                        }
+                    }
+                }
+            }
         }
     }
 
