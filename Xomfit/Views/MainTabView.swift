@@ -33,30 +33,35 @@ struct MainTabView: View {
             )
             .animation(.spring(response: 0.4, dampingFraction: 0.82), value: selectedTab)
         }
+        // Tab bar reserves bottom space whenever it's visible.
         .safeAreaInset(edge: .bottom) {
-            VStack(spacing: Theme.Spacing.sm) {
-                if workoutSession.isActive && !workoutSession.isPresented {
-                    WorkoutResumeBar(
-                        workoutName: workoutSession.workoutName,
-                        durationString: workoutSession.durationString,
-                        isPaused: workoutSession.isPaused,
-                        tickId: tickId,
-                        onTap: {
-                            withAnimation(.spring(response: 0.35, dampingFraction: 0.82)) {
-                                workoutSession.isPresented = true
-                            }
-                        }
-                    )
+            if tabBarVisible {
+                FloatingTabBar(selectedTab: $selectedTab)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
-                }
-
-                if tabBarVisible {
-                    FloatingTabBar(selectedTab: $selectedTab)
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
-                }
+                    .animation(.spring(response: 0.4, dampingFraction: 0.82), value: tabBarVisible)
             }
-            .animation(.spring(response: 0.4, dampingFraction: 0.82), value: workoutSession.isActive)
-            .animation(.spring(response: 0.4, dampingFraction: 0.82), value: workoutSession.isPresented)
+        }
+        // Resume bar (#289): when an active workout exists but the cover is dismissed,
+        // reserve real estate above the tab bar so scrollable content (Profile, Workout
+        // list, etc.) is pushed up — never hidden beneath the bar.
+        .safeAreaInset(edge: .bottom) {
+            if workoutSession.isActive && !workoutSession.isPresented {
+                WorkoutResumeBar(
+                    workoutName: workoutSession.workoutName,
+                    durationString: workoutSession.durationString,
+                    isPaused: workoutSession.isPaused,
+                    tickId: tickId,
+                    onTap: {
+                        withAnimation(.spring(response: 0.35, dampingFraction: 0.82)) {
+                            workoutSession.isPresented = true
+                        }
+                    }
+                )
+                .padding(.bottom, Theme.Spacing.sm)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+                .animation(.spring(response: 0.4, dampingFraction: 0.82), value: workoutSession.isActive)
+                .animation(.spring(response: 0.4, dampingFraction: 0.82), value: workoutSession.isPresented)
+            }
         }
         .onReceive(resumeTimer) { _ in
             if workoutSession.isActive && !workoutSession.isPresented {
