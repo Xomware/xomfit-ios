@@ -147,10 +147,41 @@ struct WorkoutFocusView: View {
                                 .font(.subheadline.weight(.bold))
                                 .foregroundStyle(isCompleted ? .black : (isFocused ? Theme.accent : Theme.textSecondary))
                         }
+                        // Ensure 44pt min touch target around the 36pt visual
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Set \(idx + 1)\(isCompleted ? ", completed" : "")\(isFocused ? ", current" : "")")
                 }
+
+                // + Set button — adds a new set to the current exercise without leaving focus mode
+                Button {
+                    dismissKeyboard()
+                    Haptics.light()
+                    let exerciseIndex = viewModel.focusExerciseIndex
+                    viewModel.addSet(to: exerciseIndex)
+                    // Point focus at the newly added set, mirroring `addAnotherSet()` behavior
+                    if viewModel.exercises.indices.contains(exerciseIndex) {
+                        viewModel.focusSetIndex = max(viewModel.exercises[exerciseIndex].sets.count - 1, 0)
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "plus")
+                            .font(.subheadline.weight(.bold))
+                        Text("Set")
+                            .font(.subheadline.weight(.bold))
+                    }
+                    .foregroundStyle(Theme.accent)
+                    .padding(.horizontal, 12)
+                    .frame(minHeight: 44)
+                    .background(Theme.accent.opacity(0.15))
+                    .clipShape(.capsule)
+                    .contentShape(.capsule)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Add set")
+                .accessibilityHint("Adds a new set to the current exercise")
             }
             .padding(.horizontal, Theme.Spacing.sm)
         }
