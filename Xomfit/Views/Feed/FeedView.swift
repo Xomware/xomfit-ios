@@ -38,8 +38,28 @@ struct FeedView: View {
                             )
                             Spacer()
                         } else {
-                            feedList
+                            ZStack {
+                                feedList
+                                // #311: brief skeleton overlay while a refresh
+                                // or filter change is in flight so the list
+                                // doesn't pop without feedback.
+                                if viewModel.isRefreshing || viewModel.isFiltering {
+                                    feedSkeleton
+                                        .background(Theme.background)
+                                        .transition(.opacity)
+                                }
+                            }
+                            .animation(.easeInOut(duration: 0.2), value: viewModel.isRefreshing)
+                            .animation(.easeInOut(duration: 0.2), value: viewModel.isFiltering)
                         }
+                    }
+                    // #311: trip the filtering flag whenever the date range or
+                    // muscle-group selection changes so the skeleton flashes.
+                    .onChange(of: viewModel.dateRange) { _, _ in
+                        Task { await viewModel.applyFilterChange() }
+                    }
+                    .onChange(of: viewModel.selectedMuscleGroups) { _, _ in
+                        Task { await viewModel.applyFilterChange() }
                     }
                 }
             }
@@ -142,7 +162,11 @@ struct FeedView: View {
                     }
                 }
 
-                if !viewModel.hasMore && !viewModel.filteredFeedItems.isEmpty {
+                // #311: surface load-more failures with a retry banner so the
+                // user knows pagination didn't silently exhaust.
+                if let loadMoreError = viewModel.loadMoreError {
+                    loadMoreRetryBanner(message: loadMoreError)
+                } else if !viewModel.hasMore && !viewModel.filteredFeedItems.isEmpty {
                     Text("You're all caught up!")
                         .font(Theme.fontCaption)
                         .foregroundStyle(Theme.textSecondary)
@@ -156,6 +180,50 @@ struct FeedView: View {
         .refreshable {
             await viewModel.refreshFeed(userId: userId)
         }
+    }
+
+    // MARK: - Load-More Retry Banner (#311)
+
+    private func loadMoreRetryBanner(message: String) -> some View {
+        VStack(spacing: Theme.Spacing.xs) {
+            HStack(spacing: Theme.Spacing.sm) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundStyle(Theme.alert)
+                Text("Couldn't load more posts")
+                    .font(Theme.fontCaption.weight(.semibold))
+                    .foregroundStyle(Theme.textPrimary)
+            }
+            Text(message)
+                .font(Theme.fontCaption)
+                .foregroundStyle(Theme.textSecondary)
+                .multilineTextAlignment(.center)
+            Button {
+                Haptics.light()
+                Task { await viewModel.loadMore(userId: userId) }
+            } label: {
+                Text("Retry")
+                    .font(Theme.fontCaption.weight(.semibold))
+                    .foregroundStyle(Theme.accent)
+                    .padding(.horizontal, Theme.Spacing.md)
+                    .padding(.vertical, 8)
+                    .frame(minHeight: 36)
+                    .background(
+                        Capsule().fill(Theme.accent.opacity(0.15))
+                    )
+            }
+            .accessibilityLabel("Retry loading more posts")
+        }
+        .frame(maxWidth: .infinity)
+        .padding(Theme.Spacing.md)
+        .background(
+            RoundedRectangle(cornerRadius: Theme.Radius.md)
+                .fill(Theme.alert.opacity(0.10))
+                .overlay(
+                    RoundedRectangle(cornerRadius: Theme.Radius.md)
+                        .strokeBorder(Theme.alert.opacity(0.4), lineWidth: 0.5)
+                )
+        )
+        .padding(.vertical, Theme.Spacing.sm)
     }
 
     // MARK: - Empty State
@@ -225,12 +293,10 @@ struct FeedView: View {
     // MARK: - Error View
 
     private func errorView(message: String) -> some View {
-        XomEmptyState(
-            icon: "exclamationmark.triangle",
+        XomErrorState(
             title: "Failed to load feed",
-            subtitle: message,
-            ctaLabel: "Try Again",
-            ctaAction: { Task { await viewModel.loadFeed(userId: userId) } }
+            message: message,
+            retryAction: { Task { await viewModel.loadFeed(userId: userId) } }
         )
     }
 }

@@ -18,6 +18,9 @@ struct ProfileStatsView: View {
     var longestStreak: Int = 0
     /// Profile owner — used by the Body measurements link (#317). nil = link hidden.
     var userId: String? = nil
+    /// Optional CTA fired from the "log your first workout" empty state (#311).
+    /// When nil, the empty-state card hides its action button.
+    var onStartWorkout: (() -> Void)? = nil
 
     @State private var heatmapFilter: HeatmapTimeFilter = .week
 
@@ -34,6 +37,12 @@ struct ProfileStatsView: View {
 
     var body: some View {
         VStack(spacing: Theme.Spacing.sm) {
+            // #311: when there are no workouts yet, surface a friendly empty
+            // state above the (all-zero) cards so the screen doesn't feel
+            // broken. Stats stay rendered below for context.
+            if totalWorkouts == 0 {
+                firstWorkoutEmptyState
+            }
             StreakCard(currentStreak: currentStreak, longestStreak: longestStreak)
             statsCards
             bodyLink
@@ -44,6 +53,24 @@ struct ProfileStatsView: View {
             prSection
         }
         .padding(.horizontal, Theme.Spacing.md)
+    }
+
+    // MARK: - First-Workout Empty State (#311)
+
+    private var firstWorkoutEmptyState: some View {
+        VStack(spacing: Theme.Spacing.sm) {
+            XomEmptyState(
+                icon: "dumbbell.fill",
+                title: "No stats yet",
+                subtitle: "Log your first workout to unlock stats.",
+                ctaLabel: onStartWorkout != nil ? "Start Workout" : nil,
+                ctaAction: onStartWorkout
+            )
+        }
+        .frame(maxWidth: .infinity)
+        .cardStyle()
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("No stats yet. Log your first workout to unlock stats.")
     }
 
     // MARK: - Body Measurements Link (#317)
