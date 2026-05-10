@@ -103,6 +103,8 @@ struct WorkoutDetailView: View {
                     summaryStatView(value: "\(workout.totalPRs)", label: "PRs", highlight: true)
                 }
             }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(summaryStatsAccessibility)
 
             if !workout.muscleGroups.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -337,6 +339,19 @@ struct WorkoutDetailView: View {
 
     private func summaryStatView(value: String, label: String, highlight: Bool = false) -> some View {
         XomStat(value, label: label, iconColor: highlight ? Theme.prGold : Theme.accent)
+    }
+
+    /// Combined VoiceOver readout for the summary stat row.
+    private var summaryStatsAccessibility: String {
+        var parts = [
+            "\(workout.exercises.count) exercises",
+            "\(workout.totalSets) sets",
+            "\(workout.formattedVolume) pounds total volume"
+        ]
+        if workout.totalPRs > 0 {
+            parts.append("\(workout.totalPRs) personal record\(workout.totalPRs == 1 ? "" : "s")")
+        }
+        return parts.joined(separator: ", ")
     }
 
     private func formatWeight(_ value: Double) -> String {

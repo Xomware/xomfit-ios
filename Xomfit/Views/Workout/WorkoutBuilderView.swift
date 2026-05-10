@@ -364,22 +364,27 @@ private struct BuilderExerciseRow: View {
                     } label: {
                         Image(systemName: "minus.circle")
                             .foregroundStyle(exercise.targetSets > 1 ? Theme.accent : Theme.textSecondary.opacity(0.3))
+                            .frame(minWidth: 44, minHeight: 44)
+                            .contentShape(Rectangle())
                     }
                     .disabled(exercise.targetSets <= 1)
-                    .frame(minWidth: 44, minHeight: 44)
+                    .accessibilityLabel("Decrease sets")
 
                     Text("\(exercise.targetSets)")
                         .font(.body.weight(.bold).monospaced())
                         .foregroundStyle(Theme.textPrimary)
                         .frame(minWidth: 24)
+                        .accessibilityLabel("\(exercise.targetSets) sets")
 
                     Button {
                         onUpdateSets(exercise.targetSets + 1)
                     } label: {
                         Image(systemName: "plus.circle")
                             .foregroundStyle(Theme.accent)
+                            .frame(minWidth: 44, minHeight: 44)
+                            .contentShape(Rectangle())
                     }
-                    .frame(minWidth: 44, minHeight: 44)
+                    .accessibilityLabel("Increase sets")
                 }
 
                 Spacer()

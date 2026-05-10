@@ -336,8 +336,11 @@ struct FeedDetailView: View {
                         .font(.subheadline.weight(.medium))
                         .foregroundStyle(Theme.textSecondary)
                 }
+                .frame(minWidth: 44, minHeight: 44)
+                .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("\(localItem.isLiked ? "Unlike" : "Like"), \(localItem.likes) likes")
 
             NavigationLink {
                 FeedCommentsView(feedItemId: item.id, userId: userId)
@@ -351,8 +354,12 @@ struct FeedDetailView: View {
                         .font(.subheadline.weight(.medium))
                         .foregroundStyle(Theme.textSecondary)
                 }
+                .frame(minWidth: 44, minHeight: 44)
+                .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("\(localItem.comments.count) comments")
+            .accessibilityHint("Opens the comment thread")
 
             Button {
                 shareFeedItem()
@@ -360,6 +367,8 @@ struct FeedDetailView: View {
                 Image(systemName: "square.and.arrow.up")
                     .font(Theme.fontBody)
                     .foregroundStyle(Theme.textSecondary)
+                    .frame(minWidth: 44, minHeight: 44)
+                    .contentShape(Rectangle())
             }
             .accessibilityLabel("Share")
 

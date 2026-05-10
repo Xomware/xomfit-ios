@@ -110,9 +110,12 @@ struct PhotoZoomView: View {
                             .font(Theme.fontTitle2)
                             .foregroundStyle(Theme.textSecondary)
                             .background(Color.black.opacity(0.4).clipShape(Circle()))
+                            .frame(minWidth: 44, minHeight: 44)
+                            .contentShape(Rectangle())
                     }
                     .padding()
                     .accessibilityLabel("Close")
+                    .accessibilityHint("Closes the full-screen photo viewer")
                 }
                 Spacer()
             }

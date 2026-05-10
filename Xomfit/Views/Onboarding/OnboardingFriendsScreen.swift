@@ -52,7 +52,10 @@ struct OnboardingFriendsScreen: View {
                     } label: {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundStyle(Theme.textSecondary)
+                            .frame(minWidth: 44, minHeight: 44)
+                            .contentShape(Rectangle())
                     }
+                    .accessibilityLabel("Clear search")
                 }
 
                 if isSearching {

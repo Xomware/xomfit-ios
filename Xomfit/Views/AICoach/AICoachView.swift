@@ -216,6 +216,8 @@ struct AICoachView: View {
                 Image(systemName: "xmark")
                     .font(.caption.weight(.bold))
                     .foregroundStyle(Theme.textSecondary)
+                    .frame(minWidth: 44, minHeight: 44)
+                    .contentShape(Rectangle())
             }
             .accessibilityLabel("Dismiss error")
         }
@@ -491,6 +493,7 @@ private struct WorkoutBuildCard: View {
 
 private struct TypingDots: View {
     @State private var phase: Int = 0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         HStack(spacing: Theme.Spacing.tight) {
@@ -498,10 +501,13 @@ private struct TypingDots: View {
                 Circle()
                     .fill(Theme.textSecondary)
                     .frame(width: 6, height: 6)
-                    .opacity(phase == index ? 1 : 0.3)
+                    .opacity(reduceMotion ? 0.7 : (phase == index ? 1 : 0.3))
             }
         }
         .onAppear {
+            // Skip the cycling timer entirely under Reduce Motion — the static
+            // dots + the "Coach is typing" label are enough signal.
+            guard !reduceMotion else { return }
             Timer.scheduledTimer(withTimeInterval: 0.35, repeats: true) { timer in
                 Task { @MainActor in
                     phase = (phase + 1) % 3

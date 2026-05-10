@@ -137,11 +137,14 @@ struct SetRowView: View {
             }
 
             HStack(spacing: Theme.Spacing.sm) {
-                // Delete button
+                // Delete button. Visually compact (30pt slot) but the inner
+                // image carries the 44pt minimum so the actual hit target meets HIG.
                 Button(action: onDelete) {
                     Image(systemName: "minus.circle.fill")
                         .foregroundStyle(Theme.destructive)
                         .font(isDropSet ? .subheadline : .headline)
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .frame(width: 30)
@@ -206,9 +209,12 @@ struct SetRowView: View {
                     Text(workoutSet.weightMode == .perSide ? "\(weightUnit.displayName) ×2  ×" : "\(weightUnit.displayName)  ×")
                         .font(Theme.fontCaption)
                         .foregroundStyle(workoutSet.weightMode == .perSide ? Theme.accent : Theme.textSecondary)
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel(workoutSet.weightMode == .perSide ? "Per side weight, tap to switch to total" : "Total weight, tap to switch to per side")
+                .accessibilityLabel(workoutSet.weightMode == .perSide ? "Per side weight" : "Total weight")
+                .accessibilityHint(workoutSet.weightMode == .perSide ? "Switches to total weight" : "Switches to per-side weight")
 
                 // Reps field
                 TextField("0", text: $repsText)
@@ -339,6 +345,8 @@ struct SetRowView: View {
             .padding(.vertical, 3)
             .background(Theme.accent.opacity(0.10))
             .clipShape(.capsule)
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .padding(.leading, Theme.Spacing.xl + 30)

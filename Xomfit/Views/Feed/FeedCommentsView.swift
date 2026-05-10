@@ -50,6 +50,7 @@ struct FeedCommentsView: View {
                         Image(systemName: "bubble.right")
                             .font(Theme.fontLargeTitle)
                             .foregroundStyle(Theme.textSecondary)
+                            .accessibilityHidden(true)
                         Text("No comments yet")
                             .font(Theme.fontHeadline)
                             .foregroundStyle(Theme.textPrimary)
@@ -57,6 +58,8 @@ struct FeedCommentsView: View {
                             .font(Theme.fontBody)
                             .foregroundStyle(Theme.textSecondary)
                     }
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel("No comments yet. Be the first to comment.")
                     Spacer()
                 } else {
                     ScrollView {
@@ -235,6 +238,7 @@ private struct CommentRow: View {
                     name: comment.user?.displayName ?? "User",
                     size: 32
                 )
+                .accessibilityHidden(true)
 
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(spacing: 6) {
@@ -245,6 +249,8 @@ private struct CommentRow: View {
                             .font(Theme.fontSmall)
                             .foregroundStyle(Theme.textTertiary)
                     }
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel("\(comment.user?.displayName ?? "User"), \(comment.createdAt.timeAgo)")
                     Text(comment.text)
                         .font(Theme.fontBody)
                         .foregroundStyle(Theme.textPrimary)
@@ -255,10 +261,12 @@ private struct CommentRow: View {
                             .foregroundStyle(Theme.textSecondary)
                             .padding(.vertical, 6)
                             .padding(.trailing, 12)
+                            .frame(minHeight: 44)
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Reply to \(comment.user?.displayName ?? "user")")
+                    .accessibilityHint("Adds a threaded reply under this comment")
                 }
 
                 Spacer()

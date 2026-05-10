@@ -34,6 +34,11 @@ struct ParticleBurstView: View {
     @State private var particles: [Particle] = []
     @State private var isAnimating = false
 
+    /// Suppresses the burst entirely when Reduce Motion is enabled.
+    /// Callsites can still gate as a belt-and-suspenders, but this guarantees
+    /// any future caller respects the preference automatically.
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     var body: some View {
         ZStack {
             ForEach(particles) { particle in
@@ -46,8 +51,9 @@ struct ParticleBurstView: View {
             }
         }
         .allowsHitTesting(false)
+        .accessibilityHidden(true)
         .onChange(of: trigger) { _, newValue in
-            guard newValue else { return }
+            guard newValue, !reduceMotion else { return }
             burst()
         }
     }
