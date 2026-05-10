@@ -67,6 +67,10 @@ struct MainTabView: View {
             ActiveWorkoutView()
                 .environment(authService)
                 .environment(workoutSession)
+                // #288: prevent accidental swipe-dismiss leaving the cover stuck
+                // in a half-dismissed state (only the workout header bar visible).
+                // The user must explicitly Discard or Finish to leave the workout.
+                .interactiveDismissDisabled(workoutSession.isActive)
         }
         .toast($launchBadgeToast)
         .task {
