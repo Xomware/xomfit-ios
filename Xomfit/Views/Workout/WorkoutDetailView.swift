@@ -3,6 +3,10 @@ import SwiftUI
 struct WorkoutDetailView: View {
     let workout: Workout
 
+    /// Image rendered for sharing (#320). Held while the share sheet is presented
+    /// so `UIActivityViewController` doesn't see a stale image.
+    @State private var shareImage: UIImage?
+
     var body: some View {
         ZStack {
             Theme.background.ignoresSafeArea()
@@ -21,6 +25,25 @@ struct WorkoutDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .hideTabBar()
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    Haptics.light()
+                    shareImage = WorkoutImageRenderer.render(workout: workout)
+                } label: {
+                    Image(systemName: "square.and.arrow.up")
+                        .foregroundStyle(Theme.accent)
+                }
+                .accessibilityLabel("Share workout as image")
+            }
+        }
+        .sheet(item: Binding(
+            get: { shareImage.map { ShareImageWrapper(image: $0) } },
+            set: { shareImage = $0?.image }
+        )) { wrapper in
+            WorkoutShareSheet(image: wrapper.image)
+                .presentationDetents([.medium, .large])
+        }
     }
 
     // MARK: - Summary Card
@@ -327,4 +350,12 @@ struct WorkoutDetailView: View {
         formatter.dateFormat = "h:mm a"
         return "\(formatter.string(from: start)) - \(formatter.string(from: end))"
     }
+}
+
+// MARK: - Share Image Wrapper (#320)
+
+/// `Identifiable` wrapper so we can drive `.sheet(item:)` off the rendered image.
+private struct ShareImageWrapper: Identifiable {
+    let id = UUID()
+    let image: UIImage
 }

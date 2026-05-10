@@ -122,6 +122,9 @@ struct FeedComment: Codable, Identifiable {
     var user: AppUser?
     var text: String
     var createdAt: Date
+    /// Optional parent comment id — when set, this is a reply to that comment.
+    /// Backwards-compatible: existing rows decode this as nil. (#320)
+    var parentCommentId: String? = nil
 }
 
 // MARK: - Mock Data

@@ -18,6 +18,10 @@ struct ProfileStatsView: View {
     var longestStreak: Int = 0
     /// Profile owner — used by the Body measurements link (#317). nil = link hidden.
     var userId: String? = nil
+    /// Workout history used by `BadgesSection` for badge evaluation (#320).
+    var workouts: [Workout] = []
+    /// Date of the user's first PR (oldest), used by `BadgesSection` (#320).
+    var firstPRDate: Date? = nil
 
     @State private var heatmapFilter: HeatmapTimeFilter = .week
 
@@ -35,6 +39,7 @@ struct ProfileStatsView: View {
     var body: some View {
         VStack(spacing: Theme.Spacing.sm) {
             StreakCard(currentStreak: currentStreak, longestStreak: longestStreak)
+            BadgesSection(workouts: workouts, firstPRDate: firstPRDate)
             statsCards
             bodyLink
             volumeTrendSection

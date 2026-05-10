@@ -200,7 +200,9 @@ struct ProfileView: View {
                 currentStreak: viewModel.currentStreak,
                 longestStreak: viewModel.longestStreak,
                 // Only own profile gets the Body link — measurements are private to the user.
-                userId: viewModel.isOwnProfile ? resolvedUserId : nil
+                userId: viewModel.isOwnProfile ? resolvedUserId : nil,
+                workouts: viewModel.workouts,
+                firstPRDate: viewModel.allPRs.map(\.date).min()
             )
         }
     }
