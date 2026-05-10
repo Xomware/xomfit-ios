@@ -63,7 +63,7 @@ struct WorkoutTemplate: Codable, Identifiable {
 extension WorkoutTemplate {
     // Force unwrap is intentional — these are compile-time constants referencing known IDs
     private static func ex(_ id: String) -> Exercise {
-        ExerciseDatabase.all.first(where: { $0.id == id })!
+        ExerciseDatabase.byId[id]!
     }
 
     static let builtIn: [WorkoutTemplate] = [

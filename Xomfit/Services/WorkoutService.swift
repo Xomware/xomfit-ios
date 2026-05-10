@@ -363,7 +363,7 @@ final class WorkoutService {
         let exercises = row.workoutExercises
             .sorted { $0.sortOrder < $1.sortOrder }
             .map { exRow in
-                let exercise = ExerciseDatabase.all.first(where: { $0.id == exRow.exerciseId })
+                let exercise = ExerciseDatabase.byId[exRow.exerciseId]
                     ?? Exercise(
                         id: exRow.exerciseId,
                         name: exRow.exerciseName,

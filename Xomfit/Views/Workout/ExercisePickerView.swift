@@ -12,7 +12,7 @@ struct ExercisePickerView: View {
 
     private var recentExercises: [Exercise] {
         let ids = UserDefaults.standard.stringArray(forKey: Self.recentKey) ?? []
-        return ids.compactMap { id in ExerciseDatabase.all.first(where: { $0.id == id }) }
+        return ids.compactMap { id in ExerciseDatabase.byId[id] }
     }
 
     private static func recordRecent(_ exercise: Exercise) {

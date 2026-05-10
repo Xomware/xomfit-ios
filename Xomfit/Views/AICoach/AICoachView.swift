@@ -365,7 +365,7 @@ private struct WorkoutBuildCard: View {
     /// behaviour as `AICoachViewModel.buildTemplate`.
     private var resolved: [(item: WorkoutBuildPayload.Exercise, exercise: Exercise)] {
         payload.exercises.compactMap { item in
-            guard let ex = ExerciseDatabase.all.first(where: { $0.id == item.exerciseId }) else {
+            guard let ex = ExerciseDatabase.byId[item.exerciseId] else {
                 return nil
             }
             return (item, ex)

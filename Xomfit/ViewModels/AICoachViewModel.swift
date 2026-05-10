@@ -134,7 +134,7 @@ final class AICoachViewModel {
     /// exercises survive the filter.
     func buildTemplate(from payload: WorkoutBuildPayload) -> WorkoutTemplate? {
         let templateExercises: [WorkoutTemplate.TemplateExercise] = payload.exercises.compactMap { item in
-            guard let exercise = ExerciseDatabase.all.first(where: { $0.id == item.exerciseId }) else {
+            guard let exercise = ExerciseDatabase.byId[item.exerciseId] else {
                 return nil
             }
             let notes: String?
