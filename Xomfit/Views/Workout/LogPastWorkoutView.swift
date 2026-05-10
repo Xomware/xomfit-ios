@@ -16,7 +16,9 @@ struct LogPastWorkoutView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        @Bindable var viewModel = viewModel
+
+        return NavigationStack {
             ZStack {
                 Theme.background.ignoresSafeArea()
 

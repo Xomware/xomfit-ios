@@ -39,8 +39,15 @@ final class FriendsViewModel {
         do {
             let (friendsResult, incomingResult, outgoingResult) = try await (friendsTask, incomingTask, outgoingTask)
             friends = friendsResult
-            incomingRequests = incomingResult
-            outgoingRequests = outgoingResult
+
+            // Defensive dedupe: if a stale pending row exists in either direction
+            // for a user we're already accepted-friends with (data corruption from
+            // a duplicate request before the unique-pair guard landed), don't show
+            // them in pending. The friends list is the source of truth.
+            let friendUserIds: Set<String> = Set(friendsResult.flatMap { [$0.requesterId, $0.addresseeId] })
+                .subtracting([userId])
+            incomingRequests = incomingResult.filter { !friendUserIds.contains($0.requesterId) }
+            outgoingRequests = outgoingResult.filter { !friendUserIds.contains($0.addresseeId) }
 
             await hydrateProfiles(userId: userId)
         } catch {
