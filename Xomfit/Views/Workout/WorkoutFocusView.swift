@@ -72,6 +72,11 @@ struct WorkoutFocusView: View {
                 emptyFocusState
             }
         }
+        // Push content below any active Dynamic Island (#289). Bumps content
+        // down deterministically when an island (e.g. music app) is present.
+        .safeAreaInset(edge: .top, spacing: 0) {
+            Color.clear.frame(height: 8)
+        }
         .sheet(isPresented: $showExercisePicker) {
             ExercisePickerView { exercise in
                 viewModel.addExercise(exercise)

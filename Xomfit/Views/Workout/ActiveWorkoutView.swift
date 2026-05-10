@@ -165,6 +165,12 @@ struct ActiveWorkoutView: View {
                     .foregroundStyle(Theme.accent)
                 }
             }
+            // Push the header below any active Dynamic Island (#289). Even with the
+            // existing top safe-area, an active island (e.g. music app) can still
+            // occlude the workout header — bump everything down deterministically.
+            .safeAreaInset(edge: .top, spacing: 0) {
+                Color.clear.frame(height: 8)
+            }
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 // Empty — just ensures keyboard inset is respected; actual toolbar is above
                 Color.clear.frame(height: 0)
@@ -274,18 +280,22 @@ struct ActiveWorkoutView: View {
     // MARK: - Header
 
     private var headerBar: some View {
-        HStack {
-            // Discard button
+        // Tighten horizontal spacing between adjacent controls so the rest pill
+        // doesn't get squeezed into multiple lines (#287).
+        HStack(spacing: Theme.Spacing.xs) {
+            // Discard button — compact
             Button {
                 Haptics.warning()
                 showDiscardAlert = true
             } label: {
                 Text("Discard")
-                    .font(.subheadline.weight(.semibold))
+                    .font(.caption.weight(.semibold))
                     .foregroundStyle(Theme.destructive)
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
             }
 
-            Spacer()
+            Spacer(minLength: Theme.Spacing.xs)
 
             // Timer cluster — total time prominent + rest timer chip so both stay visible
             // around the Dynamic Island. Name is secondary (can be hidden by island).
@@ -296,6 +306,9 @@ struct ActiveWorkoutView: View {
                             .font(.caption2)
                         Text(viewModel.durationString)
                             .font(Theme.fontNumberMedium)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                            .fixedSize(horizontal: true, vertical: false)
                     }
                     .foregroundStyle(Theme.accent)
 
@@ -306,6 +319,9 @@ struct ActiveWorkoutView: View {
                                 .font(.caption2)
                             Text(headerRestString)
                                 .font(Theme.fontNumberMedium)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                                .fixedSize(horizontal: true, vertical: false)
                         }
                         .foregroundStyle(isOvertime ? Theme.destructive : Theme.textPrimary)
                         .padding(.horizontal, 7)
@@ -325,9 +341,10 @@ struct ActiveWorkoutView: View {
             }
             .animation(.xomChill, value: viewModel.isRestTimerActive)
 
-            Spacer()
+            Spacer(minLength: Theme.Spacing.xs)
 
             // Pause / Resume toggle — freezes elapsed time + rest timer
+            // Visually narrower (32pt) but keeps a 44pt tap target via contentShape.
             Button {
                 Haptics.light()
                 withAnimation(.xomChill) {
@@ -337,7 +354,7 @@ struct ActiveWorkoutView: View {
                 Image(systemName: viewModel.isPaused ? "play.circle.fill" : "pause.circle.fill")
                     .font(.title3.weight(.semibold))
                     .foregroundStyle(viewModel.isPaused ? Theme.accent : Theme.textPrimary)
-                    .frame(width: 44, height: 44)
+                    .frame(width: 32, height: 44)
                     .contentShape(Rectangle())
             }
             .accessibilityLabel(viewModel.isPaused ? "Resume workout" : "Pause workout")
@@ -345,7 +362,7 @@ struct ActiveWorkoutView: View {
                 ? "Resumes the elapsed timer and rest countdown"
                 : "Freezes the elapsed timer and rest countdown")
 
-            // Focus mode toggle
+            // Focus mode toggle — visually narrower, 44pt tap area enforced.
             Button {
                 withAnimation {
                     viewModel.focusMode.toggle()
@@ -360,13 +377,15 @@ struct ActiveWorkoutView: View {
                 Image(systemName: viewModel.focusMode ? "list.bullet" : "eye")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(viewModel.focusMode ? Theme.accent : Theme.textSecondary)
-                    .frame(width: 36, height: 36)
+                    .frame(width: 32, height: 32)
                     .background(viewModel.focusMode ? Theme.accent.opacity(0.15) : Theme.textSecondary.opacity(0.15))
                     .clipShape(Circle())
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
             }
             .accessibilityLabel(viewModel.focusMode ? "Switch to list view" : "Switch to focus view")
 
-            // Finish button
+            // Finish button — compact (smaller font + tighter padding to free up header space).
             Button {
                 Haptics.success()
                 workoutDescription = ""
@@ -375,20 +394,23 @@ struct ActiveWorkoutView: View {
                 if viewModel.isSaving {
                     ProgressView()
                         .tint(.black)
-                        .frame(width: 70, height: 32)
+                        .frame(width: 60, height: 28)
                         .background(Theme.accent)
                         .clipShape(.rect(cornerRadius: 8))
                 } else {
                     Text("Finish")
-                        .font(.subheadline.weight(.bold))
+                        .font(.caption.weight(.bold))
                         .foregroundStyle(.black)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
+                        .lineLimit(1)
+                        .fixedSize(horizontal: true, vertical: false)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 7)
                         .background(Theme.accent)
                         .clipShape(.rect(cornerRadius: 8))
                 }
             }
             .disabled(viewModel.isSaving)
+            .accessibilityLabel("Finish workout")
         }
         .padding(.horizontal, Theme.Spacing.md)
         .padding(.top, Theme.Spacing.md)
