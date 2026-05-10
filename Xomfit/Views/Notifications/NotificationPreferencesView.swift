@@ -55,9 +55,9 @@ struct NotificationPreferencesView: View {
         Toggle(isOn: isOn) {
             HStack(spacing: 10) {
                 Image(systemName: icon)
-                    .font(.subheadline)
+                    .font(Theme.fontSubheadline)
                     .foregroundStyle(Theme.accent)
-                    .frame(width: 24)
+                    .frame(width: Theme.Spacing.lg)
                 Text(label)
                     .font(Theme.fontBody)
                     .foregroundStyle(Theme.textPrimary)

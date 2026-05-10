@@ -150,7 +150,7 @@ struct WarmupView: View {
                 .foregroundStyle(Theme.textPrimary)
             HStack(spacing: 6) {
                 Image(systemName: "clock.fill")
-                    .font(.caption)
+                    .font(Theme.fontCaption)
                     .foregroundStyle(Theme.accent)
                 Text("\(stretches.count) stretches · \(formatTime(estimatedTotalDuration))")
                     .font(Theme.fontSubheadline)
@@ -159,7 +159,7 @@ struct WarmupView: View {
             Text("Tap a stretch to see how it's done.")
                 .font(Theme.fontCaption)
                 .foregroundStyle(Theme.textSecondary.opacity(0.8))
-                .padding(.top, 2)
+                .padding(.top, Theme.Spacing.tighter)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .combine)
@@ -191,7 +191,7 @@ struct WarmupView: View {
                 .background(Theme.accent.opacity(0.15))
                 .clipShape(.rect(cornerRadius: Theme.Radius.xs))
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.tight) {
                 HStack(alignment: .firstTextBaseline) {
                     Text(stretch.name)
                         .font(.subheadline.weight(.semibold))
@@ -211,7 +211,7 @@ struct WarmupView: View {
             Image(systemName: "chevron.right")
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(Theme.textSecondary.opacity(0.6))
-                .padding(.top, 4)
+                .padding(.top, Theme.Spacing.tight)
         }
         .padding(Theme.Spacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -243,7 +243,7 @@ struct WarmupView: View {
     }
 
     private var timerHeader: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: Theme.Spacing.tight) {
             Text("Loosen up first")
                 .font(Theme.fontTitle2)
                 .foregroundStyle(Theme.textPrimary)
@@ -284,13 +284,13 @@ struct WarmupView: View {
             VStack(alignment: .leading, spacing: Theme.Spacing.md) {
                 HStack(alignment: .top, spacing: Theme.Spacing.md) {
                     Image(systemName: stretch.icon)
-                        .font(.title2)
+                        .font(Theme.fontTitle2)
                         .foregroundStyle(Theme.accent)
                         .frame(width: 44, height: 44)
                         .background(Theme.accent.opacity(0.15))
                         .clipShape(.rect(cornerRadius: 10))
 
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.tight) {
                         Text("Now: \(stretch.name)")
                             .font(Theme.fontHeadline)
                             .foregroundStyle(Theme.textPrimary)
@@ -330,7 +330,7 @@ struct WarmupView: View {
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(Theme.textSecondary)
                         .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
+                        .padding(.vertical, Theme.Spacing.sm)
                         .background(Theme.surfaceElevated)
                         .clipShape(.rect(cornerRadius: Theme.Radius.sm))
                     }
@@ -380,7 +380,7 @@ struct WarmupView: View {
             Text("\(index + 1)")
                 .font(.caption.weight(.bold).monospaced())
                 .foregroundStyle(Theme.textSecondary)
-                .frame(width: 24, height: 24)
+                .frame(width: Theme.Spacing.lg, height: Theme.Spacing.lg)
                 .background(Theme.surfaceElevated)
                 .clipShape(.rect(cornerRadius: 6))
 

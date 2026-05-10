@@ -28,7 +28,7 @@ struct XomToolbarTitle: View {
 
             if let subtitle {
                 Text(subtitle)
-                    .font(.caption)
+                    .font(Theme.fontCaption)
                     .foregroundStyle(Theme.textSecondary)
             }
         }

@@ -128,7 +128,7 @@ struct LogPastWorkoutView: View {
                     .font(Theme.fontCaption)
                     .foregroundStyle(Theme.textSecondary)
                 TextField(LogPastWorkoutViewModel.defaultName, text: $viewModel.name)
-                    .font(.body.weight(.semibold))
+                    .font(Theme.fontBodyEmphasized)
                     .foregroundStyle(Theme.textPrimary)
                     .padding(Theme.Spacing.sm)
                     .background(Theme.surfaceElevated)
@@ -196,7 +196,7 @@ struct LogPastWorkoutView: View {
     private var emptyState: some View {
         VStack(spacing: Theme.Spacing.sm) {
             Image(systemName: "calendar.badge.clock")
-                .font(.largeTitle)
+                .font(Theme.fontLargeTitle)
                 .foregroundStyle(Theme.textSecondary.opacity(0.5))
             Text("No exercises yet")
                 .font(Theme.fontBody)
@@ -214,7 +214,7 @@ struct LogPastWorkoutView: View {
             Haptics.light()
             showExercisePicker = true
         } label: {
-            HStack(spacing: 8) {
+            HStack(spacing: Theme.Spacing.sm) {
                 Image(systemName: "plus.circle.fill")
                 Text("Add Exercise")
                     .font(.subheadline.weight(.semibold))
@@ -293,13 +293,13 @@ private struct PastExerciseCard: View {
             // Header
             HStack {
                 Image(systemName: exercise.exercise.icon)
-                    .font(.headline)
+                    .font(Theme.fontHeadline)
                     .foregroundStyle(Theme.accent)
-                    .frame(width: 32, height: 32)
+                    .frame(width: Theme.Spacing.xl, height: Theme.Spacing.xl)
                     .background(Theme.accentMuted)
                     .clipShape(.rect(cornerRadius: 8))
 
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
                     Text(exercise.exercise.name)
                         .font(.subheadline.weight(.bold))
                         .foregroundStyle(Theme.textPrimary)
@@ -315,7 +315,7 @@ private struct PastExerciseCard: View {
                     onDelete()
                 } label: {
                     Image(systemName: "trash")
-                        .font(.subheadline)
+                        .font(Theme.fontSubheadline)
                         .foregroundStyle(Theme.destructive.opacity(0.8))
                         .frame(width: 44, height: 44)
                         .contentShape(Rectangle())
@@ -332,7 +332,7 @@ private struct PastExerciseCard: View {
                 Text("REPS")
                     .frame(maxWidth: .infinity)
                 // Spacer matching trailing delete button width in PastSetRow
-                Color.clear.frame(width: 32)
+                Color.clear.frame(width: Theme.Spacing.xl)
             }
             .font(.caption2.weight(.semibold))
             .foregroundStyle(Theme.textSecondary)
@@ -422,7 +422,7 @@ private struct PastSetRow: View {
                 .keyboardType(.decimalPad)
                 .multilineTextAlignment(.center)
                 .font(Theme.fontNumberMedium)
-                .padding(.vertical, 8)
+                .padding(.vertical, Theme.Spacing.sm)
                 .padding(.horizontal, 6)
                 .background(Theme.surfaceElevated)
                 .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
@@ -446,7 +446,7 @@ private struct PastSetRow: View {
                 .keyboardType(.numberPad)
                 .multilineTextAlignment(.center)
                 .font(Theme.fontNumberMedium)
-                .padding(.vertical, 8)
+                .padding(.vertical, Theme.Spacing.sm)
                 .padding(.horizontal, 6)
                 .background(Theme.surfaceElevated)
                 .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
@@ -472,8 +472,8 @@ private struct PastSetRow: View {
             } label: {
                 Image(systemName: "minus.circle.fill")
                     .foregroundStyle(Theme.destructive)
-                    .font(.headline)
-                    .frame(width: 32, height: 32)
+                    .font(Theme.fontHeadline)
+                    .frame(width: Theme.Spacing.xl, height: Theme.Spacing.xl)
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)

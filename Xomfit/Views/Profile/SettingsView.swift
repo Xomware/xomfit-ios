@@ -137,9 +137,9 @@ struct SettingsView: View {
             Toggle(isOn: workoutRemindersBinding) {
                 HStack(spacing: Theme.Spacing.md) {
                     Image(systemName: "alarm.fill")
-                        .frame(width: 24)
+                        .frame(width: Theme.Spacing.lg)
                         .foregroundStyle(Theme.accent)
-                    VStack(alignment: .leading, spacing: 2) {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
                         Text("Workout reminders")
                             .foregroundStyle(Theme.textPrimary)
                         if !notificationsAuthorized {
@@ -158,7 +158,7 @@ struct SettingsView: View {
             } label: {
                 HStack(spacing: Theme.Spacing.md) {
                     Image(systemName: "bell.fill")
-                        .frame(width: 24)
+                        .frame(width: Theme.Spacing.lg)
                         .foregroundStyle(Theme.accent)
                     Text("Notification Settings")
                         .foregroundStyle(Theme.textPrimary)
@@ -177,7 +177,7 @@ struct SettingsView: View {
             // Weight unit
             HStack(spacing: Theme.Spacing.md) {
                 Image(systemName: "scalemass.fill")
-                    .frame(width: 24)
+                    .frame(width: Theme.Spacing.lg)
                     .foregroundStyle(Theme.accent)
                 Text("Weight unit")
                     .foregroundStyle(Theme.textPrimary)
@@ -194,7 +194,7 @@ struct SettingsView: View {
             // Default rest duration (seconds)
             HStack(spacing: Theme.Spacing.md) {
                 Image(systemName: "timer")
-                    .frame(width: 24)
+                    .frame(width: Theme.Spacing.lg)
                     .foregroundStyle(Theme.accent)
                 Stepper(value: $restDurationSeconds, in: 30...600, step: 15) {
                     HStack {
@@ -214,7 +214,7 @@ struct SettingsView: View {
             // Week start day
             HStack(spacing: Theme.Spacing.md) {
                 Image(systemName: "calendar")
-                    .frame(width: 24)
+                    .frame(width: Theme.Spacing.lg)
                     .foregroundStyle(Theme.accent)
                 Text("Week starts on")
                     .foregroundStyle(Theme.textPrimary)
@@ -231,7 +231,7 @@ struct SettingsView: View {
             // Theme
             HStack(spacing: Theme.Spacing.md) {
                 Image(systemName: "paintbrush.fill")
-                    .frame(width: 24)
+                    .frame(width: Theme.Spacing.lg)
                     .foregroundStyle(Theme.accent)
                 Text("Theme")
                     .foregroundStyle(Theme.textPrimary)
@@ -262,7 +262,7 @@ struct SettingsView: View {
             } label: {
                 HStack(spacing: Theme.Spacing.md) {
                     Image(systemName: "target")
-                        .frame(width: 24)
+                        .frame(width: Theme.Spacing.lg)
                         .foregroundStyle(Theme.accent)
                     Text("Fitness Goals")
                         .foregroundStyle(Theme.textPrimary)
@@ -281,7 +281,7 @@ struct SettingsView: View {
             } label: {
                 HStack(spacing: Theme.Spacing.md) {
                     Image(systemName: "doc.text.magnifyingglass")
-                        .frame(width: 24)
+                        .frame(width: Theme.Spacing.lg)
                         .foregroundStyle(Theme.accent)
                     Text("Reports")
                         .foregroundStyle(Theme.textPrimary)
@@ -303,7 +303,7 @@ struct SettingsView: View {
             } label: {
                 HStack(spacing: Theme.Spacing.md) {
                     Image(systemName: "sparkles")
-                        .frame(width: 24)
+                        .frame(width: Theme.Spacing.lg)
                         .foregroundStyle(Theme.accent)
                     Text("AI Coach")
                         .foregroundStyle(Theme.textPrimary)
@@ -313,7 +313,7 @@ struct SettingsView: View {
 
             HStack(spacing: Theme.Spacing.md) {
                 Image(systemName: "key.fill")
-                    .frame(width: 24)
+                    .frame(width: Theme.Spacing.lg)
                     .foregroundStyle(Theme.accent)
                 SecureField("Anthropic API Key", text: $anthropicAPIKey)
                     .foregroundStyle(Theme.textPrimary)
@@ -341,7 +341,7 @@ struct SettingsView: View {
             } label: {
                 HStack(spacing: Theme.Spacing.md) {
                     Image(systemName: "square.and.arrow.up")
-                        .frame(width: 24)
+                        .frame(width: Theme.Spacing.lg)
                         .foregroundStyle(Theme.accent)
                     Text("Export workouts")
                         .foregroundStyle(Theme.textPrimary)
@@ -360,7 +360,7 @@ struct SettingsView: View {
             } label: {
                 HStack(spacing: Theme.Spacing.md) {
                     Image(systemName: "trash.fill")
-                        .frame(width: 24)
+                        .frame(width: Theme.Spacing.lg)
                         .foregroundStyle(Theme.destructive)
                     Text("Delete account")
                         .foregroundStyle(Theme.destructive)
@@ -380,7 +380,7 @@ struct SettingsView: View {
             } label: {
                 HStack(spacing: Theme.Spacing.md) {
                     Image(systemName: "envelope.open.fill")
-                        .frame(width: 24)
+                        .frame(width: Theme.Spacing.lg)
                         .foregroundStyle(Theme.accent)
                     Text("Send feedback")
                         .foregroundStyle(Theme.textPrimary)
@@ -393,7 +393,7 @@ struct SettingsView: View {
             } label: {
                 HStack(spacing: Theme.Spacing.md) {
                     Image(systemName: "star.fill")
-                        .frame(width: 24)
+                        .frame(width: Theme.Spacing.lg)
                         .foregroundStyle(Theme.prGold)
                     Text("Rate XomFit")
                         .foregroundStyle(Theme.textPrimary)
@@ -404,13 +404,13 @@ struct SettingsView: View {
             Link(destination: URL(string: "https://xomware.com/privacy")!) {
                 HStack(spacing: Theme.Spacing.md) {
                     Image(systemName: "lock.shield.fill")
-                        .frame(width: 24)
+                        .frame(width: Theme.Spacing.lg)
                         .foregroundStyle(Theme.accent)
                     Text("Privacy Policy")
                         .foregroundStyle(Theme.textPrimary)
                     Spacer()
                     Image(systemName: "arrow.up.right.square")
-                        .font(.caption)
+                        .font(Theme.fontCaption)
                         .foregroundStyle(Theme.textTertiary)
                 }
             }
@@ -440,7 +440,7 @@ struct SettingsView: View {
             } label: {
                 HStack(spacing: Theme.Spacing.md) {
                     Image(systemName: "rectangle.portrait.and.arrow.right")
-                        .frame(width: 24)
+                        .frame(width: Theme.Spacing.lg)
                         .foregroundStyle(Theme.destructive)
                     Text("Sign Out")
                         .foregroundStyle(Theme.destructive)
@@ -493,7 +493,7 @@ struct SettingsView: View {
     private func settingsRow(icon: String, iconColor: Color, label: String, value: String) -> some View {
         HStack(spacing: Theme.Spacing.md) {
             Image(systemName: icon)
-                .frame(width: 24)
+                .frame(width: Theme.Spacing.lg)
                 .foregroundStyle(iconColor)
             Text(label)
                 .foregroundStyle(Theme.textPrimary)
@@ -626,7 +626,7 @@ extension SettingsView {
     fileprivate func toolRow(icon: String, label: String) -> some View {
         HStack(spacing: Theme.Spacing.md) {
             Image(systemName: icon)
-                .frame(width: 24)
+                .frame(width: Theme.Spacing.lg)
                 .foregroundStyle(Theme.accent)
             Text(label)
                 .foregroundStyle(Theme.textPrimary)

@@ -109,9 +109,9 @@ private struct CountUpStatCard: View {
 
     var body: some View {
         XomCard(padding: Theme.Spacing.sm) {
-            VStack(spacing: 4) {
+            VStack(spacing: Theme.Spacing.tight) {
                 Image(systemName: icon)
-                    .font(.headline)
+                    .font(Theme.fontHeadline)
                     .foregroundStyle(iconColor)
                 CountUpNumber(target: count)
                 XomMetricLabel(label)
@@ -164,11 +164,11 @@ private struct LiftProgressionChart: View {
                             }
                         }
                     } label: {
-                        HStack(spacing: 4) {
+                        HStack(spacing: Theme.Spacing.tight) {
                             Text(selectedExercise)
                                 .font(Theme.fontCaption)
                             Image(systemName: "chevron.up.chevron.down")
-                                .font(.caption2)
+                                .font(Theme.fontCaption2)
                         }
                         .foregroundStyle(Theme.accent)
                     }

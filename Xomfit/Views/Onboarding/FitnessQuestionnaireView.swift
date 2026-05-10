@@ -152,7 +152,7 @@ struct FitnessQuestionnaireView: View {
                 ForEach(0..<totalPages, id: \.self) { index in
                     Circle()
                         .fill(index == currentPage ? Theme.accent : Theme.surfaceElevated)
-                        .frame(width: 8, height: 8)
+                        .frame(width: Theme.Spacing.sm, height: Theme.Spacing.sm)
                         .overlay(
                             Circle()
                                 .strokeBorder(
@@ -333,14 +333,14 @@ private struct ChoiceRow: View {
             HStack(spacing: Theme.Spacing.md) {
                 if let icon {
                     Image(systemName: icon)
-                        .font(.title3)
+                        .font(Theme.fontTitle3)
                         .foregroundStyle(isSelected ? Theme.accent : Theme.textSecondary)
-                        .frame(width: 32, height: 32)
+                        .frame(width: Theme.Spacing.xl, height: Theme.Spacing.xl)
                 }
 
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
                     Text(label)
-                        .font(.body.weight(.semibold))
+                        .font(Theme.fontBodyEmphasized)
                         .foregroundStyle(Theme.textPrimary)
 
                     if let subtitle {
@@ -353,7 +353,7 @@ private struct ChoiceRow: View {
                 Spacer()
 
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .font(.title3)
+                    .font(Theme.fontTitle3)
                     .foregroundStyle(isSelected ? Theme.accent : Theme.textTertiary)
             }
             .padding(Theme.Spacing.md)
@@ -416,7 +416,7 @@ private struct ChipButton: View {
     var body: some View {
         Button(action: onTap) {
             Text(label)
-                .font(.body.weight(.semibold))
+                .font(Theme.fontBodyEmphasized)
                 .foregroundStyle(isSelected ? .black : Theme.textPrimary)
                 .frame(maxWidth: .infinity, minHeight: 56)
                 .background(

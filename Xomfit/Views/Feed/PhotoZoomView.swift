@@ -92,7 +92,7 @@ struct PhotoZoomView: View {
                         }
                 case .failure:
                     Image(systemName: "photo")
-                        .font(.largeTitle)
+                        .font(Theme.fontLargeTitle)
                         .foregroundStyle(Theme.textSecondary)
                 default:
                     ProgressView().tint(Theme.textSecondary)
@@ -107,7 +107,7 @@ struct PhotoZoomView: View {
                         dismiss()
                     } label: {
                         Image(systemName: "xmark.circle.fill")
-                            .font(.title2)
+                            .font(Theme.fontTitle2)
                             .foregroundStyle(Theme.textSecondary)
                             .background(Color.black.opacity(0.4).clipShape(Circle()))
                     }

@@ -77,7 +77,7 @@ struct FeedView: View {
                                 if NotificationService.shared.unreadCount > 0 {
                                     Circle()
                                         .fill(Theme.destructive)
-                                        .frame(width: 8, height: 8)
+                                        .frame(width: Theme.Spacing.sm, height: Theme.Spacing.sm)
                                         .offset(x: 3, y: -3)
                                 }
                             }
@@ -205,7 +205,7 @@ struct FeedView: View {
                     .font(Theme.fontCaption.weight(.semibold))
                     .foregroundStyle(Theme.accent)
                     .padding(.horizontal, Theme.Spacing.md)
-                    .padding(.vertical, 8)
+                    .padding(.vertical, Theme.Spacing.sm)
                     .frame(minHeight: 36)
                     .background(
                         Capsule().fill(Theme.accent.opacity(0.15))

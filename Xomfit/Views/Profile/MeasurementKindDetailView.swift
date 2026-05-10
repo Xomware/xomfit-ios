@@ -98,13 +98,13 @@ struct MeasurementKindDetailView: View {
         XomCard(variant: .elevated) {
             HStack(spacing: Theme.Spacing.md) {
                 Image(systemName: kind.systemImage)
-                    .font(.title2)
+                    .font(Theme.fontTitle2)
                     .foregroundStyle(Theme.accent)
                     .frame(width: 44, height: 44)
                     .background(Theme.accentMuted)
                     .clipShape(Circle())
 
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: Theme.Spacing.tight) {
                     if let latest = viewModel.latest(of: kind) {
                         Text("\(kind.format(latest.value)) \(kind.unit)")
                             .font(Theme.fontNumberLarge)
@@ -141,7 +141,7 @@ struct MeasurementKindDetailView: View {
                 ? Theme.textSecondary
                 : (isPositive ? Theme.accent : Theme.destructive)
             let prefix = delta > 0 ? "+" : ""
-            VStack(alignment: .trailing, spacing: 2) {
+            VStack(alignment: .trailing, spacing: Theme.Spacing.tighter) {
                 Text("\(prefix)\(kind.format(delta))")
                     .font(Theme.fontNumberMedium)
                     .foregroundStyle(fg)
@@ -220,7 +220,7 @@ struct MeasurementKindDetailView: View {
                 AxisValueLabel {
                     if let v = value.as(Double.self) {
                         Text(kind.format(v))
-                            .font(.caption2)
+                            .font(Theme.fontCaption2)
                             .foregroundStyle(Theme.textTertiary)
                     }
                 }
@@ -230,7 +230,7 @@ struct MeasurementKindDetailView: View {
             AxisMarks { _ in
                 AxisGridLine().foregroundStyle(Theme.hairline)
                 AxisValueLabel()
-                    .font(.caption2)
+                    .font(Theme.fontCaption2)
                     .foregroundStyle(Theme.textTertiary)
             }
         }
@@ -320,7 +320,7 @@ struct MeasurementKindDetailView: View {
     private func historyRow(_ entry: BodyMeasurement) -> some View {
         XomCard(padding: Theme.Spacing.sm) {
             HStack(spacing: Theme.Spacing.md) {
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
                     Text("\(kind.format(entry.value)) \(kind.unit)")
                         .font(Theme.fontNumberMedium)
                         .foregroundStyle(Theme.textPrimary)
@@ -343,8 +343,8 @@ struct MeasurementKindDetailView: View {
                     isDeleteAlertPresented = true
                 } label: {
                     Image(systemName: "trash")
-                        .font(.subheadline)
-                        .foregroundStyle(Theme.textSecondary)
+                        .font(Theme.fontSubheadline)
+                        .foregroundStyle(Theme.destructive)
                         .frame(width: 44, height: 44)
                 }
                 .accessibilityLabel("Delete entry")

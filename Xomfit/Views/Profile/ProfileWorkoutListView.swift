@@ -24,7 +24,7 @@ struct ProfileWorkoutListView: View {
             } else if isFiltered && workouts.isEmpty {
                 VStack(spacing: Theme.Spacing.sm) {
                     Image(systemName: "line.3.horizontal.decrease")
-                        .font(.largeTitle)
+                        .font(Theme.fontLargeTitle)
                         .foregroundStyle(Theme.textSecondary)
                     Text("No matching workouts")
                         .font(Theme.fontBody)
@@ -67,7 +67,7 @@ struct ProfileWorkoutListView: View {
     private func workoutCard(_ workout: Workout) -> some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
             HStack {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: Theme.Spacing.tight) {
                     Text(workout.name)
                         .font(.subheadline.weight(.bold))
                         .foregroundStyle(Theme.textPrimary)
@@ -80,19 +80,19 @@ struct ProfileWorkoutListView: View {
                     .font(.caption.weight(.bold).monospaced())
                     .foregroundStyle(Theme.accent)
                     .padding(.horizontal, 10)
-                    .padding(.vertical, 4)
+                    .padding(.vertical, Theme.Spacing.tight)
                     .background(Theme.accent.opacity(0.12))
                     .clipShape(.rect(cornerRadius: 6))
             }
 
-            HStack(spacing: 16) {
+            HStack(spacing: Theme.Spacing.md) {
                 statLabel(value: "\(workout.exercises.count)", label: "exercises")
                 statLabel(value: "\(workout.totalSets)", label: "sets")
                 statLabel(value: workout.formattedVolume, label: "lbs")
                 if workout.totalPRs > 0 {
                     HStack(spacing: 3) {
                         Image(systemName: "trophy.fill")
-                            .font(.caption2)
+                            .font(Theme.fontCaption2)
                         Text("\(workout.totalPRs) PRs")
                             .font(Theme.fontCaption)
                     }
@@ -101,13 +101,13 @@ struct ProfileWorkoutListView: View {
             }
 
             if !workout.muscleGroups.isEmpty {
-                HStack(spacing: 4) {
+                HStack(spacing: Theme.Spacing.tight) {
                     ForEach(workout.muscleGroups.prefix(4), id: \.self) { mg in
                         Text(mg.displayName)
                             .font(.caption2.weight(.medium))
                             .foregroundStyle(Theme.textSecondary)
                             .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
+                            .padding(.vertical, Theme.Spacing.tighter)
                             .background(Theme.surfaceSecondary)
                             .clipShape(.rect(cornerRadius: 4))
                     }
@@ -133,7 +133,7 @@ struct ProfileWorkoutListView: View {
     private var emptyState: some View {
         VStack(spacing: Theme.Spacing.sm) {
             Image(systemName: "figure.strengthtraining.traditional")
-                .font(.largeTitle)
+                .font(Theme.fontLargeTitle)
                 .foregroundStyle(Theme.textSecondary)
             Text("No workouts yet")
                 .font(Theme.fontBody)

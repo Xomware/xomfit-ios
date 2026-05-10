@@ -28,7 +28,7 @@ struct FeedFilterBar: View {
     var body: some View {
         VStack(spacing: 0) {
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
+                HStack(spacing: Theme.Spacing.sm) {
                     // Date range chips
                     ForEach(FeedDateRange.allCases) { range in
                         let isActive = selectedDateRange == range
@@ -66,7 +66,7 @@ struct FeedFilterBar: View {
                 }
                 .padding(.horizontal, Theme.Spacing.md)
             }
-            .padding(.vertical, 8)
+            .padding(.vertical, Theme.Spacing.sm)
 
             XomDivider()
         }

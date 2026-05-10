@@ -115,14 +115,14 @@ struct OnboardingPermissionsScreen: View {
         VStack(alignment: .leading, spacing: Theme.Spacing.md) {
             HStack(spacing: Theme.Spacing.md) {
                 Image(systemName: icon)
-                    .font(.title3)
+                    .font(Theme.fontTitle3)
                     .foregroundStyle(Theme.accent)
                     .frame(width: 44, height: 44)
                     .background(Theme.accent.opacity(0.12))
                     .clipShape(Circle())
                     .accessibilityHidden(true)
 
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
                     Text(title)
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(Theme.textPrimary)

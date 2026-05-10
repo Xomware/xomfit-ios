@@ -39,7 +39,7 @@ extension View {
 // MARK: - Preview
 
 #Preview {
-    VStack(spacing: 8) {
+    VStack(spacing: Theme.Spacing.sm) {
         XomMetricLabel("Total Volume")
         XomMetricLabel("Weekly Workouts")
         Text("custom text").metricLabel()

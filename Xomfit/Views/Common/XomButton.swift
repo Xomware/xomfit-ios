@@ -113,7 +113,7 @@ struct XomButton: View {
 // MARK: - Preview
 
 #Preview {
-    VStack(spacing: 16) {
+    VStack(spacing: Theme.Spacing.md) {
         XomButton("Start Workout", variant: .primary) {}
         XomButton("Edit Profile", variant: .secondary) {}
         XomButton("Delete", variant: .destructive) {}

@@ -186,17 +186,17 @@ private struct ExerciseRow: View {
         Button(action: onTap) {
             HStack(spacing: Theme.Spacing.md) {
                 Image(systemName: exercise.icon)
-                    .font(.title3)
+                    .font(Theme.fontTitle3)
                     .foregroundStyle(Theme.accent)
                     .frame(width: 36, height: 36)
                     .background(Theme.accentMuted)
                     .clipShape(.rect(cornerRadius: 8))
 
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: Theme.Spacing.tight) {
                     Text(exercise.name)
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(Theme.textPrimary)
-                    HStack(spacing: 4) {
+                    HStack(spacing: Theme.Spacing.tight) {
                         XomBadge(exercise.equipment.displayName, variant: .secondary)
                         ForEach(exercise.muscleGroups.prefix(2), id: \.self) { mg in
                             XomBadge(mg.displayName, variant: .secondary)
@@ -210,7 +210,7 @@ private struct ExerciseRow: View {
                     showDetails = true
                 } label: {
                     Image(systemName: "info.circle")
-                        .font(.title3)
+                        .font(Theme.fontTitle3)
                         .foregroundStyle(Theme.textSecondary)
                         .frame(width: 44, height: 44)
                         .contentShape(Rectangle())
@@ -222,7 +222,7 @@ private struct ExerciseRow: View {
                     .foregroundStyle(Theme.accent)
             }
             .frame(minHeight: 48)
-            .padding(.vertical, 4)
+            .padding(.vertical, Theme.Spacing.tight)
         }
         .buttonStyle(.plain)
         .sheet(isPresented: $showDetails) {

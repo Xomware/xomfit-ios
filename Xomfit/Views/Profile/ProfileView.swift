@@ -219,7 +219,7 @@ struct ProfileView: View {
                 // Only own profile gets the Body link — measurements are private to the user.
                 userId: viewModel.isOwnProfile ? resolvedUserId : nil,
                 workouts: viewModel.workouts,
-                firstPRDate: viewModel.allPRs.map(\.date).min()
+                firstPRDate: viewModel.allPRs.map(\.date).min(),
                 onStartWorkout: statsEmptyStateAction
             )
         }
@@ -247,7 +247,7 @@ struct ProfileView: View {
     @ToolbarContentBuilder
     private var ownProfileToolbar: some ToolbarContent {
         ToolbarItem(placement: .topBarTrailing) {
-            HStack(spacing: 16) {
+            HStack(spacing: Theme.Spacing.md) {
                 NavigationLink {
                     AICoachView()
                         .hideTabBar()

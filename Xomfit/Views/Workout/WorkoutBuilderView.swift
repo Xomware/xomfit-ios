@@ -134,7 +134,7 @@ struct WorkoutBuilderView: View {
 
     private var nameField: some View {
         TextField("Workout Name", text: $viewModel.name)
-            .font(.body.weight(.semibold))
+            .font(Theme.fontBodyEmphasized)
             .foregroundStyle(Theme.textPrimary)
             .padding(Theme.Spacing.md)
             .background(Theme.surface)
@@ -150,15 +150,15 @@ struct WorkoutBuilderView: View {
                     Button {
                         viewModel.category = cat
                     } label: {
-                        HStack(spacing: 4) {
+                        HStack(spacing: Theme.Spacing.tight) {
                             Image(systemName: cat.icon)
-                                .font(.caption2)
+                                .font(Theme.fontCaption2)
                             Text(cat.displayName)
                                 .font(Theme.fontSmall)
                         }
                         .foregroundStyle(viewModel.category == cat ? .black : Theme.textSecondary)
                         .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
+                        .padding(.vertical, Theme.Spacing.sm)
                         .background(viewModel.category == cat ? Theme.accent : Theme.surface)
                         .clipShape(.rect(cornerRadius: 20))
                     }
@@ -201,7 +201,7 @@ struct WorkoutBuilderView: View {
     private var emptyState: some View {
         VStack(spacing: Theme.Spacing.sm) {
             Image(systemName: "figure.strengthtraining.traditional")
-                .font(.largeTitle)
+                .font(Theme.fontLargeTitle)
                 .foregroundStyle(Theme.textSecondary.opacity(0.5))
             Text("No exercises yet")
                 .font(Theme.fontBody)
@@ -221,7 +221,7 @@ struct WorkoutBuilderView: View {
             Haptics.light()
             showExercisePicker = true
         } label: {
-            HStack(spacing: 8) {
+            HStack(spacing: Theme.Spacing.sm) {
                 Image(systemName: "plus.circle.fill")
                 Text("Add Exercise")
                     .font(.subheadline.weight(.semibold))
@@ -326,13 +326,13 @@ private struct BuilderExerciseRow: View {
                         .font(.subheadline.weight(.bold))
                         .foregroundStyle(Theme.textPrimary)
 
-                    HStack(spacing: 4) {
+                    HStack(spacing: Theme.Spacing.tight) {
                         ForEach(exercise.exercise.muscleGroups.prefix(3), id: \.self) { mg in
                             Text(mg.displayName)
                                 .font(Theme.fontSmall)
                                 .foregroundStyle(Theme.textSecondary)
                                 .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
+                                .padding(.vertical, Theme.Spacing.tighter)
                                 .background(Theme.surfaceSecondary)
                                 .clipShape(.rect(cornerRadius: 4))
                         }
@@ -343,7 +343,7 @@ private struct BuilderExerciseRow: View {
 
                 Button(action: onDelete) {
                     Image(systemName: "trash")
-                        .font(.subheadline)
+                        .font(Theme.fontSubheadline)
                         .foregroundStyle(Theme.destructive.opacity(0.8))
                         .frame(width: 44, height: 44)
                         .contentShape(Rectangle())
@@ -354,7 +354,7 @@ private struct BuilderExerciseRow: View {
             // Sets & Reps controls
             HStack(spacing: Theme.Spacing.md) {
                 // Sets stepper
-                HStack(spacing: 8) {
+                HStack(spacing: Theme.Spacing.sm) {
                     Text("Sets")
                         .font(Theme.fontCaption)
                         .foregroundStyle(Theme.textSecondary)
@@ -385,7 +385,7 @@ private struct BuilderExerciseRow: View {
                 Spacer()
 
                 // Reps field
-                HStack(spacing: 8) {
+                HStack(spacing: Theme.Spacing.sm) {
                     Text("Reps")
                         .font(Theme.fontCaption)
                         .foregroundStyle(Theme.textSecondary)
@@ -395,7 +395,7 @@ private struct BuilderExerciseRow: View {
                         .foregroundStyle(Theme.textPrimary)
                         .multilineTextAlignment(.center)
                         .frame(width: 60)
-                        .padding(.horizontal, 8)
+                        .padding(.horizontal, Theme.Spacing.sm)
                         .padding(.vertical, 6)
                         .background(Theme.surfaceSecondary)
                         .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
@@ -445,7 +445,7 @@ private struct BuilderExerciseRow: View {
             Haptics.selection()
             showNotesSheet = true
         } label: {
-            HStack(spacing: 4) {
+            HStack(spacing: Theme.Spacing.tight) {
                 Image(systemName: hasNote ? "note.text" : "plus")
                     .font(.caption2.weight(.semibold))
                 if hasNote, let preview = previewText(exercise.notes) {
@@ -458,8 +458,8 @@ private struct BuilderExerciseRow: View {
                 }
             }
             .foregroundStyle(hasNote ? .black : Theme.textSecondary)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
+            .padding(.horizontal, Theme.Spacing.sm)
+            .padding(.vertical, Theme.Spacing.tight)
             .background(hasNote ? Theme.accent : Theme.surfaceSecondary)
             .clipShape(.capsule)
         }
@@ -474,15 +474,15 @@ private struct BuilderExerciseRow: View {
             Haptics.selection()
             showRestSheet = true
         } label: {
-            HStack(spacing: 4) {
+            HStack(spacing: Theme.Spacing.tight) {
                 Image(systemName: "timer")
                     .font(.caption2.weight(.semibold))
                 Text("Rest: \(formatRest(seconds))")
                     .font(.caption2.weight(.semibold))
             }
             .foregroundStyle(isCustom ? .black : Theme.textSecondary)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
+            .padding(.horizontal, Theme.Spacing.sm)
+            .padding(.vertical, Theme.Spacing.tight)
             .background(isCustom ? Theme.accent : Theme.surfaceSecondary)
             .clipShape(.capsule)
         }

@@ -51,7 +51,7 @@ struct WorkoutDetailView: View {
     private var summaryCard: some View {
         VStack(spacing: Theme.Spacing.md) {
             HStack {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: Theme.Spacing.tight) {
                     Text(workout.startTime.workoutDateString)
                         .font(Theme.fontCaption)
                         .foregroundStyle(Theme.textSecondary)
@@ -63,9 +63,9 @@ struct WorkoutDetailView: View {
                     }
 
                     if let location = workout.location, !location.isEmpty {
-                        HStack(spacing: 4) {
+                        HStack(spacing: Theme.Spacing.tight) {
                             Image(systemName: "location.fill")
-                                .font(.caption2)
+                                .font(Theme.fontCaption2)
                             Text(location)
                                 .font(Theme.fontSmall)
                         }
@@ -75,10 +75,10 @@ struct WorkoutDetailView: View {
                 Spacer()
 
                 if let rating = workout.rating, rating > 0 {
-                    HStack(spacing: 2) {
+                    HStack(spacing: Theme.Spacing.tighter) {
                         ForEach(1...5, id: \.self) { star in
                             Image(systemName: star <= rating ? "star.fill" : "star")
-                                .font(.caption)
+                                .font(Theme.fontCaption)
                                 .foregroundStyle(star <= rating ? Theme.accent : Theme.textSecondary.opacity(0.3))
                         }
                     }
@@ -117,7 +117,7 @@ struct WorkoutDetailView: View {
             if let notes = workout.notes, !notes.isEmpty {
                 HStack {
                     Image(systemName: "note.text")
-                        .font(.caption)
+                        .font(Theme.fontCaption)
                         .foregroundStyle(Theme.textSecondary)
                     Text(notes)
                         .font(Theme.fontCaption)
@@ -166,12 +166,12 @@ struct WorkoutDetailView: View {
                     }
                 }
             } label: {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: Theme.Spacing.tight) {
                     HStack(spacing: Theme.Spacing.sm) {
                         Text("\(index)")
                             .font(.caption.weight(.bold).monospaced())
                             .foregroundStyle(Theme.accent)
-                            .frame(width: 24, height: 24)
+                            .frame(width: Theme.Spacing.lg, height: Theme.Spacing.lg)
                             .background(Theme.accent.opacity(0.12))
                             .clipShape(.rect(cornerRadius: 6))
 
@@ -188,7 +188,7 @@ struct WorkoutDetailView: View {
                         if exercise.sets.contains(where: { $0.isPersonalRecord }) {
                             HStack(spacing: 3) {
                                 Image(systemName: "trophy.fill")
-                                    .font(.caption2)
+                                    .font(Theme.fontCaption2)
                                 Text("PR")
                                     .font(.caption2.weight(.bold))
                             }
@@ -204,7 +204,7 @@ struct WorkoutDetailView: View {
                             Spacer().frame(width: 24 + Theme.Spacing.sm)
                             Rectangle()
                                 .fill(Theme.accent.opacity(0.6))
-                                .frame(width: 2)
+                                .frame(width: Theme.Spacing.tighter)
                             Text(notes)
                                 .font(Theme.fontSmall)
                                 .italic()
@@ -244,13 +244,13 @@ struct WorkoutDetailView: View {
 
             if set.isPersonalRecord {
                 Image(systemName: "trophy.fill")
-                    .font(.caption2)
+                    .font(Theme.fontCaption2)
                     .foregroundStyle(Theme.prGold)
                     .padding(.leading, 6)
             }
         }
         .font(.subheadline.weight(.medium).monospaced())
-        .padding(.vertical, 4)
+        .padding(.vertical, Theme.Spacing.tight)
         .accessibilityLabel("Set \(number): \(formatWeight(set.weight)) lbs for \(set.reps) reps\(set.isPersonalRecord ? ", personal record" : "")")
     }
 
@@ -302,11 +302,11 @@ struct WorkoutDetailView: View {
     private func soundtrackRow(track: WorkoutTrack) -> some View {
         HStack(spacing: Theme.Spacing.sm) {
             Image(systemName: "music.note")
-                .font(.caption)
+                .font(Theme.fontCaption)
                 .foregroundStyle(Theme.textSecondary)
                 .frame(width: 20)
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
                 Text(track.title)
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(Theme.textPrimary)
@@ -321,7 +321,7 @@ struct WorkoutDetailView: View {
 
             Spacer()
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, Theme.Spacing.sm)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(accessibilityLabel(for: track))
     }

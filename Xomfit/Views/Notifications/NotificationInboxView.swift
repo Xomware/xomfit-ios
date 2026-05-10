@@ -74,7 +74,7 @@ private struct NotificationRow: View {
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: notification.type.icon)
-                .font(.body)
+                .font(Theme.fontBody)
                 .foregroundStyle(iconColor)
                 .frame(width: 36, height: 36)
                 .background(iconColor.opacity(0.15))
@@ -102,10 +102,10 @@ private struct NotificationRow: View {
             if !notification.isRead {
                 Circle()
                     .fill(Theme.accent)
-                    .frame(width: 8, height: 8)
+                    .frame(width: Theme.Spacing.sm, height: Theme.Spacing.sm)
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, Theme.Spacing.tight)
     }
 
     private var iconColor: Color {

@@ -118,8 +118,8 @@ private struct PRRow: View {
             HStack(spacing: Theme.Spacing.md) {
                 Image(systemName: "trophy.fill")
                     .foregroundStyle(isTopThree ? Theme.prGold : Theme.textTertiary)
-                    .font(.subheadline)
-                    .frame(width: 24)
+                    .font(Theme.fontSubheadline)
+                    .frame(width: Theme.Spacing.lg)
 
                 VStack(alignment: .leading, spacing: 3) {
                     Text("\(pr.weight.formattedWeight) lbs \u{00D7} \(pr.reps) reps")

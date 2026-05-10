@@ -45,7 +45,7 @@ struct ProfileFriendsView: View {
         return HStack(spacing: Theme.Spacing.md) {
             XomAvatar(name: name, size: 40)
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
                 Text(name)
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Theme.textPrimary)
@@ -74,7 +74,7 @@ struct ProfileFriendsView: View {
     private var emptyState: some View {
         VStack(spacing: Theme.Spacing.sm) {
             Image(systemName: "person.2")
-                .font(.largeTitle)
+                .font(Theme.fontLargeTitle)
                 .foregroundStyle(Theme.textSecondary)
             Text("No friends yet")
                 .font(Theme.fontBody)

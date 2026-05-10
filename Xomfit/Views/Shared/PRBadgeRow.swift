@@ -7,7 +7,7 @@ struct PRBadgeRow: View {
         HStack(spacing: Theme.Spacing.sm) {
             Image(systemName: "trophy.fill")
                 .foregroundStyle(Theme.prGold)
-                .font(.subheadline)
+                .font(Theme.fontSubheadline)
                 .frame(width: 20)
 
             Text(pr.exerciseName)

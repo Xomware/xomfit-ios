@@ -36,7 +36,7 @@ struct RestTimerRingView: View {
 // MARK: - Preview
 
 #Preview {
-    HStack(spacing: 24) {
+    HStack(spacing: Theme.Spacing.lg) {
         RestTimerRingView(progress: 0.25, color: Theme.accent, lineWidth: 6)
             .frame(width: 80, height: 80)
         RestTimerRingView(progress: 0.6, color: Theme.accent, lineWidth: 6)

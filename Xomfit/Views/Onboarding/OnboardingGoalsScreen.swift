@@ -75,13 +75,13 @@ private struct GoalCard: View {
             VStack(spacing: Theme.Spacing.sm) {
                 ZStack(alignment: .topTrailing) {
                     Image(systemName: goal.icon)
-                        .font(.largeTitle)
+                        .font(Theme.fontLargeTitle)
                         .foregroundStyle(isSelected ? Theme.accent : Theme.textSecondary)
                         .frame(maxWidth: .infinity)
 
                     if isSelected {
                         Image(systemName: "checkmark.circle.fill")
-                            .font(.body)
+                            .font(Theme.fontBody)
                             .foregroundStyle(Theme.accent)
                             .transition(.scale.combined(with: .opacity))
                     }

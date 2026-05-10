@@ -63,7 +63,7 @@ struct UserSearchView: View {
         HStack(spacing: 10) {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(Theme.textSecondary)
-                .font(.body)
+                .font(Theme.fontBody)
 
             TextField("Search by username", text: $query)
                 .textInputAutocapitalization(.never)
@@ -123,7 +123,7 @@ struct UserSearchView: View {
             // Avatar circle with initials
             initialsAvatar(profile)
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
                 Text(profile.displayName.isEmpty ? profile.username : profile.displayName)
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Theme.textPrimary)
@@ -134,7 +134,7 @@ struct UserSearchView: View {
 
             Spacer()
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, Theme.Spacing.tight)
         .accessibilityElement(children: .combine)
     }
 
@@ -161,7 +161,7 @@ struct UserSearchView: View {
     private var emptyState: some View {
         VStack(spacing: Theme.Spacing.sm) {
             Image(systemName: "magnifyingglass")
-                .font(.largeTitle)
+                .font(Theme.fontLargeTitle)
                 .foregroundStyle(Theme.textSecondary)
             Text("Search for users by username")
                 .font(Theme.fontBody)
@@ -172,7 +172,7 @@ struct UserSearchView: View {
     private var noResultsView: some View {
         VStack(spacing: Theme.Spacing.sm) {
             Image(systemName: "person.slash")
-                .font(.largeTitle)
+                .font(Theme.fontLargeTitle)
                 .foregroundStyle(Theme.textSecondary)
             Text("No users found")
                 .font(Theme.fontBody)

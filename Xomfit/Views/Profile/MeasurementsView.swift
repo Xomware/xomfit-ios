@@ -94,9 +94,9 @@ struct MeasurementsView: View {
         XomCard(padding: Theme.Spacing.sm) {
             VStack(spacing: Theme.Spacing.xs) {
                 Image(systemName: kind.systemImage)
-                    .font(.title3)
+                    .font(Theme.fontTitle3)
                     .foregroundStyle(Theme.accent)
-                    .frame(height: 24)
+                    .frame(height: Theme.Spacing.lg)
 
                 Text(kind.displayName)
                     .font(Theme.fontSubheadline.weight(.semibold))
@@ -149,11 +149,11 @@ private struct MeasurementKindRow: View {
         XomCard {
             HStack(spacing: Theme.Spacing.md) {
                 Image(systemName: kind.systemImage)
-                    .font(.title3)
+                    .font(Theme.fontTitle3)
                     .foregroundStyle(Theme.accent)
-                    .frame(width: 32, height: 32)
+                    .frame(width: Theme.Spacing.xl, height: Theme.Spacing.xl)
 
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
                     Text(kind.displayName)
                         .font(Theme.fontSubheadline.weight(.semibold))
                         .foregroundStyle(Theme.textPrimary)
@@ -172,7 +172,7 @@ private struct MeasurementKindRow: View {
     @ViewBuilder
     private var latestValue: some View {
         if let latest {
-            VStack(alignment: .trailing, spacing: 2) {
+            VStack(alignment: .trailing, spacing: Theme.Spacing.tighter) {
                 Text("\(kind.format(latest.value)) \(kind.unit)")
                     .font(Theme.fontNumberMedium)
                     .foregroundStyle(Theme.textPrimary)

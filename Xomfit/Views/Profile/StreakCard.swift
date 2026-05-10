@@ -34,12 +34,12 @@ struct StreakCard: View {
                         .fill(iconColor.opacity(0.15))
                         .frame(width: 44, height: 44)
                     Image(systemName: "flame.fill")
-                        .font(.title3)
+                        .font(Theme.fontTitle3)
                         .foregroundStyle(iconColor)
                         .symbolEffect(.bounce, value: currentStreak)
                 }
 
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
                     Text(headlineText)
                         .font(.headline.weight(.bold))
                         .foregroundStyle(Theme.textPrimary)
@@ -60,7 +60,7 @@ struct StreakCard: View {
 }
 
 #Preview {
-    VStack(spacing: 16) {
+    VStack(spacing: Theme.Spacing.md) {
         StreakCard(currentStreak: 7, longestStreak: 12)
         StreakCard(currentStreak: 1, longestStreak: 12)
         StreakCard(currentStreak: 0, longestStreak: 12)

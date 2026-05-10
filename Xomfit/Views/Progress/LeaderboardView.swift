@@ -67,9 +67,9 @@ struct LeaderboardView: View {
     // MARK: - Filter Bar
 
     private var filterBar: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: Theme.Spacing.sm) {
             // Metric + Timeframe row
-            HStack(spacing: 8) {
+            HStack(spacing: Theme.Spacing.sm) {
                 filterMenu(
                     label: viewModel.selectedMetric.rawValue,
                     icon: "chart.bar.fill"
@@ -174,7 +174,7 @@ struct LeaderboardView: View {
     private func podiumColumn(entry: LeaderboardEntry, height: CGFloat) -> some View {
         VStack(spacing: Theme.Spacing.xs) {
             Text(entry.badge ?? "")
-                .font(.title)
+                .font(Theme.fontTitle)
 
             XomAvatar(name: entry.displayName, size: entry.rank == 1 ? 56 : 44)
 
@@ -220,7 +220,7 @@ struct LeaderboardView: View {
 
                 XomAvatar(name: entry.displayName, size: 40)
 
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
                     Text(entry.displayName)
                         .font(.subheadline.weight(isCurrentUser ? .bold : .medium))
                         .foregroundStyle(isCurrentUser ? Theme.textPrimary : Theme.textPrimary)
@@ -256,9 +256,9 @@ struct LeaderboardView: View {
         Menu {
             content()
         } label: {
-            HStack(spacing: 4) {
+            HStack(spacing: Theme.Spacing.tight) {
                 Image(systemName: icon)
-                    .font(.caption2)
+                    .font(Theme.fontCaption2)
                 Text(label)
                     .font(.caption.weight(.semibold))
                 Image(systemName: "chevron.down")

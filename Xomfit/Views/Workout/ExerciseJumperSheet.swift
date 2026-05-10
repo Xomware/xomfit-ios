@@ -70,7 +70,7 @@ struct ExerciseJumperSheet: View {
                 VStack(alignment: .leading, spacing: 6) {
                     HStack(spacing: 6) {
                         Text(exercise.exercise.name)
-                            .font(.body.weight(.semibold))
+                            .font(Theme.fontBodyEmphasized)
                             .foregroundStyle(allComplete ? Theme.textSecondary : Theme.textPrimary)
                             .lineLimit(2)
                             .multilineTextAlignment(.leading)
@@ -80,7 +80,7 @@ struct ExerciseJumperSheet: View {
                                 .font(.caption2.weight(.bold))
                                 .foregroundStyle(.black)
                                 .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
+                                .padding(.vertical, Theme.Spacing.tighter)
                                 .background(Theme.accent)
                                 .clipShape(.capsule)
                         }
@@ -95,7 +95,7 @@ struct ExerciseJumperSheet: View {
                                 .background(
                                     Circle().fill(setDone ? Theme.accent : Color.clear)
                                 )
-                                .frame(width: 8, height: 8)
+                                .frame(width: Theme.Spacing.sm, height: Theme.Spacing.sm)
                                 .accessibilityHidden(true)
                                 .id(setIdx)
                         }
@@ -103,7 +103,7 @@ struct ExerciseJumperSheet: View {
                         Text("\(completedCount)/\(totalCount)")
                             .font(.caption.weight(.medium))
                             .foregroundStyle(Theme.textSecondary)
-                            .padding(.leading, 4)
+                            .padding(.leading, Theme.Spacing.tight)
                     }
                 }
 

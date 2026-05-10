@@ -257,7 +257,7 @@ private struct SearchResultRow: View {
                 size: 40
             )
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
                 Text(profile.displayName)
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Theme.textPrimary)
@@ -270,7 +270,7 @@ private struct SearchResultRow: View {
 
             actionView
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, Theme.Spacing.tight)
         .confirmationDialog(
             "Cancel friend request?",
             isPresented: $showCancelDialog,
@@ -389,7 +389,7 @@ private struct PendingRequestRow: View {
         HStack(spacing: Theme.Spacing.md) {
             XomAvatar(name: requesterName, size: 40)
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
                 Text(requesterName)
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Theme.textPrimary)
@@ -403,7 +403,7 @@ private struct PendingRequestRow: View {
 
             Spacer()
 
-            HStack(spacing: 8) {
+            HStack(spacing: Theme.Spacing.sm) {
                 Button("Accept") {
                     Haptics.light()
                     onAccept()
@@ -431,7 +431,7 @@ private struct PendingRequestRow: View {
                 .accessibilityLabel("Decline friend request")
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, Theme.Spacing.tight)
     }
 }
 
@@ -455,7 +455,7 @@ private struct OutgoingRequestRow: View {
         HStack(spacing: Theme.Spacing.md) {
             XomAvatar(name: addresseeName, size: 40)
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
                 Text(addresseeName)
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Theme.textPrimary)
@@ -482,7 +482,7 @@ private struct OutgoingRequestRow: View {
             .buttonStyle(.plain)
             .accessibilityLabel("Cancel outgoing friend request")
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, Theme.Spacing.tight)
         .confirmationDialog(
             "Cancel friend request?",
             isPresented: $showCancelDialog,
@@ -517,7 +517,7 @@ private struct FriendListRow: View {
         HStack(spacing: Theme.Spacing.md) {
             XomAvatar(name: friendName, size: 40)
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
                 Text(friendName)
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Theme.textPrimary)
@@ -535,7 +535,7 @@ private struct FriendListRow: View {
 
             Spacer()
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, Theme.Spacing.tight)
         .swipeActions(edge: .trailing) {
             Button("Remove", role: .destructive) {
                 onRemove()

@@ -108,7 +108,7 @@ struct PlateCalculatorView: View {
                         Text("\(w.formattedWeight)")
                             .font(.subheadline.weight(.semibold).monospacedDigit())
                             .foregroundStyle(barWeight == w && !useCustomBar ? .black : Theme.textPrimary)
-                            .padding(.vertical, 8)
+                            .padding(.vertical, Theme.Spacing.sm)
                             .frame(maxWidth: .infinity)
                             .background(barWeight == w && !useCustomBar ? Theme.accent : Theme.surfaceElevated)
                             .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
@@ -124,7 +124,7 @@ struct PlateCalculatorView: View {
                     Text("Custom")
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(useCustomBar ? .black : Theme.textPrimary)
-                        .padding(.vertical, 8)
+                        .padding(.vertical, Theme.Spacing.sm)
                         .frame(maxWidth: .infinity)
                         .background(useCustomBar ? Theme.accent : Theme.surfaceElevated)
                         .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
@@ -220,7 +220,7 @@ struct PlateCalculatorView: View {
 
     private var plateStackVisualization: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(alignment: .center, spacing: 4) {
+            HStack(alignment: .center, spacing: Theme.Spacing.tight) {
                 // Bar nub
                 Rectangle()
                     .fill(Theme.textTertiary)
@@ -300,7 +300,7 @@ struct PlateCalculatorView: View {
     }
 
     private func summaryStat(label: String, value: String) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
             Text(label.uppercased())
                 .font(.caption2.weight(.semibold))
                 .foregroundStyle(Theme.textTertiary)
@@ -401,7 +401,7 @@ private struct FlowChipRow: View {
                             .font(.caption.weight(.semibold).monospacedDigit())
                             .foregroundStyle(isSelected ? .black : Theme.textPrimary)
                             .padding(.horizontal, Theme.Spacing.md)
-                            .padding(.vertical, 8)
+                            .padding(.vertical, Theme.Spacing.sm)
                             .background(isSelected ? Theme.accent : Theme.surfaceElevated)
                             .clipShape(.capsule)
                             .overlay(

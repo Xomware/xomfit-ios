@@ -67,7 +67,7 @@ struct RestTimerView: View {
             }
 
             // Label + controls
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                 XomMetricLabel("Rest")
 
                 HStack(spacing: 10) {

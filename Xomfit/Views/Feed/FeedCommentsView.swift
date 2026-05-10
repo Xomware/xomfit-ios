@@ -48,7 +48,7 @@ struct FeedCommentsView: View {
                     Spacer()
                     VStack(spacing: Theme.Spacing.sm) {
                         Image(systemName: "bubble.right")
-                            .font(.largeTitle)
+                            .font(Theme.fontLargeTitle)
                             .foregroundStyle(Theme.textSecondary)
                         Text("No comments yet")
                             .font(Theme.fontHeadline)
@@ -120,14 +120,14 @@ struct FeedCommentsView: View {
                     cancelReply()
                 } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .font(.body)
+                        .font(Theme.fontBody)
                         .foregroundStyle(Theme.textSecondary)
                         .frame(width: 44, height: 44)
                 }
                 .accessibilityLabel("Cancel reply")
             }
             .padding(.horizontal, Theme.Spacing.md)
-            .padding(.vertical, 4)
+            .padding(.vertical, Theme.Spacing.tight)
             .background(Theme.surface)
             .overlay(alignment: .top) { XomDivider() }
         }
@@ -156,7 +156,7 @@ struct FeedCommentsView: View {
                         .frame(width: 44, height: 44)
                 } else {
                     Image(systemName: "arrow.up.circle.fill")
-                        .font(.largeTitle)
+                        .font(Theme.fontLargeTitle)
                         .foregroundStyle(newCommentText.isEmpty ? Theme.textSecondary : Theme.accent)
                 }
             }

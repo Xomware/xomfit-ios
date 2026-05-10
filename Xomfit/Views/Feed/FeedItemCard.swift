@@ -32,7 +32,7 @@ struct FeedItemCard: View {
                     Text(caption)
                         .font(Theme.fontBody)
                         .foregroundStyle(Theme.textPrimary)
-                        .padding(.top, 2)
+                        .padding(.top, Theme.Spacing.tighter)
                 }
 
                 XomDivider()
@@ -82,7 +82,7 @@ struct FeedItemCard: View {
                 size: 48
             )
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
                 Text(item.user.displayName.isEmpty ? item.user.username : item.user.displayName)
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Theme.textPrimary)
@@ -118,7 +118,7 @@ struct FeedItemCard: View {
                     Image(systemName: "ellipsis")
                         .font(.system(size: 18, weight: .medium))
                         .foregroundStyle(Theme.textSecondary)
-                        .frame(width: 32, height: 32)
+                        .frame(width: Theme.Spacing.xl, height: Theme.Spacing.xl)
                         .contentShape(Rectangle())
                 }
                 .accessibilityLabel("Post options")
@@ -292,7 +292,7 @@ private struct WorkoutActivityContent: View {
                     .foregroundStyle(Theme.textPrimary)
 
                 if let rating = activity.rating, rating > 0 {
-                    HStack(spacing: 2) {
+                    HStack(spacing: Theme.Spacing.tighter) {
                         ForEach(1...5, id: \.self) { star in
                             Image(systemName: star <= rating ? "star.fill" : "star")
                                 .font(.system(size: 10))
@@ -303,7 +303,7 @@ private struct WorkoutActivityContent: View {
             }
 
             if let location = activity.location, !location.isEmpty {
-                HStack(spacing: 4) {
+                HStack(spacing: Theme.Spacing.tight) {
                     Image(systemName: "location.fill")
                         .font(.system(size: 10))
                     Text(location)

@@ -90,13 +90,13 @@ struct ProfileStatsView: View {
                 XomCard {
                     HStack(spacing: Theme.Spacing.md) {
                         Image(systemName: "ruler")
-                            .font(.title3)
+                            .font(Theme.fontTitle3)
                             .foregroundStyle(Theme.accent)
-                            .frame(width: 32, height: 32)
+                            .frame(width: Theme.Spacing.xl, height: Theme.Spacing.xl)
                             .background(Theme.accentMuted)
                             .clipShape(Circle())
 
-                        VStack(alignment: .leading, spacing: 2) {
+                        VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
                             Text("Body")
                                 .font(Theme.fontSubheadline.weight(.semibold))
                                 .foregroundStyle(Theme.textPrimary)
@@ -135,9 +135,9 @@ struct ProfileStatsView: View {
 
     private func countUpStatCard(icon: String, count: Int, label: String, iconColor: Color) -> some View {
         XomCard(padding: Theme.Spacing.sm) {
-            VStack(spacing: 4) {
+            VStack(spacing: Theme.Spacing.tight) {
                 Image(systemName: icon)
-                    .font(.headline)
+                    .font(Theme.fontHeadline)
                     .foregroundStyle(iconColor)
                 CountUpNumber(target: count)
                 XomMetricLabel(label)
@@ -205,7 +205,7 @@ struct ProfileStatsView: View {
     }
 
     private func consistencyBar(count: Int, maxCount: Int) -> some View {
-        VStack(spacing: 4) {
+        VStack(spacing: Theme.Spacing.tight) {
             GeometryReader { proxy in
                 VStack {
                     Spacer(minLength: 0)
@@ -360,7 +360,7 @@ struct ProfileStatsView: View {
     private var emptyState: some View {
         VStack(spacing: Theme.Spacing.sm) {
             Image(systemName: "trophy")
-                .font(.largeTitle)
+                .font(Theme.fontLargeTitle)
                 .foregroundStyle(Theme.textSecondary)
             Text("No PRs yet")
                 .font(Theme.fontBody)

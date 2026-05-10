@@ -46,7 +46,7 @@ struct StretchDetailSheet: View {
                 .background(Theme.accentMuted)
                 .clipShape(.rect(cornerRadius: Theme.cornerRadius))
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.tight) {
                 Text(stretch.name)
                     .font(Theme.fontTitle2)
                     .foregroundStyle(Theme.textPrimary)
@@ -65,10 +65,10 @@ struct StretchDetailSheet: View {
     private var metaSection: some View {
         HStack(spacing: Theme.Spacing.sm) {
             Image(systemName: "timer")
-                .font(.subheadline)
+                .font(Theme.fontSubheadline)
                 .foregroundStyle(Theme.accent)
-                .frame(width: 24)
-            VStack(alignment: .leading, spacing: 2) {
+                .frame(width: Theme.Spacing.lg)
+            VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
                 Text("Hold Time")
                     .font(Theme.fontSmall)
                     .foregroundStyle(Theme.textSecondary)

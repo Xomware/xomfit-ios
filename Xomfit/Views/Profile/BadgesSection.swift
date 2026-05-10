@@ -69,13 +69,13 @@ private struct BadgePill: View {
                         .fill(isUnlocked ? Theme.accent.opacity(0.18) : Theme.surfaceElevated)
                         .frame(width: 44, height: 44)
                     Image(systemName: badge.iconSystemName)
-                        .font(.title3)
+                        .font(Theme.fontTitle3)
                         .foregroundStyle(isUnlocked ? Theme.accent : Theme.textTertiary)
                     if !isUnlocked {
                         Image(systemName: "lock.fill")
                             .font(.caption2.weight(.bold))
                             .foregroundStyle(Theme.textSecondary)
-                            .padding(4)
+                            .padding(Theme.Spacing.tight)
                             .background(Circle().fill(Theme.background))
                             .offset(x: 16, y: 16)
                     }
