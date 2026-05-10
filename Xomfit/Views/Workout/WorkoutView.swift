@@ -6,17 +6,21 @@ struct WorkoutView: View {
 
     @State private var showNameEntry = false
     @State private var pendingWorkoutName = ""
-    @State private var showTemplateList = false
     @State private var showBuilder = false
     @State private var showLogPastWorkout = false
     @State private var previewTemplate: WorkoutTemplate?
-    @State private var templateRefreshId = UUID()
-    @State private var recentWorkouts: [Workout] = []
+
+    /// Shared data store for the Quick Hitter previews and the See-All pages.
+    /// Owned here so the same loaded data backs both the previews and the
+    /// dedicated category pages without re-fetching on push.
+    @State private var viewModel = WorkoutTabViewModel()
+
     private var hasStartedFirstWorkout: Bool {
         UserDefaults.standard.bool(forKey: "xomfit_first_workout_started")
     }
-    @State private var myTemplates: [WorkoutTemplate] = []
-    @State private var savedTemplates: [WorkoutTemplate] = []
+
+    /// Number of items shown in each Quick Hitter preview before "See All".
+    private let previewCount = 4
 
     // MARK: - Warmup flow (#261)
 
@@ -99,27 +103,14 @@ struct WorkoutView: View {
                             .padding(.horizontal, Theme.Spacing.md)
 
                             // First workout guide for new users
-                            if recentWorkouts.isEmpty && !hasStartedFirstWorkout {
+                            if viewModel.recent.isEmpty && !hasStartedFirstWorkout {
                                 firstWorkoutCard
                             }
 
-                            // Quick Start templates
-                            templateSection
-
-                            // Recent workouts
-                            if !recentWorkouts.isEmpty {
-                                recentSection
-                            }
-
-                            // My Workouts (custom templates)
-                            if !myTemplates.isEmpty {
-                                myWorkoutsSection
-                            }
-
-                            // Saved Workouts
-                            if !savedTemplates.isEmpty {
-                                savedSection
-                            }
+                            // Quick Hitter sections (vertical previews + See All)
+                            recentsQuickHitters
+                            preGeneratedQuickHitters
+                            friendsAndSavedQuickHitters
                         }
                     }
                 }
@@ -128,11 +119,11 @@ struct WorkoutView: View {
             .navigationBarTitleDisplayMode(.large)
             .toolbarColorScheme(.dark, for: .navigationBar)
             .task {
-                await loadSections()
+                await viewModel.load(userId: userId)
             }
             .onChange(of: workoutSession.isPresented) { _, isPresented in
                 if !isPresented {
-                    Task { await loadSections() }
+                    Task { await viewModel.load(userId: userId) }
                 }
             }
         }
@@ -176,31 +167,22 @@ struct WorkoutView: View {
             }
         }
         .sheet(isPresented: $showBuilder, onDismiss: {
-            templateRefreshId = UUID()
-            Task { await loadSections() }
+            Task { await viewModel.load(userId: userId) }
         }) {
             WorkoutBuilderView()
         }
         .sheet(isPresented: $showLogPastWorkout, onDismiss: {
-            Task { await loadSections() }
+            Task { await viewModel.load(userId: userId) }
         }) {
             LogPastWorkoutView()
         }
         .sheet(item: $previewTemplate) { template in
             TemplateDetailView(template: template) {
+                let captured = template
                 previewTemplate = nil
-                requestStart(stretches: StretchDatabase.suggestedStretches(for: template, target: TimeInterval(warmupMinutes * 60))) {
-                    workoutSession.startFromTemplate(template, userId: userId)
+                requestStart(stretches: StretchDatabase.suggestedStretches(for: captured, target: TimeInterval(warmupMinutes * 60))) {
+                    workoutSession.startFromTemplate(captured, userId: userId)
                     workoutSession.isPresented = true
-                }
-            }
-        }
-        .sheet(isPresented: $showTemplateList) {
-            TemplateListView { template in
-                // Dismiss the list first, then show preview after a brief delay
-                showTemplateList = false
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    previewTemplate = template
                 }
             }
         }
@@ -254,111 +236,114 @@ struct WorkoutView: View {
         .padding(.horizontal, Theme.Spacing.md)
     }
 
-    // MARK: - Templates
+    // MARK: - Quick Hitter Sections
 
-    private var templateSection: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            HStack {
-                Text("Quick Start")
-                    .font(.body.weight(.bold))
-                    .foregroundStyle(Theme.textPrimary)
-                Spacer()
-                Button {
-                    showTemplateList = true
+    /// Header row used by each Quick Hitter section. Tappable "See All" pushes
+    /// the dedicated category page.
+    private func sectionHeader(for category: WorkoutCategory, showSeeAll: Bool) -> some View {
+        HStack {
+            Text(category.title)
+                .font(.body.weight(.bold))
+                .foregroundStyle(Theme.textPrimary)
+            Spacer()
+            if showSeeAll {
+                NavigationLink {
+                    WorkoutCategoryPage(category: category, viewModel: viewModel)
                 } label: {
-                    Text("See All")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(Theme.accent)
-                }
-            }
-            .padding(.horizontal, Theme.Spacing.md)
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: Theme.Spacing.sm) {
-                    ForEach(Array(TemplateService.shared.allTemplates().prefix(6).enumerated()), id: \.element.id) { index, template in
-                        TemplateCardView(template: template) {
-                            previewTemplate = template
-                        }
-                        .staggeredAppear(index: index)
+                    HStack(spacing: 4) {
+                        Text("See All")
+                            .font(.caption.weight(.semibold))
+                        Image(systemName: "chevron.right")
+                            .font(.caption2.weight(.semibold))
                     }
+                    .foregroundStyle(Theme.accent)
                 }
-                .padding(.horizontal, Theme.Spacing.md)
-                .id(templateRefreshId)
+                .accessibilityLabel("See all \(category.title.lowercased())")
             }
         }
-        .padding(.vertical, Theme.Spacing.sm)
+        .padding(.horizontal, Theme.Spacing.md)
     }
 
-    // MARK: - Recent Workouts
+    @ViewBuilder
+    private var recentsQuickHitters: some View {
+        if !viewModel.recent.isEmpty {
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                sectionHeader(for: .recents, showSeeAll: viewModel.recent.count > previewCount)
 
-    private var recentSection: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            Text("Recent")
-                .font(.body.weight(.bold))
-                .foregroundStyle(Theme.textPrimary)
-                .padding(.horizontal, Theme.Spacing.md)
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: Theme.Spacing.sm) {
-                    ForEach(Array(recentWorkouts.prefix(5).enumerated()), id: \.element.id) { index, workout in
-                        TemplateCardView(template: templateFromWorkout(workout)) {
-                            previewTemplate = templateFromWorkout(workout)
+                VStack(spacing: Theme.Spacing.xs) {
+                    ForEach(Array(viewModel.recent.prefix(previewCount))) { workout in
+                        NavigationLink {
+                            WorkoutDetailView(workout: workout)
+                        } label: {
+                            RecentWorkoutCard(workout: workout, style: .row) { /* handled by link */ }
+                                .allowsHitTesting(false)
                         }
-                        .staggeredAppear(index: index)
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("\(workout.name), \(workout.startTime.timeAgo)")
                     }
                 }
                 .padding(.horizontal, Theme.Spacing.md)
             }
+            .padding(.vertical, Theme.Spacing.sm)
         }
-        .padding(.vertical, Theme.Spacing.sm)
     }
 
-    // MARK: - My Workouts
+    @ViewBuilder
+    private var preGeneratedQuickHitters: some View {
+        if !viewModel.builtInTemplates.isEmpty {
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                sectionHeader(for: .preGenerated, showSeeAll: viewModel.builtInTemplates.count > previewCount)
 
-    private var myWorkoutsSection: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            Text("My Workouts")
-                .font(.body.weight(.bold))
-                .foregroundStyle(Theme.textPrimary)
-                .padding(.horizontal, Theme.Spacing.md)
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: Theme.Spacing.sm) {
-                    ForEach(Array(myTemplates.enumerated()), id: \.element.id) { index, template in
-                        TemplateCardView(template: template) {
+                VStack(spacing: Theme.Spacing.xs) {
+                    ForEach(Array(viewModel.builtInTemplates.prefix(previewCount))) { template in
+                        TemplateCardView(template: template, style: .row) {
                             previewTemplate = template
                         }
-                        .staggeredAppear(index: index)
                     }
                 }
                 .padding(.horizontal, Theme.Spacing.md)
             }
+            .padding(.vertical, Theme.Spacing.sm)
         }
-        .padding(.vertical, Theme.Spacing.sm)
     }
 
-    // MARK: - Saved Workouts
+    @ViewBuilder
+    private var friendsAndSavedQuickHitters: some View {
+        let combinedTemplates = viewModel.myTemplates + viewModel.savedTemplates
+        let friendItems = viewModel.friendWorkouts
+        let totalCount = combinedTemplates.count + friendItems.count
 
-    private var savedSection: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            Text("Saved Workouts")
-                .font(.body.weight(.bold))
-                .foregroundStyle(Theme.textPrimary)
-                .padding(.horizontal, Theme.Spacing.md)
+        if totalCount > 0 {
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                sectionHeader(for: .friendsAndSaved, showSeeAll: totalCount > previewCount)
 
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: Theme.Spacing.sm) {
-                    ForEach(Array(savedTemplates.enumerated()), id: \.element.id) { index, template in
-                        TemplateCardView(template: template) {
+                VStack(spacing: Theme.Spacing.xs) {
+                    // Templates first (own + saved), then friend workouts, capped at previewCount total.
+                    let templatePreview = Array(combinedTemplates.prefix(previewCount))
+                    let remainingSlots = max(0, previewCount - templatePreview.count)
+                    let friendPreview = Array(friendItems.prefix(remainingSlots))
+
+                    ForEach(templatePreview) { template in
+                        TemplateCardView(template: template, style: .row) {
                             previewTemplate = template
                         }
-                        .staggeredAppear(index: index)
+                    }
+
+                    ForEach(friendPreview) { workout in
+                        NavigationLink {
+                            WorkoutDetailView(workout: workout)
+                        } label: {
+                            RecentWorkoutCard(workout: workout, style: .row) { /* handled by link */ }
+                                .allowsHitTesting(false)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Friend workout: \(workout.name)")
                     }
                 }
                 .padding(.horizontal, Theme.Spacing.md)
             }
+            .padding(.vertical, Theme.Spacing.sm)
         }
-        .padding(.vertical, Theme.Spacing.sm)
     }
 
     // MARK: - Warmup gating (#261)
@@ -397,36 +382,5 @@ struct WorkoutView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
             action?()
         }
-    }
-
-    // MARK: - Data Loading
-
-    private func loadSections() async {
-        guard !userId.isEmpty else { return }
-        recentWorkouts = await WorkoutService.shared.fetchWorkouts(userId: userId)
-        let allCustom = TemplateService.shared.allTemplates().filter { $0.isCustom }
-        myTemplates = allCustom.filter { $0.category != .saved }
-        savedTemplates = allCustom.filter { $0.category == .saved }
-    }
-
-    private func templateFromWorkout(_ workout: Workout) -> WorkoutTemplate {
-        let exercises = workout.exercises.map { ex in
-            WorkoutTemplate.TemplateExercise(
-                id: UUID().uuidString,
-                exercise: ex.exercise,
-                targetSets: ex.sets.count,
-                targetReps: ex.bestSet.map { "\($0.reps)" } ?? "8",
-                notes: ex.notes
-            )
-        }
-        return WorkoutTemplate(
-            id: "recent-\(workout.id)",
-            name: workout.name,
-            description: "From \(workout.startTime.workoutDateString)",
-            exercises: exercises,
-            estimatedDuration: Int(workout.duration / 60),
-            category: .custom,
-            isCustom: false
-        )
     }
 }
