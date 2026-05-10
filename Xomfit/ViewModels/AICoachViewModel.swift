@@ -1,7 +1,11 @@
 import Foundation
 import Observation
 
-/// View model for the AI Coach chat. In-memory message list per app launch (v1).
+/// View model for the AI Coach chat.
+/// - Streams replies token-by-token via `AICoachService.sendMessageStream`.
+/// - Persists the last 50 messages to UserDefaults under `aiCoach.conversation`.
+/// - Captures `build_workout` tool calls and surfaces them on the assistant
+///   message so the chat view can render an inline Save / Start card.
 @MainActor
 @Observable
 final class AICoachViewModel {
@@ -26,13 +30,22 @@ final class AICoachViewModel {
         "Help me hit a 225 bench"
     ]
 
+    // MARK: - Persistence
+
+    /// Storage key for the conversation history.
+    private static let storageKey = "aiCoach.conversation"
+    /// Cap on stored history so the UserDefaults blob doesn't grow unbounded.
+    private static let historyCap = 50
+
     // MARK: - Dependencies
 
     private let service: AICoachService
-    /// Runtime override for the API key (read from Settings via @AppStorage).
-    /// The view passes this in on each send.
-    init(service: AICoachService = .shared) {
+    private let defaults: UserDefaults
+
+    init(service: AICoachService = .shared, defaults: UserDefaults = .standard) {
         self.service = service
+        self.defaults = defaults
+        self.messages = Self.loadPersisted(from: defaults)
     }
 
     // MARK: - Derived
@@ -52,6 +65,7 @@ final class AICoachViewModel {
     }
 
     /// Send the current draft. No-op when nothing to send.
+    /// Streams the response and updates the placeholder bubble in place.
     func send(apiKeyOverride: String?) async {
         let trimmed = draft.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, !isSending else { return }
@@ -62,43 +76,159 @@ final class AICoachViewModel {
         draft = ""
         isSending = true
 
-        // Insert a placeholder assistant bubble that we'll replace when the
-        // reply arrives. Marked streaming so the UI can show a typing dot.
+        // Insert a placeholder assistant bubble that we'll stream into.
         let placeholderId = UUID()
         messages.append(
             AICoachMessage(id: placeholderId, role: .assistant, text: "", isStreaming: true)
         )
+        persist()
 
         do {
             // Send everything except the placeholder (last entry).
             let history = Array(messages.dropLast())
-            let reply = try await service.sendMessage(
+            let stream = service.sendMessageStream(
                 messages: history,
                 apiKeyOverride: apiKeyOverride
             )
-            replacePlaceholder(id: placeholderId, with: reply)
+
+            for try await event in stream {
+                switch event {
+                case .textDelta(let chunk):
+                    appendText(chunk, to: placeholderId)
+                case .toolUse(let payload):
+                    attachWorkoutPayload(payload, to: placeholderId)
+                case .done:
+                    finishStreaming(id: placeholderId)
+                }
+            }
+            // If the stream ended without an explicit `message_stop` (rare),
+            // still flip off the streaming flag.
+            finishStreaming(id: placeholderId)
         } catch {
             // Drop the placeholder and surface the error.
             messages.removeAll { $0.id == placeholderId }
             errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+            persist()
         }
 
         isSending = false
     }
 
-    /// Clear the conversation and any pending error.
-    func reset() {
+    /// Clear the conversation, wipe the persisted blob, and reset transient state.
+    func clearConversation() {
         messages.removeAll()
         draft = ""
         errorMessage = nil
         isSending = false
+        persist()
     }
 
-    // MARK: - Private
+    /// Back-compat alias used by existing views.
+    func reset() { clearConversation() }
 
-    private func replacePlaceholder(id: UUID, with text: String) {
+    // MARK: - Tool actions
+
+    /// Build a `WorkoutTemplate` from a streamed `build_workout` payload.
+    /// Skips exercises whose ids aren't present in `ExerciseDatabase.all`
+    /// rather than failing the whole tool call. Returns nil if no usable
+    /// exercises survive the filter.
+    func buildTemplate(from payload: WorkoutBuildPayload) -> WorkoutTemplate? {
+        let templateExercises: [WorkoutTemplate.TemplateExercise] = payload.exercises.compactMap { item in
+            guard let exercise = ExerciseDatabase.all.first(where: { $0.id == item.exerciseId }) else {
+                return nil
+            }
+            let notes: String?
+            if let weight = item.targetWeight, weight > 0 {
+                notes = "Target weight: \(formatWeight(weight)) lb"
+            } else {
+                notes = nil
+            }
+            return WorkoutTemplate.TemplateExercise(
+                id: UUID().uuidString,
+                exercise: exercise,
+                targetSets: max(1, item.sets),
+                targetReps: "\(max(1, item.targetReps))",
+                notes: notes
+            )
+        }
+
+        guard !templateExercises.isEmpty else { return nil }
+
+        return WorkoutTemplate(
+            id: "tpl-ai-\(UUID().uuidString.prefix(8))",
+            name: payload.name,
+            description: "Built by AI Coach",
+            exercises: templateExercises,
+            estimatedDuration: payload.estimatedDurationMinutes ?? 45,
+            category: .custom,
+            isCustom: true
+        )
+    }
+
+    /// Save the AI-built template via `TemplateService`. Returns the persisted
+    /// template (or nil when no exercises mapped).
+    @discardableResult
+    func saveTemplate(from payload: WorkoutBuildPayload) -> WorkoutTemplate? {
+        guard let template = buildTemplate(from: payload) else {
+            errorMessage = "Couldn't save — none of the suggested exercises matched the catalog."
+            return nil
+        }
+        TemplateService.shared.saveCustomTemplate(template)
+        return template
+    }
+
+    // MARK: - Private (streaming)
+
+    private func appendText(_ chunk: String, to id: UUID) {
         guard let index = messages.firstIndex(where: { $0.id == id }) else { return }
-        messages[index].text = text
-        messages[index].isStreaming = false
+        messages[index].text += chunk
+        // Persist on each delta so a crash mid-stream still keeps progress.
+        // UserDefaults coalesces writes so this is cheap.
+        persist()
+    }
+
+    private func attachWorkoutPayload(_ payload: WorkoutBuildPayload, to id: UUID) {
+        guard let index = messages.firstIndex(where: { $0.id == id }) else { return }
+        messages[index].workoutPayload = payload
+        persist()
+    }
+
+    private func finishStreaming(id: UUID) {
+        guard let index = messages.firstIndex(where: { $0.id == id }) else { return }
+        if messages[index].isStreaming {
+            messages[index].isStreaming = false
+            persist()
+        }
+    }
+
+    // MARK: - Private (persistence)
+
+    private func persist() {
+        // Cap to last `historyCap` messages so the blob stays bounded.
+        let capped = messages.suffix(Self.historyCap)
+        let payload = Array(capped)
+        guard let data = try? JSONEncoder().encode(payload) else { return }
+        defaults.set(data, forKey: Self.storageKey)
+    }
+
+    private static func loadPersisted(from defaults: UserDefaults) -> [AICoachMessage] {
+        guard let data = defaults.data(forKey: storageKey) else { return [] }
+        guard var decoded = try? JSONDecoder().decode([AICoachMessage].self, from: data) else {
+            return []
+        }
+        // Defensive: never restore with a dangling streaming flag.
+        for i in decoded.indices where decoded[i].isStreaming {
+            decoded[i].isStreaming = false
+        }
+        return decoded
+    }
+
+    // MARK: - Private (formatting)
+
+    private func formatWeight(_ value: Double) -> String {
+        if value.rounded() == value {
+            return String(Int(value))
+        }
+        return String(format: "%.1f", value)
     }
 }

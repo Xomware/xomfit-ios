@@ -4,13 +4,21 @@ import SwiftUI
 /// via `AICoachService` and seeds the system prompt with the user's
 /// `UserFitnessProfile` when available.
 ///
-/// v1 scope:
-/// - Plain-text replies (no streaming yet — TODO)
-/// - In-memory chat history per app launch (no persistence)
-/// - 3 suggestion chips when empty
+/// Scope:
+/// - Streaming replies (token-by-token) via SSE.
+/// - Conversation persisted to UserDefaults (last 50 messages).
+/// - `build_workout` tool: when the model calls it, an inline Save / Start
+///   card is rendered under the assistant message.
 struct AICoachView: View {
     @State private var viewModel = AICoachViewModel()
+    @State private var savedToast: Toast?
+    @State private var showClearConfirm = false
     @FocusState private var inputFocused: Bool
+
+    /// Workout session is optional — the chat is also reachable from Settings,
+    /// where it's not in scope. When absent, the "Start Now" card button is hidden.
+    @Environment(WorkoutLoggerViewModel.self) private var workoutSession: WorkoutLoggerViewModel?
+    @Environment(AuthService.self) private var authService: AuthService?
 
     /// Optional override key persisted by the user in Settings.
     /// Stored in `@AppStorage` for v1 — TODO Keychain.
@@ -40,17 +48,31 @@ struct AICoachView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 if !viewModel.isEmpty {
-                    Button {
+                    Button(role: .destructive) {
                         Haptics.light()
-                        viewModel.reset()
+                        showClearConfirm = true
                     } label: {
-                        Image(systemName: "arrow.counterclockwise")
+                        Image(systemName: "trash")
                             .foregroundStyle(Theme.textPrimary)
                     }
-                    .accessibilityLabel("Start new conversation")
+                    .accessibilityLabel("Clear conversation")
                 }
             }
         }
+        .confirmationDialog(
+            "Clear conversation?",
+            isPresented: $showClearConfirm,
+            titleVisibility: .visible
+        ) {
+            Button("Clear", role: .destructive) {
+                Haptics.medium()
+                viewModel.clearConversation()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This deletes the saved chat history on this device.")
+        }
+        .toast($savedToast)
     }
 
     // MARK: - Empty state
@@ -122,8 +144,19 @@ struct AICoachView: View {
             ScrollView {
                 LazyVStack(spacing: Theme.Spacing.md) {
                     ForEach(viewModel.messages) { message in
-                        AICoachMessageBubble(message: message)
-                            .id(message.id)
+                        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                            AICoachMessageBubble(message: message)
+                            if message.role == .assistant, let payload = message.workoutPayload {
+                                WorkoutBuildCard(
+                                    payload: payload,
+                                    canStart: workoutSession != nil && authService?.currentUser != nil,
+                                    onSave: { handleSave(payload: payload) },
+                                    onStart: { handleStart(payload: payload) }
+                                )
+                                .padding(.leading, 40) // align with bubble (past avatar)
+                            }
+                        }
+                        .id(message.id)
                     }
                 }
                 .padding(.horizontal, Theme.Spacing.md)
@@ -143,6 +176,27 @@ struct AICoachView: View {
         withAnimation(.xomChill) {
             proxy.scrollTo(last.id, anchor: .bottom)
         }
+    }
+
+    // MARK: - Tool actions
+
+    private func handleSave(payload: WorkoutBuildPayload) {
+        Haptics.medium()
+        if let template = viewModel.saveTemplate(from: payload) {
+            savedToast = Toast(style: .success, message: "Saved \"\(template.name)\" to templates")
+        }
+    }
+
+    private func handleStart(payload: WorkoutBuildPayload) {
+        guard
+            let workoutSession,
+            let userId = authService?.currentUser?.id.uuidString.lowercased(),
+            !userId.isEmpty,
+            let template = viewModel.buildTemplate(from: payload)
+        else { return }
+        Haptics.medium()
+        workoutSession.startFromTemplate(template, userId: userId)
+        workoutSession.isPresented = true
     }
 
     // MARK: - Error banner
@@ -293,6 +347,143 @@ private struct AICoachMessageBubble: View {
                     "\(message.role == .user ? "You" : "Coach") said: \(message.text)"
                 )
         }
+    }
+}
+
+// MARK: - Workout build card
+
+/// Inline card under an assistant message that called the `build_workout`
+/// tool. Lists the exercises and offers Save / Start actions.
+private struct WorkoutBuildCard: View {
+    let payload: WorkoutBuildPayload
+    let canStart: Bool
+    let onSave: () -> Void
+    let onStart: () -> Void
+
+    /// Resolved exercises from the catalog, in payload order. Items whose
+    /// `exerciseId` isn't in `ExerciseDatabase.all` are dropped — same skip
+    /// behaviour as `AICoachViewModel.buildTemplate`.
+    private var resolved: [(item: WorkoutBuildPayload.Exercise, exercise: Exercise)] {
+        payload.exercises.compactMap { item in
+            guard let ex = ExerciseDatabase.all.first(where: { $0.id == item.exerciseId }) else {
+                return nil
+            }
+            return (item, ex)
+        }
+    }
+
+    /// Number of exercises the model returned that we couldn't map. Surfaced
+    /// in the footer so users know why the saved template might be shorter.
+    private var skippedCount: Int { payload.exercises.count - resolved.count }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            header
+
+            Divider().background(Theme.hairline)
+
+            VStack(alignment: .leading, spacing: 6) {
+                ForEach(Array(resolved.enumerated()), id: \.offset) { _, row in
+                    exerciseRow(item: row.item, exercise: row.exercise)
+                }
+                if resolved.isEmpty {
+                    Text("No matching exercises in your catalog yet.")
+                        .font(Theme.fontCaption)
+                        .foregroundStyle(Theme.textSecondary)
+                }
+                if skippedCount > 0 && !resolved.isEmpty {
+                    Text("\(skippedCount) exercise\(skippedCount == 1 ? "" : "s") skipped (unknown id)")
+                        .font(Theme.fontCaption)
+                        .foregroundStyle(Theme.textTertiary)
+                }
+            }
+
+            HStack(spacing: Theme.Spacing.sm) {
+                Button {
+                    onSave()
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "bookmark.fill")
+                        Text("Save as Template")
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 44)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Theme.surfaceElevated)
+                .foregroundStyle(Theme.textPrimary)
+                .disabled(resolved.isEmpty)
+
+                Button {
+                    onStart()
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "play.fill")
+                        Text("Start Now")
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 44)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Theme.accent)
+                .foregroundStyle(.black)
+                .disabled(resolved.isEmpty || !canStart)
+            }
+        }
+        .padding(Theme.Spacing.md)
+        .background(
+            RoundedRectangle(cornerRadius: Theme.Radius.md)
+                .fill(Theme.surface)
+                .overlay(
+                    RoundedRectangle(cornerRadius: Theme.Radius.md)
+                        .strokeBorder(Theme.accent.opacity(0.4), lineWidth: 0.5)
+                )
+        )
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Suggested workout: \(payload.name), \(resolved.count) exercises")
+    }
+
+    private var header: some View {
+        HStack(spacing: Theme.Spacing.sm) {
+            Image(systemName: "dumbbell.fill")
+                .foregroundStyle(Theme.accent)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(payload.name)
+                    .font(Theme.fontBody.weight(.semibold))
+                    .foregroundStyle(Theme.textPrimary)
+                if let mins = payload.estimatedDurationMinutes, mins > 0 {
+                    Text("~\(mins) min · \(resolved.count) exercise\(resolved.count == 1 ? "" : "s")")
+                        .font(Theme.fontCaption)
+                        .foregroundStyle(Theme.textSecondary)
+                } else {
+                    Text("\(resolved.count) exercise\(resolved.count == 1 ? "" : "s")")
+                        .font(Theme.fontCaption)
+                        .foregroundStyle(Theme.textSecondary)
+                }
+            }
+            Spacer(minLength: 0)
+        }
+    }
+
+    private func exerciseRow(item: WorkoutBuildPayload.Exercise, exercise: Exercise) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: Theme.Spacing.sm) {
+            Text(exercise.name)
+                .font(Theme.fontCaption.weight(.medium))
+                .foregroundStyle(Theme.textPrimary)
+                .lineLimit(1)
+            Spacer(minLength: 0)
+            Text(targetLine(item: item))
+                .font(Theme.fontCaption)
+                .foregroundStyle(Theme.textSecondary)
+                .monospacedDigit()
+        }
+    }
+
+    private func targetLine(item: WorkoutBuildPayload.Exercise) -> String {
+        var parts = ["\(item.sets)x\(item.targetReps)"]
+        if let w = item.targetWeight, w > 0 {
+            let weightStr: String = (w.rounded() == w) ? String(Int(w)) : String(format: "%.1f", w)
+            parts.append("@ \(weightStr) lb")
+        }
+        return parts.joined(separator: " ")
     }
 }
 
