@@ -12,22 +12,44 @@ enum RecentWorkoutCardStyle {
 struct RecentWorkoutCard: View {
     let workout: Workout
     var style: RecentWorkoutCardStyle = .compact
-    let onSelect: () -> Void
+
+    /// Tap handler. When `nil`, the card renders as plain visual content with no
+    /// embedded Button -- intended for cases where the parent wraps this view in
+    /// a `NavigationLink` (or similar) and needs the inner content to NOT consume
+    /// taps.
+    let onSelect: (() -> Void)?
+
+    init(workout: Workout, style: RecentWorkoutCardStyle = .compact, onSelect: (() -> Void)? = nil) {
+        self.workout = workout
+        self.style = style
+        self.onSelect = onSelect
+    }
 
     var body: some View {
-        Button(action: {
-            Haptics.light()
-            onSelect()
-        }) {
-            if style == .row {
-                rowBody
-            } else {
-                compactBody
+        if let onSelect {
+            Button(action: {
+                Haptics.light()
+                onSelect()
+            }) {
+                cardContent
             }
+            .buttonStyle(PressableCardStyle())
+            .accessibilityLabel("\(workout.name), \(workout.startTime.timeAgo), \(workout.exercises.count) exercises, \(workout.durationString)")
+            .accessibilityAddTraits(.isButton)
+        } else {
+            cardContent
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("\(workout.name), \(workout.startTime.timeAgo), \(workout.exercises.count) exercises, \(workout.durationString)")
         }
-        .buttonStyle(PressableCardStyle())
-        .accessibilityLabel("\(workout.name), \(workout.startTime.timeAgo), \(workout.exercises.count) exercises, \(workout.durationString)")
-        .accessibilityAddTraits(.isButton)
+    }
+
+    @ViewBuilder
+    private var cardContent: some View {
+        if style == .row {
+            rowBody
+        } else {
+            compactBody
+        }
     }
 
     private var compactBody: some View {
@@ -113,5 +135,6 @@ struct RecentWorkoutCard: View {
             RoundedRectangle(cornerRadius: Theme.cornerRadius)
                 .strokeBorder(Theme.hairline, lineWidth: 0.5)
         )
+        .contentShape(Rectangle())
     }
 }

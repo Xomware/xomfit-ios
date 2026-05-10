@@ -275,10 +275,9 @@ struct WorkoutView: View {
                         NavigationLink {
                             WorkoutDetailView(workout: workout)
                         } label: {
-                            RecentWorkoutCard(workout: workout, style: .row) { /* handled by link */ }
-                                .allowsHitTesting(false)
+                            RecentWorkoutCard(workout: workout, style: .row)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(PressableCardStyle())
                         .accessibilityLabel("\(workout.name), \(workout.startTime.timeAgo)")
                     }
                 }
@@ -333,10 +332,9 @@ struct WorkoutView: View {
                         NavigationLink {
                             WorkoutDetailView(workout: workout)
                         } label: {
-                            RecentWorkoutCard(workout: workout, style: .row) { /* handled by link */ }
-                                .allowsHitTesting(false)
+                            RecentWorkoutCard(workout: workout, style: .row)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(PressableCardStyle())
                         .accessibilityLabel("Friend workout: \(workout.name)")
                     }
                 }
