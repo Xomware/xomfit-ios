@@ -6,6 +6,8 @@ import SwiftUI
 struct ExerciseDetailSheet: View {
     let exercise: Exercise
     @Environment(\.dismiss) private var dismiss
+    /// Toggles the 1RM estimator sheet from the meta row link.
+    @State private var showOneRM: Bool = false
 
     var body: some View {
         NavigationStack {
@@ -70,10 +72,32 @@ struct ExerciseDetailSheet: View {
                 value: exercise.muscleGroups.map(\.displayName).joined(separator: ", "),
                 icon: exercise.muscleGroups.first?.icon ?? "figure.strengthtraining.traditional"
             )
+
+            // Tools link — opens the 1RM estimator inline (no pre-fill; user types).
+            Button {
+                Haptics.selection()
+                showOneRM = true
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "function")
+                        .font(.caption.weight(.semibold))
+                    Text("Estimate 1RM")
+                        .font(.caption.weight(.semibold))
+                }
+                .foregroundStyle(Theme.accent)
+                .padding(.top, 2)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Estimate one rep max")
+            .accessibilityHint("Opens the 1RM estimator")
         }
         .padding(Theme.Spacing.md)
         .background(Theme.surface)
         .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+        .sheet(isPresented: $showOneRM) {
+            OneRMEstimatorView()
+                .presentationDetents([.large])
+        }
     }
 
     private func metaRow(label: String, value: String, icon: String) -> some View {
