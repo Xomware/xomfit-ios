@@ -41,6 +41,10 @@ struct FeedCommentRow: Codable {
     let userId: String
     let text: String
     let createdAt: String
+    /// Optional reply parent — present when the row is a reply to another comment.
+    /// MIGRATION TODO (#320): add `parent_comment_id uuid null references feed_comments(id)`
+    /// to the `feed_comments` table when threading is rolled out server-side.
+    let parentCommentId: String?
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -48,6 +52,7 @@ struct FeedCommentRow: Codable {
         case userId = "user_id"
         case text
         case createdAt = "created_at"
+        case parentCommentId = "parent_comment_id"
     }
 }
 
@@ -73,6 +78,9 @@ private struct FeedCommentInsert: Encodable {
     let feed_item_id: String
     let user_id: String
     let text: String
+    /// MIGRATION TODO (#320): backend column `parent_comment_id` must exist.
+    /// When nil this is a top-level comment; otherwise it is a reply.
+    let parent_comment_id: String?
 }
 
 // MARK: - FeedService
@@ -300,17 +308,25 @@ final class FeedService {
                 userId: row.userId,
                 user: nil,
                 text: row.text,
-                createdAt: date
+                createdAt: date,
+                parentCommentId: row.parentCommentId
             )
         }
     }
 
-    func postComment(feedItemId: String, userId: String, text: String) async throws {
+    /// Post a comment. When `parentCommentId` is non-nil this is a threaded reply (#320).
+    func postComment(
+        feedItemId: String,
+        userId: String,
+        text: String,
+        parentCommentId: String? = nil
+    ) async throws {
         let insert = FeedCommentInsert(
             id: UUID().uuidString,
             feed_item_id: feedItemId,
             user_id: userId,
-            text: text
+            text: text,
+            parent_comment_id: parentCommentId
         )
         do {
             try await supabase
