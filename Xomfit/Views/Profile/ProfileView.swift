@@ -179,7 +179,11 @@ struct ProfileView: View {
                 currentUserId: currentUserId
             )
         case .calendar:
-            ProfileCalendarView(workoutDays: viewModel.workoutDays, userId: resolvedUserId)
+            ProfileCalendarView(
+                workoutDays: viewModel.workoutDays,
+                workouts: viewModel.workouts,
+                userId: resolvedUserId
+            )
         case .stats:
             ProfileStatsView(
                 totalWorkouts: viewModel.totalWorkouts,
