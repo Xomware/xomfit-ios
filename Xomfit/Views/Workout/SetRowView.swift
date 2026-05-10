@@ -39,7 +39,7 @@ struct SetRowView: View {
     /// after PRService flips `isPersonalRecord` on the row itself.
     private var beatsPriorPR: Bool {
         guard isCompleted, workoutSet.weight > 0, workoutSet.reps > 0 else { return false }
-        guard let pr = personalRecord else { return true } // first ever logged set counts as a PR
+        guard let pr = personalRecord else { return false } // unknown history -> don't celebrate
         if workoutSet.weight > pr.weight { return true }
         if workoutSet.weight == pr.weight && workoutSet.reps > pr.reps { return true }
         return false

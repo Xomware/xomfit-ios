@@ -633,6 +633,10 @@ private struct ExerciseCard: View {
 
     @State private var showDetails = false
     @State private var showSupersetActionSheet = false
+    /// Driven by the visible link-icon button in the header. Distinct from
+    /// `showSupersetActionSheet` so the long-press and tap paths don't fight
+    /// over a single binding (#294).
+    @State private var showSupersetToggleConfirm = false
 
     private var isInSuperset: Bool {
         viewModel.exercises.indices.contains(exerciseIndex)
@@ -735,6 +739,28 @@ private struct ExerciseCard: View {
                     }
                     .accessibilityLabel("Move \(exercise.exercise.name) down")
                 }
+
+                // Superset toggle (#294) — visible affordance for grouping with the
+                // next exercise. Disabled (but still rendered) when neither action
+                // is meaningful, so the button row layout stays stable.
+                Button {
+                    Haptics.selection()
+                    showSupersetToggleConfirm = true
+                } label: {
+                    Image(systemName: isInSuperset ? "link.circle.fill" : "link")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(isInSuperset ? Theme.accent : Theme.textSecondary)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .disabled(!isInSuperset && !canGroupWithNext)
+                .accessibilityLabel(isInSuperset
+                    ? "Ungroup superset"
+                    : "Group with next exercise as superset")
+                .accessibilityHint(isInSuperset
+                    ? "Removes this exercise from its superset"
+                    : "Pairs this exercise with the next one for back-to-back sets")
 
                 Button {
                     viewModel.removeExercise(at: exerciseIndex)
@@ -893,6 +919,30 @@ private struct ExerciseCard: View {
             Text(isInSuperset
                  ? "This exercise is part of a superset."
                  : "Group this exercise with the next one for back-to-back sets.")
+        }
+        // Visible-affordance dialog (#294). Mirrors the long-press menu but
+        // surfaces a single primary action so the icon-button intent is clear.
+        .confirmationDialog(
+            isInSuperset ? "Ungroup Superset?" : "Group with Next Exercise?",
+            isPresented: $showSupersetToggleConfirm,
+            titleVisibility: .visible
+        ) {
+            if isInSuperset {
+                Button("Ungroup Superset", role: .destructive) {
+                    Haptics.light()
+                    viewModel.toggleSupersetWithNext(exerciseIndex: exerciseIndex)
+                }
+            } else if canGroupWithNext {
+                Button("Group with Next Exercise") {
+                    Haptics.success()
+                    viewModel.toggleSupersetWithNext(exerciseIndex: exerciseIndex)
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text(isInSuperset
+                 ? "Removes \(exercise.exercise.name) from its superset."
+                 : "Pairs \(exercise.exercise.name) with the next exercise for back-to-back sets.")
         }
         .sheet(isPresented: $showDetails) {
             ExerciseDetailSheet(exercise: exercise.exercise)
