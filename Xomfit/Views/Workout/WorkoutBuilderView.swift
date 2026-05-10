@@ -182,6 +182,8 @@ struct WorkoutBuilderView: View {
                             exercise: exercise,
                             onUpdateSets: { viewModel.updateSets(at: index, sets: $0) },
                             onUpdateReps: { viewModel.updateReps(at: index, reps: $0) },
+                            onUpdateNotes: { viewModel.updateNotes(at: index, notes: $0) },
+                            onUpdateRestSeconds: { viewModel.updateRestSeconds(at: index, seconds: $0) },
                             onDelete: { viewModel.removeExercise(at: index) }
                         )
                     }
@@ -298,9 +300,22 @@ private struct BuilderExerciseRow: View {
     let exercise: WorkoutTemplate.TemplateExercise
     let onUpdateSets: (Int) -> Void
     let onUpdateReps: (String) -> Void
+    let onUpdateNotes: (String?) -> Void
+    let onUpdateRestSeconds: (Int?) -> Void
     let onDelete: () -> Void
 
+    /// Pulled from the same UserDefaults key the rest of the app reads. Lets the
+    /// rest pill show the live default when the template doesn't override.
+    @AppStorage("restDuration") private var defaultRestStored: Double = 90
+
     @State private var repsText: String = ""
+    @State private var showNotesSheet = false
+    @State private var showRestSheet = false
+
+    private var defaultRestSeconds: Int {
+        let v = defaultRestStored > 0 ? defaultRestStored : 90
+        return Int(v)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
@@ -390,9 +405,105 @@ private struct BuilderExerciseRow: View {
                         }
                 }
             }
+
+            // Notes + per-exercise rest override (#318) — reuses the same sheets the
+            // live workout uses so the look-and-feel matches the template builder.
+            HStack(spacing: 6) {
+                notesPill
+                restPill
+                Spacer()
+            }
         }
         .padding(Theme.Spacing.md)
         .background(Theme.surface)
         .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+        .sheet(isPresented: $showNotesSheet) {
+            ExerciseNotesSheet(
+                exerciseName: exercise.exercise.name,
+                initialNotes: exercise.notes ?? "",
+                onSave: { onUpdateNotes($0) }
+            )
+            .presentationDetents([.medium, .large])
+        }
+        .sheet(isPresented: $showRestSheet) {
+            ExerciseRestSheet(
+                exerciseName: exercise.exercise.name,
+                initialRestSeconds: exercise.restSeconds ?? defaultRestSeconds,
+                isCustomized: exercise.restSeconds != nil,
+                defaultRestSeconds: defaultRestSeconds,
+                onSave: { onUpdateRestSeconds($0) }
+            )
+            .presentationDetents([.medium])
+        }
+    }
+
+    // MARK: - Pills
+
+    private var notesPill: some View {
+        let hasNote = (exercise.notes?.isEmpty == false)
+        return Button {
+            Haptics.selection()
+            showNotesSheet = true
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: hasNote ? "note.text" : "plus")
+                    .font(.caption2.weight(.semibold))
+                if hasNote, let preview = previewText(exercise.notes) {
+                    Text(preview)
+                        .font(.caption2.weight(.semibold))
+                        .lineLimit(1)
+                } else {
+                    Text("Add note")
+                        .font(.caption2.weight(.semibold))
+                }
+            }
+            .foregroundStyle(hasNote ? .black : Theme.textSecondary)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(hasNote ? Theme.accent : Theme.surfaceSecondary)
+            .clipShape(.capsule)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(hasNote ? "Edit note: \(exercise.notes ?? "")" : "Add note")
+    }
+
+    private var restPill: some View {
+        let isCustom = exercise.restSeconds != nil
+        let seconds = exercise.restSeconds ?? defaultRestSeconds
+        return Button {
+            Haptics.selection()
+            showRestSheet = true
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: "timer")
+                    .font(.caption2.weight(.semibold))
+                Text("Rest: \(formatRest(seconds))")
+                    .font(.caption2.weight(.semibold))
+            }
+            .foregroundStyle(isCustom ? .black : Theme.textSecondary)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(isCustom ? Theme.accent : Theme.surfaceSecondary)
+            .clipShape(.capsule)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Rest \(formatRest(seconds))\(isCustom ? ", custom" : ", default")")
+    }
+
+    private func previewText(_ notes: String?) -> String? {
+        guard let notes else { return nil }
+        let single = notes.replacingOccurrences(of: "\n", with: " ")
+        let trimmed = single.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        if trimmed.count > 24 { return String(trimmed.prefix(24)) + "…" }
+        return trimmed
+    }
+
+    private func formatRest(_ seconds: Int) -> String {
+        if seconds >= 60 && seconds % 60 == 0 { return "\(seconds / 60)m" }
+        if seconds < 60 { return "\(seconds)s" }
+        let m = seconds / 60
+        let s = seconds % 60
+        return "\(m)m \(s)s"
     }
 }

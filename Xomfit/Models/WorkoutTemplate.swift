@@ -15,6 +15,9 @@ struct WorkoutTemplate: Codable, Identifiable {
         var targetSets: Int
         var targetReps: String // "5" or "8-12"
         var notes: String?
+        /// Per-exercise rest override in seconds. nil = use the workout's global default.
+        /// Optional + default keeps existing templates decodable as-is.
+        var restSeconds: Int? = nil
     }
 
     enum TemplateCategory: String, Codable, CaseIterable {

@@ -623,7 +623,8 @@ struct ActiveWorkoutView: View {
                     exercise: ex.exercise,
                     targetSets: ex.sets.count,
                     targetReps: ex.bestSet.map { "\($0.reps)" } ?? "8",
-                    notes: ex.notes
+                    notes: ex.notes,
+                    restSeconds: ex.restSeconds
                 )
             }
             let template = WorkoutTemplate(
@@ -847,19 +848,19 @@ private struct ExerciseCard: View {
                 }
             }
 
-            // Variant config (grip, attachment, position, laterality)
-            if exercise.exercise.supportedGrips != nil ||
-               exercise.exercise.supportedAttachments != nil ||
-               exercise.exercise.supportedPositions != nil ||
-               exercise.exercise.supportsUnilateral {
-                ExerciseConfigRow(
-                    exercise: exercise,
-                    onGripChanged: { grip in viewModel.setGrip(exerciseIndex: exerciseIndex, grip: grip) },
-                    onAttachmentChanged: { att in viewModel.setAttachment(exerciseIndex: exerciseIndex, attachment: att) },
-                    onPositionChanged: { pos in viewModel.setPosition(exerciseIndex: exerciseIndex, position: pos) },
-                    onLateralityChanged: { lat in viewModel.setLaterality(exerciseIndex: exerciseIndex, laterality: lat) }
-                )
-            }
+            // Variant config (grip, attachment, position, laterality) + per-session extras
+            // (notes pill, rest override). The extras pills always render so the user can
+            // edit notes / rest even on exercises without grip/attachment/position variants.
+            ExerciseConfigRow(
+                exercise: exercise,
+                onGripChanged: { grip in viewModel.setGrip(exerciseIndex: exerciseIndex, grip: grip) },
+                onAttachmentChanged: { att in viewModel.setAttachment(exerciseIndex: exerciseIndex, attachment: att) },
+                onPositionChanged: { pos in viewModel.setPosition(exerciseIndex: exerciseIndex, position: pos) },
+                onLateralityChanged: { lat in viewModel.setLaterality(exerciseIndex: exerciseIndex, laterality: lat) },
+                onNotesChanged: { notes in viewModel.setNotes(exerciseIndex: exerciseIndex, notes: notes) },
+                onRestSecondsChanged: { secs in viewModel.setRestSeconds(exerciseIndex: exerciseIndex, seconds: secs) },
+                defaultRestSeconds: Int(viewModel.defaultRestDuration)
+            )
 
             // Laterality badge
             if exercise.exercise.supportsUnilateral && exercise.selectedLaterality != .bilateral {

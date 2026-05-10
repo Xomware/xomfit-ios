@@ -127,6 +127,9 @@ struct WorkoutExercise: Codable, Identifiable {
     /// When non-nil, this exercise is part of a superset group.
     /// All exercises sharing the same UUID are performed back-to-back (1 set of A → 1 set of B → rest → ...).
     var supersetGroupId: UUID? = nil
+    /// Per-exercise rest override in seconds. When nil, the global `defaultRestDuration` is used.
+    /// Backwards-compatible: pre-existing workouts decode this as nil.
+    var restSeconds: Int? = nil
 
     var bestSet: WorkoutSet? {
         sets.max(by: { $0.volume < $1.volume })
