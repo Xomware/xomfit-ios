@@ -56,17 +56,28 @@ struct WorkoutFocusView: View {
                     .transition(.push(from: .trailing))
                     .animation(.easeInOut(duration: 0.3), value: viewModel.focusExerciseIndex)
 
-                    exerciseNavigation
+                    // Inline minimized rest timer banner — reserves real estate in
+                    // the layout (instead of floating overlay) so the bottom nav
+                    // buttons aren't covered. Tap to expand back to full screen.
+                    if viewModel.isRestTimerActive && isRestTimerMinimized {
+                        minimizedRestTimerBanner
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
+                    }
 
-                    Spacer().frame(height: viewModel.isRestTimerActive && isRestTimerMinimized ? 100 : 0)
+                    exerciseNavigation
                 }
                 .safeAreaPadding(.top)
                 .padding(.top, Theme.Spacing.sm)
                 .padding(.horizontal, Theme.Spacing.lg)
+                .animation(.xomChill, value: isRestTimerMinimized)
+                .animation(.xomChill, value: viewModel.isRestTimerActive)
 
-                // Rest timer overlay
-                if viewModel.isRestTimerActive {
-                    restTimerOverlay
+                // Full-screen rest timer — only when the timer is active AND not minimized.
+                // The minimized banner is rendered inline inside the VStack above so it
+                // doesn't double-render and doesn't cover the bottom navigation buttons.
+                if viewModel.isRestTimerActive && !isRestTimerMinimized {
+                    fullScreenRestTimer
+                        .transition(.opacity)
                 }
             } else {
                 emptyFocusState
@@ -187,6 +198,42 @@ struct WorkoutFocusView: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel("Add set")
                 .accessibilityHint("Adds a new set to the current exercise")
+
+                // + drop set button — only when the focused set is completed AND
+                // is not itself already a drop set (chains stay tidy via SetRow path).
+                // Mirrors the SetRowView styling so the affordance feels familiar.
+                if let focused = viewModel.focusSet,
+                   focused.completedAt != Date.distantPast,
+                   !focused.isDropSet {
+                    Button {
+                        dismissKeyboard()
+                        Haptics.light()
+                        let exerciseIndex = viewModel.focusExerciseIndex
+                        let parentSetIndex = viewModel.focusSetIndex
+                        viewModel.addDropSet(exerciseIndex: exerciseIndex, parentSetIndex: parentSetIndex)
+                        // Drop set is inserted right after the parent — advance focus to it.
+                        if viewModel.exercises.indices.contains(exerciseIndex),
+                           viewModel.exercises[exerciseIndex].sets.indices.contains(parentSetIndex + 1) {
+                            viewModel.focusSetIndex = parentSetIndex + 1
+                        }
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "arrow.down.right")
+                                .font(.subheadline.weight(.bold))
+                            Text("drop set")
+                                .font(.subheadline.weight(.bold))
+                        }
+                        .foregroundStyle(Theme.accent)
+                        .padding(.horizontal, 12)
+                        .frame(minHeight: 44)
+                        .background(Theme.accent.opacity(0.10))
+                        .clipShape(.capsule)
+                        .contentShape(.capsule)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Add drop set after current set")
+                    .accessibilityHint("Inserts a drop set immediately after the current set with reduced weight")
+                }
             }
             .padding(.horizontal, Theme.Spacing.sm)
         }
@@ -389,59 +436,59 @@ struct WorkoutFocusView: View {
         }
     }
 
-    // MARK: - Rest Timer Overlay
+    // MARK: - Minimized Rest Timer Banner (inline)
 
-    private var restTimerOverlay: some View {
-        Group {
-            if isRestTimerMinimized {
-                // Minimized: bottom banner with Lift button and tap-to-expand
-                VStack {
-                    Spacer()
-                    HStack(spacing: Theme.Spacing.sm) {
-                        // Tap the timer area to expand back to full screen
-                        Button {
-                            withAnimation(.xomChill) { isRestTimerMinimized = false }
-                        } label: {
-                            RestTimerView(
-                                restTimeRemaining: viewModel.restTimeRemaining,
-                                restDuration: viewModel.restDuration,
-                                onSkip: { viewModel.skipRestTimer() },
-                                onExtend: { viewModel.extendRestTimer() }
-                            )
-                        }
-                        .buttonStyle(.plain)
+    /// Compact rest-timer banner rendered inline inside the main VStack
+    /// (between the exercise card and the bottom navigation) so it reserves
+    /// layout space and never floats on top of the +Set / +drop set / nav
+    /// buttons. Tapping anywhere on the banner expands the full-screen timer.
+    private var minimizedRestTimerBanner: some View {
+        Button {
+            withAnimation(.xomChill) { isRestTimerMinimized = false }
+        } label: {
+            VStack(spacing: 6) {
+                HStack(spacing: Theme.Spacing.sm) {
+                    RestTimerView(
+                        restTimeRemaining: viewModel.restTimeRemaining,
+                        restDuration: viewModel.restDuration,
+                        onSkip: { viewModel.skipRestTimer() },
+                        onExtend: { viewModel.extendRestTimer() }
+                    )
+                    .layoutPriority(1)
 
-                        // Lift button to skip timer entirely
-                        Button {
-                            Haptics.success()
-                            viewModel.skipRestTimer()
-                            isRestTimerMinimized = false
-                        } label: {
-                            Text("LIFT")
-                                .font(.caption.weight(.black))
-                                .foregroundStyle(.black)
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 10)
-                                .background(Theme.accent)
-                                .clipShape(.capsule)
-                        }
+                    // Discoverable expand affordance — chevron + diagonal arrows
+                    // hint that tapping anywhere on the banner re-opens the
+                    // full-screen timer.
+                    VStack(spacing: 2) {
+                        Image(systemName: "chevron.up")
+                            .font(.caption2.weight(.bold))
+                        Image(systemName: "arrow.up.left.and.arrow.down.right")
+                            .font(.caption2.weight(.semibold))
                     }
-                    if let nextEx = viewModel.upcomingExercise {
-                        Text("Next: \(nextEx.exercise.name)")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(Theme.accent)
-                    }
+                    .foregroundStyle(Theme.accent)
+                    .frame(minWidth: 28)
+                    .accessibilityHidden(true)
                 }
-                .padding(.horizontal, Theme.Spacing.md)
-                .padding(.bottom, Theme.Spacing.lg)
-                .shadow(color: .black.opacity(0.5), radius: 12, x: 0, y: -4)
-                .transition(.move(edge: .bottom).combined(with: .opacity))
-            } else {
-                // Full-screen rest timer
-                fullScreenRestTimer
-                    .transition(.opacity)
+                if let nextEx = viewModel.upcomingExercise {
+                    Text("Next: \(nextEx.exercise.name)")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(Theme.accent)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
             }
+            .padding(Theme.Spacing.sm)
+            .frame(maxWidth: .infinity)
+            .background(Theme.surface)
+            .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+            .overlay(
+                RoundedRectangle(cornerRadius: Theme.cornerRadius)
+                    .stroke(Theme.accent.opacity(0.25), lineWidth: 1)
+            )
+            .contentShape(.rect(cornerRadius: Theme.cornerRadius))
         }
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Rest timer minimized. Tap to expand to full screen.")
     }
 
     private var restIsOvertime: Bool { viewModel.restTimeRemaining <= 0 }
