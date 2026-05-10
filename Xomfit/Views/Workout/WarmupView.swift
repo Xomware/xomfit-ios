@@ -2,9 +2,14 @@ import SwiftUI
 
 /// Pre-workout stretch flow.
 ///
-/// Shows a total countdown at the top and walks the user through ~5-7 stretches,
-/// auto-advancing as each per-stretch sub-timer hits zero. Users can skip the
-/// remaining time at any point and jump straight into the workout.
+/// Two phases:
+/// 1. Preview — vertical list of suggested stretches with names, durations, and
+///    target-muscle captions. User can tap a row for the full stretch detail,
+///    hit "Start Warmup" to begin the timer, or "Skip" to jump straight to the
+///    workout.
+/// 2. Timer — total countdown at the top, walks the user through each stretch
+///    with a per-stretch sub-timer. Auto-advances; user can skip remaining time
+///    at any point.
 struct WarmupView: View {
     let stretches: [Stretch]
     /// Total warmup duration in seconds (default 6 minutes).
@@ -20,6 +25,8 @@ struct WarmupView: View {
     @State private var currentIndex: Int = 0
     @State private var timer: Timer?
     @State private var isFinished: Bool = false
+    @State private var hasStarted: Bool = false
+    @State private var stretchForDetail: Stretch?
 
     init(stretches: [Stretch], totalDuration: Int = 360, onFinish: @escaping () -> Void) {
         self.stretches = stretches
@@ -44,25 +51,21 @@ struct WarmupView: View {
         return 1 - (Double(stretchRemaining) / Double(stretch.durationSeconds))
     }
 
+    /// Sum of per-stretch hold times (clamped to the warmup budget).
+    private var estimatedTotalDuration: Int {
+        let summed = stretches.reduce(0) { $0 + $1.durationSeconds }
+        return min(summed, max(totalDuration, summed))
+    }
+
     var body: some View {
         NavigationStack {
             ZStack {
                 Theme.background.ignoresSafeArea()
 
-                ScrollView {
-                    VStack(spacing: Theme.Spacing.lg) {
-                        header
-                        totalTimerCard
-                        currentStretchCard
-                        upcomingList
-                    }
-                    .padding(Theme.Spacing.md)
-                    .padding(.bottom, 100)
-                }
-
-                VStack {
-                    Spacer()
-                    skipButton
+                if hasStarted {
+                    timerContent
+                } else {
+                    previewContent
                 }
             }
             .navigationTitle("Warmup")
@@ -78,18 +81,168 @@ struct WarmupView: View {
                     .foregroundStyle(Theme.textSecondary)
                 }
             }
-            .onAppear {
-                startTimer()
-            }
             .onDisappear {
                 stopTimer()
+            }
+            .sheet(item: $stretchForDetail) { stretch in
+                StretchDetailSheet(stretch: stretch)
             }
         }
     }
 
-    // MARK: - Header
+    // MARK: - Preview
 
-    private var header: some View {
+    private var previewContent: some View {
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
+                    previewHeader
+                    previewList
+                }
+                .padding(Theme.Spacing.md)
+                .padding(.bottom, 120)
+            }
+
+            VStack(spacing: Theme.Spacing.sm) {
+                Button {
+                    Haptics.medium()
+                    beginTimer()
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: "play.fill")
+                        Text("Start Warmup")
+                    }
+                }
+                .buttonStyle(AccentButtonStyle())
+                .accessibilityLabel("Start warmup timer")
+
+                Button {
+                    Haptics.light()
+                    finish()
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: "forward.fill")
+                        Text("Skip")
+                    }
+                }
+                .buttonStyle(GhostButtonStyle())
+                .accessibilityLabel("Skip warmup and start workout")
+            }
+            .padding(.horizontal, Theme.Spacing.md)
+            .padding(.bottom, Theme.Spacing.md)
+            .background(
+                LinearGradient(
+                    colors: [Theme.background.opacity(0), Theme.background],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .frame(height: 180)
+                .allowsHitTesting(false),
+                alignment: .bottom
+            )
+        }
+    }
+
+    private var previewHeader: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Warmup")
+                .font(Theme.fontTitle2)
+                .foregroundStyle(Theme.textPrimary)
+            HStack(spacing: 6) {
+                Image(systemName: "clock.fill")
+                    .font(.caption)
+                    .foregroundStyle(Theme.accent)
+                Text("\(stretches.count) stretches · \(formatTime(estimatedTotalDuration))")
+                    .font(Theme.fontSubheadline)
+                    .foregroundStyle(Theme.textSecondary)
+            }
+            Text("Tap a stretch to see how it's done.")
+                .font(Theme.fontCaption)
+                .foregroundStyle(Theme.textSecondary.opacity(0.8))
+                .padding(.top, 2)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isHeader)
+    }
+
+    private var previewList: some View {
+        VStack(spacing: Theme.Spacing.sm) {
+            ForEach(Array(stretches.enumerated()), id: \.element.id) { index, stretch in
+                Button {
+                    Haptics.selection()
+                    stretchForDetail = stretch
+                } label: {
+                    previewRow(index: index, stretch: stretch)
+                }
+                .buttonStyle(PressableCardStyle())
+                .accessibilityLabel("\(stretch.name), \(stretch.durationSeconds) seconds, \(muscleGroupSummary(stretch.targetMuscleGroups))")
+                .accessibilityHint("Opens stretch details")
+            }
+        }
+    }
+
+    private func previewRow(index: Int, stretch: Stretch) -> some View {
+        HStack(alignment: .top, spacing: Theme.Spacing.md) {
+            Text("\(index + 1)")
+                .font(.caption.weight(.bold).monospaced())
+                .foregroundStyle(Theme.accent)
+                .frame(width: 28, height: 28)
+                .background(Theme.accent.opacity(0.15))
+                .clipShape(.rect(cornerRadius: Theme.Radius.xs))
+
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(alignment: .firstTextBaseline) {
+                    Text(stretch.name)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Theme.textPrimary)
+                    Spacer()
+                    Text("\(stretch.durationSeconds)s")
+                        .font(.caption.weight(.semibold).monospacedDigit())
+                        .foregroundStyle(Theme.textSecondary)
+                }
+                Text(muscleGroupSummary(stretch.targetMuscleGroups))
+                    .font(Theme.fontCaption)
+                    .foregroundStyle(Theme.textSecondary)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+            }
+
+            Image(systemName: "chevron.right")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(Theme.textSecondary.opacity(0.6))
+                .padding(.top, 4)
+        }
+        .padding(Theme.Spacing.md)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.surface)
+        .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+        .contentShape(Rectangle())
+    }
+
+    // MARK: - Timer
+
+    private var timerContent: some View {
+        ZStack {
+            ScrollView {
+                VStack(spacing: Theme.Spacing.lg) {
+                    timerHeader
+                    totalTimerCard
+                    currentStretchCard
+                    upcomingList
+                }
+                .padding(Theme.Spacing.md)
+                .padding(.bottom, 100)
+            }
+
+            VStack {
+                Spacer()
+                skipButton
+            }
+        }
+    }
+
+    private var timerHeader: some View {
         VStack(spacing: 4) {
             Text("Loosen up first")
                 .font(Theme.fontTitle2)
@@ -103,8 +256,6 @@ struct WarmupView: View {
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isHeader)
     }
-
-    // MARK: - Total timer
 
     private var totalTimerCard: some View {
         VStack(spacing: Theme.Spacing.sm) {
@@ -126,8 +277,6 @@ struct WarmupView: View {
         .background(Theme.surface)
         .clipShape(.rect(cornerRadius: Theme.cornerRadius))
     }
-
-    // MARK: - Current stretch
 
     @ViewBuilder
     private var currentStretchCard: some View {
@@ -171,6 +320,24 @@ struct WarmupView: View {
 
                 HStack(spacing: Theme.Spacing.sm) {
                     Button {
+                        Haptics.selection()
+                        stretchForDetail = stretch
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "info.circle")
+                            Text("Details")
+                        }
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Theme.textSecondary)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(Theme.surfaceElevated)
+                        .clipShape(.rect(cornerRadius: Theme.Radius.sm))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Show stretch details")
+
+                    Button {
                         Haptics.light()
                         advanceToNextStretch()
                     } label: {
@@ -190,8 +357,6 @@ struct WarmupView: View {
             EmptyView()
         }
     }
-
-    // MARK: - Upcoming
 
     @ViewBuilder
     private var upcomingList: some View {
@@ -237,8 +402,6 @@ struct WarmupView: View {
         .accessibilityLabel("Up next: \(stretch.name), \(stretch.durationSeconds) seconds")
     }
 
-    // MARK: - Skip button
-
     private var skipButton: some View {
         Button {
             Haptics.medium()
@@ -255,7 +418,13 @@ struct WarmupView: View {
         .accessibilityLabel("Skip remaining warmup and start workout")
     }
 
-    // MARK: - Timer
+    // MARK: - Timer control
+
+    private func beginTimer() {
+        guard !hasStarted else { return }
+        hasStarted = true
+        startTimer()
+    }
 
     private func startTimer() {
         // Bail early if there are no stretches at all.
@@ -265,7 +434,9 @@ struct WarmupView: View {
         }
         stopTimer()
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
-            tick()
+            Task { @MainActor in
+                tick()
+            }
         }
     }
 
@@ -274,6 +445,7 @@ struct WarmupView: View {
         timer = nil
     }
 
+    @MainActor
     private func tick() {
         guard !isFinished else { return }
 

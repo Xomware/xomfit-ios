@@ -205,6 +205,10 @@ struct TemplateDetailView: View {
                 }
             }
 
+            if !targetMuscleGroups.isEmpty {
+                targetsRow
+            }
+
             HStack(spacing: Theme.Spacing.lg) {
                 statPill(icon: "dumbbell.fill", label: "Exercises", value: "\(draft.exercises.count)")
                 statPill(icon: "clock.fill", label: "Duration", value: "~\(estimatedDuration)m")
@@ -216,6 +220,38 @@ struct TemplateDetailView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Theme.surface)
         .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+    }
+
+    /// Union of muscle groups hit by every exercise in the template, in source order
+    /// (de-duplicated). Used by the "Targets" chip row.
+    private var targetMuscleGroups: [MuscleGroup] {
+        var seen = Set<MuscleGroup>()
+        var ordered: [MuscleGroup] = []
+        for tex in draft.exercises {
+            for mg in tex.exercise.muscleGroups where !seen.contains(mg) {
+                seen.insert(mg)
+                ordered.append(mg)
+            }
+        }
+        return ordered
+    }
+
+    private var targetsRow: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Targets")
+                .font(Theme.fontSmall)
+                .foregroundStyle(Theme.textSecondary)
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 6) {
+                    ForEach(targetMuscleGroups, id: \.self) { mg in
+                        XomBadge(mg.displayName, icon: mg.icon, color: Theme.accent, variant: .display)
+                    }
+                }
+            }
+        }
+        .padding(.top, Theme.Spacing.xs)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Targets: \(targetMuscleGroups.map(\.displayName).joined(separator: ", "))")
     }
 
     private var totalSets: Int {
@@ -597,6 +633,7 @@ private struct EditableExerciseRow: View {
 
     @State private var repsText: String = ""
     @State private var weightText: String = ""
+    @State private var showDetails: Bool = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
@@ -624,6 +661,19 @@ private struct EditableExerciseRow: View {
                 }
 
                 Spacer()
+
+                Button {
+                    Haptics.selection()
+                    showDetails = true
+                } label: {
+                    Image(systemName: "info.circle")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Theme.textSecondary)
+                        .frame(width: 32, height: 32)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Show details for \(exercise.exercise.name)")
 
                 Button {
                     Haptics.light()
@@ -725,6 +775,9 @@ private struct EditableExerciseRow: View {
         .padding(Theme.Spacing.md)
         .background(Theme.surface)
         .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+        .sheet(isPresented: $showDetails) {
+            ExerciseDetailSheet(exercise: exercise.exercise)
+        }
         .onAppear {
             repsText = exercise.targetReps
             if targetWeight > 0 {
