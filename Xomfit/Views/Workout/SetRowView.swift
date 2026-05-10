@@ -26,6 +26,10 @@ struct SetRowView: View {
     /// Plate calculator sheet, opened from the weight field action sheet.
     @State private var showPlateCalculator: Bool = false
 
+    /// Display-only weight unit. Edits stay in lbs internally regardless.
+    @AppStorage("weightUnit") private var weightUnitRaw: String = WeightUnit.lbs.rawValue
+    private var weightUnit: WeightUnit { WeightUnit(rawValue: weightUnitRaw) ?? .lbs }
+
     private var isCompleted: Bool {
         workoutSet.completedAt != Date.distantPast
     }
@@ -199,7 +203,7 @@ struct SetRowView: View {
                     }
 
                 Button(action: onToggleWeightMode) {
-                    Text(workoutSet.weightMode == .perSide ? "lbs ×2  ×" : "lbs  ×")
+                    Text(workoutSet.weightMode == .perSide ? "\(weightUnit.displayName) ×2  ×" : "\(weightUnit.displayName)  ×")
                         .font(Theme.fontCaption)
                         .foregroundStyle(workoutSet.weightMode == .perSide ? Theme.accent : Theme.textSecondary)
                 }
@@ -274,7 +278,7 @@ struct SetRowView: View {
             if let last = lastSet, last.weight > 0, last.reps > 0 {
                 hintChip(
                     label: "Last",
-                    value: "\(last.weight.formattedWeight)×\(last.reps)",
+                    value: "\(last.weight.formattedWeight(unit: weightUnit))×\(last.reps)",
                     color: Theme.textSecondary
                 )
             }
@@ -282,7 +286,7 @@ struct SetRowView: View {
             if let pr = personalRecord, pr.weight > 0, pr.reps > 0 {
                 hintChip(
                     label: "PR",
-                    value: "\(pr.weight.formattedWeight)×\(pr.reps)",
+                    value: "\(pr.weight.formattedWeight(unit: weightUnit))×\(pr.reps)",
                     color: Theme.prGold
                 )
             }

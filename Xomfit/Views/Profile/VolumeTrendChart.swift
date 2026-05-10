@@ -6,6 +6,10 @@ import SwiftUI
 struct VolumeTrendChart: View {
     let buckets: [ProfileViewModel.VolumeBucket]
 
+    /// Display unit for axis + accessibility labels. Stored values stay lbs.
+    @AppStorage("weightUnit") private var weightUnitRaw: String = WeightUnit.lbs.rawValue
+    private var weightUnit: WeightUnit { WeightUnit(rawValue: weightUnitRaw) ?? .lbs }
+
     private static let dayMonthFormatter: DateFormatter = {
         let f = DateFormatter()
         f.dateFormat = "M/d"
@@ -43,14 +47,15 @@ struct VolumeTrendChart: View {
             }
 
             Chart(buckets) { bucket in
+                let displayVolume = bucket.volume * weightUnit.multiplierFromLbs
                 BarMark(
                     x: .value("Week", Self.dayMonthFormatter.string(from: bucket.weekStart)),
-                    y: .value("Volume", bucket.volume)
+                    y: .value("Volume", displayVolume)
                 )
                 .foregroundStyle(barColor(for: bucket))
                 .cornerRadius(4)
                 .accessibilityLabel(Self.dayMonthFormatter.string(from: bucket.weekStart))
-                .accessibilityValue("\(formattedVolume(bucket.volume)) pounds")
+                .accessibilityValue("\(formattedVolume(displayVolume)) \(weightUnit.accessibilityName)")
             }
             .chartYAxis {
                 AxisMarks(position: .leading) { value in

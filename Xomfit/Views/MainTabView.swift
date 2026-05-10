@@ -10,6 +10,18 @@ struct MainTabView: View {
     /// App-open streak / new-PR celebration toast (#250). Cleared after auto-dismiss.
     @State private var launchBadgeToast: Toast?
 
+    /// Theme override from Settings (#312). Empty string = follow system.
+    @AppStorage("colorScheme") private var preferredColorSchemeRaw: String = ""
+
+    /// Maps the stored value to a `ColorScheme?`. nil => follow system.
+    private var resolvedColorScheme: ColorScheme? {
+        switch preferredColorSchemeRaw {
+        case "light": return .light
+        case "dark":  return .dark
+        default:      return nil
+        }
+    }
+
     private let resumeTimer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     var body: some View {
@@ -89,6 +101,7 @@ struct MainTabView: View {
             launchBadgeToast = Toast(style: .success, message: badge.message)
         }
         .environment(\.tabBarVisible, $tabBarVisible)
+        .preferredColorScheme(resolvedColorScheme)
     }
 }
 

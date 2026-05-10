@@ -19,6 +19,10 @@ struct ProfileStatsView: View {
 
     @State private var heatmapFilter: HeatmapTimeFilter = .week
 
+    /// Display unit for weight values. Stored values stay lbs.
+    @AppStorage("weightUnit") private var weightUnitRaw: String = WeightUnit.lbs.rawValue
+    private var weightUnit: WeightUnit { WeightUnit(rawValue: weightUnitRaw) ?? .lbs }
+
     private var activeMuscleGroupSets: [String: Int] {
         switch heatmapFilter {
         case .week: return muscleGroupSetsThisWeek
@@ -251,7 +255,7 @@ struct ProfileStatsView: View {
                 }
             }
 
-            Text("\(pr.weight.formattedWeight) lbs \u{00D7} \(pr.reps)")
+            Text("\(pr.weight.formattedWeight(unit: weightUnit)) \(weightUnit.displayName) \u{00D7} \(pr.reps)")
                 .font(Theme.fontNumberMedium)
                 .foregroundStyle(Theme.textPrimary)
         }
@@ -270,7 +274,7 @@ struct ProfileStatsView: View {
     }
 
     private func prOfTheMonthAccessibility(pr: PersonalRecord, pctText: String?) -> String {
-        var parts = ["PR of the month: \(pr.exerciseName), \(pr.weight.formattedWeight) pounds for \(pr.reps) reps"]
+        var parts = ["PR of the month: \(pr.exerciseName), \(pr.weight.formattedWeight(unit: weightUnit)) \(weightUnit.accessibilityName) for \(pr.reps) reps"]
         if let pctText {
             parts.append("\(pctText) improvement")
         }

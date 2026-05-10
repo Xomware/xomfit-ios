@@ -389,25 +389,29 @@ private struct WorkoutActivityContent: View {
 private struct PRActivityContent: View {
     let activity: PRActivity
 
+    /// Display unit for weight values. Stored values stay lbs.
+    @AppStorage("weightUnit") private var weightUnitRaw: String = WeightUnit.lbs.rawValue
+    private var weightUnit: WeightUnit { WeightUnit(rawValue: weightUnitRaw) ?? .lbs }
+
     var body: some View {
         ActivityStripeCard(stripeColor: Theme.prGold, icon: "trophy.fill", title: activity.exerciseName) {
             Text(activity.exerciseName)
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(Theme.textPrimary)
 
-            Text("\(activity.weight.formattedWeight) lbs × \(activity.reps) reps")
+            Text("\(activity.weight.formattedWeight(unit: weightUnit)) \(weightUnit.displayName) × \(activity.reps) reps")
                 .font(Theme.fontDisplay)
                 .foregroundStyle(Theme.prGold)
-                .accessibilityLabel("\(activity.weight.formattedWeight) pounds, \(activity.reps) reps")
+                .accessibilityLabel("\(activity.weight.formattedWeight(unit: weightUnit)) \(weightUnit.accessibilityName), \(activity.reps) reps")
 
             if let prev = activity.previousBest {
-                Text("Previous best: \(prev.formattedWeight) lbs")
+                Text("Previous best: \(prev.formattedWeight(unit: weightUnit)) \(weightUnit.displayName)")
                     .font(Theme.fontCaption)
                     .foregroundStyle(Theme.textTertiary)
             }
 
             if let imp = activity.improvement, imp > 0 {
-                XomBadge("+\(imp.formattedWeight) lbs", color: Theme.accent, variant: .display)
+                XomBadge("+\(imp.formattedWeight(unit: weightUnit)) \(weightUnit.displayName)", color: Theme.accent, variant: .display)
             }
         }
     }
