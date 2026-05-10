@@ -159,6 +159,10 @@ final class WorkoutLoggerViewModel {
         totalPausedDuration = 0
         skipRestTimer()
         startLiveActivity()
+
+        // Begin Now Playing capture — Apple Music only (see NowPlayingService docs).
+        // Silent no-op when the user denied Apple Music access.
+        NowPlayingService.shared.startCapture()
     }
 
     func discardWorkout() {
@@ -184,6 +188,9 @@ final class WorkoutLoggerViewModel {
         location = ""
         rating = 0
         skipRestTimer()
+
+        // Drop any captured Now Playing tracks — discarding the workout discards the soundtrack.
+        _ = NowPlayingService.shared.stopCapture()
     }
 
     func startFromTemplate(_ template: WorkoutTemplate, userId: String) {
@@ -927,6 +934,11 @@ final class WorkoutLoggerViewModel {
 
         let trimmedNotes = notes?.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedLocation = location.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        // Pull the Now Playing capture and attach it to the saved workout.
+        // Empty list when the user denied Apple Music access or only used non-Apple Music sources.
+        let capturedTracks = NowPlayingService.shared.stopCapture()
+
         let workout = Workout(
             id: UUID().uuidString,
             userId: userId,
@@ -936,7 +948,8 @@ final class WorkoutLoggerViewModel {
             endTime: Date(),
             notes: trimmedNotes?.isEmpty == false ? trimmedNotes : nil,
             location: trimmedLocation.isEmpty ? nil : trimmedLocation,
-            rating: rating > 0 ? rating : nil
+            rating: rating > 0 ? rating : nil,
+            tracks: capturedTracks
         )
 
         do {
