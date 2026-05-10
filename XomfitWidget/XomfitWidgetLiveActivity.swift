@@ -23,6 +23,21 @@ struct XomfitWidgetLiveActivity: Widget {
         state.isOvertime ? .red : Self.accentGreen
     }
 
+    /// Renders the rest-timer countdown, switching to a "+M:SS" count-up display
+    /// when overtime so SwiftUI's `Text(timerInterval:countsDown:true)` doesn't
+    /// blow up on a past endDate (issue #303).
+    @ViewBuilder
+    private func restTimerCountdown(endDate: Date, isOvertime: Bool) -> some View {
+        if isOvertime || endDate <= Date.now {
+            HStack(spacing: 0) {
+                Text("+")
+                Text(endDate, style: .timer)
+            }
+        } else {
+            Text(timerInterval: Date.now...endDate, countsDown: true)
+        }
+    }
+
     /// Static "Paused" label used in place of live timers when the workout is paused.
     @ViewBuilder
     private func pausedLabel(font: Font) -> some View {
@@ -76,10 +91,11 @@ struct XomfitWidgetLiveActivity: Widget {
                 if context.state.isPaused {
                     pausedLabel(font: .system(size: 12, weight: .semibold))
                 } else if context.state.isResting, let endDate = context.state.restEndDate {
-                    Text(timerInterval: Date.now...endDate, countsDown: true)
+                    restTimerCountdown(endDate: endDate, isOvertime: context.state.isOvertime)
                         .font(.system(size: 12, weight: .semibold, design: .monospaced))
                         .foregroundStyle(restColor(context.state))
                         .multilineTextAlignment(.trailing)
+                        .monospacedDigit()
                 } else {
                     Text(context.attributes.startTime, style: .timer)
                         .font(.system(size: 12, weight: .semibold, design: .monospaced))
@@ -92,7 +108,7 @@ struct XomfitWidgetLiveActivity: Widget {
                         .font(.system(size: 11, weight: .semibold))
                         .foregroundStyle(.white.opacity(0.85))
                 } else if context.state.isResting, let endDate = context.state.restEndDate {
-                    Text(timerInterval: Date.now...endDate, countsDown: true)
+                    restTimerCountdown(endDate: endDate, isOvertime: context.state.isOvertime)
                         .font(.system(size: 11, weight: .semibold, design: .monospaced))
                         .foregroundStyle(restColor(context.state))
                         .multilineTextAlignment(.center)
@@ -154,7 +170,7 @@ struct XomfitWidgetLiveActivity: Widget {
                 } else if state.isResting, let endDate = state.restEndDate {
                     HStack(spacing: 4) {
                         Text("Resting")
-                        Text(timerInterval: Date.now...endDate, countsDown: true)
+                        restTimerCountdown(endDate: endDate, isOvertime: state.isOvertime)
                     }
                     .font(.system(size: 13, weight: .medium))
                     .foregroundStyle(restColor(state))
@@ -227,7 +243,7 @@ struct XomfitWidgetLiveActivity: Widget {
                     Text("Rest:")
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(restColor(state))
-                    Text(timerInterval: Date.now...endDate, countsDown: true)
+                    restTimerCountdown(endDate: endDate, isOvertime: state.isOvertime)
                         .font(.system(size: 12, weight: .semibold, design: .monospaced))
                         .foregroundStyle(restColor(state))
                     Spacer()
