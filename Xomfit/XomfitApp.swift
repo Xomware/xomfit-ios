@@ -11,6 +11,13 @@ struct XomFitApp: App {
     @State private var showFitnessQuestionnaire = false
     @AppStorage("onboardingSkipped") private var onboardingSkipped = false
 
+    /// Deep-link target for `xomfit://report/<id>` (#260). When set, we
+    /// present the Reports list as a sheet pre-seeded with this id, so
+    /// the matching detail view auto-pushes once data loads. Reset to nil
+    /// when the sheet dismisses.
+    @State private var pendingReportId: String? = nil
+    @State private var showReportsSheet = false
+
     var body: some Scene {
         WindowGroup {
             Group {
@@ -52,6 +59,12 @@ struct XomFitApp: App {
                             }
                             .interactiveDismissDisabled()
                         }
+                        .sheet(isPresented: $showReportsSheet, onDismiss: { pendingReportId = nil }) {
+                            NavigationStack {
+                                ReportsListView(deepLinkReportId: pendingReportId)
+                            }
+                            .preferredColorScheme(.dark)
+                        }
                 } else {
                     LoginView()
                         .environment(authService)
@@ -62,6 +75,22 @@ struct XomFitApp: App {
                 if url.scheme == "xomfit", url.host == "workout" {
                     if workoutSession.isActive {
                         workoutSession.isPresented = true
+                    }
+                    return
+                }
+                if url.scheme == "xomfit", url.host == "report" {
+                    // `xomfit://report/<id>` — first path component is the id.
+                    let id = url.pathComponents
+                        .filter { $0 != "/" }
+                        .first?
+                        .trimmingCharacters(in: .whitespacesAndNewlines)
+                    if let id, !id.isEmpty {
+                        pendingReportId = id
+                    } else {
+                        pendingReportId = nil
+                    }
+                    if authService.isAuthenticated {
+                        showReportsSheet = true
                     }
                     return
                 }

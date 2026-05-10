@@ -86,6 +86,26 @@ struct SettingsView: View {
 
                 Section {
                     NavigationLink {
+                        ReportsListView()
+                            .hideTabBar()
+                    } label: {
+                        HStack(spacing: Theme.Spacing.md) {
+                            Image(systemName: "doc.text.magnifyingglass")
+                                .frame(width: 24)
+                                .foregroundStyle(Theme.accent)
+                            Text("Reports")
+                                .foregroundStyle(Theme.textPrimary)
+                        }
+                    }
+                    .tint(Theme.textTertiary)
+                } header: {
+                    XomMetricLabel("Reports")
+                }
+                .listRowBackground(Theme.surface)
+                .listRowSeparatorTint(Theme.hairline)
+
+                Section {
+                    NavigationLink {
                         AICoachView()
                             .hideTabBar()
                     } label: {
