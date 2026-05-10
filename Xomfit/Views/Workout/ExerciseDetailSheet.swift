@@ -52,7 +52,7 @@ struct ExerciseDetailSheet: View {
                 .background(Theme.accentMuted)
                 .clipShape(.rect(cornerRadius: Theme.cornerRadius))
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.tight) {
                 Text(exercise.name)
                     .font(Theme.fontTitle2)
                     .foregroundStyle(Theme.textPrimary)
@@ -85,7 +85,7 @@ struct ExerciseDetailSheet: View {
                         .font(.caption.weight(.semibold))
                 }
                 .foregroundStyle(Theme.accent)
-                .padding(.top, 2)
+                .padding(.top, Theme.Spacing.tighter)
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Estimate one rep max")
@@ -103,10 +103,10 @@ struct ExerciseDetailSheet: View {
     private func metaRow(label: String, value: String, icon: String) -> some View {
         HStack(spacing: Theme.Spacing.sm) {
             Image(systemName: icon)
-                .font(.subheadline)
+                .font(Theme.fontSubheadline)
                 .foregroundStyle(Theme.accent)
-                .frame(width: 24)
-            VStack(alignment: .leading, spacing: 2) {
+                .frame(width: Theme.Spacing.lg)
+            VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
                 Text(label)
                     .font(Theme.fontSmall)
                     .foregroundStyle(Theme.textSecondary)
@@ -207,9 +207,9 @@ struct ExerciseDetailSheet: View {
                 ForEach(exercise.tips, id: \.self) { tip in
                     HStack(alignment: .top, spacing: Theme.Spacing.sm) {
                         Image(systemName: "checkmark.circle.fill")
-                            .font(.subheadline)
+                            .font(Theme.fontSubheadline)
                             .foregroundStyle(Theme.accent)
-                            .padding(.top, 2)
+                            .padding(.top, Theme.Spacing.tighter)
                         Text(tip)
                             .font(Theme.fontBody)
                             .foregroundStyle(Theme.textPrimary.opacity(0.9))

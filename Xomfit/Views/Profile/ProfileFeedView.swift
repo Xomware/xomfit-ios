@@ -23,7 +23,7 @@ struct ProfileFeedView: View {
             } else if isFiltered && filteredItems.isEmpty {
                 VStack(spacing: Theme.Spacing.sm) {
                     Image(systemName: "line.3.horizontal.decrease")
-                        .font(.largeTitle)
+                        .font(Theme.fontLargeTitle)
                         .foregroundStyle(Theme.textSecondary)
                     Text("No matching posts")
                         .font(Theme.fontBody)

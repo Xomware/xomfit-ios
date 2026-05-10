@@ -21,7 +21,7 @@ struct ExerciseConfigRow: View {
     @State private var showRestSheet = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: Theme.Spacing.tight) {
             if let grips = exercise.exercise.supportedGrips {
                 configSection(label: "Grip") {
                     ForEach(grips) { grip in
@@ -113,7 +113,7 @@ struct ExerciseConfigRow: View {
             Haptics.selection()
             showNotesSheet = true
         } label: {
-            HStack(spacing: 4) {
+            HStack(spacing: Theme.Spacing.tight) {
                 Image(systemName: hasNote ? "note.text" : "plus")
                     .font(.caption2.weight(.semibold))
                 if hasNote, let preview = notePreview(exercise.notes) {
@@ -126,8 +126,8 @@ struct ExerciseConfigRow: View {
                 }
             }
             .foregroundStyle(hasNote ? .black : Theme.textSecondary)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
+            .padding(.horizontal, Theme.Spacing.sm)
+            .padding(.vertical, Theme.Spacing.tight)
             .background(hasNote ? Theme.accent : Theme.surfaceSecondary)
             .clipShape(.capsule)
         }
@@ -142,15 +142,15 @@ struct ExerciseConfigRow: View {
             Haptics.selection()
             showRestSheet = true
         } label: {
-            HStack(spacing: 4) {
+            HStack(spacing: Theme.Spacing.tight) {
                 Image(systemName: "timer")
                     .font(.caption2.weight(.semibold))
                 Text("Rest: \(formatRest(seconds))")
                     .font(.caption2.weight(.semibold))
             }
             .foregroundStyle(isCustom ? .black : Theme.textSecondary)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
+            .padding(.horizontal, Theme.Spacing.sm)
+            .padding(.vertical, Theme.Spacing.tight)
             .background(isCustom ? Theme.accent : Theme.surfaceSecondary)
             .clipShape(.capsule)
         }
@@ -194,8 +194,8 @@ struct ExerciseConfigRow: View {
             Text(label)
                 .font(.caption2.weight(.semibold))
                 .foregroundStyle(isSelected ? .black : Theme.textSecondary)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
+                .padding(.horizontal, Theme.Spacing.sm)
+                .padding(.vertical, Theme.Spacing.tight)
                 .background(isSelected ? Theme.accent : Theme.surfaceSecondary)
                 .clipShape(.capsule)
         }

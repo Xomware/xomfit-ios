@@ -112,15 +112,15 @@ struct XomFitLoaderSpin: View {
     ZStack {
         Theme.background.ignoresSafeArea()
         VStack(spacing: 40) {
-            VStack(spacing: 8) {
+            VStack(spacing: Theme.Spacing.sm) {
                 XomFitLoaderPaint(size: 80)
                 Text("Paint").font(Theme.fontCaption).foregroundStyle(Theme.textSecondary)
             }
-            VStack(spacing: 8) {
+            VStack(spacing: Theme.Spacing.sm) {
                 XomFitLoaderPulse(size: 60)
                 Text("Pulse").font(Theme.fontCaption).foregroundStyle(Theme.textSecondary)
             }
-            VStack(spacing: 8) {
+            VStack(spacing: Theme.Spacing.sm) {
                 XomFitLoaderSpin(size: 50)
                 Text("Spin").font(Theme.fontCaption).foregroundStyle(Theme.textSecondary)
             }

@@ -20,7 +20,7 @@ struct PrivateProfileView: View {
             XomAvatar(name: displayName.isEmpty ? username : initials, size: 80)
 
             // Name
-            VStack(spacing: 4) {
+            VStack(spacing: Theme.Spacing.tight) {
                 if !displayName.isEmpty {
                     Text(displayName)
                         .font(Theme.fontTitle2)

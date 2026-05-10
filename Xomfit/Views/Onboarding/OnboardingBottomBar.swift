@@ -19,7 +19,7 @@ struct OnboardingBottomBar: View {
                 ForEach(0..<totalPages, id: \.self) { index in
                     Circle()
                         .fill(index == currentPage ? Theme.accent : Theme.surfaceElevated)
-                        .frame(width: 8, height: 8)
+                        .frame(width: Theme.Spacing.sm, height: Theme.Spacing.sm)
                         .overlay(
                             Circle()
                                 .strokeBorder(

@@ -47,19 +47,19 @@ struct TemplateCardView: View {
         HStack(spacing: 10) {
             // Category icon
             Image(systemName: template.category.icon)
-                .font(.headline)
+                .font(Theme.fontHeadline)
                 .foregroundStyle(Theme.accent)
-                .frame(width: 32, height: 32)
+                .frame(width: Theme.Spacing.xl, height: Theme.Spacing.xl)
                 .background(Theme.accent.opacity(0.15))
                 .clipShape(.rect(cornerRadius: 6))
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
                 Text(template.name)
                     .font(style == .row ? .subheadline.weight(.bold) : .caption.weight(.bold))
                     .foregroundStyle(Theme.textPrimary)
                     .lineLimit(1)
 
-                HStack(spacing: 4) {
+                HStack(spacing: Theme.Spacing.tight) {
                     Text("\(template.exercises.count) ex")
                     Text("~\(template.estimatedDuration)m")
                         .foregroundStyle(Theme.accent)

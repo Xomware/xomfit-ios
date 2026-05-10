@@ -86,7 +86,7 @@ struct WorkoutFocusView: View {
         // Push content below any active Dynamic Island (#289). Bumps content
         // down deterministically when an island (e.g. music app) is present.
         .safeAreaInset(edge: .top, spacing: 0) {
-            Color.clear.frame(height: 8)
+            Color.clear.frame(height: Theme.Spacing.sm)
         }
         .sheet(isPresented: $showExercisePicker) {
             ExercisePickerView { exercise in
@@ -104,20 +104,20 @@ struct WorkoutFocusView: View {
     // MARK: - Exercise Header
 
     private func exerciseHeader(exercise: WorkoutExercise) -> some View {
-        VStack(spacing: 4) {
+        VStack(spacing: Theme.Spacing.tight) {
             Text(exercise.exercise.name)
                 .font(.title2.weight(.bold))
                 .foregroundStyle(Theme.textPrimary)
                 .multilineTextAlignment(.center)
                 .accessibilityAddTraits(.isHeader)
 
-            HStack(spacing: 4) {
+            HStack(spacing: Theme.Spacing.tight) {
                 ForEach(exercise.exercise.muscleGroups.prefix(2), id: \.self) { mg in
                     Text(mg.displayName)
                         .font(Theme.fontSmall)
                         .foregroundStyle(Theme.accent)
                         .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
+                        .padding(.vertical, Theme.Spacing.tighter)
                         .background(Theme.accent.opacity(0.15))
                         .clipShape(.rect(cornerRadius: 4))
                 }
@@ -125,13 +125,13 @@ struct WorkoutFocusView: View {
                 if exercise.exercise.supportsUnilateral && exercise.selectedLaterality != .bilateral {
                     HStack(spacing: 3) {
                         Image(systemName: "arrow.left.and.right")
-                            .font(.caption2)
+                            .font(Theme.fontCaption2)
                         Text(exercise.selectedLaterality.displayName)
                             .font(Theme.fontSmall)
                     }
                     .foregroundStyle(Theme.accent)
                     .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
+                    .padding(.vertical, Theme.Spacing.tighter)
                     .background(Theme.accent.opacity(0.15))
                     .clipShape(.capsule)
                 }
@@ -143,7 +143,7 @@ struct WorkoutFocusView: View {
 
     private func setIndicator(exercise: WorkoutExercise) -> some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
+            HStack(spacing: Theme.Spacing.sm) {
                 ForEach(Array(exercise.sets.enumerated()), id: \.element.id) { idx, set in
                     let isCompleted = set.completedAt != Date.distantPast
                     let isFocused = idx == viewModel.focusSetIndex
@@ -182,7 +182,7 @@ struct WorkoutFocusView: View {
                         viewModel.focusSetIndex = max(viewModel.exercises[exerciseIndex].sets.count - 1, 0)
                     }
                 } label: {
-                    HStack(spacing: 4) {
+                    HStack(spacing: Theme.Spacing.tight) {
                         Image(systemName: "plus")
                             .font(.subheadline.weight(.bold))
                         Text("Set")
@@ -217,7 +217,7 @@ struct WorkoutFocusView: View {
                             viewModel.focusSetIndex = parentSetIndex + 1
                         }
                     } label: {
-                        HStack(spacing: 4) {
+                        HStack(spacing: Theme.Spacing.tight) {
                             Image(systemName: "arrow.down.right")
                                 .font(.subheadline.weight(.bold))
                             Text("drop set")
@@ -242,7 +242,7 @@ struct WorkoutFocusView: View {
     // MARK: - Weight Display
 
     private func weightDisplay(currentSet: WorkoutSet) -> some View {
-        VStack(spacing: 4) {
+        VStack(spacing: Theme.Spacing.tight) {
             Text("WEIGHT")
                 .font(Theme.fontSmall)
                 .foregroundStyle(Theme.textSecondary)
@@ -292,7 +292,7 @@ struct WorkoutFocusView: View {
     // MARK: - Reps Display
 
     private func repsDisplay(currentSet: WorkoutSet) -> some View {
-        VStack(spacing: 4) {
+        VStack(spacing: Theme.Spacing.tight) {
             Text("REPS")
                 .font(Theme.fontSmall)
                 .foregroundStyle(Theme.textSecondary)
@@ -411,7 +411,7 @@ struct WorkoutFocusView: View {
             // Rest timer config (compact, visible in focus mode)
             HStack(spacing: 6) {
                 Image(systemName: "timer")
-                    .font(.caption2)
+                    .font(Theme.fontCaption2)
                     .foregroundStyle(Theme.accent)
                 Text("Rest:")
                     .font(.caption2.weight(.semibold))
@@ -427,7 +427,7 @@ struct WorkoutFocusView: View {
                     Text(viewModel.defaultRestDuration > 0 ? "\(Int(viewModel.defaultRestDuration))s" : "Off")
                         .font(.caption2.weight(.bold))
                         .foregroundStyle(Theme.accent)
-                        .padding(.horizontal, 8)
+                        .padding(.horizontal, Theme.Spacing.sm)
                         .padding(.vertical, 3)
                         .background(Theme.accent.opacity(0.12))
                         .clipShape(.capsule)
@@ -459,7 +459,7 @@ struct WorkoutFocusView: View {
                     // Discoverable expand affordance — chevron + diagonal arrows
                     // hint that tapping anywhere on the banner re-opens the
                     // full-screen timer.
-                    VStack(spacing: 2) {
+                    VStack(spacing: Theme.Spacing.tighter) {
                         Image(systemName: "chevron.up")
                             .font(.caption2.weight(.bold))
                         Image(systemName: "arrow.up.left.and.arrow.down.right")
@@ -520,7 +520,7 @@ struct WorkoutFocusView: View {
                         withAnimation(.xomChill) { isRestTimerMinimized = true }
                     } label: {
                         Image(systemName: "arrow.down.right.and.arrow.up.left")
-                            .font(.body.weight(.semibold))
+                            .font(Theme.fontBodyEmphasized)
                             .foregroundStyle(Theme.textSecondary)
                             .frame(width: 44, height: 44)
                             .background(Theme.surface.opacity(0.3))
@@ -544,7 +544,7 @@ struct WorkoutFocusView: View {
                         .rotationEffect(.degrees(-90))
                         .animation(.linear(duration: 1), value: restProgress)
 
-                    VStack(spacing: 4) {
+                    VStack(spacing: Theme.Spacing.tight) {
                         Text("REST")
                             .font(.caption.weight(.bold))
                             .foregroundStyle(Theme.textSecondary)
@@ -558,7 +558,7 @@ struct WorkoutFocusView: View {
 
                 // Next exercise hint
                 if let nextEx = viewModel.upcomingExercise {
-                    VStack(spacing: 4) {
+                    VStack(spacing: Theme.Spacing.tight) {
                         Text("NEXT UP")
                             .font(.caption2.weight(.bold))
                             .foregroundStyle(Theme.accent)

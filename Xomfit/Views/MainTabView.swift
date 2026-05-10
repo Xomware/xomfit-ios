@@ -160,7 +160,7 @@ private struct WorkoutResumeBar: View {
                     .background(Theme.accent.opacity(0.15))
                     .clipShape(Circle())
 
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
                     Text(workoutName.isEmpty ? "Workout" : workoutName)
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(Theme.textPrimary)

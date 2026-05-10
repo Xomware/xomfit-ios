@@ -189,13 +189,13 @@ struct TemplateDetailView: View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
             HStack(spacing: 10) {
                 Image(systemName: draft.category.icon)
-                    .font(.title3)
+                    .font(Theme.fontTitle3)
                     .foregroundStyle(Theme.accent)
                     .frame(width: 40, height: 40)
                     .background(Theme.accent.opacity(0.15))
                     .clipShape(.rect(cornerRadius: Theme.Radius.xs))
 
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
                     Text(draft.category.displayName)
                         .font(Theme.fontCaption)
                         .foregroundStyle(Theme.accent)
@@ -264,9 +264,9 @@ struct TemplateDetailView: View {
     }
 
     private func statPill(icon: String, label: String, value: String) -> some View {
-        VStack(spacing: 4) {
+        VStack(spacing: Theme.Spacing.tight) {
             Image(systemName: icon)
-                .font(.subheadline)
+                .font(Theme.fontSubheadline)
                 .foregroundStyle(Theme.accent)
             Text(value)
                 .font(.subheadline.weight(.bold))
@@ -306,7 +306,7 @@ struct TemplateDetailView: View {
     private var emptyState: some View {
         VStack(spacing: Theme.Spacing.sm) {
             Image(systemName: "figure.strengthtraining.traditional")
-                .font(.largeTitle)
+                .font(Theme.fontLargeTitle)
                 .foregroundStyle(Theme.textSecondary.opacity(0.5))
             Text("No exercises yet")
                 .font(Theme.fontBody)
@@ -324,7 +324,7 @@ struct TemplateDetailView: View {
             Haptics.light()
             showExercisePicker = true
         } label: {
-            HStack(spacing: 8) {
+            HStack(spacing: Theme.Spacing.sm) {
                 Image(systemName: "plus.circle.fill")
                 Text("Add Exercise")
                     .font(.subheadline.weight(.semibold))
@@ -352,11 +352,11 @@ struct TemplateDetailView: View {
             HStack(spacing: 10) {
                 Image(systemName: "play.fill")
                 Text(hasUnsavedChanges ? "Start Lift" : "Start Workout")
-                    .font(.headline)
+                    .font(Theme.fontHeadline)
             }
             .foregroundStyle(.black)
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 16)
+            .padding(.vertical, Theme.Spacing.md)
             .background(Theme.accent)
             .clipShape(.rect(cornerRadius: Theme.cornerRadius))
         }
@@ -381,7 +381,7 @@ struct TemplateDetailView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
 
                     TextField("Template name", text: $newTemplateName)
-                        .font(.body.weight(.semibold))
+                        .font(Theme.fontBodyEmphasized)
                         .foregroundStyle(Theme.textPrimary)
                         .padding(Theme.Spacing.md)
                         .background(Theme.surface)
@@ -642,7 +642,7 @@ private struct EditableExerciseRow: View {
                 Text("\(index)")
                     .font(.caption.weight(.bold).monospaced())
                     .foregroundStyle(Theme.accent)
-                    .frame(width: 24, height: 24)
+                    .frame(width: Theme.Spacing.lg, height: Theme.Spacing.lg)
                     .background(Theme.accent.opacity(0.15))
                     .clipShape(.rect(cornerRadius: Theme.Radius.xs))
 
@@ -669,7 +669,7 @@ private struct EditableExerciseRow: View {
                     Image(systemName: "info.circle")
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(Theme.textSecondary)
-                        .frame(width: 32, height: 32)
+                        .frame(width: Theme.Spacing.xl, height: Theme.Spacing.xl)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -680,7 +680,7 @@ private struct EditableExerciseRow: View {
                     onDelete()
                 } label: {
                     Image(systemName: "trash")
-                        .font(.subheadline)
+                        .font(Theme.fontSubheadline)
                         .foregroundStyle(Theme.destructive.opacity(0.85))
                         .frame(width: 44, height: 44)
                         .contentShape(Rectangle())
@@ -691,11 +691,11 @@ private struct EditableExerciseRow: View {
             // Editable controls: sets stepper, reps, weight
             HStack(alignment: .center, spacing: Theme.Spacing.sm) {
                 // Sets stepper
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: Theme.Spacing.tight) {
                     Text("Sets")
                         .font(Theme.fontSmall)
                         .foregroundStyle(Theme.textSecondary)
-                    HStack(spacing: 4) {
+                    HStack(spacing: Theme.Spacing.tight) {
                         Button {
                             Haptics.selection()
                             onUpdateSets(exercise.targetSets - 1)
@@ -725,7 +725,7 @@ private struct EditableExerciseRow: View {
                 }
 
                 // Reps text field
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: Theme.Spacing.tight) {
                     Text("Reps")
                         .font(Theme.fontSmall)
                         .foregroundStyle(Theme.textSecondary)
@@ -735,8 +735,8 @@ private struct EditableExerciseRow: View {
                         .keyboardType(.numbersAndPunctuation)
                         .multilineTextAlignment(.center)
                         .frame(width: 64)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 8)
+                        .padding(.horizontal, Theme.Spacing.sm)
+                        .padding(.vertical, Theme.Spacing.sm)
                         .background(Theme.surfaceElevated)
                         .clipShape(.rect(cornerRadius: Theme.Radius.sm))
                         .onChange(of: repsText) { _, newValue in
@@ -746,7 +746,7 @@ private struct EditableExerciseRow: View {
                 }
 
                 // Target weight text field
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: Theme.Spacing.tight) {
                     Text("Weight")
                         .font(Theme.fontSmall)
                         .foregroundStyle(Theme.textSecondary)
@@ -756,8 +756,8 @@ private struct EditableExerciseRow: View {
                         .keyboardType(.decimalPad)
                         .multilineTextAlignment(.center)
                         .frame(width: 70)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 8)
+                        .padding(.horizontal, Theme.Spacing.sm)
+                        .padding(.vertical, Theme.Spacing.sm)
                         .background(Theme.surfaceElevated)
                         .clipShape(.rect(cornerRadius: Theme.Radius.sm))
                         .onChange(of: weightText) { _, newValue in

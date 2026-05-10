@@ -65,11 +65,11 @@ struct LoginView: View {
                                     }
                                 }
                             } label: {
-                                HStack(spacing: 8) {
+                                HStack(spacing: Theme.Spacing.sm) {
                                     Image(systemName: "g.circle.fill")
-                                        .font(.title3)
+                                        .font(Theme.fontTitle3)
                                     Text("Sign in with Google")
-                                        .font(.body.weight(.semibold))
+                                        .font(Theme.fontBodyEmphasized)
                                 }
                                 .foregroundStyle(.black)
                                 .frame(maxWidth: .infinity)
@@ -142,7 +142,7 @@ struct LoginView: View {
                         .padding(.horizontal, Theme.Spacing.lg)
 
                         // Sign up link
-                        HStack(spacing: 4) {
+                        HStack(spacing: Theme.Spacing.tight) {
                             Text("Don't have an account?")
                                 .foregroundStyle(Theme.textSecondary)
                                 .font(Theme.fontCaption)

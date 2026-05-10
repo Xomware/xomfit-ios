@@ -248,7 +248,7 @@ struct WorkoutCategoryPage: View {
     private var emptyState: some View {
         VStack(spacing: Theme.Spacing.sm) {
             Image(systemName: category.icon)
-                .font(.largeTitle)
+                .font(Theme.fontLargeTitle)
                 .foregroundStyle(Theme.textTertiary)
             Text(category.emptyStateTitle)
                 .font(.subheadline.weight(.semibold))
@@ -265,7 +265,7 @@ struct WorkoutCategoryPage: View {
     private var filteredEmptyState: some View {
         VStack(spacing: Theme.Spacing.sm) {
             Image(systemName: "line.3.horizontal.decrease")
-                .font(.largeTitle)
+                .font(Theme.fontLargeTitle)
                 .foregroundStyle(Theme.textTertiary)
             Text("No matches")
                 .font(.subheadline.weight(.semibold))

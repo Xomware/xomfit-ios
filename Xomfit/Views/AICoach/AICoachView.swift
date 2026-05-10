@@ -315,7 +315,7 @@ private struct AICoachMessageBubble: View {
         Image(systemName: "sparkles")
             .font(.subheadline.weight(.bold))
             .foregroundStyle(Theme.accent)
-            .frame(width: 32, height: 32)
+            .frame(width: Theme.Spacing.xl, height: Theme.Spacing.xl)
             .background(Theme.accent.opacity(0.18))
             .clipShape(Circle())
             .accessibilityHidden(true)
@@ -445,7 +445,7 @@ private struct WorkoutBuildCard: View {
         HStack(spacing: Theme.Spacing.sm) {
             Image(systemName: "dumbbell.fill")
                 .foregroundStyle(Theme.accent)
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
                 Text(payload.name)
                     .font(Theme.fontBody.weight(.semibold))
                     .foregroundStyle(Theme.textPrimary)
@@ -493,7 +493,7 @@ private struct TypingDots: View {
     @State private var phase: Int = 0
 
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: Theme.Spacing.tight) {
             ForEach(0..<3, id: \.self) { index in
                 Circle()
                     .fill(Theme.textSecondary)

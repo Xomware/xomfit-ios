@@ -49,7 +49,7 @@ struct OnboardingWelcomeScreen: View {
     private func featureRow(icon: String, text: String) -> some View {
         HStack(spacing: Theme.Spacing.md) {
             Image(systemName: icon)
-                .font(.title3)
+                .font(Theme.fontTitle3)
                 .foregroundStyle(Theme.accent)
                 .frame(width: 44, height: 44)
                 .background(Theme.accent.opacity(0.12))

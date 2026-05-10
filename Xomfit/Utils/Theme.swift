@@ -55,6 +55,8 @@ enum Theme {
 
     enum Spacing {
         static let hairline: CGFloat = 0.5
+        static let tighter: CGFloat = 2
+        static let tight:   CGFloat = 4
         static let xs:  CGFloat = 4
         static let sm:  CGFloat = 8
         static let md:  CGFloat = 16
@@ -96,10 +98,15 @@ enum Theme {
     static let fontLargeTitle: Font  = .largeTitle.weight(.bold)
     static let fontTitle: Font       = .title.weight(.bold)
     static let fontTitle2: Font      = .title2.weight(.semibold)
+    static let fontTitle3: Font      = .title3
     static let fontHeadline: Font    = .title3.weight(.semibold)
     static let fontBody: Font        = .body
+    static let fontBodyEmphasized: Font = .body.weight(.semibold)
+    static let fontCallout: Font     = .callout
+    static let fontFootnote: Font    = .footnote
     static let fontSubheadline: Font = .subheadline
     static let fontCaption: Font     = .caption
+    static let fontCaption2: Font    = .caption2
     static let fontSmall: Font       = .caption2.weight(.medium)
 
     /// Uppercase + 0.5 kerning metric label. Apply via XomMetricLabel or .metricLabel() modifier.

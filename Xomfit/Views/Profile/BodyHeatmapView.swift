@@ -105,7 +105,7 @@ struct BodyHeatmapView: View {
     }
 
     private func legendItem(color: Color, label: String) -> some View {
-        VStack(spacing: 2) {
+        VStack(spacing: Theme.Spacing.tighter) {
             RoundedRectangle(cornerRadius: 3)
                 .fill(color)
                 .frame(width: 20, height: 12)

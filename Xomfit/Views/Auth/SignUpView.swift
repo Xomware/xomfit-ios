@@ -32,7 +32,7 @@ struct SignUpView: View {
                             .font(Theme.fontCaption)
                             .foregroundStyle(Theme.textSecondary)
                     }
-                    .padding(.top, 48)
+                    .padding(.top, Theme.Spacing.xxl)
                     .padding(.bottom, Theme.Spacing.md)
 
                     // Form
@@ -93,7 +93,7 @@ struct SignUpView: View {
                     .padding(.horizontal, Theme.Spacing.lg)
 
                     // Back to login
-                    HStack(spacing: 4) {
+                    HStack(spacing: Theme.Spacing.tight) {
                         Text("Already have an account?")
                             .foregroundStyle(Theme.textSecondary)
                             .font(Theme.fontCaption)

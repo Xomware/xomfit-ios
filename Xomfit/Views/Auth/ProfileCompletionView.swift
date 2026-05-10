@@ -58,7 +58,7 @@ struct ProfileCompletionView: View {
 
     private var usernameSection: some View {
         Section {
-            HStack(spacing: 4) {
+            HStack(spacing: Theme.Spacing.tight) {
                 Text("@")
                     .foregroundStyle(Theme.textSecondary)
                 TextField("username", text: $username)
@@ -115,7 +115,7 @@ struct ProfileCompletionView: View {
                             .tint(.black)
                     } else {
                         Text("Continue")
-                            .font(.body.weight(.semibold))
+                            .font(Theme.fontBodyEmphasized)
                     }
                     Spacer()
                 }

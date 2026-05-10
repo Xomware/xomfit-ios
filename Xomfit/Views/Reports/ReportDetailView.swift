@@ -178,14 +178,14 @@ struct ReportDetailView: View {
             Text("\(rank)")
                 .font(.subheadline.weight(.bold).monospacedDigit())
                 .foregroundStyle(Theme.accent)
-                .frame(width: 24)
+                .frame(width: Theme.Spacing.lg)
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
                 Text(exercise.name)
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Theme.textPrimary)
                 Text("\(exercise.sets) set\(exercise.sets == 1 ? "" : "s")")
-                    .font(.caption)
+                    .font(Theme.fontCaption)
                     .foregroundStyle(Theme.textTertiary)
             }
 
@@ -223,9 +223,9 @@ struct ReportDetailView: View {
     private func newPRRow(_ pr: UserReport.NewPR) -> some View {
         HStack(spacing: Theme.Spacing.md) {
             Image(systemName: "trophy.fill")
-                .font(.body.weight(.semibold))
+                .font(Theme.fontBodyEmphasized)
                 .foregroundStyle(Theme.prGold)
-                .frame(width: 24)
+                .frame(width: Theme.Spacing.lg)
 
             Text(pr.exercise)
                 .font(.subheadline.weight(.semibold))

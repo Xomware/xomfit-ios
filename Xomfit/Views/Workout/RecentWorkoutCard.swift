@@ -63,16 +63,16 @@ struct RecentWorkoutCard: View {
                 .font(Theme.fontSmall)
                 .foregroundStyle(Theme.textSecondary)
 
-            HStack(spacing: 8) {
+            HStack(spacing: Theme.Spacing.sm) {
                 HStack(spacing: 3) {
                     Image(systemName: "figure.strengthtraining.traditional")
-                        .font(.caption2)
+                        .font(Theme.fontCaption2)
                     Text("\(workout.exercises.count) ex")
                 }
 
                 HStack(spacing: 3) {
                     Image(systemName: "clock")
-                        .font(.caption2)
+                        .font(Theme.fontCaption2)
                     Text(workout.durationString)
                         .foregroundStyle(Theme.accent)
                 }
@@ -94,13 +94,13 @@ struct RecentWorkoutCard: View {
     private var rowBody: some View {
         HStack(spacing: 10) {
             Image(systemName: "figure.strengthtraining.traditional")
-                .font(.headline)
+                .font(Theme.fontHeadline)
                 .foregroundStyle(Theme.accent)
-                .frame(width: 32, height: 32)
+                .frame(width: Theme.Spacing.xl, height: Theme.Spacing.xl)
                 .background(Theme.accent.opacity(0.15))
                 .clipShape(.rect(cornerRadius: 6))
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
                 Text(workout.name)
                     .font(.subheadline.weight(.bold))
                     .foregroundStyle(Theme.textPrimary)

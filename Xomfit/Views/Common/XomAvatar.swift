@@ -85,7 +85,7 @@ struct XomAvatar: View {
 // MARK: - Preview
 
 #Preview {
-    HStack(spacing: 16) {
+    HStack(spacing: Theme.Spacing.md) {
         XomAvatar(name: "Dom Giordano", size: 44)
         XomAvatar(name: "Dom Giordano", size: 96, ringColor: Theme.accent)
         XomAvatar(name: "Dom Giordano", size: 48, isOnline: true)

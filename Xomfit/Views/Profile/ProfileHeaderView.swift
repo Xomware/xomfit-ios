@@ -44,7 +44,7 @@ struct ProfileHeaderView: View {
                         )
                         .hideTabBar()
                     } label: {
-                        VStack(spacing: 2) {
+                        VStack(spacing: Theme.Spacing.tighter) {
                             Text("\(friendCount)")
                                 .font(Theme.fontNumberLarge)
                                 .foregroundStyle(Theme.textPrimary)
@@ -68,7 +68,7 @@ struct ProfileHeaderView: View {
             }
 
             // Name + username + bio
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.tight) {
                 if !displayName.isEmpty {
                     Text(displayName)
                         .font(Theme.fontTitle2)
@@ -87,12 +87,12 @@ struct ProfileHeaderView: View {
                         .foregroundStyle(Theme.textSecondary)
                         .lineLimit(4)
                         .truncationMode(.tail)
-                        .padding(.top, 2)
+                        .padding(.top, Theme.Spacing.tighter)
                 }
 
                 if isPrivate && isOwnProfile {
                     XomBadge("Private Account", icon: "lock.fill", variant: .secondary)
-                        .padding(.top, 4)
+                        .padding(.top, Theme.Spacing.tight)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -107,7 +107,7 @@ struct ProfileHeaderView: View {
 
     private func statColumn(value: Int, label: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            VStack(spacing: 2) {
+            VStack(spacing: Theme.Spacing.tighter) {
                 Text("\(value)")
                     .font(Theme.fontNumberLarge)
                     .foregroundStyle(Theme.textPrimary)

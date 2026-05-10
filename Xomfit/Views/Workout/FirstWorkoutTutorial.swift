@@ -50,7 +50,7 @@ struct FirstWorkoutTutorial: View {
                 // Header
                 VStack(spacing: Theme.Spacing.xs) {
                     Image(systemName: "sparkles")
-                        .font(.title2)
+                        .font(Theme.fontTitle2)
                         .foregroundStyle(Theme.accent)
                         .accessibilityHidden(true)
 
@@ -124,12 +124,12 @@ private struct CalloutRow: View {
             Image(systemName: callout.icon)
                 .font(.title3.weight(.semibold))
                 .foregroundStyle(Theme.accent)
-                .frame(width: 32, height: 32)
+                .frame(width: Theme.Spacing.xl, height: Theme.Spacing.xl)
                 .background(Theme.accent.opacity(0.15))
                 .clipShape(Circle())
                 .accessibilityHidden(true)
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
                 Text(callout.title)
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Theme.textPrimary)

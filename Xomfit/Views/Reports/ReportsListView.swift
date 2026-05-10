@@ -171,7 +171,7 @@ private struct ReportRow: View {
                     .fill(Theme.accentMuted)
                     .frame(width: 36, height: 36)
                 Image(systemName: iconName)
-                    .font(.body.weight(.semibold))
+                    .font(Theme.fontBodyEmphasized)
                     .foregroundStyle(Theme.accent)
             }
 
@@ -183,13 +183,13 @@ private struct ReportRow: View {
                     if isUnread {
                         Circle()
                             .fill(Theme.accent)
-                            .frame(width: 8, height: 8)
+                            .frame(width: Theme.Spacing.sm, height: Theme.Spacing.sm)
                             .accessibilityLabel("Unread")
                     }
                 }
 
                 Text(excerpt)
-                    .font(.footnote)
+                    .font(Theme.fontFootnote)
                     .foregroundStyle(Theme.textSecondary)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
@@ -197,7 +197,7 @@ private struct ReportRow: View {
 
             Spacer(minLength: 0)
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, Theme.Spacing.tight)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(
             "\(report.kind.rawValue.capitalized) report, \(dateRangeText)\(isUnread ? ", unread" : "")"

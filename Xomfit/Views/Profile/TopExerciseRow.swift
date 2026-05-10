@@ -31,7 +31,7 @@ struct TopExerciseRow: View {
 
                 Spacer()
 
-                VStack(alignment: .trailing, spacing: 2) {
+                VStack(alignment: .trailing, spacing: Theme.Spacing.tighter) {
                     Text("\(formattedVolume) lbs")
                         .font(Theme.fontNumberMedium)
                         .foregroundStyle(Theme.textPrimary)
@@ -49,7 +49,7 @@ struct TopExerciseRow: View {
                         .frame(width: proxy.size.width * fillFraction)
                 }
             }
-            .frame(height: 4)
+            .frame(height: Theme.Spacing.tight)
         }
         .padding(.horizontal, Theme.Spacing.sm)
         .padding(.vertical, Theme.Spacing.xs)

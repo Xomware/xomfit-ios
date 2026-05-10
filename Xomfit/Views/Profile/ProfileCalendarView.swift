@@ -112,7 +112,7 @@ struct ProfileCalendarView: View {
                 navigateMonth(by: -1)
             } label: {
                 Image(systemName: "chevron.left")
-                    .font(.body.weight(.semibold))
+                    .font(Theme.fontBodyEmphasized)
                     .foregroundStyle(Theme.accent)
                     .frame(width: 44, height: 44)
             }
@@ -130,7 +130,7 @@ struct ProfileCalendarView: View {
                 navigateMonth(by: 1)
             } label: {
                 Image(systemName: "chevron.right")
-                    .font(.body.weight(.semibold))
+                    .font(Theme.fontBodyEmphasized)
                     .foregroundStyle(canGoForwardMonth ? Theme.accent : Theme.textSecondary.opacity(0.3))
                     .frame(width: 44, height: 44)
             }
@@ -176,7 +176,7 @@ struct ProfileCalendarView: View {
                 selectedDate = IdentifiableDate(date: normalized)
             }
         } label: {
-            VStack(spacing: 2) {
+            VStack(spacing: Theme.Spacing.tighter) {
                 Text("\(dayNumber)")
                     .font(.subheadline.weight(count > 0 ? .bold : .regular))
                     .foregroundStyle(cellForeground(count: count, isToday: isToday))
@@ -306,7 +306,7 @@ struct ProfileCalendarView: View {
     }
 
     private func recapStat(label: String, value: String) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
             Text(label.uppercased())
                 .font(Theme.fontSmall)
                 .foregroundStyle(Theme.textSecondary)
@@ -390,7 +390,7 @@ struct ProfileCalendarView: View {
                         .id(weekIdx)
                     }
                 }
-                .padding(.vertical, 2)
+                .padding(.vertical, Theme.Spacing.tighter)
             }
             .onAppear {
                 // Scroll to the latest week so today is visible by default.
@@ -665,7 +665,7 @@ private struct CalendarDayDetailSheet: View {
                 } else if loadedWorkouts.isEmpty {
                     VStack(spacing: Theme.Spacing.sm) {
                         Image(systemName: "calendar.badge.exclamationmark")
-                            .font(.largeTitle)
+                            .font(Theme.fontLargeTitle)
                             .foregroundStyle(Theme.textSecondary)
                         Text("No workouts found")
                             .font(Theme.fontBody)
@@ -683,7 +683,7 @@ private struct CalendarDayDetailSheet: View {
                             } label: {
                                 HStack(spacing: 12) {
                                     Image(systemName: "dumbbell.fill")
-                                        .font(.body)
+                                        .font(Theme.fontBody)
                                         .foregroundStyle(Theme.accent)
                                         .frame(width: 36, height: 36)
                                         .background(Theme.accent.opacity(0.15))
@@ -693,7 +693,7 @@ private struct CalendarDayDetailSheet: View {
                                         Text(workout.name)
                                             .font(.subheadline.weight(.semibold))
                                             .foregroundStyle(Theme.textPrimary)
-                                        HStack(spacing: 8) {
+                                        HStack(spacing: Theme.Spacing.sm) {
                                             Text("\(workout.exercises.count) exercises")
                                             Text(workout.durationString)
                                                 .foregroundStyle(Theme.accent)

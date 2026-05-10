@@ -67,7 +67,7 @@ struct TemplateListView: View {
         } label: {
             HStack(spacing: Theme.Spacing.md) {
                 Image(systemName: template.category.icon)
-                    .font(.headline)
+                    .font(Theme.fontHeadline)
                     .foregroundStyle(Theme.accent)
                     .frame(width: 36, height: 36)
                     .background(Theme.accent.opacity(0.15))
@@ -94,7 +94,7 @@ struct TemplateListView: View {
                         .foregroundStyle(Theme.accent)
                 }
             }
-            .padding(.vertical, 4)
+            .padding(.vertical, Theme.Spacing.tight)
         }
         .buttonStyle(.plain)
         .deleteDisabled(!template.isCustom)

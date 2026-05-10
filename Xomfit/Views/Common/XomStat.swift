@@ -30,14 +30,14 @@ struct XomStat: View {
     }
 
     var body: some View {
-        VStack(spacing: 2) {
+        VStack(spacing: Theme.Spacing.tighter) {
             if let icon {
                 Image(systemName: icon)
-                    .font(.caption)
+                    .font(Theme.fontCaption)
                     .foregroundStyle(iconColor)
             }
 
-            HStack(alignment: .firstTextBaseline, spacing: 2) {
+            HStack(alignment: .firstTextBaseline, spacing: Theme.Spacing.tighter) {
                 Text(value)
                     .font(Theme.fontNumberLarge)
                     .foregroundStyle(Theme.textPrimary)

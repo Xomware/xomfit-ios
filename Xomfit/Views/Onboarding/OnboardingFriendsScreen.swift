@@ -81,7 +81,7 @@ struct OnboardingFriendsScreen: View {
                     } else if searchResults.isEmpty && searchQuery.isEmpty {
                         VStack(spacing: Theme.Spacing.sm) {
                             Image(systemName: "person.2.fill")
-                                .font(.largeTitle)
+                                .font(Theme.fontLargeTitle)
                                 .foregroundStyle(Theme.textSecondary.opacity(0.5))
                             Text("Search by username to find friends")
                                 .font(Theme.fontBody)
@@ -145,7 +145,7 @@ struct OnboardingFriendsScreen: View {
                 size: 40
             )
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
                 Text(user.displayName.isEmpty ? user.username : user.displayName)
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Theme.textPrimary)

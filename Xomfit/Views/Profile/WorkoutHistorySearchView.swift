@@ -71,7 +71,7 @@ struct WorkoutHistorySearchView: View {
     private var emptyState: some View {
         VStack(spacing: Theme.Spacing.sm) {
             Image(systemName: "magnifyingglass")
-                .font(.largeTitle)
+                .font(Theme.fontLargeTitle)
                 .foregroundStyle(Theme.textTertiary)
             Text("No matching workouts. Try a broader filter.")
                 .font(Theme.fontBody)

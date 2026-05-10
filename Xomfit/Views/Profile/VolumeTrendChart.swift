@@ -63,7 +63,7 @@ struct VolumeTrendChart: View {
                     AxisValueLabel {
                         if let v = value.as(Double.self) {
                             Text(formattedVolume(v))
-                                .font(.caption2)
+                                .font(Theme.fontCaption2)
                                 .foregroundStyle(Theme.textTertiary)
                         }
                     }
@@ -72,7 +72,7 @@ struct VolumeTrendChart: View {
             .chartXAxis {
                 AxisMarks { _ in
                     AxisValueLabel()
-                        .font(.caption2)
+                        .font(Theme.fontCaption2)
                         .foregroundStyle(Theme.textTertiary)
                 }
             }

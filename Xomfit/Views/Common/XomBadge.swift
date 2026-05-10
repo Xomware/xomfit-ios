@@ -35,7 +35,7 @@ struct XomBadge: View {
     }
 
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: Theme.Spacing.tight) {
             if let icon {
                 Image(systemName: icon)
                     .font(.system(size: 10, weight: .semibold))
@@ -45,8 +45,8 @@ struct XomBadge: View {
                 .font(Theme.fontSmall)
                 .foregroundStyle(labelForeground)
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
+        .padding(.horizontal, Theme.Spacing.sm)
+        .padding(.vertical, Theme.Spacing.tight)
         .background(backgroundFill)
         .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.xs))
         .overlay(
@@ -93,7 +93,7 @@ struct XomBadge: View {
 // MARK: - Preview
 
 #Preview {
-    VStack(spacing: 16) {
+    VStack(spacing: Theme.Spacing.md) {
         HStack {
             XomBadge("Workout", icon: "dumbbell.fill", color: Theme.accent, variant: .display)
             XomBadge("PR", icon: "trophy.fill", color: Theme.prGold, variant: .display)

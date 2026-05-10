@@ -81,7 +81,7 @@ struct WorkoutView: View {
                                     Haptics.light()
                                     showBuilder = true
                                 } label: {
-                                    HStack(spacing: 8) {
+                                    HStack(spacing: Theme.Spacing.sm) {
                                         Image(systemName: "hammer.fill")
                                         Text("Build")
                                     }
@@ -92,7 +92,7 @@ struct WorkoutView: View {
                                     Haptics.light()
                                     showLogPastWorkout = true
                                 } label: {
-                                    HStack(spacing: 8) {
+                                    HStack(spacing: Theme.Spacing.sm) {
                                         Image(systemName: "calendar.badge.clock")
                                         Text("Log Past")
                                     }
@@ -221,7 +221,7 @@ struct WorkoutView: View {
                     }
                 }
             } label: {
-                HStack(spacing: 8) {
+                HStack(spacing: Theme.Spacing.sm) {
                     Image(systemName: "play.fill")
                     Text("Start Guided Workout")
                 }
@@ -256,7 +256,7 @@ struct WorkoutView: View {
                 NavigationLink {
                     WorkoutCategoryPage(category: category, viewModel: viewModel)
                 } label: {
-                    HStack(spacing: 4) {
+                    HStack(spacing: Theme.Spacing.tight) {
                         Text("See All")
                             .font(.caption.weight(.semibold))
                         Image(systemName: "chevron.right")

@@ -90,7 +90,7 @@ struct SetRowView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
             mainRow
             if hasHints || beatsPriorPR {
                 hintRow
@@ -150,14 +150,14 @@ struct SetRowView: View {
                 // PR trophy / DROP badge / set number
                 if isPR {
                     Image(systemName: "trophy.fill")
-                        .font(.caption2)
+                        .font(Theme.fontCaption2)
                         .foregroundStyle(Theme.prGold)
-                        .frame(width: 16)
+                        .frame(width: Theme.Spacing.md)
                 } else if isDropSet {
                     Text("DROP")
                         .font(.system(size: 9, weight: .black))
                         .foregroundStyle(Theme.accent)
-                        .padding(.horizontal, 4)
+                        .padding(.horizontal, Theme.Spacing.tight)
                         .padding(.vertical, 1)
                         .background(Theme.accent.opacity(0.18))
                         .clipShape(.capsule)
@@ -165,7 +165,7 @@ struct SetRowView: View {
                     Text("\(setNumber)")
                         .font(.subheadline.weight(.bold).monospaced())
                         .foregroundStyle(isCompleted ? Theme.accent : Theme.textSecondary)
-                        .frame(width: 24, alignment: .center)
+                        .frame(width: Theme.Spacing.lg, alignment: .center)
                 }
 
                 // Weight field
@@ -296,7 +296,7 @@ struct SetRowView: View {
                     .font(.caption2.weight(.heavy))
                     .foregroundStyle(.black)
                     .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
+                    .padding(.vertical, Theme.Spacing.tighter)
                     .background(Theme.prGold)
                     .clipShape(.capsule)
                     .accessibilityLabel("New personal record")
@@ -305,7 +305,7 @@ struct SetRowView: View {
             Spacer()
         }
         .padding(.horizontal, Theme.Spacing.md)
-        .padding(.bottom, 4)
+        .padding(.bottom, Theme.Spacing.tight)
     }
 
     private func hintChip(label: String, value: String, color: Color) -> some View {
@@ -328,14 +328,14 @@ struct SetRowView: View {
             Haptics.light()
             action()
         } label: {
-            HStack(spacing: 4) {
+            HStack(spacing: Theme.Spacing.tight) {
                 Image(systemName: "arrow.down.right")
                     .font(.caption2.weight(.bold))
                 Text("drop set")
                     .font(.caption2.weight(.semibold))
             }
             .foregroundStyle(Theme.accent)
-            .padding(.horizontal, 8)
+            .padding(.horizontal, Theme.Spacing.sm)
             .padding(.vertical, 3)
             .background(Theme.accent.opacity(0.10))
             .clipShape(.capsule)

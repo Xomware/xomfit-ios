@@ -108,13 +108,13 @@ struct FeedDetailView: View {
                         .font(.title3.weight(.bold))
                         .foregroundStyle(Theme.textPrimary)
 
-                    HStack(spacing: 8) {
+                    HStack(spacing: Theme.Spacing.sm) {
                         Image(systemName: "calendar")
-                            .font(.caption)
+                            .font(Theme.fontCaption)
                         Text(localItem.createdAt.workoutDateString)
                         Text("·")
                         Image(systemName: "clock")
-                            .font(.caption)
+                            .font(Theme.fontCaption)
                         Text(formatDuration(activity.duration))
                     }
                     .font(Theme.fontCaption)
@@ -204,7 +204,7 @@ struct FeedDetailView: View {
 
                             if workoutSet.isPersonalRecord {
                                 Image(systemName: "trophy.fill")
-                                    .font(.caption2)
+                                    .font(Theme.fontCaption2)
                                     .foregroundStyle(Theme.prGold)
                             }
 
@@ -218,11 +218,11 @@ struct FeedDetailView: View {
                     Text("\(index)")
                         .font(.caption.weight(.bold).monospaced())
                         .foregroundStyle(Theme.accent)
-                        .frame(width: 24, height: 24)
+                        .frame(width: Theme.Spacing.lg, height: Theme.Spacing.lg)
                         .background(Theme.accent.opacity(0.12))
                         .clipShape(.rect(cornerRadius: 6))
 
-                    VStack(alignment: .leading, spacing: 2) {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
                         Text(exercise.exercise.name)
                             .font(.subheadline.weight(.bold))
                             .foregroundStyle(Theme.textPrimary)
@@ -238,7 +238,7 @@ struct FeedDetailView: View {
                     if exercise.sets.contains(where: { $0.isPersonalRecord }) {
                         HStack(spacing: 3) {
                             Image(systemName: "trophy.fill")
-                                .font(.caption2)
+                                .font(Theme.fontCaption2)
                             Text("PR")
                                 .font(.caption2.weight(.bold))
                         }
@@ -257,9 +257,9 @@ struct FeedDetailView: View {
     private func fallbackExerciseRow(exercise: WorkoutActivity.ExerciseSummary) -> some View {
         HStack(spacing: 12) {
             Image(systemName: "figure.strengthtraining.traditional")
-                .font(.subheadline)
+                .font(Theme.fontSubheadline)
                 .foregroundStyle(exercise.isPR ? Theme.prGold : Theme.accent)
-                .frame(width: 32, height: 32)
+                .frame(width: Theme.Spacing.xl, height: Theme.Spacing.xl)
                 .background((exercise.isPR ? Theme.prGold : Theme.accent).opacity(0.15))
                 .clipShape(.rect(cornerRadius: 8))
 
@@ -277,7 +277,7 @@ struct FeedDetailView: View {
             if exercise.isPR {
                 HStack(spacing: 3) {
                     Image(systemName: "trophy.fill")
-                        .font(.caption2)
+                        .font(Theme.fontCaption2)
                     Text("PR")
                         .font(.caption2.weight(.bold))
                 }
@@ -298,7 +298,7 @@ struct FeedDetailView: View {
                 size: 48
             )
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
                 Text(localItem.user.displayName.isEmpty ? localItem.user.username : localItem.user.displayName)
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Theme.textPrimary)
@@ -330,7 +330,7 @@ struct FeedDetailView: View {
             } label: {
                 HStack(spacing: 5) {
                     Image(systemName: localItem.isLiked ? "heart.fill" : "heart")
-                        .font(.body)
+                        .font(Theme.fontBody)
                         .foregroundStyle(localItem.isLiked ? Theme.destructive : Theme.textSecondary)
                     Text("\(localItem.likes)")
                         .font(.subheadline.weight(.medium))
@@ -345,7 +345,7 @@ struct FeedDetailView: View {
             } label: {
                 HStack(spacing: 5) {
                     Image(systemName: "bubble.right")
-                        .font(.body)
+                        .font(Theme.fontBody)
                         .foregroundStyle(Theme.textSecondary)
                     Text("\(localItem.comments.count)")
                         .font(.subheadline.weight(.medium))
@@ -358,7 +358,7 @@ struct FeedDetailView: View {
                 shareFeedItem()
             } label: {
                 Image(systemName: "square.and.arrow.up")
-                    .font(.body)
+                    .font(Theme.fontBody)
                     .foregroundStyle(Theme.textSecondary)
             }
             .accessibilityLabel("Share")
@@ -370,9 +370,9 @@ struct FeedDetailView: View {
     // MARK: - Helpers
 
     private func workoutStat(value: String, label: String, icon: String, color: Color = Theme.accent) -> some View {
-        VStack(spacing: 4) {
+        VStack(spacing: Theme.Spacing.tight) {
             Image(systemName: icon)
-                .font(.subheadline)
+                .font(Theme.fontSubheadline)
                 .foregroundStyle(color)
             Text(value)
                 .font(.body.weight(.bold))

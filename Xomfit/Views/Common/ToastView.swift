@@ -36,20 +36,20 @@ struct ToastView: View {
     }
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: Theme.Spacing.sm + Theme.Spacing.tight) {
             Image(systemName: icon)
-                .font(.title3)
+                .font(Theme.fontTitle3)
                 .foregroundStyle(iconColor)
 
             Text(toast.message)
                 .font(.subheadline.weight(.medium))
-                .foregroundStyle(.white)
+                .foregroundStyle(Theme.textPrimary)
                 .lineLimit(2)
 
             Spacer()
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
+        .padding(.horizontal, Theme.Spacing.md)
+        .padding(.vertical, Theme.Spacing.md - Theme.Spacing.tighter)
         .background(
             RoundedRectangle(cornerRadius: 14)
                 .fill(.ultraThinMaterial)
@@ -58,7 +58,7 @@ struct ToastView: View {
                         .fill(Color.black.opacity(0.5))
                 )
         )
-        .padding(.horizontal, 16)
+        .padding(.horizontal, Theme.Spacing.md)
     }
 }
 
@@ -72,7 +72,7 @@ struct ToastModifier: ViewModifier {
             .overlay(alignment: .top) {
                 if let toast = toast {
                     ToastView(toast: toast)
-                        .padding(.top, 8)
+                        .padding(.top, Theme.Spacing.sm)
                         .transition(.move(edge: .top).combined(with: .opacity))
                         .onAppear {
                             Task {

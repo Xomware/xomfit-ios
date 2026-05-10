@@ -15,10 +15,10 @@ struct ProfileTabPicker: View {
                     } label: {
                         VStack(spacing: Theme.Spacing.xs) {
                             Image(systemName: tab.icon)
-                                .font(.headline)
+                                .font(Theme.fontHeadline)
                                 // Active: textPrimary. Inactive: textSecondary. Accent is reserved for the underline only.
                                 .foregroundStyle(selectedTab == tab ? Theme.textPrimary : Theme.textSecondary)
-                                .frame(height: 24)
+                                .frame(height: Theme.Spacing.lg)
 
                             Text(tab.label)
                                 .font(Theme.fontSmall)

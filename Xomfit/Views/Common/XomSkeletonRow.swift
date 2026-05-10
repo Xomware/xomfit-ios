@@ -53,7 +53,7 @@ struct XomSkeletonRow: View {
             // Content area
             RoundedRectangle(cornerRadius: 8)
                 .fill(Theme.surfaceElevated)
-                .frame(height: 16)
+                .frame(height: Theme.Spacing.md)
             RoundedRectangle(cornerRadius: 8)
                 .fill(Theme.surfaceElevated)
                 .frame(width: 200, height: 16)

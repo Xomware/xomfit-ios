@@ -137,7 +137,7 @@ struct OneRMEstimatorView: View {
 
     private func estimateRow(name: String, value: Double, note: String) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: Theme.Spacing.md) {
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
                 Text(name)
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Theme.textPrimary)
@@ -186,7 +186,7 @@ struct OneRMEstimatorView: View {
     // MARK: - Helpers
 
     private func inputField(label: String, text: Binding<String>, keyboard: UIKeyboardType) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: Theme.Spacing.tight) {
             Text(label.uppercased())
                 .font(.caption2.weight(.semibold))
                 .foregroundStyle(Theme.textTertiary)
