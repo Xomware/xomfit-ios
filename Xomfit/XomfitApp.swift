@@ -31,6 +31,7 @@ struct XomFitApp: App {
                         .environment(workoutSession)
                         .task {
                             await NotificationService.shared.requestPermission()
+                            WatchSyncService.shared.activate()
                             evaluateFitnessQuestionnaireGate()
                         }
                         .sheet(isPresented: Bindable(authService).needsProfileCompletion) {
