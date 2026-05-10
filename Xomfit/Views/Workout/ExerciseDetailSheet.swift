@@ -86,6 +86,8 @@ struct ExerciseDetailSheet: View {
                 }
                 .foregroundStyle(Theme.accent)
                 .padding(.top, Theme.Spacing.tighter)
+                .frame(minHeight: 44)
+                .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Estimate one rep max")

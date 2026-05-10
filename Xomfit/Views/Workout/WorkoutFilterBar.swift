@@ -33,6 +33,8 @@ struct WorkoutFilterBar: View {
                 } label: {
                     Image(systemName: "xmark.circle.fill")
                         .foregroundStyle(Theme.textTertiary)
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(Rectangle())
                 }
                 .accessibilityLabel("Clear search")
             }

@@ -77,7 +77,20 @@ struct VolumeTrendChart: View {
                 }
             }
             .frame(height: 140)
+            .accessibilityLabel("Volume trend chart")
+            .accessibilityValue(chartSummary)
         }
+    }
+
+    /// One-line summary of the chart for VoiceOver — current week volume + change.
+    private var chartSummary: String {
+        guard let latest = buckets.last else { return "No volume data yet" }
+        let displayVolume = latest.volume * weightUnit.multiplierFromLbs
+        var parts = ["Latest week \(formattedVolume(displayVolume)) \(weightUnit.accessibilityName)"]
+        if let caption = changeCaption {
+            parts.append(caption.text)
+        }
+        return parts.joined(separator: ", ")
     }
 
     private func barColor(for bucket: ProfileViewModel.VolumeBucket) -> Color {

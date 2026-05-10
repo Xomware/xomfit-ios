@@ -22,6 +22,9 @@ struct FeedItemCard: View {
     @State private var zoomPhotoURL: IdentifiableURL? = nil
     @State private var particleBurst = false
 
+    /// Disables the like-button particle burst + scale punch when Reduce Motion is on.
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     var body: some View {
         XomCard(variant: .base) {
             VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
@@ -118,10 +121,11 @@ struct FeedItemCard: View {
                     Image(systemName: "ellipsis")
                         .font(.system(size: 18, weight: .medium))
                         .foregroundStyle(Theme.textSecondary)
-                        .frame(width: Theme.Spacing.xl, height: Theme.Spacing.xl)
+                        .frame(minWidth: 44, minHeight: 44)
                         .contentShape(Rectangle())
                 }
                 .accessibilityLabel("Post options")
+                .accessibilityHint("Edit caption or delete this post")
             }
         }
     }
@@ -156,17 +160,20 @@ struct FeedItemCard: View {
 
     private var actionBar: some View {
         HStack(spacing: Theme.Spacing.lg) {
-            // Like button with particle burst on first like
+            // Like button with particle burst on first like.
+            // Both the punch animation and the particle overlay respect Reduce Motion.
             Button {
                 let wasLiked = item.isLiked
-                withAnimation(.xomCelebration) { likeScale = 1.3 }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                    withAnimation(.xomPlayful) { likeScale = 1 }
-                }
-                if !wasLiked {
-                    particleBurst = false
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                        particleBurst = true
+                if !reduceMotion {
+                    withAnimation(.xomCelebration) { likeScale = 1.3 }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                        withAnimation(.xomPlayful) { likeScale = 1 }
+                    }
+                    if !wasLiked {
+                        particleBurst = false
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                            particleBurst = true
+                        }
                     }
                 }
                 onLike()
@@ -175,20 +182,26 @@ struct FeedItemCard: View {
                     Image(systemName: item.isLiked ? "heart.fill" : "heart")
                         .font(.system(size: 18, weight: .medium))
                         .foregroundStyle(item.isLiked ? Theme.destructive : Theme.textSecondary)
-                        .scaleEffect(likeScale)
+                        .scaleEffect(reduceMotion ? 1 : likeScale)
                         .overlay(
-                            ParticleBurstView(
-                                trigger: particleBurst,
-                                symbols: ["heart.fill"],
-                                color: Theme.destructive,
-                                count: 6,
-                                duration: 0.6
-                            )
+                            Group {
+                                if !reduceMotion {
+                                    ParticleBurstView(
+                                        trigger: particleBurst,
+                                        symbols: ["heart.fill"],
+                                        color: Theme.destructive,
+                                        count: 6,
+                                        duration: 0.6
+                                    )
+                                }
+                            }
                         )
                     Text("\(item.likes)")
                         .font(.caption.weight(.medium))
                         .foregroundStyle(Theme.textSecondary)
                 }
+                .frame(minWidth: 44, minHeight: 44)
+                .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .sensoryFeedback(.impact(weight: .medium), trigger: item.isLiked)
@@ -204,9 +217,12 @@ struct FeedItemCard: View {
                         .font(.caption.weight(.medium))
                         .foregroundStyle(Theme.textSecondary)
                 }
+                .frame(minWidth: 44, minHeight: 44)
+                .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .accessibilityLabel("\(item.comments.count) comments")
+            .accessibilityHint("Opens the comment thread")
 
             Spacer()
 
@@ -215,6 +231,8 @@ struct FeedItemCard: View {
                 Image(systemName: "square.and.arrow.up")
                     .font(.system(size: 18, weight: .medium))
                     .foregroundStyle(Theme.textSecondary)
+                    .frame(minWidth: 44, minHeight: 44)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Share")
@@ -227,6 +245,8 @@ struct FeedItemCard: View {
                     Image(systemName: "bookmark")
                         .font(.system(size: 18, weight: .medium))
                         .foregroundStyle(Theme.textSecondary)
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Save workout")
@@ -299,8 +319,11 @@ private struct WorkoutActivityContent: View {
                                 .foregroundStyle(star <= rating ? Theme.accent : Theme.textSecondary.opacity(0.3))
                         }
                     }
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("Rated \(rating) of 5 stars")
                 }
             }
+            .accessibilityElement(children: .combine)
 
             if let location = activity.location, !location.isEmpty {
                 HStack(spacing: Theme.Spacing.tight) {
@@ -319,6 +342,8 @@ private struct WorkoutActivityContent: View {
                 XomStat("\(activity.totalSets)", label: "Sets")
             }
             .padding(.vertical, Theme.Spacing.xs)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Duration \(formatDuration(activity.duration)), Volume \(formatVolume(activity.totalVolume)), \(activity.totalSets) sets")
 
             if activity.prCount > 0 {
                 XomBadge("\(activity.prCount) PR\(activity.prCount > 1 ? "s" : "")", icon: "trophy.fill", color: Theme.prGold, variant: .display)
@@ -348,6 +373,8 @@ private struct WorkoutActivityContent: View {
                                 .contentShape(Rectangle())
                                 .onTapGesture { onPhotoTap(url) }
                                 .accessibilityLabel("Workout photo")
+                                .accessibilityHint("Opens full-screen viewer")
+                                .accessibilityAddTraits(.isButton)
                             }
                         }
                     }
@@ -432,6 +459,8 @@ private struct MilestoneActivityContent: View {
                 .foregroundStyle(Theme.textSecondary)
             XomBadge(activity.badge, color: Theme.milestone, variant: .display)
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Milestone: \(activity.title), \(activity.subtitle), badge \(activity.badge)")
     }
 }
 
@@ -456,5 +485,9 @@ private struct StreakActivityContent: View {
                     .foregroundStyle(Theme.textSecondary)
             }
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(activity.isNewRecord
+            ? "\(activity.currentStreak) day streak, new personal record"
+            : "\(activity.currentStreak) day streak, previous best \(activity.previousBest) days")
     }
 }

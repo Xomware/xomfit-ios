@@ -688,7 +688,10 @@ private struct PRCelebrationBanner: View {
                 Image(systemName: "xmark")
                     .font(.caption.weight(.bold))
                     .foregroundStyle(.black.opacity(0.6))
+                    .frame(minWidth: 44, minHeight: 44)
+                    .contentShape(Rectangle())
             }
+            .accessibilityLabel("Dismiss new PR banner")
         }
         .padding(.horizontal, Theme.Spacing.md)
         .padding(.vertical, Theme.Spacing.md)
@@ -697,6 +700,8 @@ private struct PRCelebrationBanner: View {
         .padding(.horizontal, Theme.Spacing.md)
         .padding(.top, Theme.Spacing.sm)
         .shadow(color: Theme.prGold.opacity(0.5), radius: 8, x: 0, y: 4)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("New personal record: \(pr.exerciseName), \(pr.weight.formattedWeight) lbs for \(pr.reps) reps")
     }
 }
 
@@ -846,6 +851,7 @@ private struct ExerciseCard: View {
                         .frame(width: 44, height: 44)
                         .contentShape(Rectangle())
                 }
+                .accessibilityLabel("Remove \(exercise.exercise.name)")
             }
 
             // Variant config (grip, attachment, position, laterality) + per-session extras
@@ -1380,12 +1386,21 @@ private struct FinishWorkoutSheet: View {
                                                         selectedPhotos.remove(at: index)
                                                     }
                                                 } label: {
-                                                    Image(systemName: "xmark.circle.fill")
-                                                        .font(Theme.fontCaption)
-                                                        .foregroundStyle(.white)
-                                                        .shadow(radius: 2)
+                                                    // Visible glyph stays compact to fit the 80pt
+                                                    // thumbnail; the transparent 44pt outer frame
+                                                    // raises the hit target up to HIG (#313).
+                                                    ZStack {
+                                                        Color.clear
+                                                            .frame(width: 44, height: 44)
+                                                        Image(systemName: "xmark.circle.fill")
+                                                            .font(Theme.fontCaption)
+                                                            .foregroundStyle(.white)
+                                                            .shadow(radius: 2)
+                                                    }
+                                                    .contentShape(Rectangle())
                                                 }
-                                                .offset(x: 4, y: -4)
+                                                .offset(x: 14, y: -14)
+                                                .accessibilityLabel("Remove photo \(index + 1)")
                                             }
                                         }
                                     }

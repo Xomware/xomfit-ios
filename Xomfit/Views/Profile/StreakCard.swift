@@ -7,6 +7,9 @@ struct StreakCard: View {
     let currentStreak: Int
     let longestStreak: Int
 
+    /// Suppresses the flame symbol bounce when Reduce Motion is on.
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     private var isActive: Bool { currentStreak > 0 }
 
     private var iconColor: Color {
@@ -36,7 +39,8 @@ struct StreakCard: View {
                     Image(systemName: "flame.fill")
                         .font(Theme.fontTitle3)
                         .foregroundStyle(iconColor)
-                        .symbolEffect(.bounce, value: currentStreak)
+                        // Bounce only when motion is allowed; static otherwise.
+                        .symbolEffect(.bounce, value: reduceMotion ? 0 : currentStreak)
                 }
 
                 VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {

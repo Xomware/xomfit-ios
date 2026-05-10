@@ -473,7 +473,7 @@ private struct PastSetRow: View {
                 Image(systemName: "minus.circle.fill")
                     .foregroundStyle(Theme.destructive)
                     .font(Theme.fontHeadline)
-                    .frame(width: Theme.Spacing.xl, height: Theme.Spacing.xl)
+                    .frame(minWidth: 44, minHeight: 44)
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)

@@ -704,7 +704,8 @@ private struct EditableExerciseRow: View {
                                 .foregroundStyle(exercise.targetSets > 1 ? Theme.accent : Theme.textSecondary.opacity(0.3))
                         }
                         .disabled(exercise.targetSets <= 1)
-                        .frame(minWidth: 40, minHeight: 40)
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(Rectangle())
                         .accessibilityLabel("Decrease sets")
 
                         Text("\(exercise.targetSets)")
@@ -719,7 +720,8 @@ private struct EditableExerciseRow: View {
                             Image(systemName: "plus.circle")
                                 .foregroundStyle(Theme.accent)
                         }
-                        .frame(minWidth: 40, minHeight: 40)
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(Rectangle())
                         .accessibilityLabel("Increase sets")
                     }
                 }

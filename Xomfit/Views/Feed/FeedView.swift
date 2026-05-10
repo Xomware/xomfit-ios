@@ -82,7 +82,9 @@ struct FeedView: View {
                                 }
                             }
                         }
-                        .accessibilityLabel("Notifications")
+                        .accessibilityLabel(NotificationService.shared.unreadCount > 0
+                            ? "Notifications, \(NotificationService.shared.unreadCount) unread"
+                            : "Notifications")
 
                         Button {
                             showUserSearch = true
@@ -99,6 +101,7 @@ struct FeedView: View {
                             Image(systemName: "person.badge.plus")
                                 .foregroundStyle(Theme.textPrimary)
                         }
+                        .accessibilityLabel("Friends and requests")
                     }
                 }
             }

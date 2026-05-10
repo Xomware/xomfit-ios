@@ -130,9 +130,12 @@ struct ExerciseConfigRow: View {
             .padding(.vertical, Theme.Spacing.tight)
             .background(hasNote ? Theme.accent : Theme.surfaceSecondary)
             .clipShape(.capsule)
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel(hasNote ? "Edit note: \(exercise.notes ?? "")" : "Add note")
+        .accessibilityHint("Opens the per-exercise note editor")
     }
 
     private var restPill: some View {
@@ -153,9 +156,12 @@ struct ExerciseConfigRow: View {
             .padding(.vertical, Theme.Spacing.tight)
             .background(isCustom ? Theme.accent : Theme.surfaceSecondary)
             .clipShape(.capsule)
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Rest \(formatRest(seconds))\(isCustom ? ", custom" : ", default")")
+        .accessibilityHint("Adjusts rest time for this exercise")
     }
 
     private func notePreview(_ notes: String?) -> String? {
@@ -198,9 +204,12 @@ struct ExerciseConfigRow: View {
                 .padding(.vertical, Theme.Spacing.tight)
                 .background(isSelected ? Theme.accent : Theme.surfaceSecondary)
                 .clipShape(.capsule)
+                .frame(minHeight: 44)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("\(label)\(isSelected ? ", selected" : "")")
+        .accessibilityLabel(label)
+        .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
     }
 }
 
