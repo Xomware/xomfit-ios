@@ -114,13 +114,6 @@
 		F29F23552F5F635F00683551 /* WorkoutCardViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutCardViewModelTests.swift; sourceTree = "<group>"; };
 		F29F23562F5F635F00683551 /* WorkoutLoggerViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutLoggerViewModelTests.swift; sourceTree = "<group>"; };
 		F29F23582F5F635F00683551 /* AuthUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthUITests.swift; sourceTree = "<group>"; };
-		F29F235A2F5F635F00683551 /* LogSetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogSetView.swift; sourceTree = "<group>"; };
-		F29F235B2F5F635F00683551 /* RestTimerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestTimerView.swift; sourceTree = "<group>"; };
-		F29F235C2F5F635F00683551 /* WatchConnectivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchConnectivityManager.swift; sourceTree = "<group>"; };
-		F29F235D2F5F635F00683551 /* WatchWorkoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchWorkoutManager.swift; sourceTree = "<group>"; };
-		F29F235E2F5F635F00683551 /* WorkoutControlView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutControlView.swift; sourceTree = "<group>"; };
-		F29F235F2F5F635F00683551 /* XomFitComplication.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XomFitComplication.swift; sourceTree = "<group>"; };
-		F29F23602F5F635F00683551 /* XomFitWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XomFitWatchApp.swift; sourceTree = "<group>"; };
 		F2FA6B092F7C0635009E1AB8 /* XomfitWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = XomfitWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		F2FA6B0B2F7C0635009E1AB8 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		F2FA6B0D2F7C0635009E1AB8 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
@@ -190,7 +183,6 @@
 				F29F233B2F5F635F00683551 /* web */,
 				F29F23572F5F635F00683551 /* XomFitTests */,
 				F29F23592F5F635F00683551 /* XomFitUITests */,
-				F29F23612F5F635F00683551 /* XomFitWatch */,
 				F29F21332F5F61DC00683551 /* Xomfit */,
 				F2FA6B0F2F7C0635009E1AB8 /* XomfitWidget */,
 				F2FA6B0A2F7C0635009E1AB8 /* Frameworks */,
@@ -434,20 +426,6 @@
 				F29F23582F5F635F00683551 /* AuthUITests.swift */,
 			);
 			path = XomFitUITests;
-			sourceTree = "<group>";
-		};
-		F29F23612F5F635F00683551 /* XomFitWatch */ = {
-			isa = PBXGroup;
-			children = (
-				F29F235A2F5F635F00683551 /* LogSetView.swift */,
-				F29F235B2F5F635F00683551 /* RestTimerView.swift */,
-				F29F235C2F5F635F00683551 /* WatchConnectivityManager.swift */,
-				F29F235D2F5F635F00683551 /* WatchWorkoutManager.swift */,
-				F29F235E2F5F635F00683551 /* WorkoutControlView.swift */,
-				F29F235F2F5F635F00683551 /* XomFitComplication.swift */,
-				F29F23602F5F635F00683551 /* XomFitWatchApp.swift */,
-			);
-			path = XomFitWatch;
 			sourceTree = "<group>";
 		};
 		F2FA6B0A2F7C0635009E1AB8 /* Frameworks */ = {

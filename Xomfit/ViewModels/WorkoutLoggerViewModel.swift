@@ -860,6 +860,20 @@ final class WorkoutLoggerViewModel {
         Task {
             await activity.update(.init(state: state, staleDate: nil))
         }
+
+        // Broadcast the same snapshot to the paired Apple Watch (#256).
+        // No-op when no watch is paired / WCSession isn't supported.
+        let watchState = WatchWorkoutState(
+            workoutName: workoutName,
+            currentExercise: currentExName,
+            setNumber: currentSetNumber,
+            totalSets: currentExerciseTotalSets,
+            isResting: isRestTimerActive,
+            restEndDate: restEnd,
+            isPaused: isPaused,
+            elapsedSeconds: Int(duration)
+        )
+        WatchSyncService.shared.send(state: watchState)
     }
 
     private func endLiveActivity() {
