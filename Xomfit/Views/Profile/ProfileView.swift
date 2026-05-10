@@ -198,7 +198,9 @@ struct ProfileView: View {
                 topExercises: viewModel.topExercisesByVolume,
                 prOfTheMonth: viewModel.prOfTheMonth,
                 currentStreak: viewModel.currentStreak,
-                longestStreak: viewModel.longestStreak
+                longestStreak: viewModel.longestStreak,
+                // Only own profile gets the Body link — measurements are private to the user.
+                userId: viewModel.isOwnProfile ? resolvedUserId : nil
             )
         }
     }

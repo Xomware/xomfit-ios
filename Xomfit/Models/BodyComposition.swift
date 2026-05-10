@@ -92,8 +92,10 @@ struct BodyCompositionEntry: Identifiable, Codable {
     }
 }
 
-// MARK: - Measurement Metric
-enum BodyMeasurement: String, CaseIterable, Identifiable {
+// MARK: - Measurement Metric (legacy — kept for BodyCompositionEntry compatibility).
+// New measurement tracking uses `BodyMeasurement` struct + `MeasurementKind` enum
+// in `Models/BodyMeasurement.swift` (#317).
+enum LegacyBodyMeasurement: String, CaseIterable, Identifiable {
     case weight = "Weight"
     case chest = "Chest"
     case waist = "Waist"
