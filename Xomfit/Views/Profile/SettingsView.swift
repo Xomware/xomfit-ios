@@ -3,6 +3,9 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(AuthService.self) private var authService
     @State private var showSignOutConfirm = false
+    /// Tools section sheet toggles — both stateless utilities live in modal sheets.
+    @State private var showPlateCalculator = false
+    @State private var showOneRMEstimator = false
 
     /// Anthropic API key override (per-user). v1: stored via @AppStorage —
     /// not secure. TODO: migrate to Keychain.
@@ -142,6 +145,28 @@ struct SettingsView: View {
                 .listRowSeparatorTint(Theme.hairline)
 
                 Section {
+                    Button {
+                        Haptics.selection()
+                        showPlateCalculator = true
+                    } label: {
+                        toolRow(icon: "circle.hexagongrid.fill", label: "Plate Calculator")
+                    }
+                    .buttonStyle(.plain)
+
+                    Button {
+                        Haptics.selection()
+                        showOneRMEstimator = true
+                    } label: {
+                        toolRow(icon: "function", label: "1RM Estimator")
+                    }
+                    .buttonStyle(.plain)
+                } header: {
+                    XomMetricLabel("Tools")
+                }
+                .listRowBackground(Theme.surface)
+                .listRowSeparatorTint(Theme.hairline)
+
+                Section {
                     settingsRow(icon: "info.circle.fill", iconColor: Theme.accent, label: "Version", value: appVersion)
                     settingsRow(icon: "building.2.fill", iconColor: Theme.accent, label: "App", value: Config.appName)
                 } header: {
@@ -180,6 +205,29 @@ struct SettingsView: View {
         } message: {
             Text("You will be returned to the login screen.")
         }
+        .sheet(isPresented: $showPlateCalculator) {
+            PlateCalculatorView()
+                .presentationDetents([.large])
+        }
+        .sheet(isPresented: $showOneRMEstimator) {
+            OneRMEstimatorView()
+                .presentationDetents([.large])
+        }
+    }
+
+    private func toolRow(icon: String, label: String) -> some View {
+        HStack(spacing: Theme.Spacing.md) {
+            Image(systemName: icon)
+                .frame(width: 24)
+                .foregroundStyle(Theme.accent)
+            Text(label)
+                .foregroundStyle(Theme.textPrimary)
+            Spacer()
+            Image(systemName: "chevron.right")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(Theme.textTertiary)
+        }
+        .contentShape(Rectangle())
     }
 
     private func settingsRow(icon: String, iconColor: Color, label: String, value: String) -> some View {
