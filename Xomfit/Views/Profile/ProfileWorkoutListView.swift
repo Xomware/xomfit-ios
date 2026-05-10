@@ -7,6 +7,9 @@ struct ProfileWorkoutListView: View {
     @Binding var dateRange: FeedDateRange
     @Binding var muscleGroups: Set<MuscleGroup>
 
+    /// Drives the workout-history search sheet (#323).
+    @State private var showSearch = false
+
     var body: some View {
         VStack(spacing: 0) {
             if !allWorkouts.isEmpty {
@@ -42,6 +45,22 @@ struct ProfileWorkoutListView: View {
                 }
                 .padding(.horizontal, Theme.Spacing.md)
             }
+        }
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    Haptics.light()
+                    showSearch = true
+                } label: {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundStyle(Theme.textPrimary)
+                }
+                .accessibilityLabel("Search workout history")
+                .disabled(allWorkouts.isEmpty)
+            }
+        }
+        .sheet(isPresented: $showSearch) {
+            WorkoutHistorySearchView(workouts: allWorkouts)
         }
     }
 
