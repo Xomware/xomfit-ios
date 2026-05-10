@@ -16,6 +16,7 @@ struct ExerciseDetailSheet: View {
                     VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
                         header
                         muscleAndEquipment
+                        variationsSection
                         howToSection
                         if !exercise.tips.isEmpty {
                             tipsSection
@@ -91,6 +92,70 @@ struct ExerciseDetailSheet: View {
             }
             Spacer()
         }
+    }
+
+    /// Optional grips / attachments / positions chip rows when the exercise supports variations.
+    @ViewBuilder
+    private var variationsSection: some View {
+        let grips = exercise.supportedGrips ?? []
+        let attachments = exercise.supportedAttachments ?? []
+        let positions = exercise.supportedPositions ?? []
+
+        if !grips.isEmpty || !attachments.isEmpty || !positions.isEmpty {
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                Text("Variations")
+                    .font(Theme.fontHeadline)
+                    .foregroundStyle(Theme.textPrimary)
+
+                if !grips.isEmpty {
+                    chipRow(
+                        label: "Grips",
+                        icon: "hand.raised.fill",
+                        chips: grips.map(\.displayName)
+                    )
+                }
+                if !attachments.isEmpty {
+                    chipRow(
+                        label: "Attachments",
+                        icon: "link",
+                        chips: attachments.map(\.displayName)
+                    )
+                }
+                if !positions.isEmpty {
+                    chipRow(
+                        label: "Positions",
+                        icon: "figure.strengthtraining.traditional",
+                        chips: positions.map(\.displayName)
+                    )
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(Theme.Spacing.md)
+            .background(Theme.surface)
+            .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+        }
+    }
+
+    private func chipRow(label: String, icon: String, chips: [String]) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 6) {
+                Image(systemName: icon)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Theme.accent)
+                Text(label)
+                    .font(Theme.fontSmall)
+                    .foregroundStyle(Theme.textSecondary)
+            }
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 6) {
+                    ForEach(chips, id: \.self) { chip in
+                        XomBadge(chip, variant: .secondary)
+                    }
+                }
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(label): \(chips.joined(separator: ", "))")
     }
 
     private var howToSection: some View {
