@@ -5,7 +5,7 @@ struct OnboardingView: View {
     @State private var currentPage = 0
     @State private var selectedGoals: Set<TrainingGoal> = []
 
-    private let totalPages = 3
+    private let totalPages = 4
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -30,8 +30,11 @@ struct OnboardingView: View {
                 )
                 .tag(1)
 
-                OnboardingFriendsScreen(onFinish: { finish() })
+                OnboardingFriendsScreen(onFinish: { advance() })
                     .tag(2)
+
+                OnboardingPermissionsScreen(onContinue: { finish() })
+                    .tag(3)
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
             .animation(.xomChill, value: currentPage)
