@@ -6,6 +6,8 @@ struct PRListView: View {
     @State private var prs: [PersonalRecord] = []
     @State private var isLoading = false
     @State private var errorMessage: String?
+    /// PR currently picked for the 1RM estimator sheet. nil = sheet hidden.
+    @State private var oneRMSeed: PersonalRecord?
 
     // Group PRs by exercise name, each group sorted by date desc
     private var grouped: [(String, [PersonalRecord])] {
@@ -31,6 +33,14 @@ struct PRListView: View {
                                 PRRow(pr: pr, rank: index + 1)
                                     .listRowBackground(Theme.surface)
                                     .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: Theme.Spacing.md))
+                                    .contextMenu {
+                                        Button {
+                                            Haptics.selection()
+                                            oneRMSeed = pr
+                                        } label: {
+                                            Label("1RM Estimate", systemImage: "function")
+                                        }
+                                    }
                             }
                         } header: {
                             Text(exerciseName)
@@ -49,6 +59,10 @@ struct PRListView: View {
         .toolbarColorScheme(.dark, for: .navigationBar)
         .onAppear { loadPRs() }
         .refreshable { loadPRs() }
+        .sheet(item: $oneRMSeed) { pr in
+            OneRMEstimatorView(initialWeight: pr.weight, initialReps: pr.reps)
+                .presentationDetents([.large])
+        }
     }
 
     private var emptyState: some View {

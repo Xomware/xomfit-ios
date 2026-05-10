@@ -22,7 +22,7 @@ final class FeedViewModel {
             if !selectedMuscleGroups.isEmpty {
                 guard let exercises = item.workoutActivity?.exercises else { return false }
                 let itemGroups = exercises.flatMap { ex in
-                    ExerciseDatabase.all.first(where: { $0.name == ex.name })?.muscleGroups ?? []
+                    ExerciseDatabase.byName[ex.name]?.muscleGroups ?? []
                 }
                 if selectedMuscleGroups.isDisjoint(with: itemGroups) { return false }
             }

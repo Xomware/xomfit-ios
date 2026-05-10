@@ -95,33 +95,51 @@ final class ProfileViewModel {
     var selectedTab: ProfileTab = .feed
 
     // MARK: - Feed
-    var feedItems: [SocialFeedItem] = []
-    var feedDateRange: FeedDateRange = .all
-    var feedMuscleGroups: Set<MuscleGroup> = []
+    var feedItems: [SocialFeedItem] = [] {
+        didSet { recomputeFilters() }
+    }
+    var feedDateRange: FeedDateRange = .all {
+        didSet { recomputeFilters() }
+    }
+    var feedMuscleGroups: Set<MuscleGroup> = [] {
+        didSet { recomputeFilters() }
+    }
 
-    var filteredFeedItems: [SocialFeedItem] {
-        feedItems.filter { item in
+    /// Cached result of the feed filter (#321). Recomputed only when `feedItems`
+    /// or filter state change, instead of running on every body render.
+    private var _filteredFeedItems: [SocialFeedItem] = []
+    var filteredFeedItems: [SocialFeedItem] { _filteredFeedItems }
+
+    var isFeedFiltered: Bool { feedDateRange != .all || !feedMuscleGroups.isEmpty }
+
+    // MARK: - Workouts (profile history)
+    var workouts: [Workout] = [] {
+        didSet { recomputeFilters() }
+    }
+
+    /// Cached result of the workouts filter (#321).
+    private var _filteredWorkouts: [Workout] = []
+    var filteredWorkouts: [Workout] { _filteredWorkouts }
+
+    /// Recomputes both filtered collections. Call from view `.onChange` of the
+    /// filter state, or after assigning `feedItems`/`workouts`. Cheap when the
+    /// filter is empty (just an array copy).
+    func recomputeFilters() {
+        _filteredFeedItems = feedItems.filter { item in
             if let start = feedDateRange.startDate, item.createdAt < start {
                 return false
             }
             if !feedMuscleGroups.isEmpty {
                 guard let exercises = item.workoutActivity?.exercises else { return false }
                 let itemGroups = exercises.flatMap { ex in
-                    ExerciseDatabase.all.first(where: { $0.name == ex.name })?.muscleGroups ?? []
+                    ExerciseDatabase.byName[ex.name]?.muscleGroups ?? []
                 }
                 if feedMuscleGroups.isDisjoint(with: itemGroups) { return false }
             }
             return true
         }
-    }
 
-    var isFeedFiltered: Bool { feedDateRange != .all || !feedMuscleGroups.isEmpty }
-
-    // MARK: - Workouts (profile history)
-    var workouts: [Workout] = []
-
-    var filteredWorkouts: [Workout] {
-        workouts.filter { workout in
+        _filteredWorkouts = workouts.filter { workout in
             if let start = feedDateRange.startDate, workout.startTime < start {
                 return false
             }

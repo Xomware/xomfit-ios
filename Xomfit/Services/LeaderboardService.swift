@@ -64,7 +64,7 @@ final class LeaderboardService {
             // Muscle group filter
             if let filter = muscleGroupFilter {
                 let exerciseGroups = activity.exercises.flatMap { ex in
-                    ExerciseDatabase.all.first(where: { $0.name == ex.name })?.muscleGroups ?? []
+                    ExerciseDatabase.byName[ex.name]?.muscleGroups ?? []
                 }
                 guard exerciseGroups.contains(filter) else { continue }
             }

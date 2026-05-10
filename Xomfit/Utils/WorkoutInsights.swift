@@ -73,6 +73,30 @@ enum WorkoutInsights {
         return best
     }
 
+    // MARK: - Per-day rollups
+
+    /// Map of `startOfDay -> workout count` for the given workouts.
+    /// Used by calendar views to color cells by activity.
+    static func workoutCountsByDay(workouts: [Workout], calendar: Calendar = .current) -> [Date: Int] {
+        var result: [Date: Int] = [:]
+        for workout in workouts {
+            let day = calendar.startOfDay(for: workout.startTime)
+            result[day, default: 0] += 1
+        }
+        return result
+    }
+
+    /// Map of `startOfDay -> total volume` for the given workouts.
+    /// Used by the year heatmap to bucket cells by intensity tertiles.
+    static func volumeByDay(workouts: [Workout], calendar: Calendar = .current) -> [Date: Double] {
+        var result: [Date: Double] = [:]
+        for workout in workouts {
+            let day = calendar.startOfDay(for: workout.startTime)
+            result[day, default: 0] += workout.totalVolume
+        }
+        return result
+    }
+
     // MARK: - Toast triggers
 
     /// True when the user just incremented their streak today vs. their

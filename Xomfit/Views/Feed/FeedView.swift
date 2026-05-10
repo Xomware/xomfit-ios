@@ -194,7 +194,7 @@ struct FeedView: View {
         let templateExercises = activity.exercises.map { ex in
             WorkoutTemplate.TemplateExercise(
                 id: UUID().uuidString,
-                exercise: ExerciseDatabase.all.first(where: { $0.name == ex.name })
+                exercise: ExerciseDatabase.byName[ex.name]
                     ?? Exercise(
                         id: ex.id,
                         name: ex.name,

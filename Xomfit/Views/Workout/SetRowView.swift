@@ -21,6 +21,10 @@ struct SetRowView: View {
     @State private var repsText: String
     @FocusState private var isWeightFocused: Bool
     @FocusState private var isRepsFocused: Bool
+    /// Confirmation dialog presented after long-pressing the weight field.
+    @State private var showWeightActions: Bool = false
+    /// Plate calculator sheet, opened from the weight field action sheet.
+    @State private var showPlateCalculator: Bool = false
 
     /// Display-only weight unit. Edits stay in lbs internally regardless.
     @AppStorage("weightUnit") private var weightUnitRaw: String = WeightUnit.lbs.rawValue
@@ -108,6 +112,16 @@ struct SetRowView: View {
             let formatted = newReps > 0 ? "\(newReps)" : ""
             if repsText != formatted { repsText = formatted }
         }
+        .confirmationDialog("Weight", isPresented: $showWeightActions, titleVisibility: .hidden) {
+            Button("Plate Calculator") {
+                showPlateCalculator = true
+            }
+            Button("Cancel", role: .cancel) {}
+        }
+        .sheet(isPresented: $showPlateCalculator) {
+            PlateCalculatorView(initialTargetWeight: Double(weightText))
+                .presentationDetents([.large])
+        }
     }
 
     // MARK: - Main row (weight / reps / complete)
@@ -174,6 +188,18 @@ struct SetRowView: View {
                         if let w = Double(newValue) {
                             onWeightChange(w)
                         }
+                    }
+                    // Long-press surfaces the plate calculator without breaking text input.
+                    .simultaneousGesture(
+                        LongPressGesture(minimumDuration: 0.45)
+                            .onEnded { _ in
+                                Haptics.medium()
+                                isWeightFocused = false
+                                showWeightActions = true
+                            }
+                    )
+                    .accessibilityAction(named: Text("Plate Calculator")) {
+                        showWeightActions = true
                     }
 
                 Button(action: onToggleWeightMode) {

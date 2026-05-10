@@ -9,6 +9,8 @@ struct SettingsView: View {
     @State private var deleteAccountError: String? = nil
     @State private var isExporting = false
     @State private var exportError: String? = nil
+    @State private var showPlateCalculator = false
+    @State private var showOneRMEstimator = false
 
     /// Anthropic API key override (per-user). v1: stored via @AppStorage --
     /// not secure. TODO: migrate to Keychain.
@@ -67,6 +69,7 @@ struct SettingsView: View {
                 appPreferencesSection
                 trainingSection
                 aiCoachSection
+                toolsSection
                 dataPrivacySection
                 supportSection
                 aboutSection
@@ -111,6 +114,8 @@ struct SettingsView: View {
         } message: {
             Text(exportError ?? "")
         }
+        .sheet(isPresented: $showPlateCalculator) { PlateCalculatorView().presentationDetents([.large]) }
+        .sheet(isPresented: $showOneRMEstimator) { OneRMEstimatorView().presentationDetents([.large]) }
     }
 
     // MARK: - Sections
@@ -590,5 +595,45 @@ struct SettingsView: View {
             pop.permittedArrowDirections = []
         }
         top.present(controller, animated: true)
+    }
+}
+
+extension SettingsView {
+    fileprivate var toolsSection: some View {
+        Section {
+            Button {
+                Haptics.selection()
+                showPlateCalculator = true
+            } label: {
+                toolRow(icon: "circle.hexagongrid.fill", label: "Plate Calculator")
+            }
+            .buttonStyle(.plain)
+
+            Button {
+                Haptics.selection()
+                showOneRMEstimator = true
+            } label: {
+                toolRow(icon: "function", label: "1RM Estimator")
+            }
+            .buttonStyle(.plain)
+        } header: {
+            XomMetricLabel("Tools")
+        }
+        .listRowBackground(Theme.surface)
+        .listRowSeparatorTint(Theme.hairline)
+    }
+
+    fileprivate func toolRow(icon: String, label: String) -> some View {
+        HStack(spacing: Theme.Spacing.md) {
+            Image(systemName: icon)
+                .frame(width: 24)
+                .foregroundStyle(Theme.accent)
+            Text(label)
+                .foregroundStyle(Theme.textPrimary)
+            Spacer()
+            Image(systemName: "chevron.right")
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(Theme.textTertiary)
+        }
     }
 }
