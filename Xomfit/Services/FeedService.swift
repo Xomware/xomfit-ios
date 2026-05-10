@@ -149,7 +149,23 @@ final class FeedService {
 
     // MARK: - Post Workout to Feed
 
-    func postWorkoutToFeed(workout: Workout, userId: String, caption: String? = nil, photoURLs: [String]? = nil) async throws {
+    /// Posts a workout to the social feed.
+    ///
+    /// `compact` controls whether the per-set details (`ExerciseSummary.sets`) are
+    /// encoded into the payload (#321). Feed cards only render summaries
+    /// (`bestWeight`, `bestReps`, `setCount`, `isPR`), and `FeedDetailView` fetches
+    /// the full workout via `WorkoutService.fetchWorkout`, so the per-set array
+    /// is dead weight in the payload that bloats the row and the wire response.
+    /// Defaults to `true` to avoid posting the bloat going forward; pass `false`
+    /// only if a caller specifically needs the snapshot to round-trip through
+    /// the feed payload (no current callers do).
+    func postWorkoutToFeed(
+        workout: Workout,
+        userId: String,
+        caption: String? = nil,
+        photoURLs: [String]? = nil,
+        compact: Bool = true
+    ) async throws {
         let exercises = workout.exercises.map { ex in
             WorkoutActivity.ExerciseSummary(
                 id: ex.id,
@@ -158,7 +174,7 @@ final class FeedService {
                 bestReps: ex.bestSet?.reps ?? 0,
                 isPR: ex.sets.contains { $0.isPersonalRecord },
                 setCount: ex.sets.count,
-                sets: ex.sets.enumerated().map { index, set in
+                sets: compact ? nil : ex.sets.enumerated().map { index, set in
                     WorkoutActivity.ExerciseSummary.SetDetail(
                         setNumber: index + 1,
                         weight: set.weight,

@@ -4,6 +4,14 @@ import Foundation
 /// Organized by muscle group with form tips
 struct ExerciseDatabase {
     static let all: [Exercise] = chest + back + shoulders + legs + arms + core + unilateral + machineAndCableExtras + bodyweightExtras + mobility
+
+    /// O(1) lookup by exercise id. Replaces `all.first(where: { $0.id == ... })` callsites
+    /// which were O(n) per lookup and frequently used inside view-rendered loops (#321).
+    static let byId: [String: Exercise] = Dictionary(uniqueKeysWithValues: all.map { ($0.id, $0) })
+
+    /// O(1) lookup by exercise name. Replaces `all.first(where: { $0.name == ... })` callsites,
+    /// notably in feed muscle-group filters that ran for every visible feed item (#321).
+    static let byName: [String: Exercise] = Dictionary(uniqueKeysWithValues: all.map { ($0.name, $0) })
     
     // MARK: - Chest
     static let chest: [Exercise] = [
