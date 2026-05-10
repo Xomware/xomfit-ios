@@ -30,19 +30,19 @@ struct WorkoutFocusView: View {
                     VStack(spacing: Theme.Spacing.lg) {
                         exerciseHeader(exercise: exercise)
 
-                        // Variant config (grip, attachment, position, laterality) — shown when available
-                        if exercise.exercise.supportedGrips != nil ||
-                           exercise.exercise.supportedAttachments != nil ||
-                           exercise.exercise.supportedPositions != nil ||
-                           exercise.exercise.supportsUnilateral {
-                            ExerciseConfigRow(
-                                exercise: exercise,
-                                onGripChanged: { grip in viewModel.setGrip(exerciseIndex: viewModel.focusExerciseIndex, grip: grip) },
-                                onAttachmentChanged: { att in viewModel.setAttachment(exerciseIndex: viewModel.focusExerciseIndex, attachment: att) },
-                                onPositionChanged: { pos in viewModel.setPosition(exerciseIndex: viewModel.focusExerciseIndex, position: pos) },
-                                onLateralityChanged: { lat in viewModel.setLaterality(exerciseIndex: viewModel.focusExerciseIndex, laterality: lat) }
-                            )
-                        }
+                        // Variant config (grip, attachment, position, laterality) + per-session extras
+                        // (notes / rest override). Shown unconditionally so the extras pills are
+                        // always reachable from focus mode.
+                        ExerciseConfigRow(
+                            exercise: exercise,
+                            onGripChanged: { grip in viewModel.setGrip(exerciseIndex: viewModel.focusExerciseIndex, grip: grip) },
+                            onAttachmentChanged: { att in viewModel.setAttachment(exerciseIndex: viewModel.focusExerciseIndex, attachment: att) },
+                            onPositionChanged: { pos in viewModel.setPosition(exerciseIndex: viewModel.focusExerciseIndex, position: pos) },
+                            onLateralityChanged: { lat in viewModel.setLaterality(exerciseIndex: viewModel.focusExerciseIndex, laterality: lat) },
+                            onNotesChanged: { notes in viewModel.setNotes(exerciseIndex: viewModel.focusExerciseIndex, notes: notes) },
+                            onRestSecondsChanged: { secs in viewModel.setRestSeconds(exerciseIndex: viewModel.focusExerciseIndex, seconds: secs) },
+                            defaultRestSeconds: Int(viewModel.defaultRestDuration)
+                        )
 
                         setIndicator(exercise: exercise)
 

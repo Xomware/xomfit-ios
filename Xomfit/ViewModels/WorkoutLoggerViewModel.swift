@@ -222,6 +222,7 @@ final class WorkoutLoggerViewModel {
                 notes: templateExercise.notes
             )
             we.selectedLaterality = templateExercise.exercise.defaultLaterality
+            we.restSeconds = templateExercise.restSeconds
             builtExercises.append(we)
         }
         exercises = builtExercises
@@ -327,6 +328,19 @@ final class WorkoutLoggerViewModel {
         exercises[exerciseIndex].selectedLaterality = laterality
     }
 
+    /// Update or clear the per-exercise note. Trims whitespace; treats empty strings as nil.
+    func setNotes(exerciseIndex: Int, notes: String?) {
+        guard exercises.indices.contains(exerciseIndex) else { return }
+        let trimmed = notes?.trimmingCharacters(in: .whitespacesAndNewlines)
+        exercises[exerciseIndex].notes = (trimmed?.isEmpty == false) ? trimmed : nil
+    }
+
+    /// Set or clear the per-exercise rest override. Pass nil to fall back to the global default.
+    func setRestSeconds(exerciseIndex: Int, seconds: Int?) {
+        guard exercises.indices.contains(exerciseIndex) else { return }
+        exercises[exerciseIndex].restSeconds = seconds
+    }
+
     // MARK: - Set Management
 
     func addSet(to exerciseIndex: Int) {
@@ -381,8 +395,7 @@ final class WorkoutLoggerViewModel {
 
             let shouldStartRest = !nextSetIsDropSet && !inSupersetRound
             if shouldStartRest {
-                let exerciseCategory = exercises[exerciseIndex].exercise.category
-                startRestTimer(for: exerciseCategory)
+                startRestTimer(for: exerciseIndex)
             }
 
             // Auto-advance focus for supersets — jump to the sibling exercise's matching set
@@ -703,10 +716,17 @@ final class WorkoutLoggerViewModel {
     /// Timestamp when the rest timer was started — used to survive background suspension.
     private var restTimerStartDate: Date?
 
-    func startRestTimer(for category: ExerciseCategory) {
-        guard defaultRestDuration > 0 else { return }
-        restDuration = defaultRestDuration
-        restTimeRemaining = defaultRestDuration
+    /// Starts the rest timer using the per-exercise override when set, otherwise falls
+    /// back to the global default. Reading the override at fire-time means edits to
+    /// a pill mid-workout take effect on the very next set.
+    func startRestTimer(for exerciseIndex: Int) {
+        let override = exercises.indices.contains(exerciseIndex)
+            ? exercises[exerciseIndex].restSeconds
+            : nil
+        let duration = Double(override ?? Int(defaultRestDuration))
+        guard duration > 0 else { return }
+        restDuration = duration
+        restTimeRemaining = duration
         isRestTimerActive = true
         restTimerStartDate = Date()
         updateLiveActivity()
@@ -920,7 +940,7 @@ final class WorkoutLoggerViewModel {
         let completedExercises: [WorkoutExercise] = exercises.compactMap { ex in
             let doneSets = ex.sets.filter { $0.completedAt != Date.distantPast }
             guard !doneSets.isEmpty else { return nil }
-            return WorkoutExercise(
+            var copy = WorkoutExercise(
                 id: ex.id,
                 exercise: ex.exercise,
                 sets: doneSets,
@@ -930,6 +950,9 @@ final class WorkoutLoggerViewModel {
                 selectedPosition: ex.selectedPosition,
                 selectedLaterality: ex.selectedLaterality
             )
+            copy.supersetGroupId = ex.supersetGroupId
+            copy.restSeconds = ex.restSeconds
+            return copy
         }
 
         let trimmedNotes = notes?.trimmingCharacters(in: .whitespacesAndNewlines)

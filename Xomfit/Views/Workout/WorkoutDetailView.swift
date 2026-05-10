@@ -141,42 +141,56 @@ struct WorkoutDetailView: View {
                     ForEach(Array(exercise.sets.enumerated()), id: \.element.id) { setIndex, workoutSet in
                         setRow(set: workoutSet, number: setIndex + 1)
                     }
-
-                    // Exercise notes
-                    if let notes = exercise.notes, !notes.isEmpty {
-                        Text(notes)
-                            .font(Theme.fontSmall)
-                            .foregroundStyle(Theme.textSecondary)
-                            .padding(.top, 4)
-                    }
                 }
             } label: {
-                HStack(spacing: Theme.Spacing.sm) {
-                    Text("\(index)")
-                        .font(.caption.weight(.bold).monospaced())
-                        .foregroundStyle(Theme.accent)
-                        .frame(width: 24, height: 24)
-                        .background(Theme.accent.opacity(0.12))
-                        .clipShape(.rect(cornerRadius: 6))
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: Theme.Spacing.sm) {
+                        Text("\(index)")
+                            .font(.caption.weight(.bold).monospaced())
+                            .foregroundStyle(Theme.accent)
+                            .frame(width: 24, height: 24)
+                            .background(Theme.accent.opacity(0.12))
+                            .clipShape(.rect(cornerRadius: 6))
 
-                    Text(exercise.exercise.name)
-                        .font(.subheadline.weight(.bold))
-                        .foregroundStyle(Theme.textPrimary)
+                        Text(exercise.exercise.name)
+                            .font(.subheadline.weight(.bold))
+                            .foregroundStyle(Theme.textPrimary)
 
-                    Spacer()
+                        Spacer()
 
-                    Text("\(exercise.sets.count) sets")
-                        .font(Theme.fontCaption)
-                        .foregroundStyle(Theme.textSecondary)
+                        Text("\(exercise.sets.count) sets")
+                            .font(Theme.fontCaption)
+                            .foregroundStyle(Theme.textSecondary)
 
-                    if exercise.sets.contains(where: { $0.isPersonalRecord }) {
-                        HStack(spacing: 3) {
-                            Image(systemName: "trophy.fill")
-                                .font(.caption2)
-                            Text("PR")
-                                .font(.caption2.weight(.bold))
+                        if exercise.sets.contains(where: { $0.isPersonalRecord }) {
+                            HStack(spacing: 3) {
+                                Image(systemName: "trophy.fill")
+                                    .font(.caption2)
+                                Text("PR")
+                                    .font(.caption2.weight(.bold))
+                            }
+                            .foregroundStyle(Theme.prGold)
                         }
-                        .foregroundStyle(Theme.prGold)
+                    }
+
+                    // Quoted note preview — surfaces the per-exercise note inline so the
+                    // user sees their context without expanding the disclosure.
+                    if let notes = exercise.notes, !notes.isEmpty {
+                        HStack(alignment: .top, spacing: 6) {
+                            // Indent to roughly align with the exercise name (past the index badge).
+                            Spacer().frame(width: 24 + Theme.Spacing.sm)
+                            Rectangle()
+                                .fill(Theme.accent.opacity(0.6))
+                                .frame(width: 2)
+                            Text(notes)
+                                .font(Theme.fontSmall)
+                                .italic()
+                                .foregroundStyle(Theme.textSecondary)
+                                .lineLimit(2)
+                                .multilineTextAlignment(.leading)
+                            Spacer(minLength: 0)
+                        }
+                        .accessibilityLabel("Note: \(notes)")
                     }
                 }
             }

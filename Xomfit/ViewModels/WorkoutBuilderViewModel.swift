@@ -49,7 +49,14 @@ final class WorkoutBuilderViewModel {
 
     func updateNotes(at index: Int, notes: String?) {
         guard exercises.indices.contains(index) else { return }
-        exercises[index].notes = notes
+        let trimmed = notes?.trimmingCharacters(in: .whitespacesAndNewlines)
+        exercises[index].notes = (trimmed?.isEmpty == false) ? trimmed : nil
+    }
+
+    /// Per-exercise rest override. Pass nil to fall back to the workout's global default.
+    func updateRestSeconds(at index: Int, seconds: Int?) {
+        guard exercises.indices.contains(index) else { return }
+        exercises[index].restSeconds = seconds
     }
 
     /// Builds a `WorkoutTemplate` from the current builder state without persisting.
