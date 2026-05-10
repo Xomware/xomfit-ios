@@ -11,6 +11,7 @@ struct WorkoutDetailView: View {
                 VStack(spacing: Theme.Spacing.md) {
                     summaryCard
                     exerciseList
+                    soundtrackSection
                 }
                 .padding(.horizontal, Theme.Spacing.md)
                 .padding(.vertical, Theme.Spacing.sm)
@@ -214,6 +215,85 @@ struct WorkoutDetailView: View {
         .font(.subheadline.weight(.medium).monospaced())
         .padding(.vertical, 4)
         .accessibilityLabel("Set \(number): \(formatWeight(set.weight)) lbs for \(set.reps) reps\(set.isPersonalRecord ? ", personal record" : "")")
+    }
+
+    // MARK: - Soundtrack
+
+    /// Apple Music-only Now Playing capture (#302). See `NowPlayingService` for the iOS
+    /// platform restriction explaining why Spotify / Xomify won't ever appear here.
+    @ViewBuilder
+    private var soundtrackSection: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            HStack(spacing: 6) {
+                Image(systemName: "music.note")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Theme.accent)
+                Text("Soundtrack")
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(Theme.textPrimary)
+                Spacer()
+                if !workout.tracks.isEmpty {
+                    Text("\(workout.tracks.count)")
+                        .font(.caption.weight(.semibold).monospaced())
+                        .foregroundStyle(Theme.textSecondary)
+                }
+            }
+
+            if workout.tracks.isEmpty {
+                Text("No tracks captured. Tip: Now Playing capture works with Apple Music.")
+                    .font(Theme.fontSmall)
+                    .foregroundStyle(Theme.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityLabel("No tracks captured during this workout")
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(Array(workout.tracks.enumerated()), id: \.element.id) { index, track in
+                        soundtrackRow(track: track)
+                        if index < workout.tracks.count - 1 {
+                            Divider()
+                                .background(Theme.textSecondary.opacity(0.15))
+                        }
+                    }
+                }
+            }
+        }
+        .padding(Theme.Spacing.md)
+        .background(Theme.surface)
+        .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+    }
+
+    private func soundtrackRow(track: WorkoutTrack) -> some View {
+        HStack(spacing: Theme.Spacing.sm) {
+            Image(systemName: "music.note")
+                .font(.caption)
+                .foregroundStyle(Theme.textSecondary)
+                .frame(width: 20)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(track.title)
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(Theme.textPrimary)
+                    .lineLimit(1)
+                if let artist = track.artist, !artist.isEmpty {
+                    Text(artist)
+                        .font(Theme.fontSmall)
+                        .foregroundStyle(Theme.textSecondary)
+                        .lineLimit(1)
+                }
+            }
+
+            Spacer()
+        }
+        .padding(.vertical, 8)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(accessibilityLabel(for: track))
+    }
+
+    private func accessibilityLabel(for track: WorkoutTrack) -> String {
+        if let artist = track.artist, !artist.isEmpty {
+            return "\(track.title) by \(artist)"
+        }
+        return track.title
     }
 
     // MARK: - Helpers

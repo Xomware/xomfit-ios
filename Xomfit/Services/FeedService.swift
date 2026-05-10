@@ -168,6 +168,11 @@ final class FeedService {
             )
         }
 
+        // Now Playing capture teaser (#302). Skip when no tracks were captured so we
+        // don't bloat the payload with empty fields for Spotify-only workouts.
+        let trackCount: Int? = workout.tracks.isEmpty ? nil : workout.tracks.count
+        let firstTrackTitle: String? = workout.tracks.first?.title
+
         let activity = WorkoutActivity(
             workoutId: workout.id,
             workoutName: workout.name,
@@ -179,7 +184,9 @@ final class FeedService {
             exercises: exercises,
             location: workout.location,
             rating: workout.rating,
-            photoURLs: photoURLs
+            photoURLs: photoURLs,
+            trackCount: trackCount,
+            firstTrackTitle: firstTrackTitle
         )
 
         let payloadData = try jsonEncoder.encode(activity)

@@ -10,8 +10,58 @@ struct Workout: Codable, Identifiable {
     var notes: String?
     var location: String?
     var rating: Int?
-    
+    /// Songs captured passively during this workout via `NowPlayingService` (#302).
+    /// Apple Music only — see `WorkoutTrack` for the iOS platform restriction.
+    /// Defaulted so older cached / decoded payloads stay backward-compatible.
+    var tracks: [WorkoutTrack] = []
+
     var startDate: Date { startTime }
+
+    // MARK: - Codable
+    //
+    // Custom decoder so older cached `Workout` payloads (no `tracks` key) keep decoding.
+    // Encoding stays synthesized.
+    enum CodingKeys: String, CodingKey {
+        case id, userId, name, exercises, startTime, endTime, notes, location, rating, tracks
+    }
+
+    init(
+        id: String,
+        userId: String,
+        name: String,
+        exercises: [WorkoutExercise],
+        startTime: Date,
+        endTime: Date? = nil,
+        notes: String? = nil,
+        location: String? = nil,
+        rating: Int? = nil,
+        tracks: [WorkoutTrack] = []
+    ) {
+        self.id = id
+        self.userId = userId
+        self.name = name
+        self.exercises = exercises
+        self.startTime = startTime
+        self.endTime = endTime
+        self.notes = notes
+        self.location = location
+        self.rating = rating
+        self.tracks = tracks
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        userId = try container.decode(String.self, forKey: .userId)
+        name = try container.decode(String.self, forKey: .name)
+        exercises = try container.decode([WorkoutExercise].self, forKey: .exercises)
+        startTime = try container.decode(Date.self, forKey: .startTime)
+        endTime = try container.decodeIfPresent(Date.self, forKey: .endTime)
+        notes = try container.decodeIfPresent(String.self, forKey: .notes)
+        location = try container.decodeIfPresent(String.self, forKey: .location)
+        rating = try container.decodeIfPresent(Int.self, forKey: .rating)
+        tracks = try container.decodeIfPresent([WorkoutTrack].self, forKey: .tracks) ?? []
+    }
 
     var duration: TimeInterval {
         (endTime ?? Date()).timeIntervalSince(startTime)

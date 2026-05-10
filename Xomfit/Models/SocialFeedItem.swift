@@ -60,6 +60,10 @@ struct WorkoutActivity: Codable {
     var location: String?
     var rating: Int?
     var photoURLs: [String]?
+    /// One-line teaser surfaced on the feed card (#302). Apple Music capture only.
+    /// `trackCount` is 0 and `firstTrackTitle` is nil when the workout had no captured tracks.
+    var trackCount: Int?
+    var firstTrackTitle: String?
 
     struct ExerciseSummary: Codable, Identifiable {
         let id: String
