@@ -102,8 +102,14 @@ struct WorkoutView: View {
                             }
                             .padding(.horizontal, Theme.Spacing.md)
 
-                            // First workout guide for new users
-                            if viewModel.recent.isEmpty && !hasStartedFirstWorkout {
+                            // First workout guide for new users (#310).
+                            // Persist this card even after recents arrive — gate
+                            // only on whether the user has built/saved their own
+                            // template (myTemplates + savedTemplates), plus the
+                            // manual "Skip" escape hatch.
+                            if viewModel.myTemplates.isEmpty
+                                && viewModel.savedTemplates.isEmpty
+                                && !hasStartedFirstWorkout {
                                 firstWorkoutCard
                             }
 
