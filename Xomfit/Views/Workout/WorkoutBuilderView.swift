@@ -2,11 +2,31 @@ import SwiftUI
 
 struct WorkoutBuilderView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(AuthService.self) private var authService
+    @Environment(WorkoutLoggerViewModel.self) private var workoutSession
 
     @State private var viewModel = WorkoutBuilderViewModel()
     @State private var showExercisePicker = false
 
+    /// Action sheet presented when the user taps "Save" — lets them save as
+    /// template, start immediately, do both, or cancel.
+    @State private var showSaveOptions = false
+
+    // MARK: - Warmup flow (#261)
+
+    @AppStorage("warmupOptIn") private var warmupOptIn: String = ""
+    @AppStorage("warmupMinutes") private var warmupMinutes: Int = 6
+
+    @State private var pendingStart: (() -> Void)?
+    @State private var pendingStretches: [Stretch] = []
+    @State private var showWarmupPrompt = false
+    @State private var showWarmup = false
+
     var template: WorkoutTemplate? = nil
+
+    private var userId: String {
+        authService.currentUser?.id.uuidString.lowercased() ?? ""
+    }
 
     var body: some View {
         NavigationStack {
@@ -34,9 +54,8 @@ struct WorkoutBuilderView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        Haptics.success()
-                        viewModel.save()
-                        dismiss()
+                        Haptics.light()
+                        showSaveOptions = true
                     }
                     .fontWeight(.bold)
                     .foregroundStyle(viewModel.isValid ? Theme.accent : Theme.textSecondary)
@@ -53,6 +72,60 @@ struct WorkoutBuilderView: View {
         .sheet(isPresented: $showExercisePicker) {
             ExercisePickerView { exercise in
                 viewModel.addExercise(exercise)
+            }
+        }
+        .confirmationDialog(
+            "What do you want to do with this workout?",
+            isPresented: $showSaveOptions,
+            titleVisibility: .visible
+        ) {
+            Button("Save as Template") {
+                Haptics.success()
+                viewModel.save()
+                dismiss()
+            }
+            Button("Start Now") {
+                Haptics.medium()
+                let template = viewModel.buildTemplate()
+                startTemplateWithWarmupGate(template)
+            }
+            Button("Save AND Start") {
+                Haptics.success()
+                let saved = viewModel.save()
+                startTemplateWithWarmupGate(saved)
+            }
+            Button("Discard", role: .destructive) {
+                dismiss()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("You can save it for later, jump in now, or both.")
+        }
+        .confirmationDialog(
+            "Warm up first?",
+            isPresented: $showWarmupPrompt,
+            titleVisibility: .visible
+        ) {
+            Button("Yes, \(warmupMinutes) min") {
+                warmupOptIn = "yes"
+                showWarmup = true
+            }
+            Button("No, skip") {
+                warmupOptIn = "no"
+                runPendingStartImmediately()
+            }
+            Button("Just this once", role: .cancel) {
+                runPendingStartImmediately()
+            }
+        } message: {
+            Text("A 5-10 minute stretch routine helps loosen up before lifting.")
+        }
+        .fullScreenCover(isPresented: $showWarmup) {
+            WarmupView(
+                stretches: pendingStretches.isEmpty ? StretchDatabase.defaultRoutine() : pendingStretches,
+                totalDuration: warmupMinutes * 60
+            ) {
+                runPendingStartImmediately()
             }
         }
     }
@@ -162,6 +235,60 @@ struct WorkoutBuilderView: View {
             )
         }
         .accessibilityLabel("Add exercise to workout")
+    }
+
+    // MARK: - Start flow
+
+    /// Dismisses the builder sheet, then runs the warmup gate before kicking off
+    /// the live workout. The dismiss-first ordering ensures the active workout
+    /// cover doesn't get presented on top of the builder.
+    private func startTemplateWithWarmupGate(_ template: WorkoutTemplate) {
+        let captured = template
+        let startAction: () -> Void = {
+            workoutSession.startFromTemplate(captured, userId: userId)
+            workoutSession.isPresented = true
+        }
+        let stretches = StretchDatabase.suggestedStretches(
+            for: captured,
+            target: TimeInterval(warmupMinutes * 60)
+        )
+
+        // Dismiss first so the builder sheet animates away cleanly. Then gate.
+        dismiss()
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            requestStart(stretches: stretches, action: startAction)
+        }
+    }
+
+    /// Mirrors `WorkoutView.requestStart` -- either prompts about warming up,
+    /// presents the warmup sheet, or runs the start action directly, depending
+    /// on the user's saved preference.
+    private func requestStart(stretches: [Stretch], action: @escaping () -> Void) {
+        pendingStart = action
+        pendingStretches = stretches
+
+        switch warmupOptIn {
+        case "yes":
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                showWarmup = true
+            }
+        case "no":
+            runPendingStartImmediately()
+        default:
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                showWarmupPrompt = true
+            }
+        }
+    }
+
+    private func runPendingStartImmediately() {
+        let action = pendingStart
+        pendingStart = nil
+        pendingStretches = []
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            action?()
+        }
     }
 }
 

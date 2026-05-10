@@ -52,8 +52,11 @@ final class WorkoutBuilderViewModel {
         exercises[index].notes = notes
     }
 
-    func save() {
-        let template = WorkoutTemplate(
+    /// Builds a `WorkoutTemplate` from the current builder state without persisting.
+    /// Use this when you want the template to drive an immediate workout (e.g.
+    /// "Start Now") without committing it to saved templates.
+    func buildTemplate() -> WorkoutTemplate {
+        WorkoutTemplate(
             id: UUID().uuidString,
             name: name.trimmingCharacters(in: .whitespaces),
             description: "\(exercises.count) exercises, ~\(estimatedDuration)min",
@@ -62,7 +65,15 @@ final class WorkoutBuilderViewModel {
             category: category,
             isCustom: true
         )
+    }
+
+    /// Builds a template AND persists it via `TemplateService`. Returns the saved
+    /// template so the caller can chain into Start Now if desired.
+    @discardableResult
+    func save() -> WorkoutTemplate {
+        let template = buildTemplate()
         TemplateService.shared.saveCustomTemplate(template)
+        return template
     }
 
     func loadTemplate(_ template: WorkoutTemplate) {
