@@ -7,6 +7,12 @@ final class FeedViewModel {
     var isLoading: Bool = false
     var isRefreshing: Bool = false
     var errorMessage: String? = nil
+    /// #311: true while a filter change is being applied; FeedView renders a
+    /// brief skeleton overlay so the list doesn't pop instantly.
+    var isFiltering: Bool = false
+    /// #311: distinguish a load-more failure from "truly exhausted". When set,
+    /// FeedView shows a retry banner at the bottom of the list.
+    var loadMoreError: String? = nil
 
     // Filters
     var dateRange: FeedDateRange = .all
@@ -42,6 +48,7 @@ final class FeedViewModel {
     func loadFeed(userId: String) async {
         isLoading = true
         errorMessage = nil
+        loadMoreError = nil
         offset = 0
         hasMore = true
 
@@ -67,8 +74,18 @@ final class FeedViewModel {
         isRefreshing = false
     }
 
+    /// #311: re-applies the current filters without re-fetching, but flips
+    /// `isFiltering` for a short window so the list shows a skeleton rather
+    /// than instantly snapping to a different result set. Pure UI flag.
+    func applyFilterChange() async {
+        isFiltering = true
+        try? await Task.sleep(nanoseconds: 250_000_000) // 0.25s
+        isFiltering = false
+    }
+
     func loadMore(userId: String) async {
         guard hasMore, !isLoading else { return }
+        loadMoreError = nil
         do {
             let items = try await FeedService.shared.fetchFeed(
                 userId: userId,
@@ -79,8 +96,10 @@ final class FeedViewModel {
             offset += items.count
             hasMore = items.count == pageSize
         } catch {
-            // Non-fatal — just stop paginating
-            hasMore = false
+            // #311: keep `hasMore` true so the user can retry, and surface
+            // a retry banner at the bottom of the feed instead of silently
+            // exhausting pagination.
+            loadMoreError = error.localizedDescription
         }
     }
 

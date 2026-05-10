@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ProfileView: View {
     @Environment(AuthService.self) private var authService
+    @Environment(WorkoutLoggerViewModel.self) private var workoutSession
     @State private var viewModel = ProfileViewModel()
     @State private var showEditSheet = false
 
@@ -35,7 +36,23 @@ struct ProfileView: View {
         ZStack {
             Theme.background.ignoresSafeArea()
 
-            if viewModel.isLoading {
+            if let error = viewModel.errorMessage, !viewModel.isLoading {
+                // #311: surface the failure with a retry CTA instead of an
+                // indefinite skeleton. Loading state takes precedence so the
+                // skeleton still shows during the actual fetch.
+                XomErrorState(
+                    title: "Couldn't load profile",
+                    message: error,
+                    retryAction: {
+                        Task {
+                            await viewModel.loadAll(
+                                userId: resolvedUserId,
+                                currentUserId: currentUserId
+                            )
+                        }
+                    }
+                )
+            } else if viewModel.isLoading {
                 profileSkeleton
             } else if !viewModel.isOwnProfile && viewModel.isPrivate && !viewModel.isFriendsRelation {
                 PrivateProfileView(
@@ -203,8 +220,26 @@ struct ProfileView: View {
                 userId: viewModel.isOwnProfile ? resolvedUserId : nil,
                 workouts: viewModel.workouts,
                 firstPRDate: viewModel.allPRs.map(\.date).min()
+                onStartWorkout: statsEmptyStateAction
             )
         }
+    }
+
+    // MARK: - Quick Start Workout (#311 stats empty-state CTA)
+
+    /// Returns the start-workout closure when viewing your own profile, nil
+    /// otherwise. Pulled out so the call site is explicitly typed (the inline
+    /// ternary trips Swift's type-checker complexity budget in `tabContent`).
+    private var statsEmptyStateAction: (() -> Void)? {
+        guard viewModel.isOwnProfile else { return nil }
+        return { startEmptyWorkout() }
+    }
+
+    private func startEmptyWorkout() {
+        Haptics.medium()
+        let userId = authService.currentUser?.id.uuidString.lowercased() ?? ""
+        workoutSession.startWorkout(name: "Workout", userId: userId)
+        workoutSession.isPresented = true
     }
 
     // MARK: - Toolbar

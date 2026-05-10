@@ -69,10 +69,12 @@ struct ReportsListView: View {
     // MARK: - Empty
 
     private var emptyState: some View {
+        // #311: longer empty-state copy that explains the cadence so users
+        // don't read "no reports" as broken.
         XomEmptyState(
             icon: "doc.text.magnifyingglass",
             title: "No reports yet",
-            subtitle: "Your first weekly summary will arrive Monday morning."
+            subtitle: "Reports are auto-generated. Complete your first workout this week and we'll send your first weekly summary on Monday."
         )
     }
 

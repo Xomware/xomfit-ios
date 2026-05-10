@@ -105,13 +105,62 @@ final class AICoachViewModel {
             // still flip off the streaming flag.
             finishStreaming(id: placeholderId)
         } catch {
-            // Drop the placeholder and surface the error.
+            // Drop the placeholder and surface a user-friendly error.
             messages.removeAll { $0.id == placeholderId }
-            errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+            errorMessage = Self.userFacingMessage(for: error)
             persist()
         }
 
         isSending = false
+    }
+
+    // MARK: - Error mapping (#311)
+
+    /// Maps service / transport errors to copy that tells the user what to do
+    /// next. Falls back to `localizedDescription` for the long tail.
+    static func userFacingMessage(for error: Error) -> String {
+        if let serviceError = error as? AICoachServiceError {
+            switch serviceError {
+            case .missingAPIKey:
+                return "Your API key is invalid. Update it in Settings → AI Coach."
+            case .http(let status, _):
+                switch status {
+                case 401, 403:
+                    return "Your API key is invalid. Update it in Settings → AI Coach."
+                case 429:
+                    return "Rate limited. Try again in a minute."
+                default:
+                    return serviceError.errorDescription ?? error.localizedDescription
+                }
+            case .transport(let underlying):
+                if let urlError = underlying as? URLError, Self.isOfflineURLError(urlError) {
+                    return "You're offline. Check your connection."
+                }
+                return underlying.localizedDescription
+            case .invalidResponse, .decoding:
+                return serviceError.errorDescription ?? error.localizedDescription
+            }
+        }
+        if let urlError = error as? URLError, Self.isOfflineURLError(urlError) {
+            return "You're offline. Check your connection."
+        }
+        return (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+    }
+
+    private static func isOfflineURLError(_ error: URLError) -> Bool {
+        switch error.code {
+        case .notConnectedToInternet,
+             .networkConnectionLost,
+             .dataNotAllowed,
+             .internationalRoamingOff,
+             .timedOut,
+             .cannotConnectToHost,
+             .cannotFindHost,
+             .dnsLookupFailed:
+            return true
+        default:
+            return false
+        }
     }
 
     /// Clear the conversation, wipe the persisted blob, and reset transient state.

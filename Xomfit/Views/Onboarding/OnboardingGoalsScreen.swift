@@ -20,6 +20,12 @@ struct OnboardingGoalsScreen: View {
                     .foregroundStyle(Theme.textPrimary)
                     .multilineTextAlignment(.center)
 
+                Text("These help the AI Coach build plans that fit your lifestyle and your weekly reports highlight what matters most to you.")
+                    .font(Theme.fontSubheadline)
+                    .foregroundStyle(Theme.textSecondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, Theme.Spacing.lg)
+
                 Text("Pick all that apply")
                     .font(Theme.fontSubheadline)
                     .foregroundStyle(Theme.textSecondary)
