@@ -16,6 +16,8 @@ struct ProfileStatsView: View {
     var currentStreak: Int = 0
     /// Longest streak across history (#250).
     var longestStreak: Int = 0
+    /// Profile owner — used by the Body measurements link (#317). nil = link hidden.
+    var userId: String? = nil
 
     @State private var heatmapFilter: HeatmapTimeFilter = .week
 
@@ -30,6 +32,7 @@ struct ProfileStatsView: View {
         VStack(spacing: Theme.Spacing.sm) {
             StreakCard(currentStreak: currentStreak, longestStreak: longestStreak)
             statsCards
+            bodyLink
             volumeTrendSection
             consistencySection
             topExercisesSection
@@ -37,6 +40,47 @@ struct ProfileStatsView: View {
             prSection
         }
         .padding(.horizontal, Theme.Spacing.md)
+    }
+
+    // MARK: - Body Measurements Link (#317)
+
+    @ViewBuilder
+    private var bodyLink: some View {
+        if let userId, !userId.isEmpty {
+            NavigationLink {
+                MeasurementsView(userId: userId)
+                    .hideTabBar()
+            } label: {
+                XomCard {
+                    HStack(spacing: Theme.Spacing.md) {
+                        Image(systemName: "ruler")
+                            .font(.title3)
+                            .foregroundStyle(Theme.accent)
+                            .frame(width: 32, height: 32)
+                            .background(Theme.accentMuted)
+                            .clipShape(Circle())
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Body")
+                                .font(Theme.fontSubheadline.weight(.semibold))
+                                .foregroundStyle(Theme.textPrimary)
+                            Text("Track weight, body fat, and measurements")
+                                .font(Theme.fontSmall)
+                                .foregroundStyle(Theme.textSecondary)
+                        }
+
+                        Spacer()
+
+                        Image(systemName: "chevron.right")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(Theme.textTertiary)
+                    }
+                }
+            }
+            .buttonStyle(PressableCardStyle())
+            .accessibilityLabel("Body measurements")
+            .accessibilityHint("Opens weight, body fat, and circumference tracker")
+        }
     }
 
     // MARK: - Stats Cards
