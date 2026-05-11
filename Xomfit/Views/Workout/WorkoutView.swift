@@ -10,17 +10,17 @@ struct WorkoutView: View {
     @State private var showLogPastWorkout = false
     @State private var previewTemplate: WorkoutTemplate?
 
-    /// Shared data store for the Quick Hitter previews and the See-All pages.
-    /// Owned here so the same loaded data backs both the previews and the
-    /// dedicated category pages without re-fetching on push.
+    /// Shared data store for every category list (#338). Owned here so all four
+    /// segments share the same loaded data without re-fetching on segment change.
     @State private var viewModel = WorkoutTabViewModel()
+
+    /// Active segment under the CTAs. Defaults to Recents — the most common
+    /// landing point for returning users.
+    @State private var selectedCategory: WorkoutCategory = .recents
 
     private var hasStartedFirstWorkout: Bool {
         UserDefaults.standard.bool(forKey: "xomfit_first_workout_started")
     }
-
-    /// Number of items shown in each Quick Hitter preview before "See All".
-    private let previewCount = 4
 
     // MARK: - Warmup flow (#261)
 
@@ -113,12 +113,16 @@ struct WorkoutView: View {
                                 firstWorkoutCard
                             }
 
-                            // Quick Hitter sections (vertical previews + See All)
-                            recentsQuickHitters
-                            preGeneratedQuickHitters
-                            friendsAndSavedQuickHitters
+                            // Category segmented nav + selected list (#338)
+                            WorkoutCategoryTabs(selection: $selectedCategory)
+                                .padding(.top, Theme.Spacing.sm)
+
+                            WorkoutCategoryListView(category: selectedCategory, viewModel: viewModel)
                         }
                     }
+                    // #339: lift bottom of scroll content above the floating tab
+                    // bar + resume bar so the last item isn't hidden under chrome.
+                    .safeAreaPadding(.bottom, Theme.Spacing.md)
                 }
             }
             .navigationTitle("Workout")
@@ -240,114 +244,6 @@ struct WorkoutView: View {
         .background(Theme.surface)
         .clipShape(.rect(cornerRadius: Theme.cornerRadius))
         .padding(.horizontal, Theme.Spacing.md)
-    }
-
-    // MARK: - Quick Hitter Sections
-
-    /// Header row used by each Quick Hitter section. Tappable "See All" pushes
-    /// the dedicated category page.
-    private func sectionHeader(for category: WorkoutCategory, showSeeAll: Bool) -> some View {
-        HStack {
-            Text(category.title)
-                .font(.body.weight(.bold))
-                .foregroundStyle(Theme.textPrimary)
-            Spacer()
-            if showSeeAll {
-                NavigationLink {
-                    WorkoutCategoryPage(category: category, viewModel: viewModel)
-                } label: {
-                    HStack(spacing: Theme.Spacing.tight) {
-                        Text("See All")
-                            .font(.caption.weight(.semibold))
-                        Image(systemName: "chevron.right")
-                            .font(.caption2.weight(.semibold))
-                    }
-                    .foregroundStyle(Theme.accent)
-                }
-                .accessibilityLabel("See all \(category.title.lowercased())")
-            }
-        }
-        .padding(.horizontal, Theme.Spacing.md)
-    }
-
-    @ViewBuilder
-    private var recentsQuickHitters: some View {
-        if !viewModel.recent.isEmpty {
-            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-                sectionHeader(for: .recents, showSeeAll: viewModel.recent.count > previewCount)
-
-                VStack(spacing: Theme.Spacing.xs) {
-                    ForEach(Array(viewModel.recent.prefix(previewCount))) { workout in
-                        NavigationLink {
-                            WorkoutDetailView(workout: workout)
-                        } label: {
-                            RecentWorkoutCard(workout: workout, style: .row)
-                        }
-                        .buttonStyle(PressableCardStyle())
-                        .accessibilityLabel("\(workout.name), \(workout.startTime.timeAgo)")
-                    }
-                }
-                .padding(.horizontal, Theme.Spacing.md)
-            }
-            .padding(.vertical, Theme.Spacing.sm)
-        }
-    }
-
-    @ViewBuilder
-    private var preGeneratedQuickHitters: some View {
-        if !viewModel.builtInTemplates.isEmpty {
-            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-                sectionHeader(for: .preGenerated, showSeeAll: viewModel.builtInTemplates.count > previewCount)
-
-                VStack(spacing: Theme.Spacing.xs) {
-                    ForEach(Array(viewModel.builtInTemplates.prefix(previewCount))) { template in
-                        TemplateCardView(template: template, style: .row) {
-                            previewTemplate = template
-                        }
-                    }
-                }
-                .padding(.horizontal, Theme.Spacing.md)
-            }
-            .padding(.vertical, Theme.Spacing.sm)
-        }
-    }
-
-    @ViewBuilder
-    private var friendsAndSavedQuickHitters: some View {
-        let combinedTemplates = viewModel.myTemplates + viewModel.savedTemplates
-        let friendItems = viewModel.friendWorkouts
-        let totalCount = combinedTemplates.count + friendItems.count
-
-        if totalCount > 0 {
-            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-                sectionHeader(for: .friendsAndSaved, showSeeAll: totalCount > previewCount)
-
-                VStack(spacing: Theme.Spacing.xs) {
-                    // Templates first (own + saved), then friend workouts, capped at previewCount total.
-                    let templatePreview = Array(combinedTemplates.prefix(previewCount))
-                    let remainingSlots = max(0, previewCount - templatePreview.count)
-                    let friendPreview = Array(friendItems.prefix(remainingSlots))
-
-                    ForEach(templatePreview) { template in
-                        TemplateCardView(template: template, style: .row) {
-                            previewTemplate = template
-                        }
-                    }
-
-                    ForEach(friendPreview) { workout in
-                        NavigationLink {
-                            WorkoutDetailView(workout: workout)
-                        } label: {
-                            RecentWorkoutCard(workout: workout, style: .row)
-                        }
-                        .buttonStyle(PressableCardStyle())
-                        .accessibilityLabel("Friend workout: \(workout.name)")
-                    }
-                }
-                .padding(.horizontal, Theme.Spacing.md)
-            }
-            .padding(.vertical, Theme.Spacing.sm)
-        }
     }
 
     // MARK: - Warmup gating (#261)
