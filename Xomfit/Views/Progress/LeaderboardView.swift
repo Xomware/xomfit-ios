@@ -152,6 +152,9 @@ struct LeaderboardView: View {
                 }
             }
         }
+        .refreshable {
+            await viewModel.loadLeaderboard(userId: userId)
+        }
     }
 
     // MARK: - Podium

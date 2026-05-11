@@ -19,6 +19,19 @@ struct FeedCommentsView: View {
     /// Indent applied to nested replies.
     private static let replyIndent: CGFloat = 24
 
+    /// #319: hard cap on comment length (Twitter-style 280). Composer enforces
+    /// this on every keystroke and shows a counter once the user crosses the
+    /// soft threshold.
+    private static let commentMaxLength = 280
+    /// Show the live counter once the comment is longer than this. Keeps the
+    /// composer chrome out of the way for short comments.
+    private static let commentCounterThreshold = 200
+
+    private var commentLength: Int { newCommentText.count }
+    private var remainingChars: Int { Self.commentMaxLength - commentLength }
+    private var isOverLimit: Bool { commentLength > Self.commentMaxLength }
+    private var showCounter: Bool { commentLength > Self.commentCounterThreshold }
+
     /// Top-level comments only — replies are rendered nested under their parent.
     private var topLevelComments: [FeedComment] {
         comments.filter { $0.parentCommentId == nil }
@@ -139,36 +152,73 @@ struct FeedCommentsView: View {
     // MARK: - Comment Composer
 
     private var commentComposer: some View {
-        HStack(spacing: Theme.Spacing.sm) {
-            TextField(replyingTo == nil ? "Add a comment..." : "Add a reply...", text: $newCommentText)
-                .font(Theme.fontBody)
-                .foregroundStyle(Theme.textPrimary)
-                .padding(.horizontal, Theme.Spacing.md)
-                .padding(.vertical, 10)
-                .background(Theme.surface)
-                .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
-                .focused($composerFocused)
+        VStack(spacing: Theme.Spacing.tight) {
+            HStack(spacing: Theme.Spacing.sm) {
+                TextField(replyingTo == nil ? "Add a comment..." : "Add a reply...", text: $newCommentText)
+                    .font(Theme.fontBody)
+                    .foregroundStyle(Theme.textPrimary)
+                    .padding(.horizontal, Theme.Spacing.md)
+                    .padding(.vertical, 10)
+                    .background(Theme.surface)
+                    .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall)
+                            .strokeBorder(
+                                isOverLimit ? Theme.destructive.opacity(0.6) : .clear,
+                                lineWidth: 1
+                            )
+                    )
+                    .focused($composerFocused)
+                    // #319: enforce the 280-char cap on every keystroke. Paste
+                    // longer text and it gets trimmed back to the cap.
+                    .onChange(of: newCommentText) { _, newValue in
+                        if newValue.count > Self.commentMaxLength {
+                            newCommentText = String(newValue.prefix(Self.commentMaxLength))
+                        }
+                    }
 
-            Button {
-                Haptics.light()
-                Task { await postComment() }
-            } label: {
-                if isPosting {
-                    ProgressView()
-                        .tint(.black)
-                        .frame(width: 44, height: 44)
-                } else {
-                    Image(systemName: "arrow.up.circle.fill")
-                        .font(Theme.fontLargeTitle)
-                        .foregroundStyle(newCommentText.isEmpty ? Theme.textSecondary : Theme.accent)
+                Button {
+                    Haptics.light()
+                    Task { await postComment() }
+                } label: {
+                    if isPosting {
+                        ProgressView()
+                            .tint(.black)
+                            .frame(width: 44, height: 44)
+                    } else {
+                        Image(systemName: "arrow.up.circle.fill")
+                            .font(Theme.fontLargeTitle)
+                            .foregroundStyle(newCommentText.isEmpty ? Theme.textSecondary : Theme.accent)
+                    }
                 }
+                .disabled(newCommentText.trimmingCharacters(in: .whitespaces).isEmpty || isPosting || isOverLimit)
+                .accessibilityLabel(replyingTo == nil ? "Post comment" : "Post reply")
             }
-            .disabled(newCommentText.trimmingCharacters(in: .whitespaces).isEmpty || isPosting)
-            .accessibilityLabel(replyingTo == nil ? "Post comment" : "Post reply")
+
+            // #319: live counter once the comment is long enough that the cap
+            // is in sight. Stays hidden for short comments so the composer
+            // doesn't gain extra chrome.
+            if showCounter {
+                HStack {
+                    Spacer()
+                    Text("\(commentLength)/\(Self.commentMaxLength)")
+                        .font(Theme.fontCaption2)
+                        .foregroundStyle(isOverLimit ? Theme.destructive : Theme.textSecondary)
+                        .monospacedDigit()
+                        .accessibilityLabel(
+                            isOverLimit
+                                ? "Over limit by \(commentLength - Self.commentMaxLength) characters"
+                                : "\(remainingChars) characters remaining"
+                        )
+                }
+                .padding(.trailing, Theme.Spacing.tight)
+            }
         }
         .padding(.horizontal, Theme.Spacing.md)
         .padding(.vertical, Theme.Spacing.sm)
         .background(Theme.surface)
+        .animation(.easeOut(duration: 0.15), value: showCounter)
+        .animation(.easeOut(duration: 0.15), value: isOverLimit)
     }
 
     // MARK: - Actions
@@ -206,6 +256,9 @@ struct FeedCommentsView: View {
     private func postComment() async {
         let text = newCommentText.trimmingCharacters(in: .whitespaces)
         guard !text.isEmpty else { return }
+        // #319: defensive — UI disables Send when over the cap, but block here
+        // too so any future entry point can't bypass the limit.
+        guard text.count <= Self.commentMaxLength else { return }
         isPosting = true
         do {
             try await FeedService.shared.postComment(

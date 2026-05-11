@@ -21,6 +21,9 @@ struct ProfileHeaderView: View {
     let onAcceptRequest: () -> Void
     let onDeclineRequest: () -> Void
     let onRemoveFriend: () -> Void
+    /// Pull-to-refresh hook for the friends list child view. Optional — when
+    /// nil the friends list won't show a refresh control.
+    var onRefreshFriends: (() async -> Void)? = nil
 
     @State private var showCancelDialog = false
     @State private var showRemoveDialog = false
@@ -40,7 +43,8 @@ struct ProfileHeaderView: View {
                         FriendsListView(
                             friends: friends,
                             friendProfiles: friendProfiles,
-                            currentUserId: currentUserId
+                            currentUserId: currentUserId,
+                            onRefresh: onRefreshFriends
                         )
                         .hideTabBar()
                     } label: {

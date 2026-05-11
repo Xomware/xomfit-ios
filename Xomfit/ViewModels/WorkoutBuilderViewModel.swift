@@ -9,8 +9,16 @@ final class WorkoutBuilderViewModel {
     var isSaving = false
     var errorMessage: String?
 
+    /// Mirror of the UI-facing cap in `WorkoutBuilderView.nameMaxLength`.
+    /// Kept in the view model so `isValid` stays the single source of truth for
+    /// Save-button enablement (#319).
+    static let nameMaxLength = 50
+
     var isValid: Bool {
-        !name.trimmingCharacters(in: .whitespaces).isEmpty && !exercises.isEmpty
+        let trimmed = name.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else { return false }
+        guard name.count <= Self.nameMaxLength else { return false }
+        return !exercises.isEmpty
     }
 
     var estimatedDuration: Int {

@@ -346,7 +346,7 @@ struct TemplateDetailView: View {
 
     private var startButton: some View {
         Button {
-            Haptics.medium()
+            Haptics.success()
             startLift()
         } label: {
             HStack(spacing: 10) {

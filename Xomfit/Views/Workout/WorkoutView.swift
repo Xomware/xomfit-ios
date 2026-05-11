@@ -212,7 +212,7 @@ struct WorkoutView: View {
                 .multilineTextAlignment(.center)
 
             Button {
-                Haptics.medium()
+                Haptics.success()
                 UserDefaults.standard.set(true, forKey: "xomfit_first_workout_started")
                 if let template = WorkoutTemplate.builtIn.first(where: { $0.id == "tpl-fb-a" }) {
                     requestStart(stretches: StretchDatabase.suggestedStretches(for: template, target: TimeInterval(warmupMinutes * 60))) {

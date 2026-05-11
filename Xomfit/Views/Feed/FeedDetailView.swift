@@ -325,7 +325,7 @@ struct FeedDetailView: View {
     private var actionBar: some View {
         HStack(spacing: Theme.Spacing.lg) {
             Button {
-                Haptics.medium()
+                Haptics.selection()
                 Task { await toggleLike() }
             } label: {
                 HStack(spacing: 5) {
