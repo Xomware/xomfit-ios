@@ -164,7 +164,13 @@ struct ProfileView: View {
                     onCancelRequest: { Task { await viewModel.cancelRequest() } },
                     onAcceptRequest: { Task { await viewModel.acceptIncoming() } },
                     onDeclineRequest: { Task { await viewModel.declineIncoming() } },
-                    onRemoveFriend: { Task { await viewModel.removeFriend() } }
+                    onRemoveFriend: { Task { await viewModel.removeFriend() } },
+                    onRefreshFriends: {
+                        await viewModel.loadAll(
+                            userId: resolvedUserId,
+                            currentUserId: currentUserId
+                        )
+                    }
                 )
 
                 // Tab picker (pinned) + tab content
@@ -236,7 +242,7 @@ struct ProfileView: View {
     }
 
     private func startEmptyWorkout() {
-        Haptics.medium()
+        Haptics.success()
         let userId = authService.currentUser?.id.uuidString.lowercased() ?? ""
         workoutSession.startWorkout(name: "Workout", userId: userId)
         workoutSession.isPresented = true

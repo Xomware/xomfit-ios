@@ -22,6 +22,7 @@ struct ProfileFriendsView: View {
                         friendRow(friend: friend)
                     }
                     .buttonStyle(.plain)
+                    .simultaneousGesture(TapGesture().onEnded { Haptics.light() })
 
                     if friend.id != friends.last?.id {
                         XomDivider()

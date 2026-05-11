@@ -7,6 +7,34 @@ struct FeedView: View {
     @State private var showNotifications = false
     @State private var selectedFeedItem: SocialFeedItem? = nil
 
+    /// #319: locally-hidden feed item ids. Backed by AppStorage so hides persist
+    /// across launches. Stored as a comma-separated string because @AppStorage
+    /// doesn't support Set<String> natively. Items are filtered out client-side
+    /// in `visibleFeedItems`.
+    @AppStorage("xomfit_hidden_feed_ids") private var hiddenIdsRaw: String = ""
+
+    private var hiddenIds: Set<String> {
+        Set(hiddenIdsRaw.split(separator: ",").map { String($0) }.filter { !$0.isEmpty })
+    }
+
+    private func setHiddenIds(_ ids: Set<String>) {
+        hiddenIdsRaw = ids.sorted().joined(separator: ",")
+    }
+
+    private func hide(_ id: String) {
+        var ids = hiddenIds
+        ids.insert(id)
+        setHiddenIds(ids)
+    }
+
+    /// Filtered feed list with locally-hidden items removed. Wraps the
+    /// view-model's filtered list (date + muscle filters).
+    private var visibleFeedItems: [SocialFeedItem] {
+        let ids = hiddenIds
+        guard !ids.isEmpty else { return viewModel.filteredFeedItems }
+        return viewModel.filteredFeedItems.filter { !ids.contains($0.id) }
+    }
+
     private var userId: String {
         authService.currentUser?.id.uuidString.lowercased() ?? ""
     }
@@ -29,7 +57,7 @@ struct FeedView: View {
                             selectedMuscleGroups: $viewModel.selectedMuscleGroups
                         )
 
-                        if viewModel.isFiltered && viewModel.filteredFeedItems.isEmpty {
+                        if viewModel.isFiltered && visibleFeedItems.isEmpty {
                             Spacer()
                             XomEmptyState(
                                 icon: "line.3.horizontal.decrease",
@@ -138,48 +166,74 @@ struct FeedView: View {
     // MARK: - Feed List
 
     private var feedList: some View {
-        ScrollView {
-            LazyVStack(spacing: Theme.Spacing.md) {
-                ForEach(Array(viewModel.filteredFeedItems.enumerated()), id: \.element.id) { index, item in
-                    FeedItemCard(
-                        item: item,
-                        onLike: {
-                            Task { await viewModel.toggleLike(feedItem: item, userId: userId) }
-                        },
-                        onComment: {
-                            selectedFeedItem = item
-                        },
-                        onDelete: makeDeleteAction(for: item),
-                        onEdit: makeEditAction(for: item),
-                        onSave: makeSaveAction(for: item)
-                    )
-                    .contentShape(Rectangle())
-                    .onTapGesture {
+        // #319: List-backed so `.swipeActions` works on each feed row. The
+        // visual is matched to the prior LazyVStack via hidden separators,
+        // background, and tight insets so the change is invisible to the user.
+        List {
+            ForEach(Array(visibleFeedItems.enumerated()), id: \.element.id) { index, item in
+                FeedItemCard(
+                    item: item,
+                    onLike: {
+                        Haptics.selection()
+                        Task { await viewModel.toggleLike(feedItem: item, userId: userId) }
+                    },
+                    onComment: {
+                        Haptics.light()
                         selectedFeedItem = item
-                    }
-                    .staggeredAppear(index: index)
-                    .onAppear {
-                        if item.id == viewModel.feedItems.last?.id {
-                            Task { await viewModel.loadMore(userId: userId) }
-                        }
+                    },
+                    onDelete: makeDeleteAction(for: item),
+                    onEdit: makeEditAction(for: item),
+                    onSave: makeSaveAction(for: item)
+                )
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    Haptics.light()
+                    selectedFeedItem = item
+                }
+                .staggeredAppear(index: index)
+                .onAppear {
+                    if item.id == viewModel.feedItems.last?.id {
+                        Task { await viewModel.loadMore(userId: userId) }
                     }
                 }
-
-                // #311: surface load-more failures with a retry banner so the
-                // user knows pagination didn't silently exhaust.
-                if let loadMoreError = viewModel.loadMoreError {
-                    loadMoreRetryBanner(message: loadMoreError)
-                } else if !viewModel.hasMore && !viewModel.filteredFeedItems.isEmpty {
-                    Text("You're all caught up!")
-                        .font(Theme.fontCaption)
-                        .foregroundStyle(Theme.textSecondary)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(Theme.Spacing.md)
+                .listRowBackground(Theme.background)
+                .listRowInsets(EdgeInsets(
+                    top: Theme.Spacing.sm,
+                    leading: Theme.Spacing.md,
+                    bottom: Theme.Spacing.sm,
+                    trailing: Theme.Spacing.md
+                ))
+                .listRowSeparator(.hidden)
+                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                    Button(role: .destructive) {
+                        Haptics.medium()
+                        hide(item.id)
+                    } label: {
+                        Label("Hide", systemImage: "eye.slash")
+                    }
+                    .tint(Theme.textSecondary)
                 }
             }
-            .padding(.horizontal, Theme.Spacing.md)
-            .padding(.top, Theme.Spacing.sm)
+
+            // #311: surface load-more failures with a retry banner so the
+            // user knows pagination didn't silently exhaust.
+            if let loadMoreError = viewModel.loadMoreError {
+                loadMoreRetryBanner(message: loadMoreError)
+                    .listRowBackground(Theme.background)
+                    .listRowInsets(EdgeInsets(top: 0, leading: Theme.Spacing.md, bottom: 0, trailing: Theme.Spacing.md))
+                    .listRowSeparator(.hidden)
+            } else if !viewModel.hasMore && !visibleFeedItems.isEmpty {
+                Text("You're all caught up!")
+                    .font(Theme.fontCaption)
+                    .foregroundStyle(Theme.textSecondary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(Theme.Spacing.md)
+                    .listRowBackground(Theme.background)
+                    .listRowSeparator(.hidden)
+            }
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
         .refreshable {
             await viewModel.refreshFeed(userId: userId)
         }

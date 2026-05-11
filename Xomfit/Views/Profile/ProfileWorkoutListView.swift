@@ -6,6 +6,12 @@ struct ProfileWorkoutListView: View {
     var isFiltered: Bool
     @Binding var dateRange: FeedDateRange
     @Binding var muscleGroups: Set<MuscleGroup>
+    /// Pull-to-refresh hook owned by the parent (e.g. `ProfileView` -> `loadAll`).
+    /// Optional so callers that haven't migrated yet still compile cleanly.
+    var onRefresh: (() async -> Void)? = nil
+    /// Swipe-to-delete callback for past-workout rows. Optional — only the
+    /// current user's own profile should pass this.
+    var onDelete: ((Workout) -> Void)? = nil
 
     /// Drives the workout-history search sheet (#323).
     @State private var showSearch = false
@@ -33,17 +39,7 @@ struct ProfileWorkoutListView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 60)
             } else {
-                LazyVStack(spacing: Theme.Spacing.sm) {
-                    ForEach(workouts) { workout in
-                        NavigationLink {
-                            WorkoutDetailView(workout: workout)
-                        } label: {
-                            workoutCard(workout)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-                .padding(.horizontal, Theme.Spacing.md)
+                workoutList
             }
         }
         .toolbar {
@@ -61,6 +57,42 @@ struct ProfileWorkoutListView: View {
         }
         .sheet(isPresented: $showSearch) {
             WorkoutHistorySearchView(workouts: allWorkouts)
+        }
+    }
+
+    // MARK: - Workout List
+
+    /// List-backed rendering so `.swipeActions(edge: .trailing)` works on each
+    /// past-workout row. Owners that don't pass `onDelete` simply won't get the
+    /// swipe affordance.
+    private var workoutList: some View {
+        List {
+            ForEach(workouts) { workout in
+                NavigationLink {
+                    WorkoutDetailView(workout: workout)
+                } label: {
+                    workoutCard(workout)
+                }
+                .listRowBackground(Theme.background)
+                .listRowInsets(EdgeInsets(top: Theme.Spacing.tight, leading: Theme.Spacing.md, bottom: Theme.Spacing.tight, trailing: Theme.Spacing.md))
+                .listRowSeparator(.hidden)
+                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                    if let onDelete {
+                        Button(role: .destructive) {
+                            Haptics.medium()
+                            onDelete(workout)
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                    }
+                }
+                .simultaneousGesture(TapGesture().onEnded { Haptics.light() })
+            }
+        }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .refreshable {
+            await onRefresh?()
         }
     }
 

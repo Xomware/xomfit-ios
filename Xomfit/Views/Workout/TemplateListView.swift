@@ -27,9 +27,16 @@ struct TemplateListView: View {
                                 templateRow(template)
                                     .listRowBackground(Theme.surface)
                                     .listRowSeparator(.hidden)
-                            }
-                            .onDelete { indexSet in
-                                deleteCustom(from: items, at: indexSet)
+                                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                        if template.isCustom {
+                                            Button(role: .destructive) {
+                                                Haptics.medium()
+                                                deleteTemplate(template)
+                                            } label: {
+                                                Label("Delete", systemImage: "trash")
+                                            }
+                                        }
+                                    }
                             }
                         } header: {
                             HStack(spacing: 6) {
@@ -44,6 +51,9 @@ struct TemplateListView: View {
                 }
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
+                .refreshable {
+                    await refreshTemplates()
+                }
             }
             .navigationTitle("Templates")
             .navigationBarTitleDisplayMode(.inline)
@@ -97,18 +107,24 @@ struct TemplateListView: View {
             .padding(.vertical, Theme.Spacing.tight)
         }
         .buttonStyle(.plain)
-        .deleteDisabled(!template.isCustom)
         .accessibilityLabel("\(template.name), \(template.description), \(template.exercises.count) exercises, about \(template.estimatedDuration) minutes")
     }
 
     // MARK: - Delete
 
-    private func deleteCustom(from items: [WorkoutTemplate], at indexSet: IndexSet) {
-        for idx in indexSet {
-            let template = items[idx]
-            guard template.isCustom else { continue }
-            TemplateService.shared.deleteCustomTemplate(id: template.id)
-        }
+    private func deleteTemplate(_ template: WorkoutTemplate) {
+        guard template.isCustom else { return }
+        TemplateService.shared.deleteCustomTemplate(id: template.id)
+        templates = TemplateService.shared.allTemplates()
+    }
+
+    // MARK: - Refresh
+
+    /// Pull-to-refresh hook. Templates are local, so this just re-reads the
+    /// template store. Yields briefly so the system refresh spinner has time to
+    /// render before snapping back.
+    private func refreshTemplates() async {
+        try? await Task.sleep(nanoseconds: 250_000_000)
         templates = TemplateService.shared.allTemplates()
     }
 }

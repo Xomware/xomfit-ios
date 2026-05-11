@@ -181,7 +181,7 @@ struct AICoachView: View {
     // MARK: - Tool actions
 
     private func handleSave(payload: WorkoutBuildPayload) {
-        Haptics.medium()
+        Haptics.success()
         if let template = viewModel.saveTemplate(from: payload) {
             savedToast = Toast(style: .success, message: "Saved \"\(template.name)\" to templates")
         }
@@ -194,7 +194,7 @@ struct AICoachView: View {
             !userId.isEmpty,
             let template = viewModel.buildTemplate(from: payload)
         else { return }
-        Haptics.medium()
+        Haptics.success()
         workoutSession.startFromTemplate(template, userId: userId)
         workoutSession.isPresented = true
     }

@@ -85,7 +85,7 @@ struct WorkoutBuilderView: View {
                 dismiss()
             }
             Button("Start Now") {
-                Haptics.medium()
+                Haptics.success()
                 let template = viewModel.buildTemplate()
                 startTemplateWithWarmupGate(template)
             }
@@ -132,13 +132,61 @@ struct WorkoutBuilderView: View {
 
     // MARK: - Name Field
 
+    /// Max workout name length surfaced to the user via a red helper line.
+    /// Mirrors `WorkoutBuilderViewModel.nameMaxLength`; over-cap input is still
+    /// typeable but blocks Save.
+    private static var nameMaxLength: Int { WorkoutBuilderViewModel.nameMaxLength }
+
+    private var trimmedName: String {
+        viewModel.name.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var nameValidationMessage: String? {
+        if trimmedName.isEmpty {
+            return "Name is required"
+        }
+        if viewModel.name.count > Self.nameMaxLength {
+            return "Name is too long (\(viewModel.name.count)/\(Self.nameMaxLength))"
+        }
+        return nil
+    }
+
     private var nameField: some View {
-        TextField("Workout Name", text: $viewModel.name)
-            .font(Theme.fontBodyEmphasized)
-            .foregroundStyle(Theme.textPrimary)
-            .padding(Theme.Spacing.md)
-            .background(Theme.surface)
-            .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+        let invalid = nameValidationMessage != nil
+
+        return VStack(alignment: .leading, spacing: Theme.Spacing.tight) {
+            TextField("Workout Name", text: $viewModel.name)
+                .font(Theme.fontBodyEmphasized)
+                .foregroundStyle(Theme.textPrimary)
+                .padding(Theme.Spacing.md)
+                .background(Theme.surface)
+                .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+                .overlay(
+                    RoundedRectangle(cornerRadius: Theme.cornerRadius)
+                        .strokeBorder(
+                            invalid ? Theme.destructive.opacity(0.6) : .clear,
+                            lineWidth: 1
+                        )
+                )
+                .accessibilityHint(invalid ? (nameValidationMessage ?? "") : "")
+
+            if let message = nameValidationMessage {
+                HStack(spacing: Theme.Spacing.tight) {
+                    Image(systemName: "exclamationmark.circle.fill")
+                        .font(Theme.fontCaption2)
+                        .foregroundStyle(Theme.destructive)
+                        .accessibilityHidden(true)
+                    Text(message)
+                        .font(Theme.fontCaption)
+                        .foregroundStyle(Theme.destructive)
+                }
+                .padding(.leading, Theme.Spacing.xs)
+                .transition(.opacity)
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel(message)
+            }
+        }
+        .animation(.easeOut(duration: 0.15), value: invalid)
     }
 
     // MARK: - Category Picker
