@@ -79,6 +79,7 @@ jobs:
         run: pip3 install --quiet --break-system-packages PyJWT cryptography requests
 
       - name: Free Apple Development cert slot (revoke oldest if at limit)
+        continue-on-error: true
         env:
           ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
           ASC_API_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
