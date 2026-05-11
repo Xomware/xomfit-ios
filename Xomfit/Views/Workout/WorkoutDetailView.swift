@@ -3,9 +3,30 @@ import SwiftUI
 struct WorkoutDetailView: View {
     let workout: Workout
 
+    @Environment(AuthService.self) private var authService
+    @Environment(WorkoutLoggerViewModel.self) private var workoutSession
+
     /// Image rendered for sharing (#320). Held while the share sheet is presented
     /// so `UIActivityViewController` doesn't see a stale image.
     @State private var shareImage: UIImage?
+
+    // MARK: - Warmup gating (#337)
+    //
+    // "Start this Workout" mirrors the gate used on `WorkoutView`/`WorkoutCategoryListView`:
+    // build a fresh template from the recorded exercises, then either ask, present
+    // the warmup, or start immediately based on the user's saved preference.
+
+    @AppStorage("warmupOptIn") private var warmupOptIn: String = ""
+    @AppStorage("warmupMinutes") private var warmupMinutes: Int = 6
+
+    @State private var pendingStart: (() -> Void)?
+    @State private var pendingStretches: [Stretch] = []
+    @State private var showWarmupPrompt = false
+    @State private var showWarmup = false
+
+    private var userId: String {
+        authService.currentUser?.id.uuidString.lowercased() ?? ""
+    }
 
     var body: some View {
         ZStack {
@@ -16,6 +37,7 @@ struct WorkoutDetailView: View {
                     summaryCard
                     exerciseList
                     soundtrackSection
+                    startThisWorkoutButton
                 }
                 .padding(.horizontal, Theme.Spacing.md)
                 .padding(.vertical, Theme.Spacing.sm)
@@ -43,6 +65,33 @@ struct WorkoutDetailView: View {
         )) { wrapper in
             WorkoutShareSheet(image: wrapper.image)
                 .presentationDetents([.medium, .large])
+        }
+        .confirmationDialog(
+            "Warm up first?",
+            isPresented: $showWarmupPrompt,
+            titleVisibility: .visible
+        ) {
+            Button("Yes, \(warmupMinutes) min") {
+                warmupOptIn = "yes"
+                showWarmup = true
+            }
+            Button("No, skip") {
+                warmupOptIn = "no"
+                runPendingStartImmediately()
+            }
+            Button("Just this once", role: .cancel) {
+                runPendingStartImmediately()
+            }
+        } message: {
+            Text("A 5-10 minute stretch routine helps loosen up before lifting.")
+        }
+        .fullScreenCover(isPresented: $showWarmup) {
+            WarmupView(
+                stretches: pendingStretches.isEmpty ? StretchDatabase.defaultRoutine() : pendingStretches,
+                totalDuration: warmupMinutes * 60
+            ) {
+                runPendingStartImmediately()
+            }
         }
     }
 
@@ -333,6 +382,105 @@ struct WorkoutDetailView: View {
             return "\(track.title) by \(artist)"
         }
         return track.title
+    }
+
+    // MARK: - Start This Workout (#337)
+
+    /// Repeats this workout as a fresh active session — builds a `WorkoutTemplate`
+    /// from the recorded exercises/sets, then runs through the standard warmup gate.
+    @ViewBuilder
+    private var startThisWorkoutButton: some View {
+        Button {
+            Haptics.medium()
+            let template = makeTemplateFromWorkout()
+            requestStart(
+                stretches: StretchDatabase.suggestedStretches(
+                    for: workout,
+                    target: TimeInterval(warmupMinutes * 60)
+                )
+            ) {
+                workoutSession.startFromTemplate(template, userId: userId)
+                workoutSession.isPresented = true
+            }
+        } label: {
+            HStack(spacing: Theme.Spacing.sm) {
+                Image(systemName: "play.fill")
+                Text("Start this Workout")
+            }
+        }
+        .buttonStyle(AccentButtonStyle())
+        .accessibilityHint("Builds a fresh workout using these exercises as a template")
+        .padding(.top, Theme.Spacing.sm)
+    }
+
+    /// Build a fresh `WorkoutTemplate` from this past workout. Target reps are
+    /// derived from the most-common reps value across recorded sets; weight is
+    /// not stored on the template — `WorkoutLoggerViewModel.startFromTemplate`
+    /// will prefill it from the user's last set for that exercise.
+    private func makeTemplateFromWorkout() -> WorkoutTemplate {
+        let templateExercises: [WorkoutTemplate.TemplateExercise] = workout.exercises.map { we in
+            WorkoutTemplate.TemplateExercise(
+                id: UUID().uuidString,
+                exercise: we.exercise,
+                targetSets: max(1, we.sets.count),
+                targetReps: modalRepsString(for: we.sets),
+                notes: we.notes,
+                restSeconds: we.restSeconds
+            )
+        }
+
+        return WorkoutTemplate(
+            id: UUID().uuidString,
+            name: workout.name,
+            description: "Repeat of \(workout.startTime.workoutDateString)",
+            exercises: templateExercises,
+            estimatedDuration: Int(workout.duration / 60),
+            category: .custom,
+            isCustom: true
+        )
+    }
+
+    /// Picks the most-common reps value across the recorded sets as the target.
+    /// Falls back to the first set's reps, then "0" if there are no sets.
+    private func modalRepsString(for sets: [WorkoutSet]) -> String {
+        guard !sets.isEmpty else { return "0" }
+        let counts = Dictionary(sets.map { ($0.reps, 1) }, uniquingKeysWith: +)
+        // Prefer the highest-count reps value; break ties on the larger reps
+        // count so AMRAP-style sets don't get masked by a single warmup set.
+        let mode = counts.max { lhs, rhs in
+            if lhs.value != rhs.value { return lhs.value < rhs.value }
+            return lhs.key < rhs.key
+        }?.key ?? sets[0].reps
+        return "\(mode)"
+    }
+
+    // MARK: - Warmup gating (#337)
+
+    private func requestStart(stretches: [Stretch], action: @escaping () -> Void) {
+        pendingStart = action
+        pendingStretches = stretches
+
+        switch warmupOptIn {
+        case "yes":
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                showWarmup = true
+            }
+        case "no":
+            runPendingStartImmediately()
+        default:
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                showWarmupPrompt = true
+            }
+        }
+    }
+
+    private func runPendingStartImmediately() {
+        let action = pendingStart
+        pendingStart = nil
+        pendingStretches = []
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            action?()
+        }
     }
 
     // MARK: - Helpers

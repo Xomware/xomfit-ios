@@ -2,42 +2,46 @@ import SwiftUI
 
 // MARK: - WorkoutCategory
 
-/// The three "Quick Hitter" sections surfaced on `WorkoutView`.
+/// The four category segments surfaced on the Workouts tab (#338).
 ///
-/// Each case identifies both the preview shown on the main page and the
-/// dedicated `WorkoutCategoryPage` reachable via "See All".
+/// Each case identifies a list shown under the segmented control on `WorkoutView`.
 enum WorkoutCategory: String, CaseIterable, Identifiable, Hashable {
     /// The user's own recent past workouts.
     case recents
-    /// Built-in templates shipped with the app (non-custom).
-    case preGenerated
-    /// Combination of: the user's custom + saved templates and friends' recent workouts.
-    case friendsAndSaved
+    /// The user's own custom templates (built with WorkoutBuilder, not saved-from-friend).
+    case myWorkouts
+    /// Templates the user saved from elsewhere, plus friends' recent workouts.
+    case savedFriendsWorkouts
+    /// Built-in templates shipped with the app.
+    case preGen
 
     var id: String { rawValue }
 
     var title: String {
         switch self {
-        case .recents:         return "Recents"
-        case .preGenerated:    return "Pre-generated"
-        case .friendsAndSaved: return "Friends & Saved"
+        case .recents:              return "Recents"
+        case .myWorkouts:           return "My Workouts"
+        case .savedFriendsWorkouts: return "Saved & Friends"
+        case .preGen:               return "Pre-Gen"
         }
     }
 
     var icon: String {
         switch self {
-        case .recents:         return "clock.fill"
-        case .preGenerated:    return "list.bullet.rectangle.portrait"
-        case .friendsAndSaved: return "person.2.fill"
+        case .recents:              return "clock.fill"
+        case .myWorkouts:           return "star.fill"
+        case .savedFriendsWorkouts: return "person.2.fill"
+        case .preGen:               return "list.bullet.rectangle.portrait"
         }
     }
 
     /// Empty-state copy when the user has no items in this category at all (no filter applied).
     var emptyStateTitle: String {
         switch self {
-        case .recents:         return "No recent workouts"
-        case .preGenerated:    return "No templates available"
-        case .friendsAndSaved: return "Nothing here yet"
+        case .recents:              return "No recent workouts"
+        case .myWorkouts:           return "No custom workouts yet"
+        case .savedFriendsWorkouts: return "Nothing saved yet"
+        case .preGen:               return "No templates available"
         }
     }
 
@@ -45,26 +49,28 @@ enum WorkoutCategory: String, CaseIterable, Identifiable, Hashable {
         switch self {
         case .recents:
             return "Finished workouts will show up here."
-        case .preGenerated:
+        case .myWorkouts:
+            return "Build a workout to save it here for quick reuse."
+        case .savedFriendsWorkouts:
+            return "Save a template or follow friends to populate this list."
+        case .preGen:
             return "Built-in templates will appear once loaded."
-        case .friendsAndSaved:
-            return "Save a template or add friends to populate this list."
         }
     }
 }
 
-// MARK: - WorkoutCategoryPage
+// MARK: - WorkoutCategoryListView
 
-/// Dedicated "See All" page for a single `WorkoutCategory`.
+/// Reusable list body for a `WorkoutCategory` — filter bar + items + empty states.
 ///
-/// Reuses the shared `WorkoutTabViewModel` so filter state survives navigation
-/// while data is loaded once on the parent screen.
-struct WorkoutCategoryPage: View {
+/// Used inline on `WorkoutView` under the segmented control (#338). Receives the
+/// shared `WorkoutTabViewModel` so the same loaded data backs every category
+/// without re-fetching when the segment changes.
+struct WorkoutCategoryListView: View {
     let category: WorkoutCategory
 
-    /// Shared view model owned by `WorkoutView`. Filters apply per-page via the
-    /// local `localFilter` state — we don't mutate the shared filter so each
-    /// "See All" page starts clean.
+    /// Shared view model owned by `WorkoutView`. Local filter state is per-list
+    /// so each category starts with a clean filter.
     let viewModel: WorkoutTabViewModel
 
     @Environment(AuthService.self) private var authService
@@ -87,24 +93,15 @@ struct WorkoutCategoryPage: View {
     }
 
     var body: some View {
-        ZStack {
-            Theme.background.ignoresSafeArea()
+        VStack(spacing: 0) {
+            WorkoutFilterBar(filter: $localFilter)
 
-            VStack(spacing: 0) {
-                WorkoutFilterBar(filter: $localFilter)
-
-                ScrollView {
-                    LazyVStack(spacing: Theme.Spacing.sm) {
-                        contentView
-                    }
-                    .padding(.horizontal, Theme.Spacing.md)
-                    .padding(.vertical, Theme.Spacing.sm)
-                }
+            LazyVStack(spacing: Theme.Spacing.sm) {
+                contentView
             }
+            .padding(.horizontal, Theme.Spacing.md)
+            .padding(.vertical, Theme.Spacing.sm)
         }
-        .navigationTitle(category.title)
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbarColorScheme(.dark, for: .navigationBar)
         .sheet(item: $previewTemplate) { template in
             TemplateDetailView(template: template) {
                 let captured = template
@@ -151,10 +148,12 @@ struct WorkoutCategoryPage: View {
         switch category {
         case .recents:
             recentsContent
-        case .preGenerated:
+        case .myWorkouts:
+            myWorkoutsContent
+        case .savedFriendsWorkouts:
+            savedFriendsContent
+        case .preGen:
             preGeneratedContent
-        case .friendsAndSaved:
-            friendsAndSavedContent
         }
     }
 
@@ -179,9 +178,9 @@ struct WorkoutCategoryPage: View {
     }
 
     @ViewBuilder
-    private var preGeneratedContent: some View {
-        let items = viewModel.builtInTemplates.filter(localFilter.matches)
-        if viewModel.builtInTemplates.isEmpty {
+    private var myWorkoutsContent: some View {
+        let items = viewModel.myTemplates.filter(localFilter.matches)
+        if viewModel.myTemplates.isEmpty {
             emptyState
         } else if items.isEmpty {
             filteredEmptyState
@@ -195,12 +194,10 @@ struct WorkoutCategoryPage: View {
     }
 
     @ViewBuilder
-    private var friendsAndSavedContent: some View {
-        let templates = (viewModel.myTemplates + viewModel.savedTemplates).filter(localFilter.matches)
+    private var savedFriendsContent: some View {
+        let templates = viewModel.savedTemplates.filter(localFilter.matches)
         let workouts = viewModel.friendWorkouts.filter(localFilter.matches)
-        let hasAnySource = !viewModel.myTemplates.isEmpty
-            || !viewModel.savedTemplates.isEmpty
-            || !viewModel.friendWorkouts.isEmpty
+        let hasAnySource = !viewModel.savedTemplates.isEmpty || !viewModel.friendWorkouts.isEmpty
         let hasAnyMatch = !templates.isEmpty || !workouts.isEmpty
 
         if !hasAnySource {
@@ -227,6 +224,22 @@ struct WorkoutCategoryPage: View {
                     }
                     .buttonStyle(PressableCardStyle())
                     .accessibilityLabel("Friend workout: \(workout.name)")
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var preGeneratedContent: some View {
+        let items = viewModel.builtInTemplates.filter(localFilter.matches)
+        if viewModel.builtInTemplates.isEmpty {
+            emptyState
+        } else if items.isEmpty {
+            filteredEmptyState
+        } else {
+            ForEach(items) { template in
+                TemplateCardView(template: template, style: .row) {
+                    previewTemplate = template
                 }
             }
         }
