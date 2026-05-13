@@ -65,6 +65,26 @@ private struct WorkoutSetRow: Codable {
 
 // MARK: - Nested Fetch Response
 
+private struct WorkoutTrackRow: Codable {
+    let id: String
+    let workoutId: String
+    let title: String
+    let artist: String?
+    let album: String?
+    let capturedAt: String
+    let sourceApp: String
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case workoutId = "workout_id"
+        case title
+        case artist
+        case album
+        case capturedAt = "captured_at"
+        case sourceApp = "source_app"
+    }
+}
+
 private struct WorkoutWithRelations: Codable {
     let id: String
     let userId: String
@@ -74,6 +94,7 @@ private struct WorkoutWithRelations: Codable {
     let notes: String?
     let createdAt: String?
     let workoutExercises: [ExerciseWithSets]
+    let workoutTracks: [WorkoutTrackRow]
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -84,6 +105,7 @@ private struct WorkoutWithRelations: Codable {
         case notes
         case createdAt = "created_at"
         case workoutExercises = "workout_exercises"
+        case workoutTracks = "workout_tracks"
     }
 }
 
@@ -136,6 +158,16 @@ private struct WorkoutSetInsertPayload: Encodable {
     let completed_at: String?
 }
 
+private struct WorkoutTrackInsertPayload: Encodable {
+    let id: String
+    let workout_id: String
+    let title: String
+    let artist: String?
+    let album: String?
+    let captured_at: String
+    let source_app: String
+}
+
 // MARK: - WorkoutService
 
 @MainActor
@@ -186,7 +218,7 @@ final class WorkoutService {
         do {
             let rows: [WorkoutWithRelations] = try await supabase
                 .from("workouts")
-                .select("*, workout_exercises(*, workout_sets(*))")
+                .select("*, workout_exercises(*, workout_sets(*)), workout_tracks(*)")
                 .eq("id", value: id)
                 .limit(1)
                 .execute()
@@ -345,12 +377,32 @@ final class WorkoutService {
                     .execute()
             }
         }
+
+        // Insert captured Now Playing tracks (#345).
+        // Skipped when the list is empty (user denied access or no Apple Music playback).
+        if !workout.tracks.isEmpty {
+            let trackPayloads = workout.tracks.map { track in
+                WorkoutTrackInsertPayload(
+                    id: track.id.uuidString,
+                    workout_id: workout.id,
+                    title: track.title,
+                    artist: track.artist,
+                    album: track.album,
+                    captured_at: iso8601.string(from: track.capturedAt),
+                    source_app: track.sourceApp
+                )
+            }
+            try await supabase
+                .from("workout_tracks")
+                .upsert(trackPayloads)
+                .execute()
+        }
     }
 
     private func fetchFromSupabase(userId: String) async throws -> [Workout] {
         let rows: [WorkoutWithRelations] = try await supabase
             .from("workouts")
-            .select("*, workout_exercises(*, workout_sets(*))")
+            .select("*, workout_exercises(*, workout_sets(*)), workout_tracks(*)")
             .eq("user_id", value: userId)
             .order("start_time", ascending: false)
             .execute()
@@ -395,6 +447,17 @@ final class WorkoutService {
                 )
             }
 
+        let tracks = row.workoutTracks.map { trackRow in
+            WorkoutTrack(
+                id: UUID(uuidString: trackRow.id) ?? UUID(),
+                title: trackRow.title,
+                artist: trackRow.artist,
+                album: trackRow.album,
+                capturedAt: iso8601.date(from: trackRow.capturedAt) ?? Date(),
+                sourceApp: trackRow.sourceApp
+            )
+        }
+
         return Workout(
             id: row.id,
             userId: row.userId,
@@ -402,7 +465,8 @@ final class WorkoutService {
             exercises: exercises,
             startTime: iso8601.date(from: row.startTime) ?? Date(),
             endTime: row.endTime.flatMap { iso8601.date(from: $0) },
-            notes: row.notes
+            notes: row.notes,
+            tracks: tracks
         )
     }
 
