@@ -284,26 +284,53 @@ private struct CommentRow: View {
     /// Tapped when the user taps the Reply button on this row.
     let onReply: () -> Void
 
+    /// #367: handle used in accessibility label for the profile link.
+    private var profileHandle: String {
+        if let username = comment.user?.username, !username.isEmpty { return username }
+        return comment.user?.displayName ?? "user"
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             HStack(alignment: .top, spacing: Theme.Spacing.sm) {
-                XomAvatar(
-                    name: comment.user?.displayName ?? "User",
-                    size: 32
-                )
-                .accessibilityHidden(true)
+                // #367: avatar + name push the commenter's ProfileView.
+                NavigationLink {
+                    ProfileView(userId: comment.userId)
+                        .hideTabBar()
+                } label: {
+                    HStack(alignment: .center, spacing: Theme.Spacing.sm) {
+                        XomAvatar(
+                            name: comment.user?.displayName ?? "User",
+                            size: 32
+                        )
+
+                        HStack(spacing: 6) {
+                            Text(comment.user?.displayName ?? "User")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(Theme.textPrimary)
+                            Text(comment.createdAt.timeAgo)
+                                .font(Theme.fontSmall)
+                                .foregroundStyle(Theme.textTertiary)
+                        }
+                    }
+                    .frame(minHeight: 44)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(PressableCardStyle())
+                .simultaneousGesture(TapGesture().onEnded { Haptics.light() })
+                .accessibilityLabel("View profile of @\(profileHandle)")
+                .accessibilityHint("Opens this user's profile")
+
+                Spacer()
+            }
+            .padding(.top, 10)
+
+            // Body text + Reply button stay outside the profile link so taps on
+            // them don't navigate. Indented to align under the name.
+            HStack(alignment: .top, spacing: Theme.Spacing.sm) {
+                Color.clear.frame(width: 32, height: 0)
 
                 VStack(alignment: .leading, spacing: 3) {
-                    HStack(spacing: 6) {
-                        Text(comment.user?.displayName ?? "User")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(Theme.textPrimary)
-                        Text(comment.createdAt.timeAgo)
-                            .font(Theme.fontSmall)
-                            .foregroundStyle(Theme.textTertiary)
-                    }
-                    .accessibilityElement(children: .combine)
-                    .accessibilityLabel("\(comment.user?.displayName ?? "User"), \(comment.createdAt.timeAgo)")
                     Text(comment.text)
                         .font(Theme.fontBody)
                         .foregroundStyle(Theme.textPrimary)
@@ -324,7 +351,7 @@ private struct CommentRow: View {
 
                 Spacer()
             }
-            .padding(.vertical, 10)
+            .padding(.bottom, 10)
 
             XomDivider()
         }

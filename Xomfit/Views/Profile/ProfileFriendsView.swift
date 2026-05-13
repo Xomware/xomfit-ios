@@ -9,20 +9,39 @@ struct ProfileFriendsView: View {
         friend.requesterId == currentUserId ? friend.addresseeId : friend.requesterId
     }
 
+    /// #367: profile-link a11y label — uses username when available, falls
+    /// back to display name. Mirrors the format used across feed avatars.
+    private func rowAccessibilityLabel(for friend: FriendRow) -> String {
+        let profile = friendProfiles[otherUserId(friend)]
+        let handle: String
+        if let username = profile?.username, !username.isEmpty {
+            handle = username
+        } else if let name = profile?.displayName, !name.isEmpty {
+            handle = name
+        } else {
+            handle = "user"
+        }
+        return "View profile of @\(handle)"
+    }
+
     var body: some View {
         if friends.isEmpty {
             emptyState
         } else {
             LazyVStack(spacing: 0) {
                 ForEach(friends) { friend in
+                    // #367: row pushes ProfileView for the other user with
+                    // press feedback + a profile-specific accessibility label.
                     NavigationLink {
                         ProfileView(userId: otherUserId(friend))
                             .hideTabBar()
                     } label: {
                         friendRow(friend: friend)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(PressableCardStyle())
                     .simultaneousGesture(TapGesture().onEnded { Haptics.light() })
+                    .accessibilityLabel(rowAccessibilityLabel(for: friend))
+                    .accessibilityHint("Opens this user's profile")
 
                     if friend.id != friends.last?.id {
                         XomDivider()
@@ -65,9 +84,7 @@ struct ProfileFriendsView: View {
         }
         .padding(Theme.Spacing.md)
         .frame(minHeight: 44)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(name)\(username.isEmpty ? "" : ", @\(username)")")
-        .accessibilityAddTraits(.isButton)
+        .contentShape(Rectangle())
     }
 
     // MARK: - Empty State
