@@ -36,20 +36,26 @@ final class NowPlayingService {
     /// are cheap — they just refresh the cached `isAuthorized` flag.
     func ensureAuthorization() async {
         let status = MPMediaLibrary.authorizationStatus()
+        print("[NowPlayingService] authorizationStatus = \(status.rawValue)")
         switch status {
         case .authorized:
             isAuthorized = true
+            print("[NowPlayingService] authorized — polling will run")
         case .notDetermined:
+            print("[NowPlayingService] not determined — requesting authorization")
             let result = await withCheckedContinuation { (continuation: CheckedContinuation<MPMediaLibraryAuthorizationStatus, Never>) in
                 MPMediaLibrary.requestAuthorization { status in
                     continuation.resume(returning: status)
                 }
             }
             isAuthorized = (result == .authorized)
+            print("[NowPlayingService] authorization result: \(result.rawValue), isAuthorized=\(isAuthorized)")
         case .denied, .restricted:
             isAuthorized = false
+            print("[NowPlayingService] access denied/restricted — no track capture will occur")
         @unknown default:
             isAuthorized = false
+            print("[NowPlayingService] unknown auth status \(status.rawValue) — defaulting to denied")
         }
     }
 
@@ -57,6 +63,7 @@ final class NowPlayingService {
 
     /// Begins polling. Idempotent — safe to call repeatedly. If auth was denied, this is a no-op.
     func startCapture() {
+        print("[NowPlayingService] startCapture called — resetting session state")
         // Reset session state up-front so a back-to-back start clears prior captures
         captured.removeAll()
         seenKeys.removeAll()
@@ -67,6 +74,11 @@ final class NowPlayingService {
         pollTask = Task { [weak self] in
             guard let self else { return }
             await self.ensureAuthorization()
+            guard self.isAuthorized else {
+                print("[NowPlayingService] startCapture: not authorized, polling will not run")
+                return
+            }
+            print("[NowPlayingService] polling started — interval=\(self.pollInterval)s")
             // Capture immediately so a song already playing at workout start is recorded.
             self.captureCurrentTrack()
 
@@ -75,6 +87,7 @@ final class NowPlayingService {
                 if Task.isCancelled { return }
                 self.captureCurrentTrack()
             }
+            print("[NowPlayingService] polling loop exited")
         }
     }
 
@@ -82,6 +95,7 @@ final class NowPlayingService {
     /// `startCapture()` begins fresh.
     @discardableResult
     func stopCapture() -> [WorkoutTrack] {
+        print("[NowPlayingService] stopCapture called — \(captured.count) track(s) captured")
         pollTask?.cancel()
         pollTask = nil
         let result = captured
@@ -97,12 +111,24 @@ final class NowPlayingService {
     ///   - Nothing is playing via Apple Music (Spotify/podcasts/etc. won't surface here)
     ///   - The current track was already captured (deduped by title+artist+persistentID)
     private func captureCurrentTrack() {
-        guard isAuthorized else { return }
-        guard let item = MPMusicPlayerController.systemMusicPlayer.nowPlayingItem else { return }
-        guard let title = item.title, !title.isEmpty else { return }
+        guard isAuthorized else {
+            print("[NowPlayingService] captureCurrentTrack: skipped — not authorized")
+            return
+        }
+        guard let item = MPMusicPlayerController.systemMusicPlayer.nowPlayingItem else {
+            print("[NowPlayingService] captureCurrentTrack: nowPlayingItem is nil (nothing playing via Apple Music)")
+            return
+        }
+        guard let title = item.title, !title.isEmpty else {
+            print("[NowPlayingService] captureCurrentTrack: item has no title, skipping")
+            return
+        }
 
         let key = dedupeKey(title: title, artist: item.artist, persistentID: item.persistentID)
-        guard !seenKeys.contains(key) else { return }
+        guard !seenKeys.contains(key) else {
+            print("[NowPlayingService] captureCurrentTrack: '\(title)' already captured, deduped")
+            return
+        }
         seenKeys.insert(key)
 
         let track = WorkoutTrack(
@@ -113,6 +139,7 @@ final class NowPlayingService {
             sourceApp: "Apple Music"
         )
         captured.append(track)
+        print("[NowPlayingService] captured '\(title)' by \(item.artist ?? "unknown") — total: \(captured.count)")
     }
 
     private func dedupeKey(title: String, artist: String?, persistentID: MPMediaEntityPersistentID) -> String {
