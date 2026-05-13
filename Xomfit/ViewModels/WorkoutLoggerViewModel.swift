@@ -139,6 +139,7 @@ final class WorkoutLoggerViewModel {
     // MARK: - Workout Lifecycle
 
     func startWorkout(name: String, userId: String = "") {
+        defaultRestDuration = WorkoutLoggerViewModel.loadRestDuration()
         workoutName = name.isEmpty ? "Workout" : name
         exercises = []
         startTime = Date()
@@ -274,7 +275,9 @@ final class WorkoutLoggerViewModel {
         let workouts = WorkoutService.shared.fetchWorkoutsFromCache(userId: activeUserId)
         for workout in workouts {
             if let workoutExercise = workout.exercises.first(where: { $0.exercise.id == exerciseId }),
-               let bestSet = workoutExercise.sets.last {
+               let bestSet = workoutExercise.sets
+                .filter({ $0.completedAt != Date.distantPast && !$0.isDropSet })
+                .max(by: { $0.weight < $1.weight }) {
                 return bestSet
             }
         }
@@ -998,7 +1001,7 @@ final class WorkoutLoggerViewModel {
             let weekStart = Calendar.current.date(from: Calendar.current.dateComponents([.yearForWeekOfYear, .weekOfYear], from: Date())) ?? Date()
             let weekWorkouts = allWorkouts.filter { $0.startTime >= weekStart }
             let weeklyVolume = weekWorkouts.reduce(0.0) { $0 + $1.totalVolume }
-            let streak = calculateStreak(from: allWorkouts)
+            let streak = WorkoutInsights.currentStreak(workouts: allWorkouts)
             let latestPR = allWorkouts.flatMap { $0.exercises.flatMap { $0.sets } }
                 .filter { $0.isPersonalRecord }
                 .max(by: { $0.completedAt < $1.completedAt })
@@ -1026,16 +1029,4 @@ final class WorkoutLoggerViewModel {
         }
     }
 
-    private func calculateStreak(from workouts: [Workout]) -> Int {
-        let calendar = Calendar.current
-        let workoutDays = Set(workouts.map { calendar.startOfDay(for: $0.startTime) })
-        var streak = 0
-        var day = calendar.startOfDay(for: Date())
-        while workoutDays.contains(day) {
-            streak += 1
-            guard let prev = calendar.date(byAdding: .day, value: -1, to: day) else { break }
-            day = prev
-        }
-        return streak
-    }
 }

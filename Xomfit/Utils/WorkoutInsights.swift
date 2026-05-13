@@ -120,7 +120,7 @@ enum WorkoutInsights {
 
         // Find PR sets logged within the last day that the user hasn't seen yet.
         var candidates: [(workout: Workout, exercise: WorkoutExercise, set: WorkoutSet)] = []
-        for workout in workouts where workout.startTime >= lookbackStart && workout.startTime < today {
+        for workout in workouts where workout.startTime >= lookbackStart {
             for ex in workout.exercises {
                 for set in ex.sets where set.isPersonalRecord {
                     if let lastSeen = lastSeenDate, set.completedAt <= lastSeen { continue }
