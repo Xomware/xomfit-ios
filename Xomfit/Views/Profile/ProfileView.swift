@@ -135,6 +135,7 @@ struct ProfileView: View {
                     username: viewModel.username,
                     bio: viewModel.bio,
                     initials: viewModel.initials,
+                    avatarURL: viewModel.avatarURL,
                     isPrivate: viewModel.isPrivate,
                     isOwnProfile: viewModel.isOwnProfile,
                     feedItemCount: viewModel.feedItemCount,

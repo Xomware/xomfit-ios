@@ -5,6 +5,8 @@ struct ProfileHeaderView: View {
     let username: String
     let bio: String
     let initials: String
+    /// Public URL of the profile avatar. Nil falls back to initials (#368).
+    var avatarURL: String? = nil
     let isPrivate: Bool
     let isOwnProfile: Bool
     let feedItemCount: Int
@@ -32,8 +34,12 @@ struct ProfileHeaderView: View {
         VStack(spacing: Theme.Spacing.md) {
             // Top row: avatar + stats
             HStack(alignment: .center, spacing: Theme.Spacing.md) {
-                XomAvatar(name: displayName.isEmpty ? username : displayName, size: 72)
-                    .accessibilityLabel("Profile avatar")
+                XomAvatar(
+                    name: displayName.isEmpty ? username : displayName,
+                    size: 72,
+                    imageURL: URL(string: avatarURL ?? "")
+                )
+                .accessibilityLabel("Profile avatar")
 
                 HStack(spacing: Theme.Spacing.sm) {
                     statColumn(value: feedItemCount, label: "Posts") {
