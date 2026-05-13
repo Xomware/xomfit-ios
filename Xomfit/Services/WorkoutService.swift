@@ -503,4 +503,18 @@ final class WorkoutService {
         let data = try? JSONEncoder().encode(all)
         UserDefaults.standard.set(data, forKey: storageKey)
     }
+
+    // MARK: - Debug Fixtures (#353)
+
+    #if DEBUG
+    /// Hydrates the local cache with `Workout.mockFixtures(userId:)` for the
+    /// bypassed agent user. Only invoked when `XOMFIT_AUTH_BYPASS=1` from
+    /// `AuthService` so future agents can screenshot history / detail views
+    /// without real Supabase data. Safe to call repeatedly — overwrites this
+    /// user's cached workouts.
+    func seedDebugFixtures(userId: String) {
+        let fixtures = Workout.mockFixtures(userId: userId)
+        overwriteCache(fixtures, userId: userId)
+    }
+    #endif
 }

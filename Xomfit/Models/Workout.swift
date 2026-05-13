@@ -182,4 +182,97 @@ extension Workout {
         endTime: Date().addingTimeInterval(-3600),
         notes: nil
     )
+
+    // MARK: - Debug Fixtures (#353)
+    /// Mock workouts hydrated into `WorkoutService` cache when the
+    /// `XOMFIT_AUTH_BYPASS=1` env var is set. DEBUG-only; lets agents launch
+    /// the app and screenshot history / detail views without real Supabase data.
+    /// All workouts share `AuthService.mockDebugUserId` so they show up for the
+    /// bypassed user.
+    static func mockFixtures(userId: String) -> [Workout] {
+        let now = Date()
+        let day: TimeInterval = 86_400
+
+        return [
+            Workout(
+                id: "mock-workout-1",
+                userId: userId,
+                name: "Push Day",
+                exercises: [
+                    WorkoutExercise(
+                        id: "mock-we-1",
+                        exercise: .benchPress,
+                        sets: [
+                            WorkoutSet(id: "mock-s-1", exerciseId: "ex-1", weight: 185, reps: 8, rpe: 7, isPersonalRecord: false, completedAt: now),
+                            WorkoutSet(id: "mock-s-2", exerciseId: "ex-1", weight: 205, reps: 6, rpe: 8, isPersonalRecord: false, completedAt: now),
+                            WorkoutSet(id: "mock-s-3", exerciseId: "ex-1", weight: 225, reps: 4, rpe: 9, isPersonalRecord: true, completedAt: now)
+                        ],
+                        notes: "Felt strong on the top set"
+                    )
+                ],
+                startTime: now.addingTimeInterval(-3_600),
+                endTime: now.addingTimeInterval(-300),
+                notes: "Solid push session"
+            ),
+            Workout(
+                id: "mock-workout-2",
+                userId: userId,
+                name: "Leg Day",
+                exercises: [
+                    WorkoutExercise(
+                        id: "mock-we-2",
+                        exercise: .squat,
+                        sets: [
+                            WorkoutSet(id: "mock-s-4", exerciseId: "ex-2", weight: 245, reps: 8, rpe: 7, isPersonalRecord: false, completedAt: now.addingTimeInterval(-day)),
+                            WorkoutSet(id: "mock-s-5", exerciseId: "ex-2", weight: 285, reps: 5, rpe: 8.5, isPersonalRecord: false, completedAt: now.addingTimeInterval(-day)),
+                            WorkoutSet(id: "mock-s-6", exerciseId: "ex-2", weight: 315, reps: 3, rpe: 9.5, isPersonalRecord: true, completedAt: now.addingTimeInterval(-day))
+                        ],
+                        notes: nil
+                    )
+                ],
+                startTime: now.addingTimeInterval(-day - 4_200),
+                endTime: now.addingTimeInterval(-day - 900),
+                notes: nil
+            ),
+            Workout(
+                id: "mock-workout-3",
+                userId: userId,
+                name: "Pull Day",
+                exercises: [
+                    WorkoutExercise(
+                        id: "mock-we-3",
+                        exercise: .deadlift,
+                        sets: [
+                            WorkoutSet(id: "mock-s-7", exerciseId: "ex-3", weight: 315, reps: 5, rpe: 8, isPersonalRecord: false, completedAt: now.addingTimeInterval(-3 * day)),
+                            WorkoutSet(id: "mock-s-8", exerciseId: "ex-3", weight: 365, reps: 3, rpe: 9, isPersonalRecord: false, completedAt: now.addingTimeInterval(-3 * day)),
+                            WorkoutSet(id: "mock-s-9", exerciseId: "ex-3", weight: 405, reps: 1, rpe: 10, isPersonalRecord: true, completedAt: now.addingTimeInterval(-3 * day))
+                        ],
+                        notes: "PR on the single"
+                    )
+                ],
+                startTime: now.addingTimeInterval(-3 * day - 3_900),
+                endTime: now.addingTimeInterval(-3 * day - 600),
+                notes: "Heavy pull day"
+            ),
+            Workout(
+                id: "mock-workout-4",
+                userId: userId,
+                name: "Upper Body",
+                exercises: [
+                    WorkoutExercise(
+                        id: "mock-we-4",
+                        exercise: .benchPress,
+                        sets: [
+                            WorkoutSet(id: "mock-s-10", exerciseId: "ex-1", weight: 165, reps: 10, rpe: 7, isPersonalRecord: false, completedAt: now.addingTimeInterval(-6 * day)),
+                            WorkoutSet(id: "mock-s-11", exerciseId: "ex-1", weight: 185, reps: 8, rpe: 8, isPersonalRecord: false, completedAt: now.addingTimeInterval(-6 * day))
+                        ],
+                        notes: nil
+                    )
+                ],
+                startTime: now.addingTimeInterval(-6 * day - 3_300),
+                endTime: now.addingTimeInterval(-6 * day - 600),
+                notes: nil
+            )
+        ]
+    }
 }

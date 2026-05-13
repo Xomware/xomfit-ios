@@ -245,3 +245,45 @@ extension WorkoutTemplate {
         ),
     ]
 }
+
+// MARK: - Debug Fixtures (#353)
+extension WorkoutTemplate {
+    /// Custom templates hydrated into `TemplateService` cache when the
+    /// `XOMFIT_AUTH_BYPASS=1` env var is set. DEBUG-only; lets agents launch
+    /// the app and screenshot the templates list / builder without real data.
+    static let mockFixtures: [WorkoutTemplate] = [
+        WorkoutTemplate(
+            id: "mock-tpl-1",
+            name: "Heavy Push",
+            description: "Mock push session — strength focus",
+            exercises: [
+                .init(id: "mock-te-1", exercise: ex("ex-bench-flat"), targetSets: 5, targetReps: "5", notes: "Top set RPE 9"),
+                .init(id: "mock-te-2", exercise: ex("ex-incline-db"), targetSets: 3, targetReps: "8-10", notes: nil),
+                .init(id: "mock-te-3", exercise: ex("ex-tricep-pushdown"), targetSets: 3, targetReps: "10-12", notes: nil)
+            ],
+            estimatedDuration: 55, category: .push, isCustom: true
+        ),
+        WorkoutTemplate(
+            id: "mock-tpl-2",
+            name: "Lower Volume",
+            description: "Mock lower body — hypertrophy focus",
+            exercises: [
+                .init(id: "mock-te-4", exercise: ex("ex-squat"), targetSets: 4, targetReps: "8-10", notes: nil),
+                .init(id: "mock-te-5", exercise: ex("ex-rdl"), targetSets: 3, targetReps: "10-12", notes: nil),
+                .init(id: "mock-te-6", exercise: ex("ex-leg-curl"), targetSets: 3, targetReps: "12-15", notes: nil)
+            ],
+            estimatedDuration: 50, category: .lowerBody, isCustom: true
+        ),
+        WorkoutTemplate(
+            id: "mock-tpl-3",
+            name: "Quick Pull",
+            description: "Mock 30-minute pull session",
+            exercises: [
+                .init(id: "mock-te-7", exercise: ex("ex-lat-pulldown"), targetSets: 3, targetReps: "8-12", notes: nil),
+                .init(id: "mock-te-8", exercise: ex("ex-cable-row"), targetSets: 3, targetReps: "10-12", notes: nil),
+                .init(id: "mock-te-9", exercise: ex("ex-barbell-curl"), targetSets: 3, targetReps: "10-12", notes: nil)
+            ],
+            estimatedDuration: 35, category: .pull, isCustom: true
+        )
+    ]
+}
