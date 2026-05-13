@@ -98,4 +98,19 @@ final class ProfileService {
             .eq("id", value: userId)
             .execute()
     }
+
+    /// Persist the APNs device token on the user's profile row (#369). Called
+    /// from `AppDelegate.application(_:didRegisterForRemoteNotificationsWithDeviceToken:)`
+    /// after `UNUserNotificationCenter` hands us back a device token. The
+    /// `push_tokens` upsert in AppDelegate still fires for multi-device support;
+    /// this writes the most-recent token to the user's primary profile row so
+    /// the backend can address a single canonical device per user.
+    func updateAPNSToken(_ token: String) async throws {
+        let userId = try await supabase.auth.session.user.id.uuidString.lowercased()
+        try await supabase
+            .from("profiles")
+            .update(["apns_device_token": token])
+            .eq("id", value: userId)
+            .execute()
+    }
 }
