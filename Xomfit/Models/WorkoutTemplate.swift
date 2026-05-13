@@ -18,6 +18,10 @@ struct WorkoutTemplate: Codable, Identifiable {
         /// Per-exercise rest override in seconds. nil = use the workout's global default.
         /// Optional + default keeps existing templates decodable as-is.
         var restSeconds: Int? = nil
+        /// When non-nil, this template exercise is part of a superset group.
+        /// Mirrors `WorkoutExercise.supersetGroupId` so the live workout inherits the
+        /// grouping. Optional + default keeps existing templates decodable as-is (#344).
+        var supersetGroupId: UUID? = nil
     }
 
     enum TemplateCategory: String, Codable, CaseIterable {

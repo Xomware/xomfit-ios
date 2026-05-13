@@ -96,4 +96,65 @@ final class WorkoutBuilderViewModel {
         category = template.category
         exercises = template.exercises
     }
+
+    // MARK: - Supersets (#344)
+
+    /// Toggle a superset between `index` and the exercise immediately after it.
+    /// - If `index` is already in a superset, the entire group is ungrouped.
+    /// - Otherwise `index` and `index + 1` get a fresh shared group id.
+    /// Mirrors `WorkoutLoggerViewModel.toggleSupersetWithNext` so builder and live
+    /// workout share semantics.
+    func toggleSupersetWithNext(at index: Int) {
+        guard exercises.indices.contains(index) else { return }
+
+        if let groupId = exercises[index].supersetGroupId {
+            // Already in a group — ungroup all members of that group.
+            for i in exercises.indices where exercises[i].supersetGroupId == groupId {
+                exercises[i].supersetGroupId = nil
+            }
+            return
+        }
+
+        let nextIndex = index + 1
+        guard exercises.indices.contains(nextIndex) else { return }
+        let newGroupId = UUID()
+        exercises[index].supersetGroupId = newGroupId
+        exercises[nextIndex].supersetGroupId = newGroupId
+    }
+
+    /// Indices of all template exercises in the same superset group as `index`.
+    /// Returns nil when `index` isn't part of a group.
+    func supersetMembers(forExercise index: Int) -> [Int]? {
+        guard exercises.indices.contains(index),
+              let groupId = exercises[index].supersetGroupId else { return nil }
+        return exercises.indices.filter { exercises[$0].supersetGroupId == groupId }
+    }
+
+    /// Letter label for the superset group `index` belongs to, in workout order
+    /// of appearance ("A", "B", "C", ...). Returns nil when the exercise isn't in a group.
+    func supersetLetter(forExercise index: Int) -> String? {
+        guard exercises.indices.contains(index),
+              let groupId = exercises[index].supersetGroupId else { return nil }
+        let alphabet = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
+                        "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
+        var seen: [UUID: Int] = [:]
+        var next = 0
+        for ex in exercises {
+            guard let gid = ex.supersetGroupId, seen[gid] == nil else { continue }
+            seen[gid] = next
+            next += 1
+        }
+        guard let pos = seen[groupId] else { return nil }
+        return alphabet[pos % alphabet.count]
+    }
+
+    /// Whether `index` can currently be grouped with `index + 1` (i.e. the next
+    /// exercise exists and isn't already in this exercise's group).
+    func canGroupWithNext(at index: Int) -> Bool {
+        guard exercises.indices.contains(index),
+              exercises.indices.contains(index + 1) else { return false }
+        let myGroup = exercises[index].supersetGroupId
+        let nextGroup = exercises[index + 1].supersetGroupId
+        return myGroup == nil || myGroup != nextGroup
+    }
 }

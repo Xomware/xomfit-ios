@@ -13,8 +13,46 @@ struct WorkoutFocusView: View {
     @State private var isRestTimerMinimized = false
     @AppStorage("restTimerSound") private var restTimerSound = false
 
+    /// Set pill index targeted by a long-press, used to drive the delete
+    /// confirmation dialog (#344 C). Distinct from `focusSetIndex` so the
+    /// long-press path doesn't fight the tap-to-focus path.
+    @State private var pendingDeleteSetIndex: Int?
+    @State private var showDeleteSetConfirm = false
+
     private var exercise: WorkoutExercise? { viewModel.focusExercise }
     private var currentSet: WorkoutSet? { viewModel.focusSet }
+
+    /// Position-aware superset badge ("A1", "A2", "B1", ...) for the focused
+    /// exercise. Returns nil when the focused exercise isn't part of a superset
+    /// group. Computed locally (instead of on the VM) per #344 constraints —
+    /// no logger VM internals are touched (#344 E2).
+    private var supersetBadge: String? {
+        let idx = viewModel.focusExerciseIndex
+        guard viewModel.exercises.indices.contains(idx),
+              let letter = viewModel.supersetLetter(forExercise: idx),
+              let members = viewModel.supersetMembers(forExercise: idx),
+              let pos = members.firstIndex(of: idx) else { return nil }
+        return "\(letter)\(pos + 1)"
+    }
+
+    /// Index of the most-recently-completed non-drop set in the focused exercise,
+    /// or nil if none has been completed yet. Used to gate the "+ drop set"
+    /// capsule (#344 D) AND to choose the insertion point when the user taps it.
+    private var lastCompletedNonDropSetIndex: Int? {
+        guard let exercise = viewModel.focusExercise else { return nil }
+        let candidates = exercise.sets.enumerated().filter { _, s in
+            s.completedAt != Date.distantPast && !s.isDropSet
+        }
+        guard !candidates.isEmpty else { return nil }
+        // Prefer the latest by `completedAt`; tie-break by index so we still get
+        // a deterministic answer if timestamps collide.
+        return candidates.max(by: { lhs, rhs in
+            if lhs.element.completedAt != rhs.element.completedAt {
+                return lhs.element.completedAt < rhs.element.completedAt
+            }
+            return lhs.offset < rhs.offset
+        })?.offset
+    }
 
     var body: some View {
         ZStack {
@@ -96,6 +134,31 @@ struct WorkoutFocusView: View {
                 viewModel.focusSetIndex = 0
             }
         }
+        // Long-press-to-delete confirmation (#344 C). Driven by `pendingDeleteSetIndex`
+        // so the focused set index can still drive tap-to-focus without interference.
+        .confirmationDialog(
+            "Delete this set?",
+            isPresented: $showDeleteSetConfirm,
+            titleVisibility: .visible
+        ) {
+            Button("Delete set", role: .destructive) {
+                guard let idx = pendingDeleteSetIndex else { return }
+                Haptics.warning()
+                let exIdx = viewModel.focusExerciseIndex
+                viewModel.removeSet(exerciseIndex: exIdx, setIndex: idx)
+                // Keep `focusSetIndex` in bounds after the deletion.
+                if viewModel.exercises.indices.contains(exIdx) {
+                    let total = viewModel.exercises[exIdx].sets.count
+                    viewModel.focusSetIndex = min(viewModel.focusSetIndex, max(total - 1, 0))
+                }
+                pendingDeleteSetIndex = nil
+            }
+            Button("Cancel", role: .cancel) {
+                pendingDeleteSetIndex = nil
+            }
+        } message: {
+            Text("Removes this set from the current exercise.")
+        }
         .onChange(of: viewModel.isRestTimerActive) { _, isActive in
             if isActive { isRestTimerMinimized = false }
         }
@@ -105,11 +168,26 @@ struct WorkoutFocusView: View {
 
     private func exerciseHeader(exercise: WorkoutExercise) -> some View {
         VStack(spacing: Theme.Spacing.tight) {
-            Text(exercise.exercise.name)
-                .font(.title2.weight(.bold))
-                .foregroundStyle(Theme.textPrimary)
-                .multilineTextAlignment(.center)
-                .accessibilityAddTraits(.isHeader)
+            HStack(spacing: Theme.Spacing.sm) {
+                // Superset rotation badge (#344 E2) — e.g. "A1", "A2" so the
+                // lifter can see which slot of a paired group is in focus.
+                if let badge = supersetBadge {
+                    Text(badge)
+                        .font(.caption.weight(.black))
+                        .foregroundStyle(.black)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, Theme.Spacing.tighter)
+                        .background(Theme.accent)
+                        .clipShape(.capsule)
+                        .accessibilityLabel("Superset \(badge)")
+                }
+
+                Text(exercise.exercise.name)
+                    .font(.title2.weight(.bold))
+                    .foregroundStyle(Theme.textPrimary)
+                    .multilineTextAlignment(.center)
+                    .accessibilityAddTraits(.isHeader)
+            }
 
             HStack(spacing: Theme.Spacing.tight) {
                 ForEach(exercise.exercise.muscleGroups.prefix(2), id: \.self) { mg in
@@ -142,7 +220,15 @@ struct WorkoutFocusView: View {
     // MARK: - Set Indicator
 
     private func setIndicator(exercise: WorkoutExercise) -> some View {
-        ScrollView(.horizontal, showsIndicators: false) {
+        // Drop-set capsule is now gated on "any non-drop set in this exercise
+        // has been completed" — not just the focused set (#344 D). This lets
+        // users add a drop set even when focus has already moved to a fresh
+        // incomplete set in the same exercise.
+        let dropParentIndex = lastCompletedNonDropSetIndex
+        let dropSetEnabled = dropParentIndex != nil
+        let canDelete = exercise.sets.count > 1
+
+        return ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: Theme.Spacing.sm) {
                 ForEach(Array(exercise.sets.enumerated()), id: \.element.id) { idx, set in
                     let isCompleted = set.completedAt != Date.distantPast
@@ -168,7 +254,19 @@ struct WorkoutFocusView: View {
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
+                    // Long-press to delete (#344 C). Guarded so the last
+                    // remaining set is never deletable — every exercise needs
+                    // at least one set in focus mode.
+                    .onLongPressGesture(minimumDuration: 0.5) {
+                        guard canDelete else { return }
+                        Haptics.selection()
+                        pendingDeleteSetIndex = idx
+                        showDeleteSetConfirm = true
+                    }
                     .accessibilityLabel("Set \(idx + 1)\(isCompleted ? ", completed" : "")\(isFocused ? ", current" : "")")
+                    .accessibilityHint(canDelete
+                        ? "Long press to delete"
+                        : "Add another set before this one can be deleted")
                 }
 
                 // + Set button — adds a new set to the current exercise without leaving focus mode
@@ -199,22 +297,22 @@ struct WorkoutFocusView: View {
                 .accessibilityLabel("Add set")
                 .accessibilityHint("Adds a new set to the current exercise")
 
-                // + drop set button — only when the focused set is completed AND
-                // is not itself already a drop set (chains stay tidy via SetRow path).
-                // Mirrors the SetRowView styling so the affordance feels familiar.
-                if let focused = viewModel.focusSet,
-                   focused.completedAt != Date.distantPast,
-                   !focused.isDropSet {
+                // + drop set capsule (#344 D) — visible whenever ANY non-drop
+                // set in this exercise is completed, not just the focused one.
+                // Tap inserts the drop set after the most-recently-completed
+                // non-drop set so the affordance stays useful even when focus
+                // has already advanced to a fresh set.
+                if dropSetEnabled, let parentIdx = dropParentIndex {
                     Button {
                         dismissKeyboard()
                         Haptics.light()
                         let exerciseIndex = viewModel.focusExerciseIndex
-                        let parentSetIndex = viewModel.focusSetIndex
-                        viewModel.addDropSet(exerciseIndex: exerciseIndex, parentSetIndex: parentSetIndex)
-                        // Drop set is inserted right after the parent — advance focus to it.
+                        viewModel.addDropSet(exerciseIndex: exerciseIndex, parentSetIndex: parentIdx)
+                        // Drop set is inserted right after the parent — point
+                        // focus at it so the user lands on the new set.
                         if viewModel.exercises.indices.contains(exerciseIndex),
-                           viewModel.exercises[exerciseIndex].sets.indices.contains(parentSetIndex + 1) {
-                            viewModel.focusSetIndex = parentSetIndex + 1
+                           viewModel.exercises[exerciseIndex].sets.indices.contains(parentIdx + 1) {
+                            viewModel.focusSetIndex = parentIdx + 1
                         }
                     } label: {
                         HStack(spacing: Theme.Spacing.tight) {
@@ -231,8 +329,8 @@ struct WorkoutFocusView: View {
                         .contentShape(.capsule)
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel("Add drop set after current set")
-                    .accessibilityHint("Inserts a drop set immediately after the current set with reduced weight")
+                    .accessibilityLabel("Add drop set after set \(parentIdx + 1)")
+                    .accessibilityHint("Inserts a drop set immediately after the most recently completed set with reduced weight")
                 }
             }
             .padding(.horizontal, Theme.Spacing.sm)

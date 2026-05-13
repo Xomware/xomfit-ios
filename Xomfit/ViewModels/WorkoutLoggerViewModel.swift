@@ -223,6 +223,8 @@ final class WorkoutLoggerViewModel {
             )
             we.selectedLaterality = templateExercise.exercise.defaultLaterality
             we.restSeconds = templateExercise.restSeconds
+            // Carry the template's superset grouping into the live workout (#344).
+            we.supersetGroupId = templateExercise.supersetGroupId
             builtExercises.append(we)
         }
         exercises = builtExercises

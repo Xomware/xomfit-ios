@@ -228,10 +228,14 @@ struct WorkoutBuilderView: View {
                     ForEach(Array(viewModel.exercises.enumerated()), id: \.element.id) { index, exercise in
                         BuilderExerciseRow(
                             exercise: exercise,
+                            supersetLetter: viewModel.supersetLetter(forExercise: index),
+                            isInSuperset: exercise.supersetGroupId != nil,
+                            canGroupWithNext: viewModel.canGroupWithNext(at: index),
                             onUpdateSets: { viewModel.updateSets(at: index, sets: $0) },
                             onUpdateReps: { viewModel.updateReps(at: index, reps: $0) },
                             onUpdateNotes: { viewModel.updateNotes(at: index, notes: $0) },
                             onUpdateRestSeconds: { viewModel.updateRestSeconds(at: index, seconds: $0) },
+                            onToggleSuperset: { viewModel.toggleSupersetWithNext(at: index) },
                             onDelete: { viewModel.removeExercise(at: index) }
                         )
                     }
@@ -346,10 +350,16 @@ struct WorkoutBuilderView: View {
 
 private struct BuilderExerciseRow: View {
     let exercise: WorkoutTemplate.TemplateExercise
+    /// Letter label ("A", "B", ...) for the superset group this row belongs to,
+    /// or nil when ungrouped (#344).
+    let supersetLetter: String?
+    let isInSuperset: Bool
+    let canGroupWithNext: Bool
     let onUpdateSets: (Int) -> Void
     let onUpdateReps: (String) -> Void
     let onUpdateNotes: (String?) -> Void
     let onUpdateRestSeconds: (Int?) -> Void
+    let onToggleSuperset: () -> Void
     let onDelete: () -> Void
 
     /// Pulled from the same UserDefaults key the rest of the app reads. Lets the
@@ -359,6 +369,10 @@ private struct BuilderExerciseRow: View {
     @State private var repsText: String = ""
     @State private var showNotesSheet = false
     @State private var showRestSheet = false
+    /// Drives the link-icon button's confirmation dialog (#344 E1). Mirrors the
+    /// pattern used by ActiveWorkoutView.ExerciseCard so builder + live workout
+    /// share UX for grouping/ungrouping.
+    @State private var showSupersetToggleConfirm = false
 
     private var defaultRestSeconds: Int {
         let v = defaultRestStored > 0 ? defaultRestStored : 90
@@ -367,12 +381,26 @@ private struct BuilderExerciseRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            // Header: name + delete
+            // Header: name + superset toggle + delete
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(exercise.exercise.name)
-                        .font(.subheadline.weight(.bold))
-                        .foregroundStyle(Theme.textPrimary)
+                    HStack(spacing: 6) {
+                        // Superset letter badge (#344 E1) — mirrors ActiveWorkoutView so
+                        // the user can see at a glance which exercises are paired.
+                        if let letter = supersetLetter {
+                            Text("Superset \(letter)")
+                                .font(.caption2.weight(.black))
+                                .foregroundStyle(.black)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, Theme.Spacing.tighter)
+                                .background(Theme.accent)
+                                .clipShape(.capsule)
+                                .accessibilityLabel("Superset \(letter)")
+                        }
+                        Text(exercise.exercise.name)
+                            .font(.subheadline.weight(.bold))
+                            .foregroundStyle(Theme.textPrimary)
+                    }
 
                     HStack(spacing: Theme.Spacing.tight) {
                         ForEach(exercise.exercise.muscleGroups.prefix(3), id: \.self) { mg in
@@ -388,6 +416,28 @@ private struct BuilderExerciseRow: View {
                 }
 
                 Spacer()
+
+                // Superset toggle (#344 E1) — visible affordance for grouping with the
+                // next exercise. Disabled when no group exists and no next exercise to
+                // pair with, so the layout stays stable across rows.
+                Button {
+                    Haptics.selection()
+                    showSupersetToggleConfirm = true
+                } label: {
+                    Image(systemName: isInSuperset ? "link.circle.fill" : "link")
+                        .font(Theme.fontSubheadline)
+                        .foregroundStyle(isInSuperset ? Theme.accent : Theme.textSecondary)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .disabled(!isInSuperset && !canGroupWithNext)
+                .accessibilityLabel(isInSuperset
+                    ? "Ungroup superset"
+                    : "Group with next exercise as superset")
+                .accessibilityHint(isInSuperset
+                    ? "Removes this exercise from its superset"
+                    : "Pairs this exercise with the next one for back-to-back sets")
 
                 Button(action: onDelete) {
                     Image(systemName: "trash")
@@ -487,6 +537,30 @@ private struct BuilderExerciseRow: View {
                 onSave: { onUpdateRestSeconds($0) }
             )
             .presentationDetents([.medium])
+        }
+        // Superset confirm — mirrors ActiveWorkoutView.ExerciseCard so builder
+        // and live workout share UX (#344 E1).
+        .confirmationDialog(
+            isInSuperset ? "Ungroup Superset?" : "Group with Next Exercise?",
+            isPresented: $showSupersetToggleConfirm,
+            titleVisibility: .visible
+        ) {
+            if isInSuperset {
+                Button("Ungroup Superset", role: .destructive) {
+                    Haptics.light()
+                    onToggleSuperset()
+                }
+            } else if canGroupWithNext {
+                Button("Group with Next Exercise") {
+                    Haptics.success()
+                    onToggleSuperset()
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text(isInSuperset
+                 ? "Removes \(exercise.exercise.name) from its superset."
+                 : "Pairs \(exercise.exercise.name) with the next exercise for back-to-back sets.")
         }
     }
 
