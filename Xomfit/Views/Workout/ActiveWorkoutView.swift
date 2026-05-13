@@ -37,6 +37,19 @@ struct ActiveWorkoutView: View {
     var body: some View {
         @Bindable var viewModel = viewModel
 
+        // Timed-circuit workouts (#370) use a dedicated runner UI — simpler
+        // exercise carousel + countdown ring, no per-set logging.
+        if viewModel.kind == .timedCircuit {
+            TimedCircuitView()
+        } else {
+            setsRepsBody
+        }
+    }
+
+    @ViewBuilder
+    private var setsRepsBody: some View {
+        @Bindable var viewModel = viewModel
+
         NavigationStack {
             ZStack {
                 Theme.background.ignoresSafeArea()

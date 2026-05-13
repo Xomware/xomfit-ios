@@ -191,12 +191,10 @@ struct AICoachView: View {
         guard
             let workoutSession,
             let userId = authService?.currentUser?.id.uuidString.lowercased(),
-            !userId.isEmpty,
-            let template = viewModel.buildTemplate(from: payload)
+            !userId.isEmpty
         else { return }
         Haptics.success()
-        workoutSession.startFromTemplate(template, userId: userId)
-        workoutSession.isPresented = true
+        viewModel.startWorkout(from: payload, on: workoutSession, userId: userId)
     }
 
     // MARK: - Error banner
