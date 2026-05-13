@@ -78,6 +78,12 @@ struct XomFitApp: App {
                     }
                     return
                 }
+                if url.scheme == "xomfit", url.host == "spotify-callback" {
+                    // Belt-and-suspenders: ASWebAuthenticationSession's completion handler
+                    // normally consumes this. Forward anyway in case the OS routes it here.
+                    SpotifyAuthService.shared.handleCallback(url: url)
+                    return
+                }
                 if url.scheme == "xomfit", url.host == "report" {
                     // `xomfit://report/<id>` — first path component is the id.
                     let id = url.pathComponents
