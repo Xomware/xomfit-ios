@@ -618,7 +618,6 @@ struct ActiveWorkoutView: View {
     private func finishWorkout() {
         guard !viewModel.isSaving else { return }
         guard let user = authService.currentUser else { return }
-        viewModel.isSaving = true
         let userId = user.id.uuidString.lowercased()
         let notes = workoutDescription.trimmingCharacters(in: .whitespacesAndNewlines)
 

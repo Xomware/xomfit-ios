@@ -93,7 +93,7 @@ final class MeasurementsViewModel {
         let series = byKind[kind] ?? []
         guard let latest = series.first else { return nil }
 
-        let cutoff = Calendar.current.date(byAdding: .day, value: -days, to: latest.recordedAt) ?? .distantPast
+        let cutoff = Calendar.current.date(byAdding: .day, value: -days, to: Date()) ?? .distantPast
         // Pick the oldest point at or after the cutoff (so a 30-day delta uses the
         // first reading inside the window, not the latest one).
         let baseline = series
