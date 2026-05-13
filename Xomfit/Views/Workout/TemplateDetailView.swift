@@ -294,8 +294,12 @@ struct TemplateDetailView: View {
                         index: index + 1,
                         exercise: exercise,
                         targetWeight: bindingForWeight(exerciseId: exercise.id),
+                        canMoveUp: index > 0,
+                        canMoveDown: index < draft.exercises.count - 1,
                         onUpdateSets: { newValue in updateSets(at: index, value: newValue) },
                         onUpdateReps: { newValue in updateReps(at: index, value: newValue) },
+                        onMoveUp: { moveExercise(at: index, direction: -1) },
+                        onMoveDown: { moveExercise(at: index, direction: 1) },
                         onDelete: { removeExercise(at: index) }
                     )
                 }
@@ -459,6 +463,19 @@ struct TemplateDetailView: View {
         guard draft.exercises.indices.contains(index) else { return }
         let removed = draft.exercises.remove(at: index)
         targetWeights.removeValue(forKey: removed.id)
+        markDirty()
+    }
+
+    /// Swap an exercise with the row above (`direction = -1`) or below (`direction = 1`).
+    /// No-ops cleanly at the boundaries so callers don't need their own guards.
+    private func moveExercise(at index: Int, direction: Int) {
+        let target = index + direction
+        guard draft.exercises.indices.contains(index),
+              draft.exercises.indices.contains(target) else { return }
+        Haptics.selection()
+        withAnimation(.xomConfident) {
+            draft.exercises.swapAt(index, target)
+        }
         markDirty()
     }
 
@@ -627,8 +644,12 @@ private struct EditableExerciseRow: View {
     let index: Int
     let exercise: WorkoutTemplate.TemplateExercise
     @Binding var targetWeight: Double
+    let canMoveUp: Bool
+    let canMoveDown: Bool
     let onUpdateSets: (Int) -> Void
     let onUpdateReps: (String) -> Void
+    let onMoveUp: () -> Void
+    let onMoveDown: () -> Void
     let onDelete: () -> Void
 
     @State private var repsText: String = ""
@@ -661,6 +682,38 @@ private struct EditableExerciseRow: View {
                 }
 
                 Spacer()
+
+                // Reorder buttons — mirror ActiveWorkoutView's ExerciseCard chevrons.
+                // Hidden at the boundaries (no up on first row, no down on last).
+                if canMoveUp {
+                    Button {
+                        onMoveUp()
+                    } label: {
+                        Image(systemName: "chevron.up")
+                            .font(.subheadline.weight(.bold))
+                            .foregroundStyle(Theme.textPrimary)
+                            .frame(width: 44, height: 44)
+                            .background(Theme.surface.opacity(0.5))
+                            .clipShape(Circle())
+                            .contentShape(Rectangle())
+                    }
+                    .accessibilityLabel("Move \(exercise.exercise.name) up")
+                }
+
+                if canMoveDown {
+                    Button {
+                        onMoveDown()
+                    } label: {
+                        Image(systemName: "chevron.down")
+                            .font(.subheadline.weight(.bold))
+                            .foregroundStyle(Theme.textPrimary)
+                            .frame(width: 44, height: 44)
+                            .background(Theme.surface.opacity(0.5))
+                            .clipShape(Circle())
+                            .contentShape(Rectangle())
+                    }
+                    .accessibilityLabel("Move \(exercise.exercise.name) down")
+                }
 
                 Button {
                     Haptics.selection()
