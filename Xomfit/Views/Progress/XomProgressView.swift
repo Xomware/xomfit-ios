@@ -10,30 +10,29 @@ struct XomProgressView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                Theme.background.ignoresSafeArea()
+        // Lives inside `MainTabView`'s NavigationStack (#372).
+        ZStack {
+            Theme.background.ignoresSafeArea()
 
-                if viewModel.isLoading {
-                    XomFitLoaderPulse()
-                } else if viewModel.totalWorkouts == 0 {
-                    emptyState
-                } else {
-                    contentView
-                }
+            if viewModel.isLoading {
+                XomFitLoaderPulse()
+            } else if viewModel.totalWorkouts == 0 {
+                emptyState
+            } else {
+                contentView
             }
-            .navigationTitle("Progress")
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    NavigationLink {
-                        LeaderboardView()
-                    } label: {
-                        Image(systemName: "trophy.fill")
-                            .foregroundStyle(Theme.textPrimary)
-                    }
-                    .accessibilityLabel("Leaderboard")
+        }
+        .navigationTitle("Progress")
+        .toolbarColorScheme(.dark, for: .navigationBar)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                NavigationLink {
+                    LeaderboardView()
+                } label: {
+                    Image(systemName: "trophy.fill")
+                        .foregroundStyle(Theme.textPrimary)
                 }
+                .accessibilityLabel("Leaderboard")
             }
         }
         .task {

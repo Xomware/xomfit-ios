@@ -46,101 +46,11 @@ struct WorkoutView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                Theme.background.ignoresSafeArea()
-
-                VStack(spacing: 0) {
-                    ScrollView {
-                        VStack(spacing: Theme.Spacing.sm) {
-                            // Start Workout CTA
-                            Button {
-                                Haptics.light()
-                                pendingWorkoutName = ""
-                                showNameEntry = true
-                            } label: {
-                                HStack(spacing: 10) {
-                                    Image(systemName: "play.fill")
-                                    Text("Start Workout")
-                                }
-                            }
-                            .buttonStyle(AccentButtonStyle())
-                            .padding(.horizontal, Theme.Spacing.md)
-                            .padding(.top, Theme.Spacing.md)
-                            .simultaneousGesture(
-                                LongPressGesture(minimumDuration: 0.6).onEnded { _ in
-                                    // Long-press resets the warmup preference so the prompt shows again.
-                                    Haptics.medium()
-                                    warmupOptIn = ""
-                                    pendingWorkoutName = ""
-                                    showNameEntry = true
-                                }
-                            )
-                            .accessibilityHint("Long press to reset warmup preference")
-
-                            // Build Workout + Log Past Workout (side-by-side)
-                            HStack(spacing: Theme.Spacing.sm) {
-                                Button {
-                                    Haptics.light()
-                                    showBuilder = true
-                                } label: {
-                                    HStack(spacing: Theme.Spacing.sm) {
-                                        Image(systemName: "hammer.fill")
-                                        Text("Build")
-                                    }
-                                }
-                                .buttonStyle(GhostButtonStyle())
-
-                                Button {
-                                    Haptics.light()
-                                    showLogPastWorkout = true
-                                } label: {
-                                    HStack(spacing: Theme.Spacing.sm) {
-                                        Image(systemName: "calendar.badge.clock")
-                                        Text("Log Past")
-                                    }
-                                }
-                                .buttonStyle(GhostButtonStyle())
-                                .accessibilityLabel("Log a past workout")
-                            }
-                            .padding(.horizontal, Theme.Spacing.md)
-
-                            // First workout guide for new users (#310).
-                            // Persist this card even after recents arrive — gate
-                            // only on whether the user has built/saved their own
-                            // template (myTemplates + savedTemplates), plus the
-                            // manual "Skip" escape hatch.
-                            if viewModel.myTemplates.isEmpty
-                                && viewModel.savedTemplates.isEmpty
-                                && !hasStartedFirstWorkout {
-                                firstWorkoutCard
-                            }
-
-                            // Category segmented nav + selected list (#338)
-                            WorkoutCategoryTabs(selection: $selectedCategory)
-                                .padding(.top, Theme.Spacing.sm)
-
-                            WorkoutCategoryListView(category: selectedCategory, viewModel: viewModel)
-                        }
-                    }
-                    // #339: lift bottom of scroll content above the floating tab
-                    // bar + resume bar so the last item isn't hidden under chrome.
-                    .safeAreaPadding(.bottom, Theme.Spacing.md)
-                }
-            }
-            .navigationTitle("Workout")
-            .navigationBarTitleDisplayMode(.large)
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .task {
-                await viewModel.load(userId: userId)
-            }
-            .onChange(of: workoutSession.isPresented) { _, isPresented in
-                if !isPresented {
-                    Task { await viewModel.load(userId: userId) }
-                }
-            }
-        }
-        .alert("Name Your Workout", isPresented: $showNameEntry) {
+        // Lives inside `MainTabView`'s NavigationStack (#372). Sheets and the
+        // warmup full-screen cover stay attached at the root of the view so
+        // they can re-present after the drawer closes.
+        workoutRoot
+            .alert("Name Your Workout", isPresented: $showNameEntry) {
             TextField("e.g. Push Day", text: $pendingWorkoutName)
             Button("Start") {
                 let name = pendingWorkoutName.isEmpty ? "Workout" : pendingWorkoutName
@@ -201,6 +111,103 @@ struct WorkoutView: View {
                     workoutSession.startFromTemplate(captured, userId: userId)
                     workoutSession.isPresented = true
                 }
+            }
+        }
+    }
+
+    // MARK: - Root
+
+    private var workoutRoot: some View {
+        ZStack {
+            Theme.background.ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                ScrollView {
+                    VStack(spacing: Theme.Spacing.sm) {
+                        // Start Workout CTA
+                        Button {
+                            Haptics.light()
+                            pendingWorkoutName = ""
+                            showNameEntry = true
+                        } label: {
+                            HStack(spacing: 10) {
+                                Image(systemName: "play.fill")
+                                Text("Start Workout")
+                            }
+                        }
+                        .buttonStyle(AccentButtonStyle())
+                        .padding(.horizontal, Theme.Spacing.md)
+                        .padding(.top, Theme.Spacing.md)
+                        .simultaneousGesture(
+                            LongPressGesture(minimumDuration: 0.6).onEnded { _ in
+                                // Long-press resets the warmup preference so the prompt shows again.
+                                Haptics.medium()
+                                warmupOptIn = ""
+                                pendingWorkoutName = ""
+                                showNameEntry = true
+                            }
+                        )
+                        .accessibilityHint("Long press to reset warmup preference")
+
+                        // Build Workout + Log Past Workout (side-by-side)
+                        HStack(spacing: Theme.Spacing.sm) {
+                            Button {
+                                Haptics.light()
+                                showBuilder = true
+                            } label: {
+                                HStack(spacing: Theme.Spacing.sm) {
+                                    Image(systemName: "hammer.fill")
+                                    Text("Build")
+                                }
+                            }
+                            .buttonStyle(GhostButtonStyle())
+
+                            Button {
+                                Haptics.light()
+                                showLogPastWorkout = true
+                            } label: {
+                                HStack(spacing: Theme.Spacing.sm) {
+                                    Image(systemName: "calendar.badge.clock")
+                                    Text("Log Past")
+                                }
+                            }
+                            .buttonStyle(GhostButtonStyle())
+                            .accessibilityLabel("Log a past workout")
+                        }
+                        .padding(.horizontal, Theme.Spacing.md)
+
+                        // First workout guide for new users (#310).
+                        // Persist this card even after recents arrive — gate
+                        // only on whether the user has built/saved their own
+                        // template (myTemplates + savedTemplates), plus the
+                        // manual "Skip" escape hatch.
+                        if viewModel.myTemplates.isEmpty
+                            && viewModel.savedTemplates.isEmpty
+                            && !hasStartedFirstWorkout {
+                            firstWorkoutCard
+                        }
+
+                        // Category segmented nav + selected list (#338)
+                        WorkoutCategoryTabs(selection: $selectedCategory)
+                            .padding(.top, Theme.Spacing.sm)
+
+                        WorkoutCategoryListView(category: selectedCategory, viewModel: viewModel)
+                    }
+                }
+                // #339: lift bottom of scroll content above the resume bar so
+                // the last item isn't hidden under chrome.
+                .safeAreaPadding(.bottom, Theme.Spacing.md)
+            }
+        }
+        .navigationTitle("Workout")
+        .navigationBarTitleDisplayMode(.large)
+        .toolbarColorScheme(.dark, for: .navigationBar)
+        .task {
+            await viewModel.load(userId: userId)
+        }
+        .onChange(of: workoutSession.isPresented) { _, isPresented in
+            if !isPresented {
+                Task { await viewModel.load(userId: userId) }
             }
         }
     }

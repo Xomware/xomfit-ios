@@ -40,109 +40,114 @@ struct FeedView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                Theme.background.ignoresSafeArea()
+        // Lives inside `MainTabView`'s NavigationStack (#372). The hamburger
+        // shell provides the title + drawer affordance; `.navigationTitle`
+        // is kept for back-button labels and any pushed detail views.
+        feedRoot
+    }
 
-                if viewModel.isLoading {
-                    feedSkeleton
-                } else if let error = viewModel.errorMessage {
-                    errorView(message: error)
-                } else if viewModel.feedItems.isEmpty {
-                    emptyState
-                } else {
-                    VStack(spacing: 0) {
-                        FeedFilterBar(
-                            selectedDateRange: $viewModel.dateRange,
-                            selectedMuscleGroups: $viewModel.selectedMuscleGroups
+    private var feedRoot: some View {
+        ZStack {
+            Theme.background.ignoresSafeArea()
+
+            if viewModel.isLoading {
+                feedSkeleton
+            } else if let error = viewModel.errorMessage {
+                errorView(message: error)
+            } else if viewModel.feedItems.isEmpty {
+                emptyState
+            } else {
+                VStack(spacing: 0) {
+                    FeedFilterBar(
+                        selectedDateRange: $viewModel.dateRange,
+                        selectedMuscleGroups: $viewModel.selectedMuscleGroups
+                    )
+
+                    if viewModel.isFiltered && visibleFeedItems.isEmpty {
+                        Spacer()
+                        XomEmptyState(
+                            icon: "line.3.horizontal.decrease",
+                            title: "No matching posts",
+                            subtitle: "Try adjusting your filters"
                         )
-
-                        if viewModel.isFiltered && visibleFeedItems.isEmpty {
-                            Spacer()
-                            XomEmptyState(
-                                icon: "line.3.horizontal.decrease",
-                                title: "No matching posts",
-                                subtitle: "Try adjusting your filters"
-                            )
-                            Spacer()
-                        } else {
-                            ZStack {
-                                feedList
-                                // #311: brief skeleton overlay while a refresh
-                                // or filter change is in flight so the list
-                                // doesn't pop without feedback.
-                                if viewModel.isRefreshing || viewModel.isFiltering {
-                                    feedSkeleton
-                                        .background(Theme.background)
-                                        .transition(.opacity)
-                                }
-                            }
-                            .animation(.easeInOut(duration: 0.2), value: viewModel.isRefreshing)
-                            .animation(.easeInOut(duration: 0.2), value: viewModel.isFiltering)
-                        }
-                    }
-                    // #311: trip the filtering flag whenever the date range or
-                    // muscle-group selection changes so the skeleton flashes.
-                    .onChange(of: viewModel.dateRange) { _, _ in
-                        Task { await viewModel.applyFilterChange() }
-                    }
-                    .onChange(of: viewModel.selectedMuscleGroups) { _, _ in
-                        Task { await viewModel.applyFilterChange() }
-                    }
-                }
-            }
-            .navigationTitle("Feed")
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    HStack(spacing: Theme.Spacing.md) {
-                        Button {
-                            showNotifications = true
-                        } label: {
-                            ZStack(alignment: .topTrailing) {
-                                Image(systemName: "bell")
-                                    .foregroundStyle(Theme.textPrimary)
-                                if NotificationService.shared.unreadCount > 0 {
-                                    Circle()
-                                        .fill(Theme.destructive)
-                                        .frame(width: Theme.Spacing.sm, height: Theme.Spacing.sm)
-                                        .offset(x: 3, y: -3)
-                                }
+                        Spacer()
+                    } else {
+                        ZStack {
+                            feedList
+                            // #311: brief skeleton overlay while a refresh
+                            // or filter change is in flight so the list
+                            // doesn't pop without feedback.
+                            if viewModel.isRefreshing || viewModel.isFiltering {
+                                feedSkeleton
+                                    .background(Theme.background)
+                                    .transition(.opacity)
                             }
                         }
-                        .accessibilityLabel(NotificationService.shared.unreadCount > 0
-                            ? "Notifications, \(NotificationService.shared.unreadCount) unread"
-                            : "Notifications")
-
-                        Button {
-                            showUserSearch = true
-                        } label: {
-                            Image(systemName: "magnifyingglass")
-                                .foregroundStyle(Theme.textPrimary)
-                        }
-                        .accessibilityLabel("Search users")
-
-                        NavigationLink {
-                            FriendsView()
-                                .hideTabBar()
-                        } label: {
-                            Image(systemName: "person.badge.plus")
-                                .foregroundStyle(Theme.textPrimary)
-                        }
-                        .accessibilityLabel("Friends and requests")
+                        .animation(.easeInOut(duration: 0.2), value: viewModel.isRefreshing)
+                        .animation(.easeInOut(duration: 0.2), value: viewModel.isFiltering)
                     }
                 }
+                // #311: trip the filtering flag whenever the date range or
+                // muscle-group selection changes so the skeleton flashes.
+                .onChange(of: viewModel.dateRange) { _, _ in
+                    Task { await viewModel.applyFilterChange() }
+                }
+                .onChange(of: viewModel.selectedMuscleGroups) { _, _ in
+                    Task { await viewModel.applyFilterChange() }
+                }
             }
-            .navigationDestination(item: $selectedFeedItem) { item in
-                FeedDetailView(item: item, userId: userId)
-                    .hideTabBar()
+        }
+        .navigationTitle("Feed")
+        .toolbarColorScheme(.dark, for: .navigationBar)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                HStack(spacing: Theme.Spacing.md) {
+                    Button {
+                        showNotifications = true
+                    } label: {
+                        ZStack(alignment: .topTrailing) {
+                            Image(systemName: "bell")
+                                .foregroundStyle(Theme.textPrimary)
+                            if NotificationService.shared.unreadCount > 0 {
+                                Circle()
+                                    .fill(Theme.destructive)
+                                    .frame(width: Theme.Spacing.sm, height: Theme.Spacing.sm)
+                                    .offset(x: 3, y: -3)
+                            }
+                        }
+                    }
+                    .accessibilityLabel(NotificationService.shared.unreadCount > 0
+                        ? "Notifications, \(NotificationService.shared.unreadCount) unread"
+                        : "Notifications")
+
+                    Button {
+                        showUserSearch = true
+                    } label: {
+                        Image(systemName: "magnifyingglass")
+                            .foregroundStyle(Theme.textPrimary)
+                    }
+                    .accessibilityLabel("Search users")
+
+                    NavigationLink {
+                        FriendsView()
+                            .hideTabBar()
+                    } label: {
+                        Image(systemName: "person.badge.plus")
+                            .foregroundStyle(Theme.textPrimary)
+                    }
+                    .accessibilityLabel("Friends and requests")
+                }
             }
-            .sheet(isPresented: $showUserSearch) {
-                UserSearchView()
-            }
-            .sheet(isPresented: $showNotifications) {
-                NotificationInboxView()
-            }
+        }
+        .navigationDestination(item: $selectedFeedItem) { item in
+            FeedDetailView(item: item, userId: userId)
+                .hideTabBar()
+        }
+        .sheet(isPresented: $showUserSearch) {
+            UserSearchView()
+        }
+        .sheet(isPresented: $showNotifications) {
+            NotificationInboxView()
         }
         .onAppear {
             guard !userId.isEmpty else { return }

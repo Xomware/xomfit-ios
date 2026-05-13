@@ -18,13 +18,12 @@ struct ProfileView: View {
     }
 
     var body: some View {
-        // Tab root (own profile) gets its own NavigationStack.
-        // Pushed profiles (userId != nil) are already inside a NavigationStack.
+        // Both own-profile (drawer destination) and pushed profiles live
+        // inside `MainTabView`'s NavigationStack (#372). The own-profile case
+        // attaches the toolbar with the edit / settings / AI Coach links.
         if userId == nil {
-            NavigationStack {
-                profileContent
-                    .toolbar { ownProfileToolbar }
-            }
+            profileContent
+                .toolbar { ownProfileToolbar }
         } else {
             profileContent
         }
