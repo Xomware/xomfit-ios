@@ -618,7 +618,6 @@ struct ActiveWorkoutView: View {
     private func finishWorkout() {
         guard !viewModel.isSaving else { return }
         guard let user = authService.currentUser else { return }
-        viewModel.isSaving = true
         let userId = user.id.uuidString.lowercased()
         let notes = workoutDescription.trimmingCharacters(in: .whitespacesAndNewlines)
 
@@ -1388,8 +1387,12 @@ private struct FinishWorkoutSheet: View {
                                                     .clipShape(.rect(cornerRadius: 8))
 
                                                 Button {
+                                                    // Both arrays are kept in lockstep by the
+                                                    // paired loader in `.onChange(of: selectedPhotos)`,
+                                                    // so we remove from each at the same index (#359 bug 7).
+                                                    guard photoImages.indices.contains(index) else { return }
                                                     photoImages.remove(at: index)
-                                                    if index < selectedPhotos.count {
+                                                    if selectedPhotos.indices.contains(index) {
                                                         selectedPhotos.remove(at: index)
                                                     }
                                                 } label: {
@@ -1432,7 +1435,17 @@ private struct FinishWorkoutSheet: View {
                             }
                             .onChange(of: selectedPhotos) { _, newItems in
                                 Task {
-                                    photoImages = await PhotoService.shared.loadImages(from: newItems)
+                                    // Use the paired loader so `selectedPhotos` and
+                                    // `photoImages` stay in lockstep even when some
+                                    // PhotosPickerItems fail to decode. Without this,
+                                    // index-based removal targets the wrong photo (#359 bug 7).
+                                    let pairs = await PhotoService.shared.loadPaired(from: newItems)
+                                    let loadedItems = pairs.map { $0.0 }
+                                    let loadedImages = pairs.map { $0.1 }
+                                    if loadedItems != selectedPhotos {
+                                        selectedPhotos = loadedItems
+                                    }
+                                    photoImages = loadedImages
                                 }
                             }
                         }

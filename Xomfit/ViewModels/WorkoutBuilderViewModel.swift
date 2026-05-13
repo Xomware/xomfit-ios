@@ -17,7 +17,7 @@ final class WorkoutBuilderViewModel {
     var isValid: Bool {
         let trimmed = name.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty else { return false }
-        guard name.count <= Self.nameMaxLength else { return false }
+        guard trimmed.count <= Self.nameMaxLength else { return false }
         return !exercises.isEmpty
     }
 

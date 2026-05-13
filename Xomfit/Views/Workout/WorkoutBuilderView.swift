@@ -149,8 +149,8 @@ struct WorkoutBuilderView: View {
         if trimmedName.isEmpty {
             return "Name is required"
         }
-        if viewModel.name.count > Self.nameMaxLength {
-            return "Name is too long (\(viewModel.name.count)/\(Self.nameMaxLength))"
+        if trimmedName.count > Self.nameMaxLength {
+            return "Name is too long (\(trimmedName.count)/\(Self.nameMaxLength))"
         }
         return nil
     }
