@@ -26,18 +26,14 @@ struct ProfileStatsView: View {
     /// When nil, the empty-state card hides its action button.
     var onStartWorkout: (() -> Void)? = nil
 
-    @State private var heatmapFilter: HeatmapTimeFilter = .week
-
     /// Display unit for weight values. Stored values stay lbs.
     @AppStorage("weightUnit") private var weightUnitRaw: String = WeightUnit.lbs.rawValue
     private var weightUnit: WeightUnit { WeightUnit(rawValue: weightUnitRaw) ?? .lbs }
 
-    private var activeMuscleGroupSets: [String: Int] {
-        switch heatmapFilter {
-        case .week: return muscleGroupSetsThisWeek
-        case .month: return muscleGroupSetsThisMonth
-        }
-    }
+    // #346: The legacy week/month muscle-set rollups (`muscleGroupSetsThisWeek`,
+    // `muscleGroupSetsThisMonth`) are kept as inputs for binary compatibility
+    // with `ProfileView`, but the new `FullBodyHeatmapView` derives intensity
+    // directly from `workouts` so these are no longer read here.
 
     var body: some View {
         VStack(spacing: Theme.Spacing.sm) {
@@ -251,29 +247,13 @@ struct ProfileStatsView: View {
     }
 
     // MARK: - Heatmap Section
+    //
+    // #346: replaced the grid `BodyHeatmapView` with the full-body anatomy
+    // silhouette. The new view owns its own range picker + front/back toggle,
+    // so we drop the local `heatmapFilter` UI here and pass raw workouts in.
 
     private var heatmapSection: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            HStack {
-                Text("Muscle Heatmap")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Theme.textSecondary)
-
-                Spacer()
-
-                Picker("Time Range", selection: $heatmapFilter) {
-                    ForEach(HeatmapTimeFilter.allCases) { filter in
-                        Text(filter.rawValue).tag(filter)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .frame(width: 140)
-            }
-            .padding(.horizontal, Theme.Spacing.sm)
-
-            BodyHeatmapView(muscleGroupSets: activeMuscleGroupSets)
-        }
-        .cardStyle()
+        FullBodyHeatmapView(workouts: workouts)
     }
 
     // MARK: - PR Section

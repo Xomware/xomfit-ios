@@ -23,6 +23,9 @@ struct ExerciseDetailSheet: View {
                         if !exercise.tips.isEmpty {
                             tipsSection
                         }
+                        // #346: Mini silhouette highlighting only the muscles
+                        // this exercise hits. Non-tappable — just a visual aid.
+                        miniSilhouetteSection
                         if exercise.supportsUnilateral {
                             unilateralNote
                         }
@@ -224,6 +227,51 @@ struct ExerciseDetailSheet: View {
         .padding(Theme.Spacing.md)
         .background(Theme.surface)
         .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+    }
+
+    // MARK: - Mini Silhouette (#346)
+
+    /// 200x300pt silhouette highlighting only this exercise's muscles. Shows
+    /// front + back side-by-side so all primary muscles are visible without a
+    /// toggle. Non-interactive — `onMuscleTap: nil`.
+    private var miniSilhouetteSection: some View {
+        let highlightedFill: [MuscleGroup: Color] = Dictionary(
+            uniqueKeysWithValues: exercise.muscleGroups.map { ($0, Theme.accent.opacity(0.85)) }
+        )
+
+        return VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            Text("Muscles Worked")
+                .font(Theme.fontHeadline)
+                .foregroundStyle(Theme.textPrimary)
+
+            HStack(spacing: Theme.Spacing.md) {
+                miniBody(side: .front, fill: highlightedFill)
+                miniBody(side: .back, fill: highlightedFill)
+            }
+            .frame(maxWidth: .infinity)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(
+                "Muscles worked diagram. Highlights: \(exercise.muscleGroups.map(\.displayName).joined(separator: ", "))"
+            )
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(Theme.Spacing.md)
+        .background(Theme.surface)
+        .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+    }
+
+    private func miniBody(side: BodySide, fill: [MuscleGroup: Color]) -> some View {
+        VStack(spacing: Theme.Spacing.tighter) {
+            BodySilhouetteView(
+                side: side,
+                fillByMuscle: fill,
+                onMuscleTap: nil
+            )
+            .frame(width: 100, height: 200)
+            Text(side.label)
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(Theme.textSecondary)
+        }
     }
 
     private var unilateralNote: some View {
