@@ -1,5 +1,20 @@
 import Foundation
 
+/// How a workout is performed. Drives which runner UI is presented when the
+/// session is active and how progress is measured.
+///
+/// - `setsReps`: classic strength/lifting flow (default, backward-compatible).
+/// - `timedCircuit`: rotate through exercises for a fixed total duration. No
+///   per-set reps/weight tracking — just an exercise carousel + countdown.
+/// - `amrap`: as-many-rounds-as-possible (issue #370 follow-up).
+/// - `emom`: every-minute-on-the-minute (issue #370 follow-up).
+enum WorkoutKind: String, Codable, CaseIterable {
+    case setsReps
+    case timedCircuit
+    case amrap
+    case emom
+}
+
 struct Workout: Codable, Identifiable {
     let id: String
     var userId: String
@@ -14,15 +29,25 @@ struct Workout: Codable, Identifiable {
     /// Apple Music only — see `WorkoutTrack` for the iOS platform restriction.
     /// Defaulted so older cached / decoded payloads stay backward-compatible.
     var tracks: [WorkoutTrack] = []
+    /// Workout format. Defaults to `.setsReps` so existing cached / encoded
+    /// workouts continue to decode unchanged (#370).
+    var kind: WorkoutKind = .setsReps
+    /// Target duration in whole minutes. Used by `.timedCircuit`, `.amrap`,
+    /// and `.emom`. Nil for `.setsReps`.
+    var durationGoalMinutes: Int? = nil
+    /// Target round count. Used by `.amrap` (best-effort cap) and `.emom`
+    /// (work intervals). Nil for `.setsReps` and `.timedCircuit`.
+    var roundsGoal: Int? = nil
 
     var startDate: Date { startTime }
 
     // MARK: - Codable
     //
-    // Custom decoder so older cached `Workout` payloads (no `tracks` key) keep decoding.
-    // Encoding stays synthesized.
+    // Custom decoder so older cached `Workout` payloads (no `tracks` / `kind` keys)
+    // keep decoding. Encoding stays synthesized.
     enum CodingKeys: String, CodingKey {
         case id, userId, name, exercises, startTime, endTime, notes, location, rating, tracks
+        case kind, durationGoalMinutes, roundsGoal
     }
 
     init(
@@ -35,7 +60,10 @@ struct Workout: Codable, Identifiable {
         notes: String? = nil,
         location: String? = nil,
         rating: Int? = nil,
-        tracks: [WorkoutTrack] = []
+        tracks: [WorkoutTrack] = [],
+        kind: WorkoutKind = .setsReps,
+        durationGoalMinutes: Int? = nil,
+        roundsGoal: Int? = nil
     ) {
         self.id = id
         self.userId = userId
@@ -47,6 +75,9 @@ struct Workout: Codable, Identifiable {
         self.location = location
         self.rating = rating
         self.tracks = tracks
+        self.kind = kind
+        self.durationGoalMinutes = durationGoalMinutes
+        self.roundsGoal = roundsGoal
     }
 
     init(from decoder: Decoder) throws {
@@ -61,6 +92,9 @@ struct Workout: Codable, Identifiable {
         location = try container.decodeIfPresent(String.self, forKey: .location)
         rating = try container.decodeIfPresent(Int.self, forKey: .rating)
         tracks = try container.decodeIfPresent([WorkoutTrack].self, forKey: .tracks) ?? []
+        kind = try container.decodeIfPresent(WorkoutKind.self, forKey: .kind) ?? .setsReps
+        durationGoalMinutes = try container.decodeIfPresent(Int.self, forKey: .durationGoalMinutes)
+        roundsGoal = try container.decodeIfPresent(Int.self, forKey: .roundsGoal)
     }
 
     var duration: TimeInterval {

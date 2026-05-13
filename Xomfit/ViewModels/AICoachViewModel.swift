@@ -26,6 +26,7 @@ final class AICoachViewModel {
     /// Suggested prompts shown when the conversation is empty.
     let suggestionChips: [String] = [
         "Build me today's workout",
+        "Build me a 10-minute ab circuit",
         "Suggest a 4-day split",
         "Help me hit a 225 bench"
     ]
@@ -224,6 +225,53 @@ final class AICoachViewModel {
         }
         TemplateService.shared.saveCustomTemplate(template)
         return template
+    }
+
+    /// Resolves the payload's exercises against `ExerciseDatabase`, dropping
+    /// unknown ids. Used by the timed-circuit start path which sidesteps
+    /// `WorkoutTemplate` (no sets/reps to project).
+    func resolvedExercises(from payload: WorkoutBuildPayload) -> [Exercise] {
+        payload.exercises.compactMap { ExerciseDatabase.byId[$0.exerciseId] }
+    }
+
+    /// Start the payload as a live workout on the provided `WorkoutLoggerViewModel`.
+    /// Branches on `payload.kind`:
+    /// - `.timedCircuit`: routes into `startTimedCircuit(...)` with the payload's
+    ///   `durationMinutes` (defaulting to 10 when unspecified).
+    /// - everything else (including `.amrap` / `.emom` for v1): falls back to
+    ///   the existing template-based sets/reps flow.
+    /// Returns `true` when the workout started successfully.
+    @discardableResult
+    func startWorkout(
+        from payload: WorkoutBuildPayload,
+        on session: WorkoutLoggerViewModel,
+        userId: String
+    ) -> Bool {
+        switch payload.kind {
+        case .timedCircuit:
+            let resolved = resolvedExercises(from: payload)
+            guard !resolved.isEmpty else {
+                errorMessage = "Couldn't start — none of the suggested exercises matched the catalog."
+                return false
+            }
+            let minutes = payload.durationMinutes ?? payload.estimatedDurationMinutes ?? 10
+            session.startTimedCircuit(
+                name: payload.name,
+                userId: userId,
+                exercises: resolved,
+                durationMinutes: minutes
+            )
+            session.isPresented = true
+            return true
+        case .setsReps, .amrap, .emom:
+            guard let template = buildTemplate(from: payload) else {
+                errorMessage = "Couldn't start — none of the suggested exercises matched the catalog."
+                return false
+            }
+            session.startFromTemplate(template, userId: userId)
+            session.isPresented = true
+            return true
+        }
     }
 
     // MARK: - Private (streaming)

@@ -97,6 +97,26 @@ final class WorkoutLoggerViewModel {
     var focusExerciseIndex: Int = 0
     var focusSetIndex: Int = 0
 
+    // MARK: - Workout kind (#370)
+    /// Format of the in-progress workout. Drives which runner UI is rendered
+    /// (`ActiveWorkoutView` vs `TimedCircuitView`).
+    var kind: WorkoutKind = .setsReps
+    /// Goal duration in whole minutes for `.timedCircuit` / `.amrap` / `.emom`.
+    var durationGoalMinutes: Int? = nil
+    /// Goal round count for `.amrap` / `.emom`.
+    var roundsGoal: Int? = nil
+
+    /// Circuit rotation: which exercise the runner is currently showing.
+    /// Wraps modulo `exercises.count`.
+    var circuitExerciseIndex: Int = 0
+    /// Circuit rotation: how many full rotations through `exercises` the user
+    /// has completed. Increments when the index wraps past the last exercise.
+    var circuitRound: Int = 0
+    /// Round-by-round checkmarks keyed by exercise index. Each entry is the
+    /// set of rounds (0-indexed) the user marked complete for that exercise.
+    /// Used by `TimedCircuitView` to render per-round check pips.
+    var circuitCompletedRounds: [Int: Set<Int>] = [:]
+
     // Live Activity
     private var liveActivity: Activity<XomfitWidgetAttributes>?
     private var liveActivityUpdateCounter = 0
@@ -158,6 +178,12 @@ final class WorkoutLoggerViewModel {
         isPaused = false
         pausedAt = nil
         totalPausedDuration = 0
+        kind = .setsReps
+        durationGoalMinutes = nil
+        roundsGoal = nil
+        circuitExerciseIndex = 0
+        circuitRound = 0
+        circuitCompletedRounds = [:]
         skipRestTimer()
         startLiveActivity()
 
@@ -190,6 +216,12 @@ final class WorkoutLoggerViewModel {
         totalPausedDuration = 0
         location = ""
         rating = 0
+        kind = .setsReps
+        durationGoalMinutes = nil
+        roundsGoal = nil
+        circuitExerciseIndex = 0
+        circuitRound = 0
+        circuitCompletedRounds = [:]
         skipRestTimer()
 
         // Drop any captured Now Playing tracks — discarding the workout discards the soundtrack.
@@ -233,6 +265,114 @@ final class WorkoutLoggerViewModel {
         }
         exercises = builtExercises
         updateLiveActivity()
+    }
+
+    // MARK: - Timed Circuit (#370)
+
+    /// Start a timed-circuit workout: a rotation through `exercises` for
+    /// `durationMinutes` total. No per-set reps/weight tracking — the runner
+    /// (`TimedCircuitView`) cycles exercises and marks round-by-round completion.
+    ///
+    /// Each exercise gets a single placeholder set so the saved workout still
+    /// renders in history. Sets are marked complete on finish based on
+    /// `circuitCompletedRounds`.
+    func startTimedCircuit(
+        name: String,
+        userId: String,
+        exercises: [Exercise],
+        durationMinutes: Int
+    ) {
+        startWorkout(name: name, userId: userId)
+        kind = .timedCircuit
+        durationGoalMinutes = max(1, durationMinutes)
+
+        // Seed one placeholder set per exercise so the saved Workout has rows.
+        var built: [WorkoutExercise] = []
+        for ex in exercises {
+            let placeholderSet = WorkoutSet(
+                id: UUID().uuidString,
+                exerciseId: ex.id,
+                weight: 0,
+                reps: 0,
+                rpe: nil,
+                isPersonalRecord: false,
+                completedAt: Date.distantPast
+            )
+            var we = WorkoutExercise(
+                id: UUID().uuidString,
+                exercise: ex,
+                sets: [placeholderSet],
+                notes: nil
+            )
+            we.selectedLaterality = ex.defaultLaterality
+            built.append(we)
+        }
+        self.exercises = built
+        circuitExerciseIndex = 0
+        circuitRound = 0
+        circuitCompletedRounds = [:]
+        updateLiveActivity()
+    }
+
+    /// Total elapsed for the active circuit, clamped at the goal duration.
+    var circuitElapsedSeconds: Int {
+        Int(duration)
+    }
+
+    /// Whole seconds remaining toward `durationGoalMinutes`. Floors at 0.
+    var circuitRemainingSeconds: Int {
+        guard let mins = durationGoalMinutes else { return 0 }
+        let total = mins * 60
+        return max(0, total - circuitElapsedSeconds)
+    }
+
+    /// Fraction of the circuit completed (0...1). Returns 0 when no goal is set.
+    var circuitProgress: Double {
+        guard let mins = durationGoalMinutes, mins > 0 else { return 0 }
+        let total = Double(mins * 60)
+        let elapsed = min(Double(circuitElapsedSeconds), total)
+        return total > 0 ? elapsed / total : 0
+    }
+
+    /// True when the countdown has reached zero.
+    var circuitTimeUp: Bool {
+        circuitRemainingSeconds == 0 && durationGoalMinutes != nil
+    }
+
+    /// The exercise the circuit runner is currently showing, if any.
+    var currentCircuitExercise: WorkoutExercise? {
+        guard exercises.indices.contains(circuitExerciseIndex) else { return nil }
+        return exercises[circuitExerciseIndex]
+    }
+
+    /// Advance to the next exercise in the rotation. Wrapping past the last
+    /// exercise increments the round counter.
+    func advanceCircuitExercise() {
+        guard !exercises.isEmpty else { return }
+        let next = circuitExerciseIndex + 1
+        if next >= exercises.count {
+            circuitExerciseIndex = 0
+            circuitRound += 1
+        } else {
+            circuitExerciseIndex = next
+        }
+    }
+
+    /// Toggle a round checkmark for the current circuit exercise.
+    func toggleCurrentCircuitRoundComplete() {
+        guard exercises.indices.contains(circuitExerciseIndex) else { return }
+        var marks = circuitCompletedRounds[circuitExerciseIndex] ?? []
+        if marks.contains(circuitRound) {
+            marks.remove(circuitRound)
+        } else {
+            marks.insert(circuitRound)
+        }
+        circuitCompletedRounds[circuitExerciseIndex] = marks
+    }
+
+    /// True when the current exercise has its current round marked complete.
+    var currentCircuitRoundIsComplete: Bool {
+        circuitCompletedRounds[circuitExerciseIndex]?.contains(circuitRound) ?? false
     }
 
     // MARK: - Exercise Management
@@ -943,24 +1083,58 @@ final class WorkoutLoggerViewModel {
         isSaving = true
         errorMessage = nil
 
-        // Only keep completed sets (completedAt != distantPast) for the saved workout,
-        // but keep all exercises that have at least one set
-        let completedExercises: [WorkoutExercise] = exercises.compactMap { ex in
-            let doneSets = ex.sets.filter { $0.completedAt != Date.distantPast }
-            guard !doneSets.isEmpty else { return nil }
-            var copy = WorkoutExercise(
-                id: ex.id,
-                exercise: ex.exercise,
-                sets: doneSets,
-                notes: ex.notes,
-                selectedGrip: ex.selectedGrip,
-                selectedAttachment: ex.selectedAttachment,
-                selectedPosition: ex.selectedPosition,
-                selectedLaterality: ex.selectedLaterality
-            )
-            copy.supersetGroupId = ex.supersetGroupId
-            copy.restSeconds = ex.restSeconds
-            return copy
+        // For sets/reps workouts: keep only completed sets per exercise.
+        // For timed-circuit workouts: synthesize one "completed" set per round the
+        // user checked off, so the saved Workout reflects what they actually did.
+        let completedExercises: [WorkoutExercise]
+        if kind == .timedCircuit {
+            completedExercises = exercises.enumerated().compactMap { idx, ex in
+                let rounds = circuitCompletedRounds[idx] ?? []
+                guard !rounds.isEmpty else { return nil }
+                let now = Date()
+                let circuitSets: [WorkoutSet] = rounds.sorted().map { _ in
+                    WorkoutSet(
+                        id: UUID().uuidString,
+                        exerciseId: ex.exercise.id,
+                        weight: 0,
+                        reps: 0,
+                        rpe: nil,
+                        isPersonalRecord: false,
+                        completedAt: now
+                    )
+                }
+                var copy = WorkoutExercise(
+                    id: ex.id,
+                    exercise: ex.exercise,
+                    sets: circuitSets,
+                    notes: ex.notes,
+                    selectedGrip: ex.selectedGrip,
+                    selectedAttachment: ex.selectedAttachment,
+                    selectedPosition: ex.selectedPosition,
+                    selectedLaterality: ex.selectedLaterality
+                )
+                copy.supersetGroupId = ex.supersetGroupId
+                copy.restSeconds = ex.restSeconds
+                return copy
+            }
+        } else {
+            completedExercises = exercises.compactMap { ex in
+                let doneSets = ex.sets.filter { $0.completedAt != Date.distantPast }
+                guard !doneSets.isEmpty else { return nil }
+                var copy = WorkoutExercise(
+                    id: ex.id,
+                    exercise: ex.exercise,
+                    sets: doneSets,
+                    notes: ex.notes,
+                    selectedGrip: ex.selectedGrip,
+                    selectedAttachment: ex.selectedAttachment,
+                    selectedPosition: ex.selectedPosition,
+                    selectedLaterality: ex.selectedLaterality
+                )
+                copy.supersetGroupId = ex.supersetGroupId
+                copy.restSeconds = ex.restSeconds
+                return copy
+            }
         }
 
         let trimmedNotes = notes?.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -985,7 +1159,10 @@ final class WorkoutLoggerViewModel {
             notes: trimmedNotes?.isEmpty == false ? trimmedNotes : nil,
             location: trimmedLocation.isEmpty ? nil : trimmedLocation,
             rating: rating > 0 ? rating : nil,
-            tracks: capturedTracks
+            tracks: capturedTracks,
+            kind: kind,
+            durationGoalMinutes: durationGoalMinutes,
+            roundsGoal: roundsGoal
         )
 
         do {

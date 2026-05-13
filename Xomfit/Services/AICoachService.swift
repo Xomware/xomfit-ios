@@ -74,6 +74,15 @@ final class AICoachService {
     `build_workout` tool with concrete exercises so the app can render a \
     Save / Start card under your reply. Only use exerciseIds present in the \
     provided exercise catalog.
+
+    The `kind` field controls how the app runs the workout:
+      - "setsReps" (default): classic strength training. Provide sets + targetReps per exercise.
+      - "timedCircuit": rotate through exercises for a total `durationMinutes`. Useful for \
+        ab circuits, conditioning, or any "do X for N minutes" request. Sets/reps are ignored — \
+        send `sets: 1, targetReps: 0` for each exercise.
+      - "amrap": as many rounds as possible in `durationMinutes`. Optionally cap with `rounds`.
+      - "emom": every minute on the minute for `rounds` rounds.
+    Pick the kind that best matches the user's intent. When in doubt, use "setsReps".
     """
 
     // MARK: Init
@@ -349,12 +358,30 @@ extension AICoachService {
     /// catalog injected into the system prompt.
     static let buildWorkoutTool: AnthropicTool = AnthropicTool(
         name: "build_workout",
-        description: "Create a workout plan with exercises and target sets/reps/weight. Return when the user asks for a workout, plan, or routine.",
+        description: "Create a workout plan with exercises. Return when the user asks for a workout, plan, routine, or timed circuit.",
         inputSchema: .object([
             "type": .string("object"),
             "properties": .object([
                 "name": .object(["type": .string("string")]),
                 "estimatedDurationMinutes": .object(["type": .string("integer")]),
+                "kind": .object([
+                    "type": .string("string"),
+                    "enum": .array([
+                        .string("setsReps"),
+                        .string("timedCircuit"),
+                        .string("amrap"),
+                        .string("emom")
+                    ]),
+                    "description": .string("Workout format. Defaults to setsReps. Use timedCircuit for 'do X for N minutes' style ab circuits and conditioning.")
+                ]),
+                "durationMinutes": .object([
+                    "type": .string("integer"),
+                    "description": .string("Total duration for timedCircuit / amrap / emom workouts.")
+                ]),
+                "rounds": .object([
+                    "type": .string("integer"),
+                    "description": .string("Round count for amrap / emom workouts.")
+                ]),
                 "exercises": .object([
                     "type": .string("array"),
                     "items": .object([

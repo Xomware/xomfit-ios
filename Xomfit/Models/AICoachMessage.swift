@@ -44,11 +44,50 @@ struct WorkoutBuildPayload: Codable, Equatable {
     var name: String
     var estimatedDurationMinutes: Int?
     var exercises: [Exercise]
+    /// Workout format the model wants the app to run. Defaults to `.setsReps`
+    /// when omitted so older / partial responses still produce a sane workout (#370).
+    var kind: WorkoutKind = .setsReps
+    /// Goal duration in whole minutes for `.timedCircuit`, `.amrap`, `.emom`.
+    /// Independent of `estimatedDurationMinutes`, which is an informational
+    /// estimate for sets/reps workouts.
+    var durationMinutes: Int?
+    /// Target round count for `.amrap` / `.emom`.
+    var rounds: Int?
 
     struct Exercise: Codable, Equatable {
         var exerciseId: String
         var sets: Int
         var targetReps: Int
         var targetWeight: Double?
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case name, estimatedDurationMinutes, exercises, kind, durationMinutes, rounds
+    }
+
+    init(
+        name: String,
+        estimatedDurationMinutes: Int? = nil,
+        exercises: [Exercise],
+        kind: WorkoutKind = .setsReps,
+        durationMinutes: Int? = nil,
+        rounds: Int? = nil
+    ) {
+        self.name = name
+        self.estimatedDurationMinutes = estimatedDurationMinutes
+        self.exercises = exercises
+        self.kind = kind
+        self.durationMinutes = durationMinutes
+        self.rounds = rounds
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        name = try container.decode(String.self, forKey: .name)
+        estimatedDurationMinutes = try container.decodeIfPresent(Int.self, forKey: .estimatedDurationMinutes)
+        exercises = try container.decode([Exercise].self, forKey: .exercises)
+        kind = try container.decodeIfPresent(WorkoutKind.self, forKey: .kind) ?? .setsReps
+        durationMinutes = try container.decodeIfPresent(Int.self, forKey: .durationMinutes)
+        rounds = try container.decodeIfPresent(Int.self, forKey: .rounds)
     }
 }
