@@ -115,14 +115,9 @@ final class FeedService {
             .execute()
             .value
 
-        // Batch-fetch profiles for feed user names
-        let uniqueUserIds = Array(Set(rows.map { $0.userId }))
-        var profileMap: [String: ProfileRow] = [:]
-        for uid in uniqueUserIds {
-            if let profile = try? await ProfileService.shared.fetchProfile(userId: uid) {
-                profileMap[uid] = profile
-            }
-        }
+        // Batch-fetch profiles for feed user names — concurrent to avoid serial N+1 (#359).
+        let uniqueUserIds = Set(rows.map { $0.userId })
+        let profileMap = await fetchProfileMap(for: uniqueUserIds)
 
         return rows.compactMap { row in
             buildSocialFeedItem(from: row, profile: profileMap[row.userId])
@@ -141,14 +136,9 @@ final class FeedService {
             .execute()
             .value
 
-        // Batch-fetch profiles for feed user names
-        let uniqueUserIds = Array(Set(rows.map { $0.userId }))
-        var profileMap: [String: ProfileRow] = [:]
-        for uid in uniqueUserIds {
-            if let profile = try? await ProfileService.shared.fetchProfile(userId: uid) {
-                profileMap[uid] = profile
-            }
-        }
+        // Batch-fetch profiles for feed user names — concurrent to avoid serial N+1 (#359).
+        let uniqueUserIds = Set(rows.map { $0.userId })
+        let profileMap = await fetchProfileMap(for: uniqueUserIds)
 
         return rows.compactMap { row in
             buildSocialFeedItem(from: row, profile: profileMap[row.userId])
@@ -301,12 +291,18 @@ final class FeedService {
             .execute()
             .value
 
+        // Batch-fetch commenter profiles concurrently so each comment shows the
+        // correct username/avatar instead of a placeholder "User" (#359).
+        let uniqueUserIds = Set(rows.map { $0.userId })
+        let profileMap = await fetchProfileMap(for: uniqueUserIds)
+
         return rows.map { row in
             let date = iso8601.date(from: row.createdAt) ?? Date()
+            let user = profileMap[row.userId].map { buildAppUser(from: $0) }
             return FeedComment(
                 id: row.id,
                 userId: row.userId,
-                user: nil,
+                user: user,
                 text: row.text,
                 createdAt: date,
                 parentCommentId: row.parentCommentId
@@ -396,6 +392,46 @@ final class FeedService {
 
     // MARK: - Private Helpers
 
+    /// Concurrently fetches a `ProfileRow` for each unique user id and returns
+    /// a `[userId: ProfileRow]` map. Failed fetches are skipped silently so a
+    /// single deleted/blocked profile doesn't drop the rest of the feed (#359).
+    private func fetchProfileMap(for userIds: Set<String>) async -> [String: ProfileRow] {
+        await withTaskGroup(of: (String, ProfileRow?).self) { group in
+            for uid in userIds {
+                group.addTask {
+                    (uid, try? await ProfileService.shared.fetchProfile(userId: uid))
+                }
+            }
+            var map: [String: ProfileRow] = [:]
+            for await (uid, profile) in group {
+                if let profile { map[uid] = profile }
+            }
+            return map
+        }
+    }
+
+    /// Builds an `AppUser` from a `ProfileRow`. Stats are zeroed because the
+    /// feed/comments don't fetch aggregate stats per-user.
+    private func buildAppUser(from profile: ProfileRow) -> AppUser {
+        AppUser(
+            id: profile.id,
+            username: profile.username,
+            displayName: profile.displayName,
+            avatarURL: profile.avatarURL,
+            bio: profile.bio,
+            stats: AppUser.UserStats(
+                totalWorkouts: 0,
+                totalVolume: 0,
+                totalPRs: 0,
+                currentStreak: 0,
+                longestStreak: 0,
+                favoriteExercise: nil
+            ),
+            isPrivate: profile.isPrivate,
+            createdAt: Date()
+        )
+    }
+
     private func buildSocialFeedItem(from row: FeedItemRow, profile: ProfileRow? = nil) -> SocialFeedItem? {
         guard let activityType = ActivityType(rawValue: row.activityType) else { return nil }
         let createdAt = iso8601.date(from: row.createdAt) ?? Date()
@@ -422,23 +458,7 @@ final class FeedService {
         // Build AppUser from profile data, falling back to placeholder
         let user: AppUser
         if let profile {
-            user = AppUser(
-                id: profile.id,
-                username: profile.username,
-                displayName: profile.displayName,
-                avatarURL: profile.avatarURL,
-                bio: profile.bio,
-                stats: AppUser.UserStats(
-                    totalWorkouts: 0,
-                    totalVolume: 0,
-                    totalPRs: 0,
-                    currentStreak: 0,
-                    longestStreak: 0,
-                    favoriteExercise: nil
-                ),
-                isPrivate: profile.isPrivate,
-                createdAt: Date()
-            )
+            user = buildAppUser(from: profile)
         } else {
             user = AppUser(
                 id: row.userId,
