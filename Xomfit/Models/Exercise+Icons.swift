@@ -190,6 +190,47 @@ extension Exercise {
         "ex-worlds-greatest-stretch":   "figure.flexibility",
         "ex-cat-cow":                   "figure.flexibility",
         "ex-90-90-hip-stretch":         "figure.flexibility",
+
+        // MARK: Additional Common Lifts (#348)
+        // Lat pulldown variants
+        "ex-cable-wide-bar-lat-pulldown":     "chevron.down",
+        "ex-kneeling-lat-pulldown":           "chevron.down",
+        "ex-cable-straight-arm-pullover":     "arrow.up.and.down",
+        "ex-single-arm-overhand-pulldown":    "chevron.down",
+        // Cable rows
+        "ex-half-kneeling-cable-row":         "figure.indoor.rowing",
+        "ex-single-arm-low-cable-row":        "figure.indoor.rowing",
+        "ex-seated-cable-row-wide-grip":      "figure.indoor.rowing",
+        "ex-machine-high-row":                "gearshape.fill",
+        // Pressing
+        "ex-assisted-dip-machine":            "gearshape.fill",
+        "ex-weighted-dip":                    "figure.strengthtraining.functional",
+        "ex-hammer-strength-incline-press":   "gearshape.fill",
+        "ex-decline-cable-fly":               "figure.arms.open",
+        // Squat patterns
+        "ex-smith-front-squat":               "gearshape.fill",
+        "ex-sissy-squat":                     "figure.strengthtraining.functional",
+        "ex-kneeling-hip-thrust-machine":     "gearshape.fill",
+        // Hinge / pull
+        "ex-rope-deadlift-simulator":         "arrow.up.and.down",
+        // Shoulders
+        "ex-cable-face-pull-straight-bar":    "arrow.up.and.down",
+        "ex-cable-rear-delt-fly-high-low":    "figure.arms.open",
+        "ex-y-raise":                         "figure.arms.open",
+        // Arms
+        "ex-cable-lying-tricep-extension":    "arrow.up.and.down",
+        "ex-single-arm-cable-preacher":       "arrow.up.and.down",
+        "ex-hammer-cable-curl":               "arrow.up.and.down",
+        // Calves
+        "ex-smith-calf-raise":                "gearshape.fill",
+        "ex-donkey-calf-raise":               "figure.step.training",
+        // Core
+        "ex-cable-woodchopper-high-low":      "figure.core.training",
+        "ex-kneeling-rope-crunch":            "figure.core.training",
+        "ex-roman-chair-decline-crunch":      "figure.core.training",
+        // Mobility
+        "ex-cossack-squat":                   "figure.flexibility",
+        "ex-90-90-mobility":                  "figure.flexibility",
     ]
 
     /// Resolved SF Symbol name for this exercise.
