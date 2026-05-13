@@ -23,10 +23,16 @@ struct WorkoutFocusView: View {
                 .onTapGesture { dismissKeyboard() }
 
             if let exercise, let currentSet {
+                // Pinned top + flexible middle + pinned bottom (#344-A).
+                // The top header (exerciseHeader + config + set indicator) is anchored
+                // to the top so it respects the Dynamic Island via `.safeAreaInset`,
+                // the middle (weight/reps/done) absorbs slack via
+                // `.frame(maxHeight: .infinity)`, and the bottom slot holds
+                // exerciseNavigation — never the minimized rest banner. The banner
+                // is rendered via `.safeAreaInset(edge: .bottom)` so it reserves its
+                // own real estate and does not steal vertical space from the header.
                 VStack(spacing: Theme.Spacing.lg) {
-                    Spacer().frame(height: Theme.Spacing.sm)
-
-                    // Exercise content — animated slide on exercise change
+                    // TOP — exercise header + config + set indicator
                     VStack(spacing: Theme.Spacing.lg) {
                         exerciseHeader(exercise: exercise)
 
@@ -45,36 +51,33 @@ struct WorkoutFocusView: View {
                         )
 
                         setIndicator(exercise: exercise)
+                    }
 
+                    // MIDDLE — weight / reps / done. Absorbs slack so the top
+                    // header stays pinned under the Dynamic Island regardless of
+                    // whether the minimized rest banner is showing (#344-A).
+                    VStack(spacing: Theme.Spacing.lg) {
                         weightDisplay(currentSet: currentSet)
-
                         repsDisplay(currentSet: currentSet)
-
                         doneButton(currentSet: currentSet)
                     }
-                    .id(viewModel.focusExerciseIndex)
-                    .transition(.push(from: .trailing))
-                    .animation(.easeInOut(duration: 0.3), value: viewModel.focusExerciseIndex)
+                    .frame(maxHeight: .infinity)
 
-                    // Inline minimized rest timer banner — reserves real estate in
-                    // the layout (instead of floating overlay) so the bottom nav
-                    // buttons aren't covered. Tap to expand back to full screen.
-                    if viewModel.isRestTimerActive && isRestTimerMinimized {
-                        minimizedRestTimerBanner
-                            .transition(.move(edge: .bottom).combined(with: .opacity))
-                    }
-
+                    // BOTTOM — exercise navigation (prev/next/add + rest config).
                     exerciseNavigation
                 }
-                .safeAreaPadding(.top)
+                .id(viewModel.focusExerciseIndex)
+                .transition(.push(from: .trailing))
+                .animation(.easeInOut(duration: 0.3), value: viewModel.focusExerciseIndex)
                 .padding(.top, Theme.Spacing.sm)
                 .padding(.horizontal, Theme.Spacing.lg)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .animation(.xomChill, value: isRestTimerMinimized)
                 .animation(.xomChill, value: viewModel.isRestTimerActive)
 
                 // Full-screen rest timer — only when the timer is active AND not minimized.
-                // The minimized banner is rendered inline inside the VStack above so it
-                // doesn't double-render and doesn't cover the bottom navigation buttons.
+                // The minimized banner is rendered via `.safeAreaInset(edge: .bottom)`
+                // below so it reserves its own row instead of shrinking the header.
                 if viewModel.isRestTimerActive && !isRestTimerMinimized {
                     fullScreenRestTimer
                         .transition(.opacity)
@@ -87,6 +90,16 @@ struct WorkoutFocusView: View {
         // down deterministically when an island (e.g. music app) is present.
         .safeAreaInset(edge: .top, spacing: 0) {
             Color.clear.frame(height: Theme.Spacing.sm)
+        }
+        // Reserve a dedicated bottom row for the minimized rest banner so it
+        // never compresses the top header under the Dynamic Island (#344-A).
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            if viewModel.isRestTimerActive && isRestTimerMinimized {
+                minimizedRestTimerBanner
+                    .padding(.horizontal, Theme.Spacing.lg)
+                    .padding(.bottom, Theme.Spacing.sm)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
         }
         .sheet(isPresented: $showExercisePicker) {
             ExercisePickerView { exercise in
@@ -438,27 +451,58 @@ struct WorkoutFocusView: View {
 
     // MARK: - Minimized Rest Timer Banner (inline)
 
-    /// Compact rest-timer banner rendered inline inside the main VStack
-    /// (between the exercise card and the bottom navigation) so it reserves
-    /// layout space and never floats on top of the +Set / +drop set / nav
-    /// buttons. Tapping anywhere on the banner expands the full-screen timer.
+    /// Compact rest-timer banner rendered via `.safeAreaInset(edge: .bottom)`
+    /// on the parent ZStack so it reserves its own layout row instead of
+    /// compressing the top header under the Dynamic Island (#344-A).
+    /// Layout: `[timer ring + 0:23] [Lift] [expand glyph]` — the Lift button
+    /// ends the rest timer immediately without forcing the user to expand
+    /// the banner first (#344-F).
     private var minimizedRestTimerBanner: some View {
-        Button {
-            withAnimation(.xomChill) { isRestTimerMinimized = false }
-        } label: {
-            VStack(spacing: 6) {
-                HStack(spacing: Theme.Spacing.sm) {
+        VStack(spacing: 6) {
+            HStack(spacing: Theme.Spacing.sm) {
+                // Tappable timer-ring area — expands back to full-screen timer.
+                Button {
+                    withAnimation(.xomChill) { isRestTimerMinimized = false }
+                } label: {
                     RestTimerView(
                         restTimeRemaining: viewModel.restTimeRemaining,
                         restDuration: viewModel.restDuration,
                         onSkip: { viewModel.skipRestTimer() },
                         onExtend: { viewModel.extendRestTimer() }
                     )
-                    .layoutPriority(1)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .layoutPriority(1)
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("Rest timer minimized. Tap to expand to full screen.")
 
-                    // Discoverable expand affordance — chevron + diagonal arrows
-                    // hint that tapping anywhere on the banner re-opens the
-                    // full-screen timer.
+                // LIFT button — skips the rest timer right from the minimized
+                // banner so the user doesn't have to expand first (#344-F).
+                Button {
+                    Haptics.success()
+                    viewModel.skipRestTimer()
+                    isRestTimerMinimized = false
+                } label: {
+                    Text("Lift")
+                        .font(.subheadline.weight(.black))
+                        .foregroundStyle(.black)
+                        .padding(.horizontal, Theme.Spacing.md)
+                        .frame(minHeight: 44)
+                        .background(Theme.accent)
+                        .clipShape(.capsule)
+                        .contentShape(.capsule)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Lift — end rest and start next set")
+                .accessibilityHint("Ends the rest timer immediately")
+
+                // Discoverable expand affordance — chevron + diagonal arrows
+                // hint that tapping the timer area re-opens the full-screen
+                // timer. Itself tappable for users who target the glyph.
+                Button {
+                    withAnimation(.xomChill) { isRestTimerMinimized = false }
+                } label: {
                     VStack(spacing: Theme.Spacing.tighter) {
                         Image(systemName: "chevron.up")
                             .font(.caption2.weight(.bold))
@@ -466,29 +510,27 @@ struct WorkoutFocusView: View {
                             .font(.caption2.weight(.semibold))
                     }
                     .foregroundStyle(Theme.accent)
-                    .frame(minWidth: 28)
-                    .accessibilityHidden(true)
+                    .frame(minWidth: 44, minHeight: 44)
+                    .contentShape(Rectangle())
                 }
-                if let nextEx = viewModel.upcomingExercise {
-                    Text("Next: \(nextEx.exercise.name)")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(Theme.accent)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Expand rest timer")
             }
-            .padding(Theme.Spacing.sm)
-            .frame(maxWidth: .infinity)
-            .background(Theme.surface)
-            .clipShape(.rect(cornerRadius: Theme.cornerRadius))
-            .overlay(
-                RoundedRectangle(cornerRadius: Theme.cornerRadius)
-                    .stroke(Theme.accent.opacity(0.25), lineWidth: 1)
-            )
-            .contentShape(.rect(cornerRadius: Theme.cornerRadius))
+            if let nextEx = viewModel.upcomingExercise {
+                Text("Next: \(nextEx.exercise.name)")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Theme.accent)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
         }
-        .buttonStyle(.plain)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Rest timer minimized. Tap to expand to full screen.")
+        .padding(Theme.Spacing.sm)
+        .frame(maxWidth: .infinity)
+        .background(Theme.surface)
+        .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.cornerRadius)
+                .stroke(Theme.accent.opacity(0.25), lineWidth: 1)
+        )
     }
 
     private var restIsOvertime: Bool { viewModel.restTimeRemaining <= 0 }

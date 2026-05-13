@@ -92,9 +92,14 @@ struct ActiveWorkoutView: View {
                                         }
                                     }
                                     .padding(Theme.Spacing.md)
-                                    // Bottom padding so FAB doesn't overlap last card
-                                    .padding(.bottom, 80)
                                 }
+                                // Reserve scroll real estate for the sticky
+                                // Add Exercise FAB so the last set rows are
+                                // never covered by the floating control (#344-B).
+                                // Using `.contentMargins` keeps the FAB rendered
+                                // unconditionally (also on the empty state) while
+                                // still letting the list scroll cleanly past it.
+                                .contentMargins(.bottom, 88, for: .scrollContent)
                                 .onTapGesture {
                                     UIApplication.shared.sendAction(
                                         #selector(UIResponder.resignFirstResponder),
@@ -117,7 +122,9 @@ struct ActiveWorkoutView: View {
                 .animation(.xomChill, value: viewModel.showExerciseTransition)
                 .animation(.xomChill, value: viewModel.focusMode)
 
-                // Floating Add Exercise button (hidden in focus mode)
+                // Floating Add Exercise button (hidden in focus mode).
+                // The scrollview above reserves bottom inset via
+                // `.contentMargins` so this FAB never sits on top of set rows.
                 if !viewModel.focusMode {
                     VStack {
                         Spacer()
