@@ -1,4 +1,5 @@
 import Foundation
+import PhotosUI
 import SwiftUI
 
 /// View model for retroactively logging a workout that already happened.
@@ -14,6 +15,21 @@ final class LogPastWorkoutViewModel {
     /// Optional duration in minutes. `nil` when the field is empty.
     var durationMinutes: Int? = nil
     var exercises: [WorkoutExercise] = []
+
+    // Metadata parity with `FinishWorkoutSheet` (#364).
+    /// Free-text caption / notes for the workout. Mirrors `workoutDescription` in the live flow.
+    var notes: String = ""
+    /// Gym / location name. Mirrors `WorkoutLoggerViewModel.location`.
+    var location: String = ""
+    /// Star rating 1–5. `0` means unrated. Mirrors `WorkoutLoggerViewModel.rating`.
+    var rating: Int = 0
+    /// Manually entered soundtrack. Live workouts capture Now Playing in real time
+    /// (Apple Music / Spotify) — past workouts can't do that, so the user types in title + artist.
+    var manualTracks: [WorkoutTrack] = []
+
+    // Photo picker state — mirrors `ActiveWorkoutView`'s `selectedPhotos` / `photoImages` pair.
+    var selectedPhotos: [PhotosPickerItem] = []
+    var photoImages: [UIImage] = []
 
     // MARK: - Save State
 
@@ -96,6 +112,47 @@ final class LogPastWorkoutViewModel {
         exercises[exerciseIndex].sets.remove(at: setIndex)
     }
 
+    // MARK: - Manual Soundtrack
+
+    /// Append a track typed by the user. Title is required; artist is optional and gets nilled
+    /// when blank to match Now Playing capture behavior. Stamps `capturedAt` to `workoutDate`
+    /// so saved tracks line up with the workout's timeframe.
+    func addManualTrack(title: String, artist: String) {
+        let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedTitle.isEmpty else { return }
+        let trimmedArtist = artist.trimmingCharacters(in: .whitespacesAndNewlines)
+        let track = WorkoutTrack(
+            title: trimmedTitle,
+            artist: trimmedArtist.isEmpty ? nil : trimmedArtist,
+            album: nil,
+            capturedAt: workoutDate,
+            sourceApp: "Manual"
+        )
+        manualTracks.append(track)
+    }
+
+    func removeManualTrack(at index: Int) {
+        guard manualTracks.indices.contains(index) else { return }
+        manualTracks.remove(at: index)
+    }
+
+    // MARK: - Photo Picker
+
+    /// Loads the latest `selectedPhotos` selection into `photoImages` via `PhotoService`.
+    /// Called from `.onChange(of: selectedPhotos)` in the view layer to keep the VM as the
+    /// source of truth for the loaded `UIImage`s.
+    func loadPhotos() async {
+        photoImages = await PhotoService.shared.loadImages(from: selectedPhotos)
+    }
+
+    func removePhoto(at index: Int) {
+        guard photoImages.indices.contains(index) else { return }
+        photoImages.remove(at: index)
+        if selectedPhotos.indices.contains(index) {
+            selectedPhotos.remove(at: index)
+        }
+    }
+
     // MARK: - Save
 
     /// Persists the workout via the same path `WorkoutLoggerViewModel.finishWorkout` uses:
@@ -143,16 +200,33 @@ final class LogPastWorkoutViewModel {
 
         let endTime: Date? = durationMinutes.map { startTime.addingTimeInterval(TimeInterval($0) * 60) }
 
+        let trimmedNotes = notes.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedLocation = location.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        let workoutId = UUID().uuidString
+
+        // Upload photos before building the workout so we can attach the resulting URLs
+        // to the feed post. Matches the live flow in `ActiveWorkoutView.finishWorkout`.
+        var uploadedURLs: [String]?
+        if !photoImages.isEmpty {
+            uploadedURLs = try? await PhotoService.shared.uploadWorkoutPhotos(
+                photoImages,
+                workoutId: workoutId,
+                userId: userId
+            )
+        }
+
         let workout = Workout(
-            id: UUID().uuidString,
+            id: workoutId,
             userId: userId,
             name: resolvedName,
             exercises: savedExercises,
             startTime: startTime,
             endTime: endTime,
-            notes: nil,
-            location: nil,
-            rating: nil
+            notes: trimmedNotes.isEmpty ? nil : trimmedNotes,
+            location: trimmedLocation.isEmpty ? nil : trimmedLocation,
+            rating: rating > 0 ? rating : nil,
+            tracks: manualTracks
         )
 
         // Reuse the same persistence path as the live workout flow.
@@ -162,8 +236,8 @@ final class LogPastWorkoutViewModel {
                 try await FeedService.shared.postWorkoutToFeed(
                     workout: workout,
                     userId: userId,
-                    caption: nil,
-                    photoURLs: nil
+                    caption: workout.notes,
+                    photoURLs: uploadedURLs
                 )
             } catch {
                 // Feed post failure shouldn't block save success — log and continue.
@@ -181,6 +255,12 @@ final class LogPastWorkoutViewModel {
         name = ""
         durationMinutes = nil
         exercises = []
+        notes = ""
+        location = ""
+        rating = 0
+        manualTracks = []
+        selectedPhotos = []
+        photoImages = []
         isSaving = false
         errorMessage = nil
     }

@@ -1,4 +1,5 @@
 import SwiftUI
+import PhotosUI
 
 /// Manual data-entry sheet for logging a workout that already happened.
 /// No live timer, no rest timer — just date, optional duration, optional name,
@@ -10,6 +11,8 @@ struct LogPastWorkoutView: View {
     @State private var viewModel = LogPastWorkoutViewModel()
     @State private var showExercisePicker = false
     @State private var showDiscardAlert = false
+    @State private var manualTrackTitle: String = ""
+    @State private var manualTrackArtist: String = ""
 
     private var userId: String {
         authService.currentUser?.id.uuidString.lowercased() ?? ""
@@ -27,6 +30,7 @@ struct LogPastWorkoutView: View {
                         metadataCard
                         exerciseList
                         addExerciseButton
+                        detailsCard
                         if let error = viewModel.errorMessage {
                             errorBanner(error)
                         }
@@ -116,6 +120,11 @@ struct LogPastWorkoutView: View {
         !viewModel.exercises.isEmpty
             || !viewModel.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             || viewModel.durationMinutes != nil
+            || !viewModel.notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            || !viewModel.location.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            || viewModel.rating > 0
+            || !viewModel.manualTracks.isEmpty
+            || !viewModel.photoImages.isEmpty
     }
 
     // MARK: - Metadata Card
@@ -230,6 +239,274 @@ struct LogPastWorkoutView: View {
             )
         }
         .accessibilityLabel("Add exercise to past workout")
+    }
+
+    // MARK: - Details Card (rating / location / notes / soundtrack / photos)
+
+    private var detailsCard: some View {
+        @Bindable var viewModel = viewModel
+
+        return VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
+            ratingSection
+            locationSection
+            notesSection
+            soundtrackSection
+            photosSection
+        }
+        .padding(Theme.Spacing.md)
+        .background(Theme.surface)
+        .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+    }
+
+    private var ratingSection: some View {
+        @Bindable var viewModel = viewModel
+
+        return VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            Text("How was your workout?")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Theme.textPrimary)
+            HStack(spacing: Theme.Spacing.sm) {
+                ForEach(1...5, id: \.self) { star in
+                    Button {
+                        Haptics.light()
+                        withAnimation(.xomChill) {
+                            viewModel.rating = viewModel.rating == star ? 0 : star
+                        }
+                    } label: {
+                        Image(systemName: star <= viewModel.rating ? "star.fill" : "star")
+                            .font(Theme.fontTitle2)
+                            .foregroundStyle(star <= viewModel.rating ? Theme.accent : Theme.textSecondary.opacity(0.4))
+                            .frame(minWidth: 44, minHeight: 44, alignment: .leading)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("\(star) star\(star > 1 ? "s" : "")")
+                }
+                Spacer()
+            }
+        }
+    }
+
+    private var locationSection: some View {
+        @Bindable var viewModel = viewModel
+
+        return VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            Text("Location")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Theme.textPrimary)
+            HStack(spacing: Theme.Spacing.sm) {
+                Image(systemName: "location.fill")
+                    .font(Theme.fontCaption)
+                    .foregroundStyle(Theme.textSecondary)
+                TextField("Gym name", text: $viewModel.location)
+                    .font(Theme.fontBody)
+                    .foregroundStyle(Theme.textPrimary)
+                    .textInputAutocapitalization(.words)
+            }
+            .padding(Theme.Spacing.sm)
+            .background(Theme.surfaceElevated)
+            .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
+            .overlay(
+                RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall)
+                    .stroke(Theme.textSecondary.opacity(0.2), lineWidth: 1)
+            )
+        }
+    }
+
+    private var notesSection: some View {
+        @Bindable var viewModel = viewModel
+
+        return VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            Text("Caption")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Theme.textPrimary)
+            Text("Optional — appears on your feed post.")
+                .font(Theme.fontCaption)
+                .foregroundStyle(Theme.textSecondary)
+            TextEditor(text: $viewModel.notes)
+                .font(Theme.fontBody)
+                .foregroundStyle(Theme.textPrimary)
+                .scrollContentBackground(.hidden)
+                .padding(Theme.Spacing.sm)
+                .frame(minHeight: 80, maxHeight: 120)
+                .background(Theme.surfaceElevated)
+                .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
+                .overlay(
+                    RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall)
+                        .stroke(Theme.textSecondary.opacity(0.2), lineWidth: 1)
+                )
+                .accessibilityLabel("Workout caption")
+        }
+    }
+
+    private var soundtrackSection: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            Text("Soundtrack")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Theme.textPrimary)
+            Text("Past workouts don't capture Now Playing automatically. Add songs manually.")
+                .font(Theme.fontCaption)
+                .foregroundStyle(Theme.textSecondary)
+
+            if !viewModel.manualTracks.isEmpty {
+                VStack(spacing: Theme.Spacing.xs) {
+                    ForEach(Array(viewModel.manualTracks.enumerated()), id: \.element.id) { index, track in
+                        HStack(spacing: Theme.Spacing.sm) {
+                            Image(systemName: "music.note")
+                                .font(Theme.fontCaption)
+                                .foregroundStyle(Theme.accent)
+                                .frame(width: 24)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(track.title)
+                                    .font(Theme.fontBody)
+                                    .foregroundStyle(Theme.textPrimary)
+                                    .lineLimit(1)
+                                if let artist = track.artist, !artist.isEmpty {
+                                    Text(artist)
+                                        .font(Theme.fontCaption)
+                                        .foregroundStyle(Theme.textSecondary)
+                                        .lineLimit(1)
+                                }
+                            }
+                            Spacer()
+                            Button {
+                                Haptics.light()
+                                withAnimation(.xomChill) {
+                                    viewModel.removeManualTrack(at: index)
+                                }
+                            } label: {
+                                Image(systemName: "minus.circle.fill")
+                                    .foregroundStyle(Theme.destructive)
+                                    .font(Theme.fontSubheadline)
+                                    .frame(minWidth: 44, minHeight: 44)
+                                    .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("Remove \(track.title)")
+                        }
+                        .padding(.horizontal, Theme.Spacing.sm)
+                        .padding(.vertical, 6)
+                        .background(Theme.surfaceElevated)
+                        .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
+                    }
+                }
+            }
+
+            VStack(spacing: Theme.Spacing.xs) {
+                TextField("Song title", text: $manualTrackTitle)
+                    .font(Theme.fontBody)
+                    .foregroundStyle(Theme.textPrimary)
+                    .textInputAutocapitalization(.words)
+                    .padding(Theme.Spacing.sm)
+                    .background(Theme.surfaceElevated)
+                    .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall)
+                            .stroke(Theme.textSecondary.opacity(0.2), lineWidth: 1)
+                    )
+                TextField("Artist (optional)", text: $manualTrackArtist)
+                    .font(Theme.fontBody)
+                    .foregroundStyle(Theme.textPrimary)
+                    .textInputAutocapitalization(.words)
+                    .padding(Theme.Spacing.sm)
+                    .background(Theme.surfaceElevated)
+                    .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall)
+                            .stroke(Theme.textSecondary.opacity(0.2), lineWidth: 1)
+                    )
+                Button {
+                    Haptics.light()
+                    withAnimation(.xomChill) {
+                        viewModel.addManualTrack(title: manualTrackTitle, artist: manualTrackArtist)
+                        manualTrackTitle = ""
+                        manualTrackArtist = ""
+                    }
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "plus")
+                        Text("Add Song")
+                            .font(.subheadline.weight(.semibold))
+                    }
+                    .foregroundStyle(Theme.accent)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 10)
+                    .background(Theme.accent.opacity(0.1))
+                    .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
+                }
+                .disabled(manualTrackTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                .opacity(manualTrackTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.5 : 1)
+                .accessibilityLabel("Add song to soundtrack")
+            }
+        }
+    }
+
+    private var photosSection: some View {
+        @Bindable var viewModel = viewModel
+
+        return VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            Text("Photos")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Theme.textPrimary)
+            Text("Add up to 4 photos from this workout.")
+                .font(Theme.fontCaption)
+                .foregroundStyle(Theme.textSecondary)
+
+            if !viewModel.photoImages.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: Theme.Spacing.sm) {
+                        ForEach(viewModel.photoImages.indices, id: \.self) { index in
+                            ZStack(alignment: .topTrailing) {
+                                Image(uiImage: viewModel.photoImages[index])
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: 80, height: 80)
+                                    .clipShape(.rect(cornerRadius: 8))
+
+                                Button {
+                                    Haptics.light()
+                                    viewModel.removePhoto(at: index)
+                                } label: {
+                                    // 44pt hit target sits behind the compact glyph so the
+                                    // visual stays compact while the touch area meets HIG.
+                                    ZStack {
+                                        Color.clear
+                                            .frame(width: 44, height: 44)
+                                        Image(systemName: "xmark.circle.fill")
+                                            .font(Theme.fontCaption)
+                                            .foregroundStyle(.white)
+                                            .shadow(radius: 2)
+                                    }
+                                    .contentShape(Rectangle())
+                                }
+                                .offset(x: 14, y: -14)
+                                .accessibilityLabel("Remove photo \(index + 1)")
+                            }
+                        }
+                    }
+                }
+            }
+
+            PhotosPicker(
+                selection: $viewModel.selectedPhotos,
+                maxSelectionCount: 4,
+                matching: .images
+            ) {
+                HStack(spacing: 6) {
+                    Image(systemName: "photo.on.rectangle.angled")
+                    Text(viewModel.photoImages.isEmpty ? "Add Photos" : "Change Photos")
+                        .font(.subheadline.weight(.medium))
+                }
+                .foregroundStyle(Theme.accent)
+                .padding(.horizontal, 12)
+                .padding(.vertical, Theme.Spacing.sm)
+                .background(Theme.accent.opacity(0.12))
+                .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
+            }
+            .onChange(of: viewModel.selectedPhotos) { _, _ in
+                Task { await viewModel.loadPhotos() }
+            }
+        }
     }
 
     private func errorBanner(_ text: String) -> some View {
