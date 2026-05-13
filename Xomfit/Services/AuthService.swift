@@ -34,6 +34,23 @@ final class AuthService {
             WorkoutService.shared.seedDebugFixtures(userId: mockUser.id.uuidString)
             TemplateService.shared.seedDebugFixtures()
 
+            // Mark fitness questionnaire as completed so bypass agents land in
+            // the main app, not the onboarding gate.
+            var profile = UserFitnessProfile.current
+            if profile.completedAt == nil {
+                profile.primaryGoal = .buildMuscle
+                profile.experience = .intermediate
+                profile.workoutsPerWeek = .four
+                profile.preferredSplit = .upperLower
+                profile.sessionLength = .sixty
+                profile.completedAt = Date()
+                UserFitnessProfile.current = profile
+            }
+            UserDefaults.standard.set(true, forKey: "onboardingSkipped")
+            // Mark the first-workout tutorial seen so it doesn't overlay screenshots.
+            UserDefaults.standard.set(true, forKey: "xomfit_first_workout_tutorial_seen")
+            UserDefaults.standard.set(true, forKey: "xomfit_first_rest_timer_seen")
+
             print("[AuthService] DEBUG bypass active — using mock user \(mockUser.id.uuidString)")
             return
         }

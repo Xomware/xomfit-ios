@@ -37,7 +37,15 @@ struct XomFitApp: App {
                         .environment(authService)
                         .environment(workoutSession)
                         .task {
+                            #if DEBUG
+                            // Skip permission prompts under auth-bypass so agents can
+                            // drive the UI without dismissing modal dialogs.
+                            if ProcessInfo.processInfo.environment["XOMFIT_AUTH_BYPASS"] != "1" {
+                                await NotificationService.shared.requestPermission()
+                            }
+                            #else
                             await NotificationService.shared.requestPermission()
+                            #endif
                             WatchSyncService.shared.activate()
                             evaluateFitnessQuestionnaireGate()
                         }
