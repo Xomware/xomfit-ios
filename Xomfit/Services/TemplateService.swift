@@ -51,4 +51,16 @@ final class TemplateService {
             UserDefaults.standard.set(data, forKey: key)
         }
     }
+
+    // MARK: - Debug Fixtures (#353)
+
+    #if DEBUG
+    /// Hydrates the custom-templates cache with `WorkoutTemplate.mockFixtures`.
+    /// Only invoked when `XOMFIT_AUTH_BYPASS=1` from `AuthService` so future
+    /// agents can screenshot the templates list / builder without real data.
+    /// Safe to call repeatedly — overwrites the custom-template cache.
+    func seedDebugFixtures() {
+        encode(WorkoutTemplate.mockFixtures)
+    }
+    #endif
 }

@@ -18,6 +18,26 @@ final class AuthService {
     private var currentNonce: String?
 
     init() {
+        #if DEBUG
+        if ProcessInfo.processInfo.environment["XOMFIT_AUTH_BYPASS"] == "1" {
+            // Inject a mock signed-in user. Never hits Supabase. See #353.
+            // Hydrates WorkoutService + TemplateService caches so screenshot
+            // flows have data to render.
+            let mockUser = User.mockDebug
+            self.currentUser = mockUser
+            self.currentSession = nil
+            self.isAuthenticated = true
+            self.needsProfileCompletion = false
+            self.needsOnboarding = false
+            self.isLoading = false
+
+            WorkoutService.shared.seedDebugFixtures(userId: mockUser.id.uuidString)
+            TemplateService.shared.seedDebugFixtures()
+
+            print("[AuthService] DEBUG bypass active — using mock user \(mockUser.id.uuidString)")
+            return
+        }
+        #endif
         Task { await listenForAuthChanges() }
     }
 
@@ -224,3 +244,47 @@ final class AuthService {
         return hashedData.compactMap { String(format: "%02x", $0) }.joined()
     }
 }
+
+// MARK: - Debug Mock User (#353)
+#if DEBUG
+extension User {
+    /// Mock Supabase auth user used by the `XOMFIT_AUTH_BYPASS=1` flow.
+    /// All fields are placeholders — never hit any Supabase row.
+    static let mockDebug = User(
+        id: UUID(uuidString: "00000000-0000-0000-0000-00000000DEB6") ?? UUID(),
+        appMetadata: [:],
+        userMetadata: [
+            "display_name": .string("Debug User"),
+            "first_name": .string("Debug"),
+            "last_name": .string("User"),
+            "username": .string("debug_user")
+        ],
+        aud: "authenticated",
+        email: "debug@xomfit.local",
+        createdAt: Date(timeIntervalSince1970: 1_700_000_000),
+        updatedAt: Date(timeIntervalSince1970: 1_700_000_000)
+    )
+}
+
+extension AppUser {
+    /// Profile-shaped mock paired with `User.mockDebug` for views that consume
+    /// `AppUser` rather than the Supabase auth `User`. Mirrors the debug user's id.
+    static let mockDebug = AppUser(
+        id: "00000000-0000-0000-0000-00000000DEB6",
+        username: "debug_user",
+        displayName: "Debug User",
+        avatarURL: nil,
+        bio: "Debug bypass — used by agent UI verification (#353)",
+        stats: UserStats(
+            totalWorkouts: 4,
+            totalVolume: 25_400,
+            totalPRs: 3,
+            currentStreak: 2,
+            longestStreak: 12,
+            favoriteExercise: "Bench Press"
+        ),
+        isPrivate: false,
+        createdAt: Date(timeIntervalSince1970: 1_700_000_000)
+    )
+}
+#endif
