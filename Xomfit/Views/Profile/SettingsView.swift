@@ -1,3 +1,4 @@
+import MediaPlayer
 import StoreKit
 import SwiftUI
 import UIKit
@@ -70,6 +71,7 @@ struct SettingsView: View {
                 trainingSection
                 aiCoachSection
                 toolsSection
+                musicSourcesSection
                 dataPrivacySection
                 supportSection
                 aboutSection
@@ -598,7 +600,67 @@ struct SettingsView: View {
     }
 }
 
+// MARK: - Music Sources (#347)
+
 extension SettingsView {
+    /// Surfaces both music-capture sources side-by-side so the user understands what's
+    /// captured during a workout: Apple Music (system-permission only, read-only) and
+    /// Spotify (explicit OAuth + Web API polling).
+    fileprivate var musicSourcesSection: some View {
+        Section {
+            appleMusicRow
+            SpotifyConnectionView()
+        } header: {
+            XomMetricLabel("Music Sources")
+        } footer: {
+            Text("XomFit captures songs that played during your workout. Apple Music reads from system permission; Spotify requires sign-in.")
+                .font(Theme.fontCaption)
+                .foregroundStyle(Theme.textTertiary)
+        }
+        .listRowBackground(Theme.surface)
+        .listRowSeparatorTint(Theme.hairline)
+    }
+
+    /// Read-only Apple Music status with a deep link to the system Settings app when denied.
+    fileprivate var appleMusicRow: some View {
+        let status = MPMediaLibrary.authorizationStatus()
+        let (statusLabel, isDenied): (String, Bool) = {
+            switch status {
+            case .authorized: return ("Connected", false)
+            case .notDetermined: return ("Permission not yet requested", false)
+            case .denied: return ("Access denied", true)
+            case .restricted: return ("Restricted", true)
+            @unknown default: return ("Unknown", true)
+            }
+        }()
+
+        return HStack(spacing: Theme.Spacing.md) {
+            Image(systemName: "applelogo")
+                .frame(width: Theme.Spacing.lg)
+                .foregroundStyle(Theme.accent)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Apple Music")
+                    .foregroundStyle(Theme.textPrimary)
+                Text(statusLabel)
+                    .font(Theme.fontCaption)
+                    .foregroundStyle(Theme.textTertiary)
+            }
+            Spacer()
+            if isDenied {
+                Button("Open Settings") {
+                    if let url = URL(string: UIApplication.openSettingsURLString) {
+                        UIApplication.shared.open(url)
+                    }
+                }
+                .font(Theme.fontCaption)
+                .tint(Theme.accent)
+                .accessibilityHint("Opens the iOS Settings app where you can grant Apple Music access")
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Apple Music: \(statusLabel)")
+    }
+
     fileprivate var toolsSection: some View {
         Section {
             Button {

@@ -163,6 +163,8 @@ final class WorkoutLoggerViewModel {
         // Begin Now Playing capture — Apple Music only (see NowPlayingService docs).
         // Silent no-op when the user denied Apple Music access.
         NowPlayingService.shared.startCapture()
+        // Spotify capture runs in parallel — also a silent no-op when not signed in (#347).
+        SpotifyNowPlayingService.shared.startCapture()
     }
 
     func discardWorkout() {
@@ -191,6 +193,7 @@ final class WorkoutLoggerViewModel {
 
         // Drop any captured Now Playing tracks — discarding the workout discards the soundtrack.
         _ = NowPlayingService.shared.stopCapture()
+        _ = SpotifyNowPlayingService.shared.stopCapture()
     }
 
     func startFromTemplate(_ template: WorkoutTemplate, userId: String) {
@@ -962,7 +965,12 @@ final class WorkoutLoggerViewModel {
 
         // Pull the Now Playing capture and attach it to the saved workout.
         // Empty list when the user denied Apple Music access or only used non-Apple Music sources.
-        let capturedTracks = NowPlayingService.shared.stopCapture()
+        // Spotify tracks (when authed) merge in alongside Apple Music — sort by capture time so
+        // the saved soundtrack reflects actual play order across sources (#347).
+        let appleMusicTracks = NowPlayingService.shared.stopCapture()
+        let spotifyTracks = SpotifyNowPlayingService.shared.stopCapture()
+        let capturedTracks = (appleMusicTracks + spotifyTracks)
+            .sorted { $0.capturedAt < $1.capturedAt }
 
         let workout = Workout(
             id: UUID().uuidString,
