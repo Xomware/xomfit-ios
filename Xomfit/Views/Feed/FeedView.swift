@@ -192,7 +192,11 @@ struct FeedView: View {
                 }
                 .staggeredAppear(index: index)
                 .onAppear {
-                    if item.id == viewModel.feedItems.last?.id {
+                    // Trigger pagination off the *visible* list (#359). The
+                    // ForEach iterates `visibleFeedItems` (filtered/hidden-
+                    // aware), so comparing against `viewModel.feedItems.last`
+                    // could miss or mis-fire when hides/filters are applied.
+                    if item.id == visibleFeedItems.last?.id {
                         Task { await viewModel.loadMore(userId: userId) }
                     }
                 }
