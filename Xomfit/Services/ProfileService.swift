@@ -77,6 +77,19 @@ final class ProfileService {
             .execute()
     }
 
+    /// Writes the new avatar public URL to the `profiles.avatar_url` column.
+    /// Kept separate from `upsertProfile` so the picker flow can persist the
+    /// avatar without requiring all other edit fields to be present (#368).
+    func updateAvatarURL(userId: String, avatarURL: String) async throws {
+        print("[ProfileAvatar] ProfileService.updateAvatarURL — userId=\(userId), url=\(avatarURL)")
+        try await supabase
+            .from("profiles")
+            .update(["avatar_url": avatarURL])
+            .eq("id", value: userId)
+            .execute()
+        print("[ProfileAvatar] profiles.avatar_url updated")
+    }
+
     func updateTrainingGoals(userId: String, goals: [TrainingGoal]) async throws {
         let goalStrings = goals.map(\.rawValue)
         try await supabase

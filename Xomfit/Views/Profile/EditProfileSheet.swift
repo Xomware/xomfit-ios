@@ -1,4 +1,5 @@
 import SwiftUI
+import PhotosUI
 
 struct EditProfileSheet: View {
     let viewModel: ProfileViewModel
@@ -11,6 +12,21 @@ struct EditProfileSheet: View {
                 Theme.background.ignoresSafeArea()
 
                 Form {
+                    // MARK: - Avatar (#368)
+                    Section {
+                        avatarSection
+                            .listRowBackground(Theme.surface)
+                    } footer: {
+                        if let avatarError = viewModel.avatarErrorMessage {
+                            Text(avatarError)
+                                .font(Theme.fontSmall)
+                                .foregroundStyle(Theme.destructive)
+                        } else {
+                            Text("Tap your photo to change it.")
+                                .foregroundStyle(Theme.textSecondary)
+                        }
+                    }
+
                     Section("Username") {
                         TextField("username", text: Bindable(viewModel).editUsername)
                             .textInputAutocapitalization(.never)
@@ -91,5 +107,84 @@ struct EditProfileSheet: View {
             }
         }
         .presentationCornerRadius(Theme.Radius.lg)
+    }
+
+    // MARK: - Avatar Section
+
+    private var avatarSection: some View {
+        // Capture main-actor-isolated view-model state into locals before the
+        // PhotosPicker label closure (which is nonisolated under the iOS 26
+        // SDK / Swift 6 strict concurrency).
+        let avatarName = viewModel.displayName.isEmpty ? viewModel.username : viewModel.displayName
+        let avatarURL = viewModel.avatarURL
+        let isUploading = viewModel.isUploadingAvatar
+
+        return HStack(spacing: Theme.Spacing.md) {
+            PhotosPicker(
+                selection: Bindable(viewModel).avatarPickerItem,
+                matching: .images,
+                photoLibrary: .shared()
+            ) {
+                ZStack {
+                    XomAvatar(
+                        name: avatarName,
+                        size: 80,
+                        imageURL: URL(string: avatarURL ?? "")
+                    )
+
+                    if isUploading {
+                        Circle()
+                            .fill(Color.black.opacity(0.45))
+                            .frame(width: 80, height: 80)
+                        ProgressView()
+                            .tint(.white)
+                    } else {
+                        // Small camera affordance so the tap target is discoverable.
+                        Circle()
+                            .fill(Theme.accent)
+                            .frame(width: 26, height: 26)
+                            .overlay(
+                                Image(systemName: "camera.fill")
+                                    .font(.caption2.weight(.bold))
+                                    .foregroundStyle(.black)
+                            )
+                            .overlay(
+                                Circle().stroke(Theme.surface, lineWidth: 2)
+                            )
+                            .offset(x: 28, y: 28)
+                    }
+                }
+                .frame(width: 80, height: 80)
+            }
+            .disabled(isUploading)
+            .accessibilityLabel("Change profile photo")
+            .accessibilityAddTraits(.isButton)
+            .onChange(of: viewModel.avatarPickerItem) { _, newItem in
+                guard let newItem else { return }
+                print("[ProfileAvatar] PhotosPicker selection changed — kicking off updateAvatar")
+                Task {
+                    await viewModel.updateAvatar(item: newItem, userId: userId)
+                }
+            }
+
+            VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
+                Text("Profile Photo")
+                    .font(Theme.fontSubheadline.weight(.semibold))
+                    .foregroundStyle(Theme.textPrimary)
+                if isUploading {
+                    Text("Uploading...")
+                        .font(Theme.fontSmall)
+                        .foregroundStyle(Theme.textSecondary)
+                } else {
+                    Text("JPEG, square crop recommended.")
+                        .font(Theme.fontSmall)
+                        .foregroundStyle(Theme.textSecondary)
+                }
+            }
+
+            Spacer(minLength: 0)
+        }
+        .padding(.vertical, Theme.Spacing.tight)
+        .frame(minHeight: 44)
     }
 }

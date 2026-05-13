@@ -1,5 +1,7 @@
 import Foundation
+import PhotosUI
 import Supabase
+import SwiftUI
 
 // MARK: - Profile Tab
 
@@ -61,6 +63,14 @@ final class ProfileViewModel {
     var editDisplayName: String = ""
     var editBio: String = ""
     var editIsPrivate: Bool = false
+
+    // MARK: - Avatar editing (#368)
+    /// PhotosPicker binding for the edit sheet. Reset to nil after upload.
+    var avatarPickerItem: PhotosPickerItem? = nil
+    /// True while an avatar upload is in flight (resize + upload + DB update).
+    var isUploadingAvatar: Bool = false
+    /// Non-nil when the most recent avatar upload failed. Displayed inline.
+    var avatarErrorMessage: String? = nil
 
     // MARK: - Username validation
     var usernameError: String?
@@ -321,6 +331,58 @@ final class ProfileViewModel {
         isSaving = false
     }
 
+    // MARK: - Avatar upload (#368)
+
+    /// Full picker-to-storage-to-DB-to-state flow for changing the profile
+    /// avatar. Triggered from the EditProfileSheet's PhotosPicker `onChange`.
+    ///
+    /// Steps (each one logs with `[ProfileAvatar]` so the user can grab a
+    /// console transcript when reporting issues):
+    /// 1. Load the picked image into a UIImage.
+    /// 2. Upload to Supabase Storage `avatars/{userId}/{uuid}.jpg` (~500KB JPEG).
+    /// 3. Write the public URL to `profiles.avatar_url`.
+    /// 4. Update local `avatarURL` so ProfileHeaderView re-renders immediately.
+    func updateAvatar(item: PhotosPickerItem, userId: String) async {
+        print("[ProfileAvatar] ProfileViewModel.updateAvatar start — userId=\(userId)")
+        isUploadingAvatar = true
+        avatarErrorMessage = nil
+        defer {
+            isUploadingAvatar = false
+            avatarPickerItem = nil
+        }
+
+        // Step 1: decode picker selection into a UIImage.
+        guard let image = await PhotoService.shared.loadImage(from: item) else {
+            print("[ProfileAvatar] ERROR — couldn't decode selected image")
+            avatarErrorMessage = "Couldn't read that photo. Try a different one."
+            return
+        }
+        print("[ProfileAvatar] image decoded — size=\(image.size)")
+
+        // Step 2: upload to Supabase Storage.
+        let newURL: String
+        do {
+            newURL = try await PhotoService.shared.uploadAvatar(image, userId: userId)
+        } catch {
+            print("[ProfileAvatar] ERROR upload step failed: \(error)")
+            avatarErrorMessage = error.localizedDescription
+            return
+        }
+
+        // Step 3: persist to the profiles row.
+        do {
+            try await ProfileService.shared.updateAvatarURL(userId: userId, avatarURL: newURL)
+        } catch {
+            print("[ProfileAvatar] ERROR profile row update failed: \(error)")
+            avatarErrorMessage = "Uploaded the photo but couldn't save it to your profile. \(error.localizedDescription)"
+            return
+        }
+
+        // Step 4: refresh local state so the header avatar swaps in instantly.
+        avatarURL = newURL
+        print("[ProfileAvatar] ProfileViewModel.updateAvatar complete — avatarURL=\(newURL)")
+    }
+
     // MARK: - Edit sheet helpers
 
     func beginEditing() {
@@ -330,6 +392,9 @@ final class ProfileViewModel {
         editIsPrivate = isPrivate
         usernameError = nil
         isCheckingUsername = false
+        avatarPickerItem = nil
+        avatarErrorMessage = nil
+        isUploadingAvatar = false
     }
 
     /// Debounced username uniqueness check against Supabase.
