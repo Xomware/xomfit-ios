@@ -80,23 +80,38 @@ struct FeedItemCard: View {
 
     private var headerRow: some View {
         HStack(spacing: Theme.Spacing.sm) {
-            XomAvatar(
-                name: item.user.displayName.isEmpty ? item.user.username : item.user.displayName,
-                size: 48
-            )
+            // #367: avatar + display name push the poster's ProfileView.
+            // Nested inside the parent NavigationLink that opens FeedDetailView —
+            // SwiftUI's NavigationStack routes taps to the inner link when the
+            // tap hits its frame, leaving the rest of the card to the parent.
+            NavigationLink {
+                ProfileView(userId: item.userId)
+                    .hideTabBar()
+            } label: {
+                HStack(spacing: Theme.Spacing.sm) {
+                    XomAvatar(
+                        name: item.user.displayName.isEmpty ? item.user.username : item.user.displayName,
+                        size: 48
+                    )
 
-            VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
-                Text(item.user.displayName.isEmpty ? item.user.username : item.user.displayName)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Theme.textPrimary)
-                    .accessibilityAddTraits(.isHeader)
+                    VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
+                        Text(item.user.displayName.isEmpty ? item.user.username : item.user.displayName)
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(Theme.textPrimary)
 
-                // Activity context line under display name
-                Text("\(activityTypeLabel) · \(item.createdAt.timeAgo)")
-                    .font(Theme.fontSmall)
-                    .foregroundStyle(Theme.textTertiary)
-                    .accessibilityLabel("\(activityTypeLabel), \(item.createdAt.timeAgo)")
+                        // Activity context line under display name
+                        Text("\(activityTypeLabel) · \(item.createdAt.timeAgo)")
+                            .font(Theme.fontSmall)
+                            .foregroundStyle(Theme.textTertiary)
+                    }
+                }
+                .frame(minHeight: 44)
+                .contentShape(Rectangle())
             }
+            .buttonStyle(PressableCardStyle())
+            .simultaneousGesture(TapGesture().onEnded { Haptics.light() })
+            .accessibilityLabel("View profile of @\(item.user.username.isEmpty ? item.user.displayName : item.user.username)")
+            .accessibilityHint("Opens this user's profile")
 
             Spacer()
 

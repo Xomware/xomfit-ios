@@ -293,19 +293,33 @@ struct FeedDetailView: View {
 
     private var headerRow: some View {
         HStack(spacing: Theme.Spacing.sm) {
-            XomAvatar(
-                name: localItem.user.displayName.isEmpty ? localItem.user.username : localItem.user.displayName,
-                size: 48
-            )
+            // #367: avatar + display name push the poster's ProfileView.
+            NavigationLink {
+                ProfileView(userId: localItem.userId)
+                    .hideTabBar()
+            } label: {
+                HStack(spacing: Theme.Spacing.sm) {
+                    XomAvatar(
+                        name: localItem.user.displayName.isEmpty ? localItem.user.username : localItem.user.displayName,
+                        size: 48
+                    )
 
-            VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
-                Text(localItem.user.displayName.isEmpty ? localItem.user.username : localItem.user.displayName)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Theme.textPrimary)
-                Text("\(activityTypeLabel) · \(localItem.createdAt.timeAgo)")
-                    .font(Theme.fontSmall)
-                    .foregroundStyle(Theme.textTertiary)
+                    VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
+                        Text(localItem.user.displayName.isEmpty ? localItem.user.username : localItem.user.displayName)
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(Theme.textPrimary)
+                        Text("\(activityTypeLabel) · \(localItem.createdAt.timeAgo)")
+                            .font(Theme.fontSmall)
+                            .foregroundStyle(Theme.textTertiary)
+                    }
+                }
+                .frame(minHeight: 44)
+                .contentShape(Rectangle())
             }
+            .buttonStyle(PressableCardStyle())
+            .simultaneousGesture(TapGesture().onEnded { Haptics.light() })
+            .accessibilityLabel("View profile of @\(localItem.user.username.isEmpty ? localItem.user.displayName : localItem.user.username)")
+            .accessibilityHint("Opens this user's profile")
 
             Spacer()
         }
