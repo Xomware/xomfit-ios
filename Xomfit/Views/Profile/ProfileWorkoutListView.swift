@@ -69,7 +69,9 @@ struct ProfileWorkoutListView: View {
         List {
             ForEach(workouts) { workout in
                 NavigationLink {
-                    WorkoutDetailView(workout: workout)
+                    // #365 — surface the same pull-to-refresh closure as
+                    // `onUpdated` so saving an edit re-fetches the list.
+                    WorkoutDetailView(workout: workout, onUpdated: onRefresh)
                 } label: {
                     workoutCard(workout)
                 }
