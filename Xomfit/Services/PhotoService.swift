@@ -17,14 +17,23 @@ final class PhotoService {
     // MARK: - Load from PhotosPicker
 
     func loadImages(from selections: [PhotosPickerItem]) async -> [UIImage] {
-        var images: [UIImage] = []
+        await loadPaired(from: selections).map { $0.1 }
+    }
+
+    /// Paired loader that returns successfully-decoded items together with their
+    /// source `PhotosPickerItem`. Callers that store the picker selection
+    /// separately (e.g. a `PhotosPicker` binding) should use this so the two
+    /// arrays stay in lockstep — `loadImages` silently drops failures, which
+    /// caused per-index removals to target the wrong photo (#359 bug 7).
+    func loadPaired(from selections: [PhotosPickerItem]) async -> [(PhotosPickerItem, UIImage)] {
+        var pairs: [(PhotosPickerItem, UIImage)] = []
         for item in selections.prefix(maxPhotos) {
             if let data = try? await item.loadTransferable(type: Data.self),
                let image = UIImage(data: data) {
-                images.append(image)
+                pairs.append((item, image))
             }
         }
-        return images
+        return pairs
     }
 
     // MARK: - Upload
