@@ -19,6 +19,9 @@ struct WorkoutBuilderView: View {
 
     @State private var pendingStart: (() -> Void)?
     @State private var pendingStretches: [Stretch] = []
+    /// Exercises captured at start-flow time so the warmup preview can render
+    /// "why this stretch" captions tied to the user's actual lifts (#349).
+    @State private var pendingExercises: [Exercise] = []
     @State private var showWarmupPrompt = false
     @State private var showWarmup = false
 
@@ -123,7 +126,8 @@ struct WorkoutBuilderView: View {
         .fullScreenCover(isPresented: $showWarmup) {
             WarmupView(
                 stretches: pendingStretches.isEmpty ? StretchDatabase.defaultRoutine() : pendingStretches,
-                totalDuration: warmupMinutes * 60
+                totalDuration: warmupMinutes * 60,
+                exercises: pendingExercises
             ) {
                 runPendingStartImmediately()
             }
@@ -306,21 +310,23 @@ struct WorkoutBuilderView: View {
             for: captured,
             target: TimeInterval(warmupMinutes * 60)
         )
+        let exercises = captured.exercises.map(\.exercise)
 
         // Dismiss first so the builder sheet animates away cleanly. Then gate.
         dismiss()
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-            requestStart(stretches: stretches, action: startAction)
+            requestStart(stretches: stretches, exercises: exercises, action: startAction)
         }
     }
 
     /// Mirrors `WorkoutView.requestStart` -- either prompts about warming up,
     /// presents the warmup sheet, or runs the start action directly, depending
     /// on the user's saved preference.
-    private func requestStart(stretches: [Stretch], action: @escaping () -> Void) {
+    private func requestStart(stretches: [Stretch], exercises: [Exercise] = [], action: @escaping () -> Void) {
         pendingStart = action
         pendingStretches = stretches
+        pendingExercises = exercises
 
         switch warmupOptIn {
         case "yes":
@@ -340,6 +346,7 @@ struct WorkoutBuilderView: View {
         let action = pendingStart
         pendingStart = nil
         pendingStretches = []
+        pendingExercises = []
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
             action?()
         }
@@ -373,6 +380,9 @@ private struct BuilderExerciseRow: View {
     /// pattern used by ActiveWorkoutView.ExerciseCard so builder + live workout
     /// share UX for grouping/ungrouping.
     @State private var showSupersetToggleConfirm = false
+    /// Drives the form/details sheet (#349 — same pattern as ExercisePickerView and
+    /// TemplateDetailView, so info is reachable everywhere the exercise appears).
+    @State private var showDetails: Bool = false
 
     private var defaultRestSeconds: Int {
         let v = defaultRestStored > 0 ? defaultRestStored : 90
@@ -416,6 +426,21 @@ private struct BuilderExerciseRow: View {
                 }
 
                 Spacer()
+
+                // Info / form details (#349) — same sheet the picker and live
+                // workout use, so the user can check form without leaving the builder.
+                Button {
+                    Haptics.selection()
+                    showDetails = true
+                } label: {
+                    Image(systemName: "info.circle")
+                        .font(Theme.fontSubheadline)
+                        .foregroundStyle(Theme.textSecondary)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Show details for \(exercise.exercise.name)")
 
                 // Superset toggle (#344 E1) — visible affordance for grouping with the
                 // next exercise. Disabled when no group exists and no next exercise to
@@ -537,6 +562,9 @@ private struct BuilderExerciseRow: View {
                 onSave: { onUpdateRestSeconds($0) }
             )
             .presentationDetents([.medium])
+        }
+        .sheet(isPresented: $showDetails) {
+            ExerciseDetailSheet(exercise: exercise.exercise)
         }
         // Superset confirm — mirrors ActiveWorkoutView.ExerciseCard so builder
         // and live workout share UX (#344 E1).

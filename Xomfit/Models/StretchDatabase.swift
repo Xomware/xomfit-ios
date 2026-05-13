@@ -158,24 +158,99 @@ struct StretchDatabase {
 
     // MARK: - Suggestions
 
+    /// Hard cap on the size of any suggested routine — keeps the preview list
+    /// scannable and the timer reasonable (#349).
+    static let maxStretches: Int = 6
+
+    /// Stretch IDs treated as general dynamic openers — flow-friendly stretches
+    /// that pair well with any session and lead the routine.
+    private static let generalOpenerIds: [String] = ["st-cat-cow", "st-worlds-greatest"]
+
     /// Pick a routine of stretches that covers the muscle groups hit by a workout,
     /// summing roughly to `target` seconds (default ~6 minutes).
+    ///
+    /// Selection order (#349):
+    /// 1. Union of `Exercise.recommendedStretchIds` declared by the workout's exercises.
+    /// 2. Pad with 1-2 general dynamic openers (cat-cow, world's greatest) for flow.
+    /// 3. If still under 3 picks, fall back to frequency-weighted muscle-group selection.
+    /// 4. Cap the routine at `maxStretches` (6).
+    ///
     /// - Parameters:
-    ///   - workout: the workout being warmed up for. We look at every exercise and
-    ///     collect the muscle groups it targets.
-    ///   - target: the total time budget for the routine, in seconds.
-    /// - Returns: an ordered list of 5-7 stretches, deduplicated and prioritized
-    ///   by the muscle groups that show up most frequently in the workout.
+    ///   - workout: the workout being warmed up for.
+    ///   - target: the total time budget for the routine, in seconds. The cap on
+    ///     stretch count is enforced regardless of time budget.
     static func suggestedStretches(for workout: Workout, target: TimeInterval = 360) -> [Stretch] {
-        let groups = workout.exercises.flatMap { $0.exercise.muscleGroups }
-        return suggestedStretches(forMuscleGroups: groups, target: target)
+        suggestedStretches(
+            forExercises: workout.exercises.map(\.exercise),
+            target: target
+        )
     }
 
-    /// Pick a routine of stretches for a list of target muscle groups (e.g. from a template
-    /// before the workout has actually started).
+    /// Pick a routine of stretches for a template (template hasn't started yet).
+    /// Same selection logic as `suggestedStretches(for: workout)`.
     static func suggestedStretches(for template: WorkoutTemplate, target: TimeInterval = 360) -> [Stretch] {
-        let groups = template.exercises.flatMap { $0.exercise.muscleGroups }
-        return suggestedStretches(forMuscleGroups: groups, target: target)
+        suggestedStretches(
+            forExercises: template.exercises.map(\.exercise),
+            target: target
+        )
+    }
+
+    /// Selective routine builder used by the workout/template overloads.
+    /// Centralizes the explicit-recommendation → opener → frequency-fallback flow
+    /// so both call sites stay in sync.
+    static func suggestedStretches(forExercises exercises: [Exercise], target: TimeInterval = 360) -> [Stretch] {
+        guard !exercises.isEmpty else {
+            return defaultRoutine(target: target)
+        }
+
+        // 1) Union of explicit recommended stretches, preserving the source order
+        //    so the first compound's prescription leads the routine.
+        var picked: [Stretch] = []
+        var pickedIds = Set<String>()
+        for exercise in exercises {
+            guard let ids = exercise.recommendedStretchIds else { continue }
+            for id in ids where !pickedIds.contains(id) {
+                if let stretch = byId(id) {
+                    picked.append(stretch)
+                    pickedIds.insert(id)
+                }
+                if picked.count >= maxStretches { break }
+            }
+            if picked.count >= maxStretches { break }
+        }
+
+        // 2) Mix in 1-2 general dynamic openers for flow. Insert at the start so
+        //    the user moves before they static-stretch a specific muscle.
+        var openersInserted = 0
+        for id in generalOpenerIds {
+            guard openersInserted < 2, !pickedIds.contains(id) else { continue }
+            if let stretch = byId(id) {
+                picked.insert(stretch, at: openersInserted)
+                pickedIds.insert(id)
+                openersInserted += 1
+            }
+            if picked.count >= maxStretches { break }
+        }
+
+        // 3) Fall back to the frequency logic only when we don't have enough yet.
+        //    Anything we already picked (openers + explicit) wins over the fallback.
+        if picked.count < 3 {
+            let groups = exercises.flatMap { $0.muscleGroups }
+            let fallback = suggestedStretches(forMuscleGroups: groups, target: target)
+            for stretch in fallback where !pickedIds.contains(stretch.id) {
+                picked.append(stretch)
+                pickedIds.insert(stretch.id)
+                if picked.count >= maxStretches { break }
+            }
+        }
+
+        // 4) Final cap. The list can still be small (e.g. exotic exercise with no
+        //    muscle-group hits), in which case we let WarmupView render what we have.
+        if picked.count > maxStretches {
+            picked = Array(picked.prefix(maxStretches))
+        }
+
+        return picked.isEmpty ? defaultRoutine(target: target) : picked
     }
 
     /// Underlying selection logic: rank stretches by how many of the workout's
@@ -250,6 +325,81 @@ struct StretchDatabase {
         // If we still got nothing useful (e.g. workout used a muscle group with no stretches),
         // fall back to the default routine.
         return picked.isEmpty ? defaultRoutine(target: target) : picked
+    }
+
+    // MARK: - Captions (#349)
+
+    /// Short "why this stretch" line surfaced on the WarmupView preview rows.
+    /// Cross-references the stretch's `targetMuscleGroups` with the workout's
+    /// exercises so the caption names the lift the stretch is prepping for.
+    ///
+    /// Examples:
+    /// - "Loosens chest + shoulders for Bench Press"
+    /// - "Opens hips for Squat + Deadlift"
+    /// - "Mobilizes shoulders" (no matching exercise)
+    static func caption(for stretch: Stretch, in exercises: [Exercise]) -> String {
+        // Match exercises whose recommended list contains this stretch first —
+        // that's the strongest signal (the lift literally asked for this stretch).
+        let explicit = exercises.filter {
+            $0.recommendedStretchIds?.contains(stretch.id) == true
+        }
+
+        let matchedExercises: [Exercise]
+        if !explicit.isEmpty {
+            matchedExercises = explicit
+        } else {
+            // Fall back to muscle-group overlap so frequency-picked stretches
+            // still get a meaningful caption.
+            let targets = Set(stretch.targetMuscleGroups)
+            matchedExercises = exercises.filter { !targets.isDisjoint(with: Set($0.muscleGroups)) }
+        }
+
+        let muscleText = stretch.targetMuscleGroups
+            .prefix(2)
+            .map { $0.displayName.lowercased() }
+            .joined(separator: " + ")
+
+        let verb = preferredVerb(for: stretch.targetMuscleGroups)
+
+        guard !matchedExercises.isEmpty else {
+            // No workout context — describe the stretch in isolation.
+            if muscleText.isEmpty { return "Warmup mobility" }
+            return "\(verb) \(muscleText)"
+        }
+
+        // De-dup exercise names while preserving order, then cap at 2 so the
+        // caption stays readable on a row.
+        var seen = Set<String>()
+        var names: [String] = []
+        for ex in matchedExercises {
+            if !seen.contains(ex.name) {
+                seen.insert(ex.name)
+                names.append(ex.name)
+            }
+            if names.count >= 2 { break }
+        }
+
+        let liftSummary = names.joined(separator: " + ")
+        if muscleText.isEmpty {
+            return "Preps you for \(liftSummary)"
+        }
+        return "\(verb) \(muscleText) for \(liftSummary)"
+    }
+
+    /// Picks a verb appropriate for the muscle groups being stretched so captions
+    /// don't always start with "loosens".
+    private static func preferredVerb(for groups: [MuscleGroup]) -> String {
+        // Hip / lower body openers read better with "opens".
+        let hipGroups: Set<MuscleGroup> = [.glutes, .quads, .hamstrings]
+        if groups.contains(where: { hipGroups.contains($0) }) {
+            return "Opens"
+        }
+        // Mid-back / thoracic / shoulder mobility reads as "mobilizes".
+        let mobilityGroups: Set<MuscleGroup> = [.shoulders, .back, .traps, .lats]
+        if groups.allSatisfy({ mobilityGroups.contains($0) }) {
+            return "Mobilizes"
+        }
+        return "Loosens"
     }
 
     /// A balanced full-body warmup used when we have no workout-specific info.

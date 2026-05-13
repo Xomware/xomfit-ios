@@ -21,8 +21,16 @@ struct WorkoutDetailView: View {
 
     @State private var pendingStart: (() -> Void)?
     @State private var pendingStretches: [Stretch] = []
+    /// Exercises captured at start-flow time so the warmup preview can render
+    /// "why this stretch" captions (#349).
+    @State private var pendingExercises: [Exercise] = []
     @State private var showWarmupPrompt = false
     @State private var showWarmup = false
+
+    /// Currently-presented exercise for the form details sheet (#349). Driven by
+    /// the info button on each exercise row — mirrors `WorkoutBuilderView` and
+    /// `TemplateDetailView` so info is reachable from every workout surface.
+    @State private var exerciseForDetail: Exercise?
 
     private var userId: String {
         authService.currentUser?.id.uuidString.lowercased() ?? ""
@@ -88,10 +96,14 @@ struct WorkoutDetailView: View {
         .fullScreenCover(isPresented: $showWarmup) {
             WarmupView(
                 stretches: pendingStretches.isEmpty ? StretchDatabase.defaultRoutine() : pendingStretches,
-                totalDuration: warmupMinutes * 60
+                totalDuration: warmupMinutes * 60,
+                exercises: pendingExercises
             ) {
                 runPendingStartImmediately()
             }
+        }
+        .sheet(item: $exerciseForDetail) { exercise in
+            ExerciseDetailSheet(exercise: exercise)
         }
     }
 
@@ -229,6 +241,23 @@ struct WorkoutDetailView: View {
                         Text(exercise.exercise.name)
                             .font(.subheadline.weight(.bold))
                             .foregroundStyle(Theme.textPrimary)
+
+                        // Info button (#349) — opens the standard ExerciseDetailSheet
+                        // so the user can check form from the workout history view.
+                        // Wrapped in a Button with .buttonStyle(.plain) so it doesn't
+                        // collide with the DisclosureGroup's tap-to-expand gesture.
+                        Button {
+                            Haptics.selection()
+                            exerciseForDetail = exercise.exercise
+                        } label: {
+                            Image(systemName: "info.circle")
+                                .font(Theme.fontCaption)
+                                .foregroundStyle(Theme.textSecondary)
+                                .frame(width: 32, height: 32)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Show details for \(exercise.exercise.name)")
 
                         Spacer()
 
@@ -397,7 +426,8 @@ struct WorkoutDetailView: View {
                 stretches: StretchDatabase.suggestedStretches(
                     for: workout,
                     target: TimeInterval(warmupMinutes * 60)
-                )
+                ),
+                exercises: workout.exercises.map(\.exercise)
             ) {
                 workoutSession.startFromTemplate(template, userId: userId)
                 workoutSession.isPresented = true
@@ -456,9 +486,10 @@ struct WorkoutDetailView: View {
 
     // MARK: - Warmup gating (#337)
 
-    private func requestStart(stretches: [Stretch], action: @escaping () -> Void) {
+    private func requestStart(stretches: [Stretch], exercises: [Exercise] = [], action: @escaping () -> Void) {
         pendingStart = action
         pendingStretches = stretches
+        pendingExercises = exercises
 
         switch warmupOptIn {
         case "yes":
@@ -478,6 +509,7 @@ struct WorkoutDetailView: View {
         let action = pendingStart
         pendingStart = nil
         pendingStretches = []
+        pendingExercises = []
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
             action?()
         }

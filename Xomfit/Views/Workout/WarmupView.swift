@@ -14,6 +14,9 @@ struct WarmupView: View {
     let stretches: [Stretch]
     /// Total warmup duration in seconds (default 6 minutes).
     let totalDuration: Int
+    /// Exercises this warmup is prepping for. Drives the "why this stretch"
+    /// caption on each preview row (#349). May be empty for default routines.
+    let exercises: [Exercise]
     /// Called when the user completes or skips the warmup. The caller should
     /// dismiss this view and start the actual workout.
     let onFinish: () -> Void
@@ -28,9 +31,15 @@ struct WarmupView: View {
     @State private var hasStarted: Bool = false
     @State private var stretchForDetail: Stretch?
 
-    init(stretches: [Stretch], totalDuration: Int = 360, onFinish: @escaping () -> Void) {
+    init(
+        stretches: [Stretch],
+        totalDuration: Int = 360,
+        exercises: [Exercise] = [],
+        onFinish: @escaping () -> Void
+    ) {
         self.stretches = stretches
         self.totalDuration = totalDuration
+        self.exercises = exercises
         self.onFinish = onFinish
         _totalRemaining = State(initialValue: totalDuration)
         _stretchRemaining = State(initialValue: stretches.first?.durationSeconds ?? 30)
@@ -176,7 +185,7 @@ struct WarmupView: View {
                     previewRow(index: index, stretch: stretch)
                 }
                 .buttonStyle(PressableCardStyle())
-                .accessibilityLabel("\(stretch.name), \(stretch.durationSeconds) seconds, \(muscleGroupSummary(stretch.targetMuscleGroups))")
+                .accessibilityLabel("\(stretch.name), \(stretch.durationSeconds) seconds. \(caption(for: stretch))")
                 .accessibilityHint("Opens stretch details")
             }
         }
@@ -201,7 +210,10 @@ struct WarmupView: View {
                         .font(.caption.weight(.semibold).monospacedDigit())
                         .foregroundStyle(Theme.textSecondary)
                 }
-                Text(muscleGroupSummary(stretch.targetMuscleGroups))
+                // "Why this stretch" caption (#349) — ties the stretch back to the
+                // workout exercise(s) it preps for; falls back to a muscle-only
+                // description when there's no workout context.
+                Text(caption(for: stretch))
                     .font(Theme.fontCaption)
                     .foregroundStyle(Theme.textSecondary)
                     .lineLimit(2)
@@ -218,6 +230,13 @@ struct WarmupView: View {
         .background(Theme.surface)
         .clipShape(.rect(cornerRadius: Theme.cornerRadius))
         .contentShape(Rectangle())
+    }
+
+    /// "Why this stretch" line shown on each preview row. When the warmup is
+    /// driven by a workout/template, the caption references the matching lift —
+    /// otherwise it falls back to a muscle-only description.
+    private func caption(for stretch: Stretch) -> String {
+        StretchDatabase.caption(for: stretch, in: exercises)
     }
 
     // MARK: - Timer
