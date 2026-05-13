@@ -104,6 +104,11 @@ final class WorkoutLoggerViewModel {
     // Stored so completeSet can fire PR checks without needing the caller to pass it
     private(set) var activeUserId: String = ""
 
+    /// Stable id for the in-progress workout — used to key local notifications
+    /// (#369) so the latest scheduled rest timer replaces any prior pending one
+    /// (identifier convention: `"rest-{workoutId}"`).
+    private(set) var workoutId: String = UUID().uuidString
+
     // MARK: - Computed
 
     var duration: TimeInterval {
@@ -146,6 +151,7 @@ final class WorkoutLoggerViewModel {
         isActive = true
         errorMessage = nil
         activeUserId = userId
+        workoutId = UUID().uuidString
         newPR = nil
         showPRCelebration = false
         showExerciseTransition = false
@@ -738,6 +744,15 @@ final class WorkoutLoggerViewModel {
         isRestTimerActive = true
         restTimerStartDate = Date()
         updateLiveActivity()
+
+        // Schedule a local "rest done" notification keyed by workoutId (#369).
+        // The "rest-{workoutId}" identifier means a later start (e.g. user
+        // skips and starts a new rest immediately) replaces any prior pending
+        // notification — no duplicates queued.
+        NotificationService.shared.scheduleRestTimerNotification(
+            workoutId: workoutId,
+            duration: duration
+        )
     }
 
     /// Called when the app returns to foreground. Recalculates rest timer based on wall-clock time elapsed.
@@ -757,6 +772,10 @@ final class WorkoutLoggerViewModel {
         restTimeRemaining = 0
         isRestTimerActive = false
         updateLiveActivity()
+        // Cancel any pending local "rest done" notification (#369). Safe to call
+        // when none is pending — also clears delivered notifications if the user
+        // skipped after the timer naturally fired in the background.
+        NotificationService.shared.cancelRestTimerNotification(workoutId: workoutId)
     }
 
     func extendRestTimer(_ seconds: Double = 30) {

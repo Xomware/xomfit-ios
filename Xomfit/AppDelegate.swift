@@ -22,6 +22,15 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
             // Save token to Supabase
             if let token = NotificationService.shared.deviceToken {
                 await saveTokenToSupabase(token)
+                // Also write the latest token to the user's profile row so the
+                // backend has a canonical apns_device_token per user (#369).
+                // Errors are logged but non-fatal — push_tokens upsert above is
+                // the source-of-truth for multi-device delivery.
+                do {
+                    try await ProfileService.shared.updateAPNSToken(token)
+                } catch {
+                    print("[APNs] Failed to update profiles.apns_device_token: \(error.localizedDescription)")
+                }
             }
         }
     }

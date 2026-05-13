@@ -85,6 +85,9 @@ struct WarmupView: View {
                     Button("Cancel") {
                         Haptics.light()
                         stopTimer()
+                        // Drop the pending warmup notification on dismiss (#369)
+                        // so the user isn't pinged after backing out.
+                        NotificationService.shared.cancelWarmupNotification()
                         dismiss()
                     }
                     .foregroundStyle(Theme.textSecondary)
@@ -443,6 +446,13 @@ struct WarmupView: View {
         guard !hasStarted else { return }
         hasStarted = true
         startTimer()
+        // Schedule a local "warmup complete" notification keyed to the total
+        // warmup duration (#369). System suppresses delivery while in foreground
+        // (visual timer covers that) and delivers as a banner if the user
+        // backgrounds the app mid-warmup.
+        NotificationService.shared.scheduleWarmupNotification(
+            duration: TimeInterval(totalRemaining)
+        )
     }
 
     private func startTimer() {
@@ -504,6 +514,10 @@ struct WarmupView: View {
         guard !isFinished else { return }
         isFinished = true
         stopTimer()
+        // Cancel any pending warmup completion notification (#369). When the
+        // total timer naturally hits zero, the system has already delivered
+        // (and removed) the request — this call is a safe no-op in that case.
+        NotificationService.shared.cancelWarmupNotification()
         Haptics.success()
         onFinish()
         dismiss()
