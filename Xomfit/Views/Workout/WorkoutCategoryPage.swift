@@ -85,6 +85,9 @@ struct WorkoutCategoryListView: View {
 
     @State private var pendingStart: (() -> Void)?
     @State private var pendingStretches: [Stretch] = []
+    /// Exercises captured at start-flow time so the warmup preview can render
+    /// "why this stretch" captions (#349).
+    @State private var pendingExercises: [Exercise] = []
     @State private var showWarmupPrompt = false
     @State private var showWarmup = false
 
@@ -106,7 +109,10 @@ struct WorkoutCategoryListView: View {
             TemplateDetailView(template: template) {
                 let captured = template
                 previewTemplate = nil
-                requestStart(stretches: StretchDatabase.suggestedStretches(for: captured, target: TimeInterval(warmupMinutes * 60))) {
+                requestStart(
+                    stretches: StretchDatabase.suggestedStretches(for: captured, target: TimeInterval(warmupMinutes * 60)),
+                    exercises: captured.exercises.map(\.exercise)
+                ) {
                     workoutSession.startFromTemplate(captured, userId: userId)
                     workoutSession.isPresented = true
                 }
@@ -134,7 +140,8 @@ struct WorkoutCategoryListView: View {
         .fullScreenCover(isPresented: $showWarmup) {
             WarmupView(
                 stretches: pendingStretches.isEmpty ? StretchDatabase.defaultRoutine() : pendingStretches,
-                totalDuration: warmupMinutes * 60
+                totalDuration: warmupMinutes * 60,
+                exercises: pendingExercises
             ) {
                 runPendingStartImmediately()
             }
@@ -293,9 +300,10 @@ struct WorkoutCategoryListView: View {
 
     // MARK: - Warmup gating (mirrors WorkoutView for template starts)
 
-    private func requestStart(stretches: [Stretch], action: @escaping () -> Void) {
+    private func requestStart(stretches: [Stretch], exercises: [Exercise] = [], action: @escaping () -> Void) {
         pendingStart = action
         pendingStretches = stretches
+        pendingExercises = exercises
 
         switch warmupOptIn {
         case "yes":
@@ -315,6 +323,7 @@ struct WorkoutCategoryListView: View {
         let action = pendingStart
         pendingStart = nil
         pendingStretches = []
+        pendingExercises = []
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
             action?()
         }

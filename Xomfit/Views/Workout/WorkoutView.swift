@@ -33,6 +33,9 @@ struct WorkoutView: View {
     @State private var pendingStart: (() -> Void)?
     /// Stretches we'll show during the warmup, computed before presenting the sheet.
     @State private var pendingStretches: [Stretch] = []
+    /// Exercises captured at start-flow time so the warmup preview can render
+    /// "why this stretch" captions (#349). Empty for "blank start" flows.
+    @State private var pendingExercises: [Exercise] = []
     /// Whether to ask the user about warming up right now.
     @State private var showWarmupPrompt = false
     /// Whether to present the warmup sheet right now.
@@ -171,7 +174,8 @@ struct WorkoutView: View {
         .fullScreenCover(isPresented: $showWarmup) {
             WarmupView(
                 stretches: pendingStretches.isEmpty ? StretchDatabase.defaultRoutine() : pendingStretches,
-                totalDuration: warmupMinutes * 60
+                totalDuration: warmupMinutes * 60,
+                exercises: pendingExercises
             ) {
                 runPendingStartImmediately()
             }
@@ -190,7 +194,10 @@ struct WorkoutView: View {
             TemplateDetailView(template: template) {
                 let captured = template
                 previewTemplate = nil
-                requestStart(stretches: StretchDatabase.suggestedStretches(for: captured, target: TimeInterval(warmupMinutes * 60))) {
+                requestStart(
+                    stretches: StretchDatabase.suggestedStretches(for: captured, target: TimeInterval(warmupMinutes * 60)),
+                    exercises: captured.exercises.map(\.exercise)
+                ) {
                     workoutSession.startFromTemplate(captured, userId: userId)
                     workoutSession.isPresented = true
                 }
@@ -219,7 +226,10 @@ struct WorkoutView: View {
                 Haptics.success()
                 UserDefaults.standard.set(true, forKey: "xomfit_first_workout_started")
                 if let template = WorkoutTemplate.builtIn.first(where: { $0.id == "tpl-fb-a" }) {
-                    requestStart(stretches: StretchDatabase.suggestedStretches(for: template, target: TimeInterval(warmupMinutes * 60))) {
+                    requestStart(
+                        stretches: StretchDatabase.suggestedStretches(for: template, target: TimeInterval(warmupMinutes * 60)),
+                        exercises: template.exercises.map(\.exercise)
+                    ) {
                         workoutSession.startFromTemplate(template, userId: userId)
                         workoutSession.isPresented = true
                     }
@@ -251,9 +261,10 @@ struct WorkoutView: View {
     /// Entry point used by every "start workout" path. Either prompts the user about
     /// warming up first, presents the warmup, or runs the start action directly,
     /// depending on the user's saved preference.
-    private func requestStart(stretches: [Stretch], action: @escaping () -> Void) {
+    private func requestStart(stretches: [Stretch], exercises: [Exercise] = [], action: @escaping () -> Void) {
         pendingStart = action
         pendingStretches = stretches
+        pendingExercises = exercises
 
         switch warmupOptIn {
         case "yes":
@@ -278,6 +289,7 @@ struct WorkoutView: View {
         let action = pendingStart
         pendingStart = nil
         pendingStretches = []
+        pendingExercises = []
         // Slight delay so any prompt/sheet dismissal lands cleanly before the workout cover.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
             action?()

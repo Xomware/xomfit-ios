@@ -15,6 +15,11 @@ struct Exercise: Codable, Identifiable, Hashable {
     var supportsUnilateral: Bool = false
     /// The default laterality when this exercise is added to a workout.
     var defaultLaterality: Laterality = .bilateral
+    /// Optional pre-curated `Stretch.id` list for the warmup flow (#349).
+    /// When set, these stretches are prioritized in `StretchDatabase.suggestedStretches(for:)`
+    /// over the frequency-weighted selection. Typically 1-3 IDs covering the target
+    /// muscle and its antagonist (e.g. chest + thoracic spine for bench press).
+    var recommendedStretchIds: [String]? = nil
 }
 
 enum MuscleGroup: String, Codable, CaseIterable, Identifiable {
