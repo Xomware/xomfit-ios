@@ -212,6 +212,54 @@ final class WorkoutService {
         }
     }
 
+    // MARK: - Update (#365)
+
+    /// Updates a previously-saved workout. The base `workouts` row already upserts
+    /// in `saveToSupabase`, but child rows (`workout_exercises`, `workout_sets`,
+    /// `workout_tracks`) only upsert by id — so if the user removed an exercise
+    /// or set during edit those orphan rows would survive. To keep the source of
+    /// truth in sync we delete the child rows first and then re-run the standard
+    /// save path, which re-inserts them from the edited `Workout`.
+    ///
+    /// Always writes to local cache. Returns `true` if Supabase succeeded,
+    /// `false` if the write was queued via `SyncManager` for retry.
+    @discardableResult
+    func updateWorkout(_ workout: Workout) async -> Bool {
+        // Cache first — instant.
+        saveToCache(workout)
+
+        // Wipe children so removed exercises/sets/tracks don't leak.
+        // workout_sets cascade-deletes from workout_exercises in the schema.
+        do {
+            try await supabase
+                .from("workout_exercises")
+                .delete()
+                .eq("workout_id", value: workout.id)
+                .execute()
+
+            try await supabase
+                .from("workout_tracks")
+                .delete()
+                .eq("workout_id", value: workout.id)
+                .execute()
+
+            try await saveToSupabase(workout)
+            return true
+        } catch {
+            print("[WorkoutService] Supabase update failed, queuing for retry: \(error.localizedDescription)")
+            if let data = try? JSONEncoder().encode(workout),
+               let payload = String(data: data, encoding: .utf8) {
+                SyncManager.shared.enqueue(SyncOperation(
+                    type: .saveWorkout,
+                    entityId: workout.id,
+                    userId: workout.userId,
+                    payload: payload
+                ))
+            }
+            return false
+        }
+    }
+
     // MARK: - Fetch
 
     func fetchWorkout(id: String) async -> Workout? {

@@ -164,6 +164,94 @@ final class FeedService {
         photoURLs: [String]? = nil,
         compact: Bool = true
     ) async throws {
+        let activity = buildWorkoutActivity(from: workout, photoURLs: photoURLs, compact: compact)
+
+        let payloadData = try jsonEncoder.encode(activity)
+        let payloadString = String(data: payloadData, encoding: .utf8) ?? "{}"
+
+        let insert = FeedItemInsert(
+            id: UUID().uuidString,
+            user_id: userId,
+            activity_type: ActivityType.workout.rawValue,
+            caption: caption,
+            payload: payloadString,
+            visibility: SocialFeedItem.FeedVisibility.friends.rawValue
+        )
+
+        try await supabase
+            .from("feed_items")
+            .insert(insert)
+            .execute()
+    }
+
+    // MARK: - Update Feed Item for Workout (#365)
+
+    /// Rewrites the payload of an existing workout-type feed item after the user
+    /// edits the workout. Matches the same lookup strategy as
+    /// `deleteFeedItemsForWorkout`: fetch the user's workout-type rows, decode
+    /// each payload, find the one whose `workoutId` matches.
+    ///
+    /// If no feed item matches (e.g. workout was edited before the post-to-feed
+    /// flow ran) this is a no-op.
+    ///
+    /// `caption` and `photoURLs` are preserved from the existing row when not
+    /// passed in — only the activity payload is rebuilt from the new workout.
+    func updateFeedItemForWorkout(
+        workout: Workout,
+        userId: String
+    ) async throws {
+        // Find existing workout-type feed items for this user
+        let rows: [FeedItemRow] = try await supabase
+            .from("feed_items")
+            .select()
+            .eq("user_id", value: userId)
+            .eq("activity_type", value: ActivityType.workout.rawValue)
+            .execute()
+            .value
+
+        // Pick the row whose payload's workoutId matches
+        let match = rows.first { row in
+            guard let data = row.payload.data(using: .utf8),
+                  let activity = try? jsonDecoder.decode(WorkoutActivity.self, from: data) else {
+                return false
+            }
+            return activity.workoutId == workout.id
+        }
+
+        guard let row = match else {
+            // No existing feed post for this workout — nothing to update.
+            return
+        }
+
+        // Preserve existing photoURLs from the prior payload so we don't drop
+        // attached photos when rewriting the activity from the edited workout.
+        let existingPhotoURLs: [String]? = {
+            guard let data = row.payload.data(using: .utf8),
+                  let activity = try? jsonDecoder.decode(WorkoutActivity.self, from: data) else {
+                return nil
+            }
+            return activity.photoURLs
+        }()
+
+        let activity = buildWorkoutActivity(from: workout, photoURLs: existingPhotoURLs, compact: true)
+        let payloadData = try jsonEncoder.encode(activity)
+        let payloadString = String(data: payloadData, encoding: .utf8) ?? "{}"
+
+        try await supabase
+            .from("feed_items")
+            .update(["payload": payloadString])
+            .eq("id", value: row.id)
+            .execute()
+    }
+
+    /// Builds the `WorkoutActivity` payload shared by `postWorkoutToFeed` and
+    /// `updateFeedItemForWorkout` so both call sites stay in lock-step on the
+    /// compact-vs-full set encoding (#321).
+    private func buildWorkoutActivity(
+        from workout: Workout,
+        photoURLs: [String]?,
+        compact: Bool
+    ) -> WorkoutActivity {
         let exercises = workout.exercises.map { ex in
             WorkoutActivity.ExerciseSummary(
                 id: ex.id,
@@ -187,7 +275,7 @@ final class FeedService {
         let trackCount: Int? = workout.tracks.isEmpty ? nil : workout.tracks.count
         let firstTrackTitle: String? = workout.tracks.first?.title
 
-        let activity = WorkoutActivity(
+        return WorkoutActivity(
             workoutId: workout.id,
             workoutName: workout.name,
             duration: workout.duration,
@@ -202,23 +290,6 @@ final class FeedService {
             trackCount: trackCount,
             firstTrackTitle: firstTrackTitle
         )
-
-        let payloadData = try jsonEncoder.encode(activity)
-        let payloadString = String(data: payloadData, encoding: .utf8) ?? "{}"
-
-        let insert = FeedItemInsert(
-            id: UUID().uuidString,
-            user_id: userId,
-            activity_type: ActivityType.workout.rawValue,
-            caption: caption,
-            payload: payloadString,
-            visibility: SocialFeedItem.FeedVisibility.friends.rawValue
-        )
-
-        try await supabase
-            .from("feed_items")
-            .insert(insert)
-            .execute()
     }
 
     // MARK: - Post Generic Item
