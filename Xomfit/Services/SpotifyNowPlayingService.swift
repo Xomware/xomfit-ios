@@ -13,15 +13,30 @@ import Foundation
 /// If `SpotifyAuthService.shared.currentTokenRefreshingIfNeeded()` returns nil (user never signed
 /// in, or token revoked) the polling loop simply no-ops on each tick. No prompts, no errors.
 @MainActor
+@Observable
 final class SpotifyNowPlayingService {
-    static let shared = SpotifyNowPlayingService()
+    @ObservationIgnored static let shared = SpotifyNowPlayingService()
 
     /// 30s cadence — matches `NowPlayingService` and stays well under Spotify's rate limit.
-    private let pollInterval: TimeInterval = 30
+    @ObservationIgnored private let pollInterval: TimeInterval = 30
 
     private var captured: [WorkoutTrack] = []
-    private var seenKeys: Set<String> = []
-    private var pollTask: Task<Void, Never>?
+    @ObservationIgnored private var seenKeys: Set<String> = []
+    @ObservationIgnored private var pollTask: Task<Void, Never>?
+
+    // MARK: - Observable surface (Spotify capture polish)
+
+    /// True while the poll loop is alive. Drives the "Recording soundtrack" pill + the
+    /// Settings pulse indicator. Reset by `stopCapture`.
+    private(set) var isCapturing: Bool = false
+
+    /// Number of unique tracks captured in the current session — surfaced in the resume bar
+    /// and the active-workout popover. Stays in sync with `captured.count`.
+    var capturedCount: Int { captured.count }
+
+    /// Most recent track added in this session, if any. Surfaced in `SpotifyConnectionView` so
+    /// the user can confirm capture is working without opening an active workout.
+    private(set) var lastCapturedTrack: WorkoutTrack?
 
     private init() {}
 
@@ -33,7 +48,9 @@ final class SpotifyNowPlayingService {
         print("[SpotifyNowPlayingService] startCapture called — resetting session state")
         captured.removeAll()
         seenKeys.removeAll()
+        lastCapturedTrack = nil
         pollTask?.cancel()
+        isCapturing = true
 
         pollTask = Task { [weak self] in
             guard let self else { return }
@@ -49,12 +66,15 @@ final class SpotifyNowPlayingService {
         }
     }
 
-    /// Stop polling and return the captured tracks. Clears state for the next session.
+    /// Stop polling and return the captured tracks. Clears the live state but keeps
+    /// `lastCapturedTrack` so Settings can still display the most recent capture between
+    /// sessions.
     @discardableResult
     func stopCapture() -> [WorkoutTrack] {
         print("[SpotifyNowPlayingService] stopCapture called — \(captured.count) track(s) captured")
         pollTask?.cancel()
         pollTask = nil
+        isCapturing = false
         let result = captured
         captured.removeAll()
         seenKeys.removeAll()
@@ -122,6 +142,7 @@ final class SpotifyNowPlayingService {
                 sourceApp: "Spotify"
             )
             captured.append(track)
+            lastCapturedTrack = track
             print("[SpotifyNowPlayingService] captured '\(title)' by \(artist ?? "unknown") — total: \(captured.count)")
         } catch {
             // Network blips happen — log and continue. Polling will retry on the next tick.

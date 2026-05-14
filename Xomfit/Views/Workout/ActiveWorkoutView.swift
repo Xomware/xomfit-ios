@@ -23,6 +23,15 @@ struct ActiveWorkoutView: View {
     /// to scroll to the picked card, then cleared.
     @State private var pendingScrollIndex: Int?
 
+    // Soundtrack-capture popover (Spotify capture polish). Tapping the
+    // "Recording soundtrack" pill in the footer opens a small disclosure with
+    // the captured-tracks-so-far count + most recently captured track per source.
+    @State private var showSoundtrackPopover = false
+    /// Live mirrors of the singleton capture services. Used purely to subscribe to
+    /// `@Observable` changes — calls still go through `.shared`.
+    @State private var spotifyCapture = SpotifyNowPlayingService.shared
+    @State private var appleMusicCapture = NowPlayingService.shared
+
     // First-run polish (#310)
     /// Persisted flag — once dismissed, the active-workout tutorial overlay never re-shows.
     @AppStorage("xomfit_first_workout_tutorial_seen") private var firstTutorialSeen = false
@@ -139,8 +148,16 @@ struct ActiveWorkoutView: View {
                 // The scrollview above reserves bottom inset via
                 // `.contentMargins` so this FAB never sits on top of set rows.
                 if !viewModel.focusMode {
-                    VStack {
+                    VStack(spacing: Theme.Spacing.xs) {
                         Spacer()
+
+                        // Soundtrack capture pill (Spotify capture polish). Visible
+                        // only while at least one capture loop is alive. Tap opens
+                        // the captured-tracks-so-far popover.
+                        if spotifyCapture.isCapturing || appleMusicCapture.isCapturing {
+                            soundtrackCapturePill
+                        }
+
                         XomButton("Add Exercise", variant: .primary, icon: "plus") {
                             showExercisePicker = true
                         }
@@ -608,6 +625,130 @@ struct ActiveWorkoutView: View {
         }
         .padding(.horizontal, Theme.Spacing.md)
         .padding(.vertical, Theme.Spacing.sm)
+    }
+
+    // MARK: - Soundtrack Capture Pill (Spotify capture polish)
+
+    /// Compact, accent-tinted pill telling the user that workout music capture is running.
+    /// One pill total — sources are summarized in the label and the popover. Hidden when
+    /// neither service is actively polling.
+    private var soundtrackCapturePill: some View {
+        Button {
+            Haptics.light()
+            showSoundtrackPopover = true
+        } label: {
+            HStack(spacing: Theme.Spacing.xs) {
+                Image(systemName: "music.note")
+                    .font(.caption.weight(.bold))
+                Text(soundtrackPillLabel)
+                    .font(.caption.weight(.semibold))
+                    .lineLimit(1)
+                if totalCapturedCount > 0 {
+                    Text("\(totalCapturedCount)")
+                        .font(.caption2.weight(.heavy).monospacedDigit())
+                        .foregroundStyle(Theme.accent)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 1)
+                        .background(Theme.accent.opacity(0.22), in: Capsule())
+                }
+            }
+            .foregroundStyle(Theme.accent)
+            .padding(.horizontal, Theme.Spacing.sm)
+            .padding(.vertical, 6)
+            .frame(minHeight: 32)
+            .background(Theme.accent.opacity(0.12), in: Capsule())
+            .overlay(Capsule().stroke(Theme.accent.opacity(0.35), lineWidth: 0.5))
+            .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(soundtrackPillAccessibilityLabel)
+        .accessibilityHint("Shows the songs captured so far for this workout's soundtrack")
+        .popover(isPresented: $showSoundtrackPopover, attachmentAnchor: .point(.top)) {
+            soundtrackPopoverContent
+                .presentationCompactAdaptation(.popover)
+        }
+    }
+
+    /// Pill label — composes from whichever services are currently capturing.
+    private var soundtrackPillLabel: String {
+        switch (spotifyCapture.isCapturing, appleMusicCapture.isCapturing) {
+        case (true, true):  return "Recording soundtrack"
+        case (true, false): return "Recording soundtrack via Spotify"
+        case (false, true): return "Recording soundtrack via Apple Music"
+        case (false, false): return "Recording soundtrack" // unreachable — pill is hidden
+        }
+    }
+
+    private var soundtrackPillAccessibilityLabel: String {
+        let count = totalCapturedCount
+        let countSuffix = count == 0
+            ? "no tracks yet"
+            : "\(count) track\(count == 1 ? "" : "s") captured"
+        return "\(soundtrackPillLabel), \(countSuffix)"
+    }
+
+    private var totalCapturedCount: Int {
+        spotifyCapture.capturedCount + appleMusicCapture.capturedCount
+    }
+
+    /// Popover content surfacing per-source counts + last captured track so the user can
+    /// confirm capture is working without finishing the workout.
+    private var soundtrackPopoverContent: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+            HStack(spacing: Theme.Spacing.sm) {
+                Image(systemName: "music.note.list")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Theme.accent)
+                Text("Soundtrack capture")
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(Theme.textPrimary)
+            }
+
+            if spotifyCapture.isCapturing {
+                soundtrackPopoverSource(
+                    name: "Spotify",
+                    count: spotifyCapture.capturedCount,
+                    last: spotifyCapture.lastCapturedTrack
+                )
+            }
+            if appleMusicCapture.isCapturing {
+                soundtrackPopoverSource(
+                    name: "Apple Music",
+                    count: appleMusicCapture.capturedCount,
+                    last: appleMusicCapture.lastCapturedTrack
+                )
+            }
+
+            if totalCapturedCount == 0 {
+                Text("Nothing captured yet — start playing music and we'll log it.")
+                    .font(Theme.fontCaption)
+                    .foregroundStyle(Theme.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(Theme.Spacing.md)
+        .frame(minWidth: 240, maxWidth: 300)
+    }
+
+    private func soundtrackPopoverSource(name: String, count: Int, last: WorkoutTrack?) -> some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
+            HStack {
+                Text(name)
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(Theme.textPrimary)
+                Spacer()
+                Text("\(count) track\(count == 1 ? "" : "s")")
+                    .font(.caption.weight(.semibold).monospacedDigit())
+                    .foregroundStyle(Theme.textSecondary)
+            }
+            if let last {
+                Text("Last: \(last.title)\(last.artist.map { " — \($0)" } ?? "")")
+                    .font(Theme.fontSmall)
+                    .foregroundStyle(Theme.textSecondary)
+                    .lineLimit(2)
+            }
+        }
+        .accessibilityElement(children: .combine)
     }
 
     // MARK: - Empty State

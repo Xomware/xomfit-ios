@@ -65,6 +65,12 @@ struct MainTabView: View {
 
     private let resumeTimer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
+    /// Observable mirrors of the Now Playing capture services. Used by the resume bar to
+    /// show a live track count while the active-workout cover is dismissed. Reading these
+    /// here subscribes the shell to capture-state changes via the `@Observable` macro.
+    @State private var spotifyCapture = SpotifyNowPlayingService.shared
+    @State private var appleMusicCapture = NowPlayingService.shared
+
     /// Default drawer width: ~78% of the screen, clamped so it doesn't grow
     /// absurd on iPad widths. iOS resolves this via GeometryReader below.
     private let drawerMaxWidth: CGFloat = 320
@@ -135,6 +141,10 @@ struct MainTabView: View {
                     durationString: workoutSession.durationString,
                     isPaused: workoutSession.isPaused,
                     tickId: tickId,
+                    // Live-updating via `@Observable` on the singletons (Spotify capture
+                    // polish). When the workout is active and tracks have been captured,
+                    // the resume bar surfaces a subtle "💿 N tracks" label.
+                    capturedTrackCount: spotifyCapture.capturedCount + appleMusicCapture.capturedCount,
                     onTap: {
                         withAnimation(.spring(response: 0.35, dampingFraction: 0.82)) {
                             workoutSession.isPresented = true
@@ -407,6 +417,9 @@ private struct WorkoutResumeBar: View {
     let isPaused: Bool
     /// Drives re-render of the duration string every second. Owner updates this.
     let tickId: UUID
+    /// Live track count from `SpotifyNowPlayingService` + `NowPlayingService`. Rendered
+    /// as a subtle disc label when > 0 (Spotify capture polish).
+    let capturedTrackCount: Int
     let onTap: () -> Void
 
     var body: some View {
@@ -427,16 +440,28 @@ private struct WorkoutResumeBar: View {
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(Theme.textPrimary)
                         .lineLimit(1)
-                    if isPaused {
-                        Text("Paused")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(Theme.textSecondary)
-                    } else {
-                        Text(durationString)
-                            .font(.caption.weight(.medium))
-                            .foregroundStyle(Theme.textSecondary)
-                            .monospacedDigit()
-                            .id(tickId)
+                    HStack(spacing: Theme.Spacing.xs) {
+                        if isPaused {
+                            Text("Paused")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(Theme.textSecondary)
+                        } else {
+                            Text(durationString)
+                                .font(.caption.weight(.medium))
+                                .foregroundStyle(Theme.textSecondary)
+                                .monospacedDigit()
+                                .id(tickId)
+                        }
+                        if capturedTrackCount > 0 {
+                            HStack(spacing: 3) {
+                                Image(systemName: "opticaldisc.fill")
+                                    .font(.caption2)
+                                Text("\(capturedTrackCount) track\(capturedTrackCount == 1 ? "" : "s")")
+                                    .font(.caption.weight(.medium).monospacedDigit())
+                            }
+                            .foregroundStyle(Theme.accent)
+                            .accessibilityLabel("\(capturedTrackCount) track\(capturedTrackCount == 1 ? "" : "s") captured")
+                        }
                     }
                 }
 
