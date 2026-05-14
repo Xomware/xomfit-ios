@@ -134,6 +134,7 @@ struct MainTabView: View {
                     workoutName: workoutSession.workoutName,
                     durationString: workoutSession.durationString,
                     isPaused: workoutSession.isPaused,
+                    isWatchConnected: WatchSyncService.shared.isWatchAvailable,
                     tickId: tickId,
                     onTap: {
                         withAnimation(.spring(response: 0.35, dampingFraction: 0.82)) {
@@ -405,6 +406,10 @@ private struct WorkoutResumeBar: View {
     let workoutName: String
     let durationString: String
     let isPaused: Bool
+    /// True when a watch is paired AND the watch companion app is installed.
+    /// Renders an `applewatch` glyph in subtle accent so the user knows the
+    /// "Done Set" button on their watch is live (#256 follow-up).
+    let isWatchConnected: Bool
     /// Drives re-render of the duration string every second. Owner updates this.
     let tickId: UUID
     let onTap: () -> Void
@@ -441,6 +446,13 @@ private struct WorkoutResumeBar: View {
                 }
 
                 Spacer(minLength: 0)
+
+                if isWatchConnected {
+                    Image(systemName: "applewatch")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(Theme.accent.opacity(0.85))
+                        .accessibilityLabel("Apple Watch connected")
+                }
 
                 Image(systemName: "chevron.up")
                     .font(.caption.weight(.bold))

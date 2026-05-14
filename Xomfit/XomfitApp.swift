@@ -47,6 +47,13 @@ struct XomFitApp: App {
                             await NotificationService.shared.requestPermission()
                             #endif
                             WatchSyncService.shared.activate()
+                            // Route the watch's "Done Set" button into the
+                            // active workout session. Uses weak capture so
+                            // the closure can't keep the view model alive
+                            // past app teardown.
+                            WatchSyncService.shared.onDoneSetReceived = { [weak workoutSession] in
+                                workoutSession?.completeFocusedSetFromWatch()
+                            }
                             evaluateFitnessQuestionnaireGate()
                         }
                         .sheet(isPresented: Bindable(authService).needsProfileCompletion) {

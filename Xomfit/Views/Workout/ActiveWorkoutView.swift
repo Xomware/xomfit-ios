@@ -406,10 +406,22 @@ struct ActiveWorkoutView: View {
                     }
                 }
 
-                Text(viewModel.workoutName)
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(Theme.textTertiary)
-                    .lineLimit(1)
+                HStack(spacing: 4) {
+                    // Subtle "Apple Watch connected" cue (#256 follow-up).
+                    // Rendered next to the workout name so users know the
+                    // watch's Done Set button is live without taking extra
+                    // header space.
+                    if WatchSyncService.shared.isWatchAvailable {
+                        Image(systemName: "applewatch")
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(Theme.accent.opacity(0.8))
+                            .accessibilityLabel("Apple Watch connected")
+                    }
+                    Text(viewModel.workoutName)
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(Theme.textTertiary)
+                        .lineLimit(1)
+                }
             }
             .animation(.xomChill, value: viewModel.isRestTimerActive)
 

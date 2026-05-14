@@ -841,6 +841,29 @@ final class WorkoutLoggerViewModel {
         focusAdvance()
     }
 
+    /// Watch-triggered "Done Set". Marks the currently focused set complete
+    /// **idempotently** — if the set is already complete (e.g. WCSession
+    /// delivered the same message twice via both `sendMessage` and the
+    /// `transferUserInfo` fallback), this is a no-op. Without this guard,
+    /// `completeSet` would toggle the set OFF on the duplicate event.
+    ///
+    /// Wired from `WatchSyncService.onDoneSetReceived` in `XomFitApp`.
+    func completeFocusedSetFromWatch() {
+        // Bail when no active session or focus is out of bounds — the watch
+        // can race ahead of iOS state on cold launch.
+        guard isActive else { return }
+        guard exercises.indices.contains(focusExerciseIndex) else { return }
+        let ex = exercises[focusExerciseIndex]
+        guard ex.sets.indices.contains(focusSetIndex) else { return }
+
+        // Idempotent: only complete if currently incomplete. Skip toggle-off.
+        guard ex.sets[focusSetIndex].completedAt == Date.distantPast else { return }
+
+        Haptics.success()
+        completeSet(exerciseIndex: focusExerciseIndex, setIndex: focusSetIndex)
+        focusAdvance()
+    }
+
     // MARK: - Exercise Transition Actions
 
     func addAnotherSet() {
