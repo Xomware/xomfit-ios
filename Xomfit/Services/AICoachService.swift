@@ -39,8 +39,45 @@ enum AICoachStreamEvent {
     /// A `build_workout` tool call resolved to a parseable payload.
     /// Attach it to the assistant message so the chat can render the action card.
     case toolUse(WorkoutBuildPayload)
+    /// Token usage for this exchange. Emitted once after `message_delta`
+    /// finalizes Anthropic's usage block (#371).
+    case usage(inputTokens: Int, outputTokens: Int)
     /// Stream finished cleanly (`message_stop`).
     case done
+}
+
+// MARK: - Model selection (#371)
+
+/// User-selectable Anthropic models. Persisted via `@AppStorage("aiCoach.model")`.
+/// Source of truth for both the picker label and the API model id.
+enum AICoachModel: String, CaseIterable, Identifiable {
+    case sonnet45 = "claude-sonnet-4-6"
+    case haiku45 = "claude-haiku-4-5"
+
+    var id: String { rawValue }
+
+    /// Display name used in Settings → AI Coach → Model.
+    var displayName: String {
+        switch self {
+        case .sonnet45: return "Sonnet 4.6 (smarter)"
+        case .haiku45: return "Haiku 4.5 (faster + cheaper)"
+        }
+    }
+
+    /// Resolve a stored `@AppStorage` rawValue (possibly empty/stale) into a
+    /// valid model. Defaults to Sonnet.
+    static func resolve(rawValue: String) -> AICoachModel {
+        AICoachModel(rawValue: rawValue) ?? .sonnet45
+    }
+
+    /// Anthropic public pricing in USD per million tokens (approximate, used
+    /// for the cost meter — best-effort). Update when pricing changes.
+    var pricing: (inputPerMillion: Double, outputPerMillion: Double) {
+        switch self {
+        case .sonnet45: return (3.0, 15.0)
+        case .haiku45: return (1.0, 5.0)
+        }
+    }
 }
 
 // MARK: - Service
@@ -112,10 +149,18 @@ final class AICoachService {
 
     // MARK: - System prompt builder
 
-    /// Builds the system prompt by prepending the user's fitness profile (if any)
-    /// and appending a compressed exercise-catalog hint so the model can pick
-    /// valid `exerciseId`s for `build_workout` calls.
-    static func systemPrompt(profile: UserFitnessProfile) -> String {
+    /// Builds the system prompt by prepending the user's fitness profile (if any),
+    /// optionally appending a compressed recent-history + PR summary, and
+    /// finally appending the exercise-catalog hint so the model can pick valid
+    /// `exerciseId`s for `build_workout` calls.
+    ///
+    /// `workoutContext` is built on the @MainActor side (see
+    /// `AICoachViewModel.buildWorkoutContext`) and capped at ~3000 chars by the
+    /// caller. Passed in as a plain string so the service stays actor-agnostic.
+    static func systemPrompt(
+        profile: UserFitnessProfile,
+        workoutContext: String? = nil
+    ) -> String {
         var prompt = baseSystemPrompt
 
         if profile.isComplete {
@@ -139,6 +184,10 @@ final class AICoachService {
             if lines.count > 1 {
                 prompt = lines.joined(separator: "\n") + "\n\n" + prompt
             }
+        }
+
+        if let workoutContext, !workoutContext.isEmpty {
+            prompt += "\n\n" + workoutContext
         }
 
         let catalog = exerciseCatalogHint()
@@ -181,6 +230,7 @@ final class AICoachService {
     func sendMessageStream(
         messages: [AICoachMessage],
         profile: UserFitnessProfile = .current,
+        workoutContext: String? = nil,
         apiKeyOverride: String? = nil,
         model: String = AICoachService.defaultModel,
         maxTokens: Int = AICoachService.defaultMaxTokens
@@ -191,6 +241,7 @@ final class AICoachService {
                     try await self.runStream(
                         messages: messages,
                         profile: profile,
+                        workoutContext: workoutContext,
                         apiKeyOverride: apiKeyOverride,
                         model: model,
                         maxTokens: maxTokens,
@@ -208,6 +259,7 @@ final class AICoachService {
     private func runStream(
         messages: [AICoachMessage],
         profile: UserFitnessProfile,
+        workoutContext: String?,
         apiKeyOverride: String?,
         model: String,
         maxTokens: Int,
@@ -220,7 +272,7 @@ final class AICoachService {
         let body = AnthropicRequest(
             model: model,
             maxTokens: maxTokens,
-            system: Self.systemPrompt(profile: profile),
+            system: Self.systemPrompt(profile: profile, workoutContext: workoutContext),
             messages: messages.map { AnthropicMessage(role: $0.role.rawValue, content: $0.text) },
             stream: true,
             tools: [Self.buildWorkoutTool]
@@ -264,6 +316,11 @@ final class AICoachService {
         // input_json_delta partials until content_block_stop fires.
         var pendingToolJSON = ""
         var inToolBlock = false
+        // Token usage accumulators (#371). `message_start` carries input_tokens
+        // in `message.usage`; `message_delta` carries final output_tokens in
+        // the top-level `usage` field.
+        var inputTokens: Int = 0
+        var outputTokens: Int = 0
 
         for try await line in bytes.lines {
             if Task.isCancelled { return }
@@ -287,6 +344,14 @@ final class AICoachService {
             }
 
             switch envelope.type {
+            case "message_start":
+                // Anthropic puts input_tokens in message.usage on the start
+                // event. Output_tokens here is usually 0 / non-final.
+                if let usage = envelope.message?.usage {
+                    if let input = usage.input_tokens { inputTokens = input }
+                    if let output = usage.output_tokens { outputTokens = output }
+                }
+
             case "content_block_start":
                 if let block = envelope.content_block {
                     if block.type == "tool_use" {
@@ -314,7 +379,17 @@ final class AICoachService {
                     pendingToolJSON = ""
                 }
 
+            case "message_delta":
+                // Final output_tokens lands here on the top-level usage field.
+                if let usage = envelope.usage {
+                    if let output = usage.output_tokens { outputTokens = output }
+                    if let input = usage.input_tokens { inputTokens = input }
+                }
+
             case "message_stop":
+                if inputTokens > 0 || outputTokens > 0 {
+                    continuation.yield(.usage(inputTokens: inputTokens, outputTokens: outputTokens))
+                }
                 continuation.yield(.done)
                 return
 
@@ -479,6 +554,8 @@ private struct SSEEnvelope: Decodable {
     let index: Int?
     let content_block: ContentBlock?
     let delta: Delta?
+    let message: MessageEnvelope?
+    let usage: Usage?
 
     struct ContentBlock: Decodable {
         let type: String
@@ -490,5 +567,17 @@ private struct SSEEnvelope: Decodable {
         let type: String?
         let text: String?
         let partial_json: String?
+    }
+
+    /// `message_start` shape: { type: "message_start", message: { ..., usage: { input_tokens, output_tokens } } }
+    struct MessageEnvelope: Decodable {
+        let usage: Usage?
+    }
+
+    /// Token usage block. Appears in `message.usage` on `message_start` and at
+    /// the top level on `message_delta`.
+    struct Usage: Decodable {
+        let input_tokens: Int?
+        let output_tokens: Int?
     }
 }

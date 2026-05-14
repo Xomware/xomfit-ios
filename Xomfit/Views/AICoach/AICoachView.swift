@@ -24,6 +24,26 @@ struct AICoachView: View {
     /// Stored in `@AppStorage` for v1 — TODO Keychain.
     @AppStorage("aiCoach.anthropicAPIKey") private var apiKeyOverride: String = ""
 
+    /// User-selected Anthropic model. Persisted in Settings → AI Coach (#371).
+    @AppStorage("aiCoach.model") private var modelRawValue: String = AICoachModel.sonnet45.rawValue
+
+    /// Whether to show the past-conversations stub sheet (#371).
+    @State private var showHistoryStub = false
+
+    /// Resolved model from the persisted raw value, with fallback to Sonnet.
+    private var selectedModel: AICoachModel {
+        AICoachModel.resolve(rawValue: modelRawValue)
+    }
+
+    /// Current user id for the prompt-priming workout context. Lowercased
+    /// UUID string to match the caching key.
+    private var userId: String? {
+        guard let raw = authService?.currentUser?.id.uuidString.lowercased(),
+              !raw.isEmpty
+        else { return nil }
+        return raw
+    }
+
     var body: some View {
         ZStack {
             Theme.background.ignoresSafeArea()
@@ -39,6 +59,10 @@ struct AICoachView: View {
                     errorBanner(error)
                 }
 
+                if let cost = viewModel.costMeterText {
+                    costFooter(cost)
+                }
+
                 composer
             }
         }
@@ -47,17 +71,31 @@ struct AICoachView: View {
         .toolbarColorScheme(.dark, for: .navigationBar)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                if !viewModel.isEmpty {
-                    Button(role: .destructive) {
+                HStack(spacing: Theme.Spacing.sm) {
+                    Button {
                         Haptics.light()
-                        showClearConfirm = true
+                        showHistoryStub = true
                     } label: {
-                        Image(systemName: "trash")
+                        Image(systemName: "clock.arrow.circlepath")
                             .foregroundStyle(Theme.textPrimary)
                     }
-                    .accessibilityLabel("Clear conversation")
+                    .accessibilityLabel("Past conversations")
+
+                    if !viewModel.isEmpty {
+                        Button(role: .destructive) {
+                            Haptics.light()
+                            showClearConfirm = true
+                        } label: {
+                            Image(systemName: "trash")
+                                .foregroundStyle(Theme.textPrimary)
+                        }
+                        .accessibilityLabel("Clear conversation")
+                    }
                 }
             }
+        }
+        .sheet(isPresented: $showHistoryStub) {
+            pastConversationsStub
         }
         .confirmationDialog(
             "Clear conversation?",
@@ -91,12 +129,15 @@ struct AICoachView: View {
                     XomMetricLabel("Try Asking")
                         .padding(.horizontal, Theme.Spacing.md)
 
-                    VStack(spacing: Theme.Spacing.sm) {
-                        ForEach(viewModel.suggestionChips, id: \.self) { chip in
-                            suggestionChip(chip)
+                    // Horizontally scrollable chip rail (#371).
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: Theme.Spacing.sm) {
+                            ForEach(viewModel.suggestionChips, id: \.self) { chip in
+                                suggestionChip(chip)
+                            }
                         }
+                        .padding(.horizontal, Theme.Spacing.md)
                     }
-                    .padding(.horizontal, Theme.Spacing.md)
                 }
             }
             .padding(.vertical, Theme.Spacing.lg)
@@ -106,7 +147,14 @@ struct AICoachView: View {
     private func suggestionChip(_ text: String) -> some View {
         Button {
             Haptics.light()
-            Task { await viewModel.sendSuggestion(text, apiKeyOverride: apiKeyOverride) }
+            Task {
+                await viewModel.sendSuggestion(
+                    text,
+                    apiKeyOverride: apiKeyOverride,
+                    model: selectedModel,
+                    userId: userId
+                )
+            }
         } label: {
             HStack(spacing: Theme.Spacing.sm) {
                 Image(systemName: "sparkle")
@@ -114,19 +162,15 @@ struct AICoachView: View {
                 Text(text)
                     .font(Theme.fontBody)
                     .foregroundStyle(Theme.textPrimary)
-                    .multilineTextAlignment(.leading)
-                Spacer(minLength: 0)
-                Image(systemName: "arrow.up.right")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(Theme.textTertiary)
+                    .lineLimit(1)
             }
-            .padding(Theme.Spacing.md)
-            .frame(minHeight: 52)
+            .padding(.horizontal, Theme.Spacing.md)
+            .frame(height: 44)
             .background(
-                RoundedRectangle(cornerRadius: Theme.Radius.md)
+                Capsule()
                     .fill(Theme.surface)
                     .overlay(
-                        RoundedRectangle(cornerRadius: Theme.Radius.md)
+                        Capsule()
                             .strokeBorder(Theme.hairline, lineWidth: 0.5)
                     )
             )
@@ -155,6 +199,14 @@ struct AICoachView: View {
                                 )
                                 .padding(.leading, 40) // align with bubble (past avatar)
                             }
+                            // Regenerate action only on the latest assistant
+                            // bubble when the convo is at rest (#371).
+                            if message.role == .assistant,
+                               message.id == viewModel.lastAssistantMessageId,
+                               viewModel.canRegenerateLast {
+                                regenerateButton
+                                    .padding(.leading, 40)
+                            }
                         }
                         .id(message.id)
                     }
@@ -169,6 +221,35 @@ struct AICoachView: View {
                 scrollToBottom(proxy: proxy)
             }
         }
+    }
+
+    private var regenerateButton: some View {
+        Button {
+            Haptics.light()
+            Task {
+                await viewModel.regenerateLast(
+                    apiKeyOverride: apiKeyOverride,
+                    model: selectedModel,
+                    userId: userId
+                )
+            }
+        } label: {
+            HStack(spacing: Theme.Spacing.tight) {
+                Image(systemName: "arrow.clockwise")
+                Text("Regenerate")
+            }
+            .font(Theme.fontCaption.weight(.medium))
+            .foregroundStyle(Theme.textSecondary)
+            .padding(.horizontal, Theme.Spacing.sm)
+            .frame(minHeight: 32)
+            .background(
+                Capsule().strokeBorder(Theme.hairline, lineWidth: 0.5)
+            )
+        }
+        .buttonStyle(.plain)
+        .disabled(viewModel.isSending)
+        .accessibilityLabel("Regenerate last reply")
+        .accessibilityHint("Discards the last reply and asks again")
     }
 
     private func scrollToBottom(proxy: ScrollViewProxy) {
@@ -287,7 +368,64 @@ struct AICoachView: View {
     private func triggerSend() {
         guard viewModel.canSend else { return }
         Haptics.light()
-        Task { await viewModel.send(apiKeyOverride: apiKeyOverride) }
+        Task {
+            await viewModel.send(
+                apiKeyOverride: apiKeyOverride,
+                model: selectedModel,
+                userId: userId
+            )
+        }
+    }
+
+    // MARK: - Cost meter footer (#371)
+
+    private func costFooter(_ text: String) -> some View {
+        HStack(spacing: 4) {
+            Image(systemName: "dollarsign.circle")
+                .font(.caption2)
+                .foregroundStyle(Theme.textTertiary)
+            Text(text)
+                .font(.caption2)
+                .foregroundStyle(Theme.textTertiary)
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, Theme.Spacing.md)
+        .padding(.bottom, 2)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(text)
+    }
+
+    // MARK: - Past conversations stub (#371)
+
+    private var pastConversationsStub: some View {
+        NavigationStack {
+            ZStack {
+                Theme.background.ignoresSafeArea()
+                VStack(spacing: Theme.Spacing.md) {
+                    Image(systemName: "bubble.left.and.bubble.right")
+                        .font(.system(size: 48))
+                        .foregroundStyle(Theme.accent)
+                    Text("Multi-thread chats coming soon")
+                        .font(Theme.fontBody.weight(.semibold))
+                        .foregroundStyle(Theme.textPrimary)
+                    Text("For now your AI Coach is one rolling conversation. We'll add per-topic threads in a future update.")
+                        .font(Theme.fontCaption)
+                        .foregroundStyle(Theme.textSecondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, Theme.Spacing.lg)
+                }
+            }
+            .navigationTitle("Past Conversations")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") { showHistoryStub = false }
+                        .foregroundStyle(Theme.accent)
+                }
+            }
+        }
+        .presentationDetents([.medium])
+        .preferredColorScheme(.dark)
     }
 }
 
