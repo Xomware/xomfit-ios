@@ -62,8 +62,43 @@ This PR ships everything except the watchOS App **target** itself. Adding a targ
 3. On the Watch: workout name + elapsed time should update; rest ring should appear; "Paused" pill should show when paired iPhone is paused.
 4. Tap **Done Set** on the Watch — the iPhone should mark the focused set complete.
 
+### Testing the Done Set button (follow-up wiring)
+
+The watch → iOS "Done Set" path is wired through:
+
+```
+Watch "Done Set" button
+  → WatchSessionStore.sendDoneSet()         [XomfitWatch/]
+  → WCSession.sendMessage(["doneSet": true]) (or transferUserInfo fallback)
+  → WatchSyncService.handle(message:)        [Xomfit/Services/]
+  → WatchSyncService.onDoneSetReceived       (closure installed in XomFitApp)
+  → WorkoutLoggerViewModel.completeFocusedSetFromWatch()
+  → completeSet(exerciseIndex: focusExerciseIndex, setIndex: focusSetIndex)
+  → focusAdvance()
+```
+
+To verify after adding the target:
+
+1. Start a multi-set workout on the iPhone (e.g. 3 sets of bench).
+2. On the watch, confirm "Set 1 / 3" + the workout name render.
+3. Tap **Done Set**. Watch the iPhone:
+   - The focused set's checkmark fills.
+   - Rest timer starts (assuming not a drop-set / superset round).
+   - Focus advances to the next set or exercise.
+4. **Double-tap idempotency check**: tap **Done Set** twice in quick succession. Only the first tap should complete the set — the second is debounced (`doneSetDebounceInterval = 0.75s` in `WatchSyncService`). Without this guard, `completeSet` would toggle the set off because it's defined as a toggle.
+5. **Cold-launch check**: kill the iPhone app, wake the watch app, tap **Done Set**. The message is queued via `transferUserInfo`; once the iPhone app relaunches and the active workout cover restores, the queued event delivers and completes the focused set.
+
+### Connection status indicator
+
+When `WCSession.default.isPaired && session.isWatchAppInstalled` is true after activation, a small `applewatch` SF Symbol renders:
+
+- In the `WorkoutResumeBar` (between the duration label and the chevron).
+- In the `ActiveWorkoutView` header bar (inline with the workout name).
+
+The flag is observable on `WatchSyncService.shared.isWatchAvailable` and refreshes on `sessionWatchStateDidChange` / `sessionReachabilityDidChange` callbacks.
+
 ## How the wiring works
 
 - **iOS → Watch**: `WatchSyncService` (in `Xomfit/Services/`) wraps `WCSession`. It runs every time `WorkoutLoggerViewModel.updateLiveActivity()` ticks. Uses `sendMessage` when reachable, `updateApplicationContext` as a cold-launch fallback.
-- **Watch → iOS**: `WatchSessionStore` (in `XomfitWatch/`) decodes inbound `WatchWorkoutState` snapshots. Its "Done Set" button posts `["doneSet": true]` back. The iOS service's `onDoneSetReceived` closure is the hook to wire that into `WorkoutLoggerViewModel.completeSet(...)` in a follow-up.
+- **Watch → iOS**: `WatchSessionStore` (in `XomfitWatch/`) decodes inbound `WatchWorkoutState` snapshots. Its "Done Set" button posts `["doneSet": true]` back. The iOS service's `onDoneSetReceived` closure is installed in `XomFitApp` and routes into `WorkoutLoggerViewModel.completeFocusedSetFromWatch()` (idempotent — won't toggle an already-completed set off on duplicate WCSession delivery).
 - **Shared shape**: `WatchWorkoutState` is duplicated in `Xomfit/Models/` and `XomfitWatch/` — same trick as `XomfitWidgetAttributes.swift`. Keep both copies byte-identical or messages will silently drop on decode.
