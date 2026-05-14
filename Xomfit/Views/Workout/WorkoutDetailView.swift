@@ -446,11 +446,11 @@ struct WorkoutDetailView: View {
             }
 
             if workout.tracks.isEmpty {
-                Text("No tracks captured. Tip: Now Playing capture works with Apple Music.")
+                Text("No tracks captured. iOS only exposes Apple Music's Now Playing to third-party apps — connect Spotify in Settings to capture from there too.")
                     .font(Theme.fontSmall)
                     .foregroundStyle(Theme.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
-                    .accessibilityLabel("No tracks captured during this workout")
+                    .accessibilityLabel("No tracks captured during this workout. Connect Spotify in Settings to capture from Spotify too.")
             } else {
                 VStack(spacing: 0) {
                     ForEach(Array(workout.tracks.enumerated()), id: \.element.id) { index, track in

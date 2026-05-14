@@ -16,17 +16,35 @@ import MediaPlayer
 /// the only workarounds are (a) being the audio app yourself, or (b) private API
 /// (rejected at App Review). v1 ships the Apple Music capture only.
 @MainActor
+@Observable
 final class NowPlayingService {
-    static let shared = NowPlayingService()
+    @ObservationIgnored static let shared = NowPlayingService()
 
     /// 30s polling cadence — frequent enough to catch song changes, cheap enough to avoid wakelock pressure.
-    private let pollInterval: TimeInterval = 30
+    @ObservationIgnored private let pollInterval: TimeInterval = 30
 
     /// Accumulated tracks for the current capture session, deduped by `dedupeKey`.
     private var captured: [WorkoutTrack] = []
-    private var seenKeys: Set<String> = []
-    private var pollTask: Task<Void, Never>?
-    private var isAuthorized: Bool = false
+    @ObservationIgnored private var seenKeys: Set<String> = []
+    @ObservationIgnored private var pollTask: Task<Void, Never>?
+    @ObservationIgnored private var isAuthorized: Bool = false
+
+    /// Becomes true after the user explicitly denies Apple Music access. Used to suppress
+    /// repeated `MPMediaLibrary.requestAuthorization` traffic and noisy logs across multiple
+    /// `startCapture()` invocations within the same app launch — see `ensureAuthorization`.
+    @ObservationIgnored private var deniedNoticed: Bool = false
+
+    // MARK: - Observable surface (Spotify capture polish)
+
+    /// True while the poll loop is alive AND auth is granted. Drives the active-workout
+    /// "Recording soundtrack" pill. Reset by `stopCapture`.
+    private(set) var isCapturing: Bool = false
+
+    /// Number of unique tracks captured in the current session.
+    var capturedCount: Int { captured.count }
+
+    /// Most recent track captured this session (or the last completed session).
+    private(set) var lastCapturedTrack: WorkoutTrack?
 
     private init() {}
 
@@ -34,13 +52,19 @@ final class NowPlayingService {
 
     /// Triggers the system Apple Music auth prompt the first time. Subsequent calls
     /// are cheap — they just refresh the cached `isAuthorized` flag.
+    ///
+    /// When the user has previously denied access, this is a silent no-op after the first
+    /// observation: we log once via `deniedNoticed` and never re-poke the system. The
+    /// Soundtrack section on `WorkoutDetailView` already explains the limitation + steers
+    /// the user toward Spotify as the alternative.
     func ensureAuthorization() async {
         let status = MPMediaLibrary.authorizationStatus()
-        print("[NowPlayingService] authorizationStatus = \(status.rawValue)")
         switch status {
         case .authorized:
+            if !isAuthorized {
+                print("[NowPlayingService] authorized — polling will run")
+            }
             isAuthorized = true
-            print("[NowPlayingService] authorized — polling will run")
         case .notDetermined:
             print("[NowPlayingService] not determined — requesting authorization")
             let result = await withCheckedContinuation { (continuation: CheckedContinuation<MPMediaLibraryAuthorizationStatus, Never>) in
@@ -50,12 +74,23 @@ final class NowPlayingService {
             }
             isAuthorized = (result == .authorized)
             print("[NowPlayingService] authorization result: \(result.rawValue), isAuthorized=\(isAuthorized)")
+            if result == .denied {
+                // Mark deniedNoticed so subsequent startCapture invocations skip the noisy
+                // "denied/restricted" branch logging without us re-prompting the system.
+                deniedNoticed = true
+            }
         case .denied, .restricted:
             isAuthorized = false
-            print("[NowPlayingService] access denied/restricted — no track capture will occur")
+            if !deniedNoticed {
+                print("[NowPlayingService] access denied/restricted — Apple Music capture disabled for this session; Spotify capture (if connected) still runs")
+                deniedNoticed = true
+            }
         @unknown default:
             isAuthorized = false
-            print("[NowPlayingService] unknown auth status \(status.rawValue) — defaulting to denied")
+            if !deniedNoticed {
+                print("[NowPlayingService] unknown auth status \(status.rawValue) — defaulting to denied")
+                deniedNoticed = true
+            }
         }
     }
 
@@ -67,6 +102,7 @@ final class NowPlayingService {
         // Reset session state up-front so a back-to-back start clears prior captures
         captured.removeAll()
         seenKeys.removeAll()
+        lastCapturedTrack = nil
         pollTask?.cancel()
 
         // Kick off auth check + first poll. If auth lands on denied, the polling loop
@@ -75,9 +111,11 @@ final class NowPlayingService {
             guard let self else { return }
             await self.ensureAuthorization()
             guard self.isAuthorized else {
-                print("[NowPlayingService] startCapture: not authorized, polling will not run")
+                // Silent skip — deniedNoticed gates repeat logging in `ensureAuthorization`.
+                self.isCapturing = false
                 return
             }
+            self.isCapturing = true
             print("[NowPlayingService] polling started — interval=\(self.pollInterval)s")
             // Capture immediately so a song already playing at workout start is recorded.
             self.captureCurrentTrack()
@@ -91,13 +129,15 @@ final class NowPlayingService {
         }
     }
 
-    /// Stops polling and returns the captured list. Clears internal state so the next
-    /// `startCapture()` begins fresh.
+    /// Stops polling and returns the captured list. Clears in-flight state so the next
+    /// `startCapture()` begins fresh. `lastCapturedTrack` is retained across stop/start so
+    /// Settings can still show the most recent capture between sessions.
     @discardableResult
     func stopCapture() -> [WorkoutTrack] {
         print("[NowPlayingService] stopCapture called — \(captured.count) track(s) captured")
         pollTask?.cancel()
         pollTask = nil
+        isCapturing = false
         let result = captured
         captured.removeAll()
         seenKeys.removeAll()
@@ -139,6 +179,7 @@ final class NowPlayingService {
             sourceApp: "Apple Music"
         )
         captured.append(track)
+        lastCapturedTrack = track
         print("[NowPlayingService] captured '\(title)' by \(item.artist ?? "unknown") — total: \(captured.count)")
     }
 
