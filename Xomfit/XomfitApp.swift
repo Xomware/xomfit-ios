@@ -18,6 +18,12 @@ struct XomFitApp: App {
     @State private var pendingReportId: String? = nil
     @State private var showReportsSheet = false
 
+    /// DEBUG-only: `xomfit://coach` opens AI Coach in a sheet so agents can
+    /// screenshot it without navigating the drawer (#371).
+    #if DEBUG
+    @State private var showCoachSheet = false
+    #endif
+
     var body: some Scene {
         WindowGroup {
             Group {
@@ -80,6 +86,25 @@ struct XomFitApp: App {
                             }
                             .preferredColorScheme(.dark)
                         }
+                        #if DEBUG
+                        .sheet(isPresented: $showCoachSheet) {
+                            NavigationStack {
+                                AICoachView()
+                            }
+                            .environment(authService)
+                            .environment(workoutSession)
+                            .preferredColorScheme(.dark)
+                        }
+                        .task {
+                            // Agent screenshot helper: auto-open Coach sheet
+                            // when `XOMFIT_OPEN_COACH=1`. Combine with
+                            // XOMFIT_AUTH_BYPASS=1 to land directly on the
+                            // Coach empty-state from a cold launch (#371).
+                            if ProcessInfo.processInfo.environment["XOMFIT_OPEN_COACH"] == "1" {
+                                showCoachSheet = true
+                            }
+                        }
+                        #endif
                 } else {
                     LoginView()
                         .environment(authService)
@@ -99,6 +124,14 @@ struct XomFitApp: App {
                     SpotifyAuthService.shared.handleCallback(url: url)
                     return
                 }
+                #if DEBUG
+                if url.scheme == "xomfit", url.host == "coach" {
+                    if authService.isAuthenticated {
+                        showCoachSheet = true
+                    }
+                    return
+                }
+                #endif
                 if url.scheme == "xomfit", url.host == "report" {
                     // `xomfit://report/<id>` — first path component is the id.
                     let id = url.pathComponents

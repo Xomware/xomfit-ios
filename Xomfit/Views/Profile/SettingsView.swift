@@ -17,6 +17,9 @@ struct SettingsView: View {
     /// not secure. TODO: migrate to Keychain.
     @AppStorage("aiCoach.anthropicAPIKey") private var anthropicAPIKey: String = ""
 
+    /// User-selected Anthropic model for the AI Coach (#371). Default Sonnet.
+    @AppStorage("aiCoach.model") private var aiCoachModelRaw: String = AICoachModel.sonnet45.rawValue
+
     // MARK: - App Preferences (#312)
 
     @AppStorage("weightUnit") private var weightUnitRaw: String = WeightUnit.lbs.rawValue
@@ -324,6 +327,26 @@ struct SettingsView: View {
                     .autocorrectionDisabled()
                     .accessibilityLabel("Anthropic API Key")
                     .accessibilityHint("Stored on this device only")
+            }
+
+            // Model picker (#371). Stored as raw string so @AppStorage can use
+            // the lightweight `String` overload; AICoachView resolves it to
+            // `AICoachModel`.
+            HStack(spacing: Theme.Spacing.md) {
+                Image(systemName: "brain.head.profile")
+                    .frame(width: Theme.Spacing.lg)
+                    .foregroundStyle(Theme.accent)
+                Picker(selection: $aiCoachModelRaw) {
+                    ForEach(AICoachModel.allCases) { model in
+                        Text(model.displayName).tag(model.rawValue)
+                    }
+                } label: {
+                    Text("Model")
+                        .foregroundStyle(Theme.textPrimary)
+                }
+                .tint(Theme.accent)
+                .accessibilityLabel("AI Coach model")
+                .accessibilityHint("Pick which Anthropic model the coach uses")
             }
         } header: {
             XomMetricLabel("AI Coach")
