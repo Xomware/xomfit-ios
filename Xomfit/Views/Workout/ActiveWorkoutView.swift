@@ -283,6 +283,7 @@ struct ActiveWorkoutView: View {
         }
         .sheet(isPresented: $showFinishSheet) {
             FinishWorkoutSheet(
+                viewModel: viewModel,
                 description: $workoutDescription,
                 location: $viewModel.location,
                 rating: $viewModel.rating,
@@ -363,6 +364,18 @@ struct ActiveWorkoutView: View {
                     }
                 }
             }
+
+            #if DEBUG
+            // Agent screenshot helper for #387 — auto-present the finish sheet so
+            // the new soundtrack / location UI surfaces from a cold launch.
+            if ProcessInfo.processInfo.environment["XOMFIT_AUTO_PRESENT_FINISH"] == "1" {
+                Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(600))
+                    workoutDescription = ""
+                    showFinishSheet = true
+                }
+            }
+            #endif
         }
     }
 
@@ -1435,6 +1448,11 @@ private struct ExerciseTransitionCard: View {
 // MARK: - Finish Workout Sheet
 
 private struct FinishWorkoutSheet: View {
+    /// Passed in so the sheet can render the captured-soundtrack section and
+    /// accept manual track additions / removals (#387). Plain `let` — we only
+    /// call methods + read computed properties; `@Observable` already invalidates
+    /// the body on mutations to those properties.
+    let viewModel: WorkoutLoggerViewModel
     @Binding var description: String
     @Binding var location: String
     @Binding var rating: Int
@@ -1443,6 +1461,9 @@ private struct FinishWorkoutSheet: View {
     @Binding var photoImages: [UIImage]
     let isSaving: Bool
     let onFinish: () -> Void
+
+    /// Drives the manual-track entry sub-sheet (#387).
+    @State private var showManualTrackSheet = false
 
     var body: some View {
         NavigationStack {
@@ -1474,7 +1495,10 @@ private struct FinishWorkoutSheet: View {
                             }
                         }
 
-                        // Location
+                        // Location (#387.3) — single-line free-text input above
+                        // the soundtrack section. Placeholder steers the user to
+                        // any short label (gym, home, park...). Trimming happens
+                        // in the save path on the view model.
                         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                             Text("Location")
                                 .font(.subheadline.weight(.semibold))
@@ -1483,9 +1507,11 @@ private struct FinishWorkoutSheet: View {
                                 Image(systemName: "location.fill")
                                     .font(Theme.fontCaption)
                                     .foregroundStyle(Theme.textSecondary)
-                                TextField("Gym name", text: $location)
+                                TextField("Where? (gym, home, park...)", text: $location)
                                     .font(Theme.fontBody)
                                     .foregroundStyle(Theme.textPrimary)
+                                    .accessibilityLabel("Workout location")
+                                    .accessibilityHint("Optional. Where you did this workout — gym, home, park, etc.")
                             }
                             .padding(Theme.Spacing.sm)
                             .background(Theme.surface)
@@ -1495,6 +1521,12 @@ private struct FinishWorkoutSheet: View {
                                     .stroke(Theme.textSecondary.opacity(0.2), lineWidth: 1)
                             )
                         }
+
+                        // Soundtrack (#387.2) — captured Now Playing tracks plus
+                        // any manual additions, with per-row remove. Sits above
+                        // the caption so the user reviews their soundtrack right
+                        // after rating/location.
+                        soundtrackSection
 
                         // Description
                         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
@@ -1645,5 +1677,260 @@ private struct FinishWorkoutSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbarColorScheme(.dark, for: .navigationBar)
         }
+        .sheet(isPresented: $showManualTrackSheet) {
+            ManualTrackSheet { title, artist in
+                viewModel.addManualTrack(title: title, artist: artist)
+            }
+            .presentationDetents([.medium])
+        }
+    }
+
+    // MARK: - Soundtrack section (#387.2)
+
+    @ViewBuilder
+    private var soundtrackSection: some View {
+        let tracks = viewModel.curatedTracksSnapshot
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            HStack(spacing: Theme.Spacing.sm) {
+                Text("Soundtrack")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Theme.textPrimary)
+                if !tracks.isEmpty {
+                    Text("\(tracks.count)")
+                        .font(.caption.weight(.bold).monospacedDigit())
+                        .foregroundStyle(Theme.accent)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 1)
+                        .background(Theme.accent.opacity(0.15), in: Capsule())
+                }
+                Spacer()
+            }
+
+            if tracks.isEmpty {
+                Text("No songs captured. Add one manually or play music during your next workout.")
+                    .font(Theme.fontCaption)
+                    .foregroundStyle(Theme.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(tracks) { track in
+                        SoundtrackRow(track: track) {
+                            withAnimation(.xomChill) {
+                                viewModel.removeCapturedTrack(id: track.id)
+                            }
+                        }
+                        if track.id != tracks.last?.id {
+                            Divider()
+                                .background(Theme.textSecondary.opacity(0.15))
+                                .padding(.leading, Theme.Spacing.md)
+                        }
+                    }
+                }
+                .background(Theme.surface)
+                .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
+                .overlay(
+                    RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall)
+                        .stroke(Theme.textSecondary.opacity(0.2), lineWidth: 1)
+                )
+            }
+
+            Button {
+                Haptics.selection()
+                showManualTrackSheet = true
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "plus")
+                    Text("Add manual track")
+                        .font(.subheadline.weight(.medium))
+                }
+                .foregroundStyle(Theme.accent)
+                .padding(.horizontal, 12)
+                .padding(.vertical, Theme.Spacing.sm)
+                .frame(minHeight: 44)
+                .background(Theme.accent.opacity(0.12))
+                .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Add a track manually")
+            .accessibilityHint("Opens a form to enter a song title and artist")
+        }
+    }
+}
+
+// MARK: - Soundtrack Row (#387.2)
+
+/// Single captured-track row used by the finish sheet. Renders an icon + title
+/// + artist + source pill with a trailing trash button. Hit target on the trash
+/// is sized to 44pt per HIG.
+private struct SoundtrackRow: View {
+    let track: WorkoutTrack
+    let onRemove: () -> Void
+
+    var body: some View {
+        HStack(spacing: Theme.Spacing.sm) {
+            Image(systemName: sourceIcon)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Theme.accent)
+                .frame(width: 24)
+                .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(track.title)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Theme.textPrimary)
+                    .lineLimit(1)
+                HStack(spacing: 6) {
+                    if let artist = track.artist, !artist.isEmpty {
+                        Text(artist)
+                            .font(Theme.fontCaption)
+                            .foregroundStyle(Theme.textSecondary)
+                            .lineLimit(1)
+                        Text("\u{2022}")
+                            .font(.caption2.weight(.bold))
+                            .foregroundStyle(Theme.textTertiary)
+                            .accessibilityHidden(true)
+                    }
+                    Text(track.sourceApp)
+                        .font(Theme.fontSmall)
+                        .foregroundStyle(Theme.textTertiary)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 1)
+                        .background(Theme.textTertiary.opacity(0.15), in: Capsule())
+                }
+            }
+            Spacer()
+
+            Button {
+                Haptics.light()
+                onRemove()
+            } label: {
+                Image(systemName: "trash")
+                    .font(Theme.fontCaption)
+                    .foregroundStyle(Theme.destructive.opacity(0.85))
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Remove \(track.title) from soundtrack")
+        }
+        .padding(.horizontal, Theme.Spacing.md)
+        .padding(.vertical, 8)
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(track.title)\(track.artist.map { ", \($0)" } ?? "") from \(track.sourceApp)")
+    }
+
+    private var sourceIcon: String {
+        switch track.sourceApp.lowercased() {
+        case "manual": return "pencil"
+        case "spotify": return "music.note"
+        case "soundcloud": return "waveform"
+        case "apple music": return "music.note"
+        default: return "music.note"
+        }
+    }
+}
+
+// MARK: - Manual Track Sheet (#387.2)
+
+/// Compact title + artist entry sheet for adding a song the auto-capture missed.
+/// Source is hard-coded to "Manual" by `WorkoutLoggerViewModel.addManualTrack`.
+private struct ManualTrackSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @State private var title: String = ""
+    @State private var artist: String = ""
+    @FocusState private var focusedField: Field?
+
+    enum Field { case title, artist }
+
+    let onAdd: (String, String?) -> Void
+
+    private var canAdd: Bool {
+        !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Theme.background.ignoresSafeArea()
+                ScrollView {
+                    VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+                        VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
+                            Text("Title")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(Theme.textSecondary)
+                            TextField("Song title", text: $title)
+                                .font(Theme.fontBody)
+                                .foregroundStyle(Theme.textPrimary)
+                                .focused($focusedField, equals: .title)
+                                .submitLabel(.next)
+                                .onSubmit { focusedField = .artist }
+                                .padding(Theme.Spacing.sm)
+                                .background(Theme.surface)
+                                .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall)
+                                        .stroke(Theme.textSecondary.opacity(0.2), lineWidth: 1)
+                                )
+                                .accessibilityLabel("Song title")
+                        }
+
+                        VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
+                            Text("Artist")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(Theme.textSecondary)
+                            TextField("Artist (optional)", text: $artist)
+                                .font(Theme.fontBody)
+                                .foregroundStyle(Theme.textPrimary)
+                                .focused($focusedField, equals: .artist)
+                                .submitLabel(.done)
+                                .onSubmit { if canAdd { commit() } }
+                                .padding(Theme.Spacing.sm)
+                                .background(Theme.surface)
+                                .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall)
+                                        .stroke(Theme.textSecondary.opacity(0.2), lineWidth: 1)
+                                )
+                                .accessibilityLabel("Artist (optional)")
+                        }
+
+                        Button {
+                            commit()
+                        } label: {
+                            Text("Add Track")
+                                .font(.body.weight(.bold))
+                                .foregroundStyle(.black)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                                .background(canAdd ? Theme.accent : Theme.accent.opacity(0.4))
+                                .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(!canAdd)
+                        .accessibilityLabel("Add track")
+                    }
+                    .padding(Theme.Spacing.md)
+                }
+            }
+            .navigationTitle("Add Track")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+            }
+        }
+        .onAppear { focusedField = .title }
+    }
+
+    private func commit() {
+        let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedTitle.isEmpty else { return }
+        Haptics.success()
+        let trimmedArtist = artist.trimmingCharacters(in: .whitespacesAndNewlines)
+        onAdd(trimmedTitle, trimmedArtist.isEmpty ? nil : trimmedArtist)
+        dismiss()
     }
 }

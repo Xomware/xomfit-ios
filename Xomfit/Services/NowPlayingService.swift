@@ -46,6 +46,13 @@ final class NowPlayingService {
     /// Most recent track captured this session (or the last completed session).
     private(set) var lastCapturedTrack: WorkoutTrack?
 
+    /// Read-only copy of the currently captured tracks for this session. Used by the
+    /// finish-workout sheet (#387) to preview what will be saved without yet stopping
+    /// the capture loop. Does NOT mutate state — call `stopCapture()` to actually drain.
+    func capturedTracksSnapshot() -> [WorkoutTrack] {
+        captured
+    }
+
     private init() {}
 
     // MARK: - Authorization
@@ -104,6 +111,16 @@ final class NowPlayingService {
         seenKeys.removeAll()
         lastCapturedTrack = nil
         pollTask?.cancel()
+
+        #if DEBUG
+        // Agent screenshot bypass — skip the Apple Music auth prompt entirely so
+        // the active-workout cover renders without a modal in screenshots (#387).
+        if ProcessInfo.processInfo.environment["XOMFIT_AUTH_BYPASS"] == "1" {
+            print("[NowPlayingService] bypass active — capture is a no-op")
+            isCapturing = false
+            return
+        }
+        #endif
 
         // Kick off auth check + first poll. If auth lands on denied, the polling loop
         // will simply observe the auth flag and exit — no nag, no UI.

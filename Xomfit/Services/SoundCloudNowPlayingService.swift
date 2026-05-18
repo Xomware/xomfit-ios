@@ -49,6 +49,13 @@ final class SoundCloudNowPlayingService {
     /// `SoundCloudConnectionView` so the user can confirm capture is working.
     private(set) var lastCapturedTrack: WorkoutTrack?
 
+    /// Read-only copy of the currently captured tracks for this session. Used by the
+    /// finish-workout sheet (#387) to preview what will be saved without yet stopping
+    /// the capture loop. Does NOT mutate state — call `stopCapture()` to actually drain.
+    func capturedTracksSnapshot() -> [WorkoutTrack] {
+        captured
+    }
+
     private init() {}
 
     // MARK: - Capture lifecycle
@@ -61,6 +68,16 @@ final class SoundCloudNowPlayingService {
         seenKeys.removeAll()
         lastCapturedTrack = nil
         pollTask?.cancel()
+
+        #if DEBUG
+        // Agent screenshot bypass — skip the poll loop so the active-workout
+        // cover renders cleanly in screenshots (#387).
+        if ProcessInfo.processInfo.environment["XOMFIT_AUTH_BYPASS"] == "1" {
+            isCapturing = false
+            return
+        }
+        #endif
+
         isCapturing = true
 
         // Snapshot what's already in play-history so we don't backfill tracks the user
