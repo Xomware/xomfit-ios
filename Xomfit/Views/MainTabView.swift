@@ -267,13 +267,14 @@ struct MainTabView: View {
     private var destinationContent: some View {
         Group {
             switch destination {
-            case .feed:     FeedView()
-            case .workout:  WorkoutView()
-            case .progress: XomProgressView()
-            case .profile:  ProfileView()
-            case .reports:  ReportsListView()
-            case .tools:    ToolsView()
-            case .settings: SettingsView()
+            case .feed:      FeedView()
+            case .workout:   WorkoutView()
+            case .progress:  XomProgressView()
+            case .profile:   ProfileView()
+            case .reports:   ReportsListView()
+            case .stretches: StretchesView()
+            case .tools:     ToolsView()
+            case .settings:  SettingsView()
             }
         }
         .transition(.opacity)
