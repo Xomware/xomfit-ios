@@ -381,6 +381,15 @@ final class ProfileViewModel {
         // Step 4: refresh local state so the header avatar swaps in instantly.
         avatarURL = newURL
         print("[ProfileAvatar] ProfileViewModel.updateAvatar complete — avatarURL=\(newURL)")
+
+        // Step 5: broadcast to FeedViewModel so cached feed cards repaint
+        // without a full refetch (#385).
+        NotificationCenter.default.post(
+            name: .userProfileUpdated,
+            object: newURL,
+            userInfo: ["userId": userId]
+        )
+        print("[ProfileAvatar] broadcast .userProfileUpdated — userId=\(userId)")
     }
 
     // MARK: - Edit sheet helpers

@@ -63,7 +63,11 @@ struct ProfileFriendsView: View {
         let username = profile?.username ?? ""
 
         return HStack(spacing: Theme.Spacing.md) {
-            XomAvatar(name: name, size: 40)
+            XomAvatar(
+                name: name,
+                size: 40,
+                imageURL: profile?.avatarURL.flatMap { URL(string: $0) }
+            )
 
             VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
                 Text(name)

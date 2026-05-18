@@ -20,6 +20,19 @@ final class WorkoutLoggerViewModel {
     var location: String = ""
     var rating: Int = 0
 
+    // MARK: - Soundtrack curation (#387)
+    //
+    // The finish-workout sheet lets the user add/remove tracks before the workout
+    // saves. These overrides are merged with whatever the polling services captured
+    // when `finishWorkout` runs.
+
+    /// Manually-added tracks from the finish sheet. Source is "Manual".
+    var manualTracks: [WorkoutTrack] = []
+
+    /// Track IDs the user removed (swipe-to-delete) in the finish sheet. Applies to
+    /// the merged snapshot of (Apple Music + Spotify + manual).
+    var removedTrackIDs: Set<UUID> = []
+
     // Rest timer
     var restTimeRemaining: Double = 0
     var restDuration: Double = 0
@@ -190,6 +203,8 @@ final class WorkoutLoggerViewModel {
         circuitExerciseIndex = 0
         circuitRound = 0
         circuitCompletedRounds = [:]
+        manualTracks = []
+        removedTrackIDs = []
         skipRestTimer()
         startLiveActivity()
 
@@ -222,6 +237,8 @@ final class WorkoutLoggerViewModel {
         totalPausedDuration = 0
         location = ""
         rating = 0
+        manualTracks = []
+        removedTrackIDs = []
         kind = .setsReps
         durationGoalMinutes = nil
         roundsGoal = nil
@@ -868,12 +885,38 @@ final class WorkoutLoggerViewModel {
 
     func addAnotherSet() {
         addSet(to: completedExerciseIndex)
-        // Point focus at the newly added set so focus mode doesn't jump away
-        if focusMode {
-            focusExerciseIndex = completedExerciseIndex
-            focusSetIndex = exercises[completedExerciseIndex].sets.count - 1
+        // Always advance focus to the newly added set — previously this was guarded
+        // by `focusMode`, which left list-mode focus stuck on the finished set (#387).
+        guard exercises.indices.contains(completedExerciseIndex) else {
+            showExerciseTransition = false
+            return
         }
+        focusExerciseIndex = completedExerciseIndex
+        focusSetIndex = max(exercises[completedExerciseIndex].sets.count - 1, 0)
         showExerciseTransition = false
+    }
+
+    /// Chain a drop set off the just-completed exercise's last set and advance focus
+    /// to it. Used by the post-set "Add Drop Set" action on the transition card (#387).
+    func addDropSetFromTransition() {
+        guard exercises.indices.contains(completedExerciseIndex) else { return }
+        let parentIndex = max(exercises[completedExerciseIndex].sets.count - 1, 0)
+        addDropSet(exerciseIndex: completedExerciseIndex, parentSetIndex: parentIndex)
+        // The new drop set is inserted at parentIndex + 1 (see `addDropSet`).
+        let newSetIndex = min(parentIndex + 1, max(exercises[completedExerciseIndex].sets.count - 1, 0))
+        focusExerciseIndex = completedExerciseIndex
+        focusSetIndex = newSetIndex
+        showExerciseTransition = false
+    }
+
+    /// Convenience used by the transition card's "Next Exercise" button (#387).
+    /// Falls back to dismissing the card if no next exercise is available.
+    func moveToNextExerciseFromTransition() {
+        if let idx = nextExerciseIndex {
+            moveToExercise(index: idx)
+        } else {
+            dismissTransition()
+        }
     }
 
     func moveToExercise(index: Int) {
@@ -886,6 +929,42 @@ final class WorkoutLoggerViewModel {
 
     func dismissTransition() {
         showExerciseTransition = false
+    }
+
+    // MARK: - Soundtrack curation (#387)
+
+    /// Merged snapshot of (Apple Music + Spotify + manual) tracks, minus anything
+    /// the user removed in the finish sheet. Sorted by capture time so the order
+    /// reflects play order across sources.
+    var curatedTracksSnapshot: [WorkoutTrack] {
+        let apple = NowPlayingService.shared.capturedTracksSnapshot()
+        let spotify = SpotifyNowPlayingService.shared.capturedTracksSnapshot()
+        let merged = (apple + spotify + manualTracks)
+            .filter { !removedTrackIDs.contains($0.id) }
+        return merged.sorted { $0.capturedAt < $1.capturedAt }
+    }
+
+    /// Append a manually-entered track. Trims whitespace, drops empty titles.
+    func addManualTrack(title: String, artist: String?) {
+        let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedTitle.isEmpty else { return }
+        let trimmedArtist = artist?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let track = WorkoutTrack(
+            title: trimmedTitle,
+            artist: (trimmedArtist?.isEmpty == false) ? trimmedArtist : nil,
+            album: nil,
+            capturedAt: Date(),
+            sourceApp: "Manual"
+        )
+        manualTracks.append(track)
+    }
+
+    /// Remove a track from the curated soundtrack. Captured tracks are filtered out
+    /// at finish-time via `removedTrackIDs`; manual tracks are also dropped from
+    /// the local array so they don't get re-merged.
+    func removeCapturedTrack(id: UUID) {
+        removedTrackIDs.insert(id)
+        manualTracks.removeAll { $0.id == id }
     }
 
     // MARK: - Rest Timer
@@ -1186,9 +1265,13 @@ final class WorkoutLoggerViewModel {
         // Empty list when the user denied Apple Music access or only used non-Apple Music sources.
         // Spotify tracks (when authed) merge in alongside Apple Music — sort by capture time so
         // the saved soundtrack reflects actual play order across sources (#347).
+        //
+        // Finish-sheet edits (#387): manual entries are appended; `removedTrackIDs`
+        // filters the union so user deletions stick.
         let appleMusicTracks = NowPlayingService.shared.stopCapture()
         let spotifyTracks = SpotifyNowPlayingService.shared.stopCapture()
-        let capturedTracks = (appleMusicTracks + spotifyTracks)
+        let capturedTracks = (appleMusicTracks + spotifyTracks + manualTracks)
+            .filter { !removedTrackIDs.contains($0.id) }
             .sorted { $0.capturedAt < $1.capturedAt }
 
         let workout = Workout(
@@ -1208,11 +1291,22 @@ final class WorkoutLoggerViewModel {
         )
 
         do {
-            // Only post to feed if the workout actually persisted to Supabase.
-            // Prevents orphan feed items (posts with no matching workout row).
+            // Save workout to Supabase (queues for retry on failure).
             let persisted = await WorkoutService.shared.saveWorkout(workout)
-            if persisted {
+            print("[WorkoutLogger] finishWorkout — saveWorkout persisted=\(persisted) workoutId=\(workout.id)")
+
+            // Always attempt to post to feed regardless of whether the workout
+            // save was immediate or queued. Feed post is independent: if the
+            // save was queued the post may also fail (offline), but both paths
+            // are retried (SyncManager for the workout; the do/catch below
+            // surfaces the feed error so the user knows to refresh). (#386)
+            do {
                 try await FeedService.shared.postWorkoutToFeed(workout: workout, userId: userId, caption: workout.notes, photoURLs: photoURLs)
+                print("[WorkoutLogger] finishWorkout — feed post succeeded")
+            } catch {
+                print("[WorkoutLogger] finishWorkout — feed post FAILED: \(error)")
+                // Non-fatal: workout is saved (or queued); the feed card will
+                // appear once the user pulls-to-refresh on the feed.
             }
 
             // Update widget data

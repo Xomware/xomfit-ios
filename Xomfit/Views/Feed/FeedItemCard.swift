@@ -91,7 +91,8 @@ struct FeedItemCard: View {
                 HStack(spacing: Theme.Spacing.sm) {
                     XomAvatar(
                         name: item.user.displayName.isEmpty ? item.user.username : item.user.displayName,
-                        size: 48
+                        size: 48,
+                        imageURL: item.user.avatarURL.flatMap { URL(string: $0) }
                     )
 
                     VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {

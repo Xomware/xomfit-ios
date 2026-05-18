@@ -153,6 +153,10 @@ struct FeedView: View {
             guard !userId.isEmpty else { return }
             Task { await viewModel.loadFeed(userId: userId) }
         }
+        // #385: patch cached feed item avatars when the local user updates their photo.
+        .task {
+            await viewModel.subscribeToProfileUpdates()
+        }
     }
 
     // MARK: - Skeleton Loading
