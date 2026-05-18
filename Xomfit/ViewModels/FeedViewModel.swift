@@ -4,6 +4,22 @@ import Foundation
 @Observable
 final class FeedViewModel {
     var feedItems: [SocialFeedItem] = []
+
+    // MARK: - Profile Update Listener (#385)
+
+    /// Patches cached feed items inline when the current user updates their avatar.
+    /// Called from a `.task` in `FeedView` so it lives on the main actor.
+    func subscribeToProfileUpdates() async {
+        for await notification in NotificationCenter.default.notifications(named: .userProfileUpdated) {
+            guard let avatarURL = notification.object as? String,
+                  let userId = notification.userInfo?["userId"] as? String else { continue }
+            print("[FeedViewModel] .userProfileUpdated received — userId=\(userId) url=\(avatarURL)")
+            for index in feedItems.indices where feedItems[index].userId == userId {
+                feedItems[index].user.avatarURL = avatarURL
+                print("[FeedViewModel] patched feedItems[\(index)] avatarURL")
+            }
+        }
+    }
     var isLoading: Bool = false
     var isRefreshing: Bool = false
     var errorMessage: String? = nil

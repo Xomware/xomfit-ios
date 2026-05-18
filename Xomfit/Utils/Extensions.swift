@@ -65,3 +65,14 @@ extension Double {
             : String(format: "%.1f", self)
     }
 }
+
+// MARK: - Notification Names
+
+extension Notification.Name {
+    /// Fired by `ProfileViewModel.updateAvatar` after the new avatar URL is
+    /// persisted to Supabase. `object` is the updated `avatarURL` String;
+    /// `userInfo["userId"]` is the owner's user id.
+    /// Listeners (FeedViewModel) patch their cached entries inline without
+    /// re-fetching the whole list. (#385)
+    static let userProfileUpdated = Notification.Name("userProfileUpdated")
+}

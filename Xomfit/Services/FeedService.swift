@@ -107,6 +107,7 @@ final class FeedService {
     // MARK: - Fetch Feed
 
     func fetchFeed(userId: String, limit: Int = 20, offset: Int = 0) async throws -> [SocialFeedItem] {
+        print("[FeedService] fetchFeed — userId=\(userId) limit=\(limit) offset=\(offset)")
         let rows: [FeedItemRow] = try await supabase
             .from("feed_items")
             .select()
@@ -115,13 +116,17 @@ final class FeedService {
             .execute()
             .value
 
+        print("[FeedService] fetchFeed — rows=\(rows.count)")
+
         // Batch-fetch profiles for feed user names — concurrent to avoid serial N+1 (#359).
         let uniqueUserIds = Set(rows.map { $0.userId })
         let profileMap = await fetchProfileMap(for: uniqueUserIds)
 
-        return rows.compactMap { row in
+        let items = rows.compactMap { row in
             buildSocialFeedItem(from: row, profile: profileMap[row.userId])
         }
+        print("[FeedService] fetchFeed — built items=\(items.count) (\(rows.count - items.count) dropped by compactMap)")
+        return items
     }
 
     // MARK: - Fetch User Feed
@@ -164,10 +169,12 @@ final class FeedService {
         photoURLs: [String]? = nil,
         compact: Bool = true
     ) async throws {
+        print("[FeedService] postWorkoutToFeed — workoutId=\(workout.id) userId=\(userId) compact=\(compact)")
         let activity = buildWorkoutActivity(from: workout, photoURLs: photoURLs, compact: compact)
 
         let payloadData = try jsonEncoder.encode(activity)
         let payloadString = String(data: payloadData, encoding: .utf8) ?? "{}"
+        print("[FeedService] postWorkoutToFeed — payload bytes=\(payloadData.count) exercises=\(activity.exercises.count)")
 
         let insert = FeedItemInsert(
             id: UUID().uuidString,
@@ -178,10 +185,16 @@ final class FeedService {
             visibility: SocialFeedItem.FeedVisibility.friends.rawValue
         )
 
-        try await supabase
-            .from("feed_items")
-            .insert(insert)
-            .execute()
+        do {
+            try await supabase
+                .from("feed_items")
+                .insert(insert)
+                .execute()
+            print("[FeedService] postWorkoutToFeed — insert succeeded")
+        } catch {
+            print("[FeedService] postWorkoutToFeed — insert FAILED: \(error)")
+            throw error
+        }
     }
 
     // MARK: - Update Feed Item for Workout (#365)
@@ -517,13 +530,29 @@ final class FeedService {
 
         switch activityType {
         case .workout:
-            workoutActivity = try? jsonDecoder.decode(WorkoutActivity.self, from: payloadData)
+            do {
+                workoutActivity = try jsonDecoder.decode(WorkoutActivity.self, from: payloadData)
+            } catch {
+                print("[FeedService] buildSocialFeedItem — WorkoutActivity decode FAILED for row \(row.id): \(error)")
+            }
         case .personalRecord:
-            prActivity = try? jsonDecoder.decode(PRActivity.self, from: payloadData)
+            do {
+                prActivity = try jsonDecoder.decode(PRActivity.self, from: payloadData)
+            } catch {
+                print("[FeedService] buildSocialFeedItem — PRActivity decode FAILED for row \(row.id): \(error)")
+            }
         case .milestone:
-            milestoneActivity = try? jsonDecoder.decode(MilestoneActivity.self, from: payloadData)
+            do {
+                milestoneActivity = try jsonDecoder.decode(MilestoneActivity.self, from: payloadData)
+            } catch {
+                print("[FeedService] buildSocialFeedItem — MilestoneActivity decode FAILED for row \(row.id): \(error)")
+            }
         case .streak:
-            streakActivity = try? jsonDecoder.decode(StreakActivity.self, from: payloadData)
+            do {
+                streakActivity = try jsonDecoder.decode(StreakActivity.self, from: payloadData)
+            } catch {
+                print("[FeedService] buildSocialFeedItem — StreakActivity decode FAILED for row \(row.id): \(error)")
+            }
         }
 
         // Build AppUser from profile data, falling back to placeholder

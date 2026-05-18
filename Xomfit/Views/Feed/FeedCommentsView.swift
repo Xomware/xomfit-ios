@@ -301,7 +301,8 @@ private struct CommentRow: View {
                     HStack(alignment: .center, spacing: Theme.Spacing.sm) {
                         XomAvatar(
                             name: comment.user?.displayName ?? "User",
-                            size: 32
+                            size: 32,
+                            imageURL: comment.user?.avatarURL.flatMap { URL(string: $0) }
                         )
 
                         HStack(spacing: 6) {
