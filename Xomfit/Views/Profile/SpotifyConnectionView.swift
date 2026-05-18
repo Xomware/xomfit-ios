@@ -1,16 +1,27 @@
 import SwiftUI
 
-/// Spotify connection block embedded in `SettingsView` -> Music Sources (#347).
+/// Spotify connection block embedded in `SettingsView` -> Music Sources (#347, #390).
 ///
 /// Renders one of two modes:
-///   - Signed out: client-id paste field + "Sign In with Spotify" button
-///   - Signed in: connected display name + Sign Out button (paste field still visible so the
-///     user can swap accounts without leaving Settings)
+///   - Signed out: a single "Sign In with Spotify" CTA — the Client ID is shipped with the app
+///     so most users never need to think about it (#390).
+///   - Signed in: connected display name + Disconnect button.
+///
+/// Power users can still bring their own Spotify Developer App by expanding the
+/// "Advanced (override Client ID)" disclosure at the bottom.
 ///
 /// Kept as its own view so `SettingsView` doesn't grow another 80 lines of music-source logic.
 struct SpotifyConnectionView: View {
     @State private var spotifyAuth = SpotifyAuthService.shared
-    @AppStorage("spotifyClientId") private var clientId: String = ""
+
+    /// Per-user override for the shared Client ID baked into `SpotifyConfig.sharedClientId`. The
+    /// resolution rule lives in `SpotifyConfig.resolvedClientId()`; this binding only owns the
+    /// text-field state. Most users leave this empty and it stays out of sight under Advanced.
+    @AppStorage("spotifyClientId") private var clientIdOverride: String = ""
+
+    /// Local UI state — whether the Advanced disclosure is expanded. Defaults to collapsed so the
+    /// signed-out view stays a single-CTA experience.
+    @State private var showAdvanced: Bool = false
 
     @State private var isSigningIn: Bool = false
     @State private var errorMessage: String? = nil
@@ -22,8 +33,6 @@ struct SpotifyConnectionView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
             header
-
-            clientIdField
 
             // Surface the most recent capture, if any, so the user can confirm capture is
             // working without opening an active workout (Spotify capture polish).
@@ -39,6 +48,10 @@ struct SpotifyConnectionView: View {
                     .foregroundStyle(Theme.destructive)
                     .accessibilityLabel("Spotify error: \(errorMessage)")
             }
+
+            // Advanced override lives at the bottom, collapsed by default. Keeps the main row a
+            // single Sign In CTA for the 99% case (#390).
+            advancedDisclosure
         }
         .padding(.vertical, Theme.Spacing.xs)
     }
@@ -113,19 +126,40 @@ struct SpotifyConnectionView: View {
         .accessibilityLabel("Last captured: \(track.title)\(track.artist.map { ", by \($0)" } ?? "")")
     }
 
-    private var clientIdField: some View {
-        HStack(spacing: Theme.Spacing.md) {
-            Image(systemName: "key.fill")
-                .frame(width: Theme.Spacing.lg)
-                .foregroundStyle(Theme.accent)
-            SecureField("Spotify Client ID", text: $clientId)
-                .foregroundStyle(Theme.textPrimary)
-                .font(Theme.fontBody)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .accessibilityLabel("Spotify Client ID")
-                .accessibilityHint("Paste the client id from your Spotify Developer Dashboard")
+    /// Advanced (override Client ID) — collapsed by default. Power users who want to swap in
+    /// their own Spotify Developer App can paste a Client ID here; an empty value falls back to
+    /// the shared id baked into the app via `SpotifyConfig.resolvedClientId()` (#390).
+    private var advancedDisclosure: some View {
+        DisclosureGroup(isExpanded: $showAdvanced) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                HStack(spacing: Theme.Spacing.md) {
+                    Image(systemName: "key.fill")
+                        .frame(width: Theme.Spacing.lg)
+                        .foregroundStyle(Theme.accent)
+                    SecureField("Override Spotify Client ID", text: $clientIdOverride)
+                        .foregroundStyle(Theme.textPrimary)
+                        .font(Theme.fontBody)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .accessibilityLabel("Spotify Client ID override")
+                        .accessibilityHint("Optional. Paste a Spotify Developer App client id to override the one shipped with XomFit.")
+                }
+                Text("Leave empty to use the Spotify app shipped with XomFit. Paste your own Client ID here to point sign-in at your personal Spotify Developer App.")
+                    .font(Theme.fontCaption)
+                    .foregroundStyle(Theme.textTertiary)
+            }
+            .padding(.top, Theme.Spacing.xs)
+        } label: {
+            HStack(spacing: Theme.Spacing.md) {
+                Image(systemName: "wrench.adjustable")
+                    .frame(width: Theme.Spacing.lg)
+                    .foregroundStyle(Theme.textTertiary)
+                Text("Advanced (override Client ID)")
+                    .font(Theme.fontCaption)
+                    .foregroundStyle(Theme.textSecondary)
+            }
         }
+        .accessibilityHint("Power users only. Override the Spotify Client ID that ships with XomFit.")
     }
 
     @ViewBuilder
@@ -145,6 +179,9 @@ struct SpotifyConnectionView: View {
             }
             .accessibilityHint("Removes Spotify access and stops capturing tracks")
         } else {
+            // Primary CTA. Always enabled after #390 — the shared Client ID is baked into the
+            // app so sign-in works out of the box; the override field (under Advanced) is
+            // purely optional.
             Button {
                 Task { await signIn() }
             } label: {
@@ -158,13 +195,11 @@ struct SpotifyConnectionView: View {
                             .foregroundStyle(Theme.accent)
                     }
                     Text(isSigningIn ? "Connecting..." : "Sign In with Spotify")
-                        .foregroundStyle(clientId.trimmingCharacters(in: .whitespaces).isEmpty ? Theme.textTertiary : Theme.textPrimary)
+                        .foregroundStyle(Theme.textPrimary)
                 }
             }
-            .disabled(isSigningIn || clientId.trimmingCharacters(in: .whitespaces).isEmpty)
-            .accessibilityHint(clientId.isEmpty
-                               ? "Paste a Spotify client id above first"
-                               : "Opens the Spotify login web view")
+            .disabled(isSigningIn)
+            .accessibilityHint("Opens the Spotify login web view")
         }
     }
 

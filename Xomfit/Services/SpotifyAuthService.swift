@@ -26,7 +26,11 @@ final class SpotifyAuthService: NSObject {
 
     // MARK: - Persisted state
 
-    @ObservationIgnored @AppStorage("spotifyClientId") private var clientIdSetting: String = ""
+    // Note: the per-user Client ID override is owned by `SpotifyConnectionView` via
+    // `@AppStorage("spotifyClientId")`. Reads inside this service always go through
+    // `SpotifyConfig.resolvedClientId()` so we honor the override first and fall back to the
+    // shared id baked into the app (#390). No local `@AppStorage` mirror needed here.
+
     @ObservationIgnored @AppStorage("spotify.accessToken") private var accessToken: String = ""
     @ObservationIgnored @AppStorage("spotify.refreshToken") private var refreshToken: String = ""
     @ObservationIgnored @AppStorage("spotify.tokenExpiry") private var tokenExpiryEpoch: Double = 0
@@ -65,7 +69,12 @@ final class SpotifyAuthService: NSObject {
     ///   - `SpotifyAuthError.tokenExchangeFailed` — `/api/token` returned non-2xx
     @discardableResult
     func signIn() async throws -> Bool {
-        guard !clientIdSetting.trimmingCharacters(in: .whitespaces).isEmpty else {
+        // Resolve the Client ID through SpotifyConfig so we honor the user override first and
+        // fall back to the shared id baked into the app (#390). `resolvedClientId()` also emits a
+        // console warning when the shared id is still the unreplaced placeholder.
+        let resolvedClientId = SpotifyConfig.resolvedClientId()
+        guard !resolvedClientId.isEmpty,
+              resolvedClientId != "PLACEHOLDER_SHARED_SPOTIFY_CLIENT_ID" else {
             throw SpotifyAuthError.missingClientId
         }
 
@@ -76,7 +85,7 @@ final class SpotifyAuthService: NSObject {
         pendingPKCEVerifier = verifier
         pendingState = state
 
-        guard let authURL = buildAuthorizeURL(challenge: challenge, state: state) else {
+        guard let authURL = buildAuthorizeURL(clientId: resolvedClientId, challenge: challenge, state: state) else {
             throw SpotifyAuthError.callbackInvalid
         }
 
@@ -109,7 +118,7 @@ final class SpotifyAuthService: NSObject {
         }
 
         let code = try parseCallback(url: callbackURL, expectedState: state)
-        try await exchangeCodeForToken(code: code, verifier: verifier)
+        try await exchangeCodeForToken(clientId: resolvedClientId, code: code, verifier: verifier)
         try await refreshUserDisplayName()
         return true
     }
@@ -157,10 +166,10 @@ final class SpotifyAuthService: NSObject {
 
     // MARK: - URL construction
 
-    private func buildAuthorizeURL(challenge: String, state: String) -> URL? {
+    private func buildAuthorizeURL(clientId: String, challenge: String, state: String) -> URL? {
         var components = URLComponents(url: SpotifyConfig.authBaseURL, resolvingAgainstBaseURL: false)
         components?.queryItems = [
-            URLQueryItem(name: "client_id", value: clientIdSetting),
+            URLQueryItem(name: "client_id", value: clientId),
             URLQueryItem(name: "response_type", value: "code"),
             URLQueryItem(name: "redirect_uri", value: SpotifyConfig.redirectURI),
             URLQueryItem(name: "code_challenge_method", value: "S256"),
@@ -192,12 +201,12 @@ final class SpotifyAuthService: NSObject {
 
     // MARK: - Token exchange
 
-    private func exchangeCodeForToken(code: String, verifier: String) async throws {
+    private func exchangeCodeForToken(clientId: String, code: String, verifier: String) async throws {
         var request = URLRequest(url: SpotifyConfig.tokenURL)
         request.httpMethod = "POST"
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
         let body = formEncoded([
-            "client_id": clientIdSetting,
+            "client_id": clientId,
             "grant_type": "authorization_code",
             "code": code,
             "redirect_uri": SpotifyConfig.redirectURI,
@@ -216,11 +225,14 @@ final class SpotifyAuthService: NSObject {
 
     private func refreshAccessToken() async throws {
         guard !refreshToken.isEmpty else { throw SpotifyAuthError.tokenExchangeFailed }
+        // Resolve the Client ID again here so a paste-in (or revert) of an override since the
+        // original sign-in is honored on the next refresh tick (#390).
+        let clientId = SpotifyConfig.resolvedClientId()
         var request = URLRequest(url: SpotifyConfig.tokenURL)
         request.httpMethod = "POST"
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
         let body = formEncoded([
-            "client_id": clientIdSetting,
+            "client_id": clientId,
             "grant_type": "refresh_token",
             "refresh_token": refreshToken
         ])
@@ -334,7 +346,11 @@ enum SpotifyAuthError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .missingClientId:
-            return "Paste your Spotify Client ID in Settings -> Music Sources before signing in."
+            // After #390 this surface is only hit when the shared Client ID is still the
+            // unreplaced placeholder, which is a project-owner config problem, not a user
+            // problem. We still offer the Advanced override as an escape hatch.
+            return "Spotify isn't configured yet. Try again later, or paste your own Spotify " +
+                   "Client ID under Settings -> Music Sources -> Spotify -> Advanced."
         case .userCancelled:
             return "Spotify sign-in was cancelled."
         case .callbackInvalid:
