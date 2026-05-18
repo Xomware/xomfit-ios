@@ -487,6 +487,7 @@ struct LogPastWorkoutView: View {
                 }
             }
 
+            let pickerLabel = viewModel.photoImages.isEmpty ? "Add Photos" : "Change Photos"
             PhotosPicker(
                 selection: $viewModel.selectedPhotos,
                 maxSelectionCount: 4,
@@ -494,7 +495,7 @@ struct LogPastWorkoutView: View {
             ) {
                 HStack(spacing: 6) {
                     Image(systemName: "photo.on.rectangle.angled")
-                    Text(viewModel.photoImages.isEmpty ? "Add Photos" : "Change Photos")
+                    Text(pickerLabel)
                         .font(.subheadline.weight(.medium))
                 }
                 .foregroundStyle(Theme.accent)
