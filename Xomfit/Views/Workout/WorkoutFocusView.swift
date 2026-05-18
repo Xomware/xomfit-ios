@@ -97,6 +97,11 @@ struct WorkoutFocusView: View {
                     VStack(spacing: Theme.Spacing.lg) {
                         weightDisplay(currentSet: currentSet)
                         repsDisplay(currentSet: currentSet)
+                        // Drop-set capsule sits on its own row directly under
+                        // the reps card so the horizontal pill ScrollView stays
+                        // tight (#384 A). Only renders when a non-drop set has
+                        // been completed in this exercise.
+                        dropSetCapsuleRow(exercise: exercise)
                         doneButton(currentSet: currentSet)
                     }
                     .frame(maxHeight: .infinity)
@@ -233,12 +238,11 @@ struct WorkoutFocusView: View {
     // MARK: - Set Indicator
 
     private func setIndicator(exercise: WorkoutExercise) -> some View {
-        // Drop-set capsule is now gated on "any non-drop set in this exercise
-        // has been completed" — not just the focused set (#344 D). This lets
-        // users add a drop set even when focus has already moved to a fresh
-        // incomplete set in the same exercise.
-        let dropParentIndex = lastCompletedNonDropSetIndex
-        let dropSetEnabled = dropParentIndex != nil
+        // The drop-set capsule used to live at the tail of this scrollable row,
+        // which pushed the row off-screen with longer set counts (#384 A). It
+        // now lives in its own dedicated row under the reps card via
+        // `dropSetCapsuleRow(exercise:)` so this scroller only carries pills
+        // and the trailing `+ Set` affordance.
         let canDelete = exercise.sets.count > 1
 
         return ScrollView(.horizontal, showsIndicators: false) {
@@ -309,44 +313,53 @@ struct WorkoutFocusView: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel("Add set")
                 .accessibilityHint("Adds a new set to the current exercise")
-
-                // + drop set capsule (#344 D) — visible whenever ANY non-drop
-                // set in this exercise is completed, not just the focused one.
-                // Tap inserts the drop set after the most-recently-completed
-                // non-drop set so the affordance stays useful even when focus
-                // has already advanced to a fresh set.
-                if dropSetEnabled, let parentIdx = dropParentIndex {
-                    Button {
-                        dismissKeyboard()
-                        Haptics.light()
-                        let exerciseIndex = viewModel.focusExerciseIndex
-                        viewModel.addDropSet(exerciseIndex: exerciseIndex, parentSetIndex: parentIdx)
-                        // Drop set is inserted right after the parent — point
-                        // focus at it so the user lands on the new set.
-                        if viewModel.exercises.indices.contains(exerciseIndex),
-                           viewModel.exercises[exerciseIndex].sets.indices.contains(parentIdx + 1) {
-                            viewModel.focusSetIndex = parentIdx + 1
-                        }
-                    } label: {
-                        HStack(spacing: Theme.Spacing.tight) {
-                            Image(systemName: "arrow.down.right")
-                                .font(.subheadline.weight(.bold))
-                            Text("drop set")
-                                .font(.subheadline.weight(.bold))
-                        }
-                        .foregroundStyle(Theme.accent)
-                        .padding(.horizontal, 12)
-                        .frame(minHeight: 44)
-                        .background(Theme.accent.opacity(0.10))
-                        .clipShape(.capsule)
-                        .contentShape(.capsule)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Add drop set after set \(parentIdx + 1)")
-                    .accessibilityHint("Inserts a drop set immediately after the most recently completed set with reduced weight")
-                }
             }
             .padding(.horizontal, Theme.Spacing.sm)
+        }
+    }
+
+    // MARK: - Drop-Set Capsule Row
+
+    /// Standalone row under the reps card that holds the "drop set" capsule
+    /// (#384 A). Pulled out of the horizontal set-pill ScrollView so the pill
+    /// row stops overflowing the screen on exercises with several sets.
+    ///
+    /// Visible only when a non-drop set in this exercise has been completed —
+    /// matches the gating already used by the previous in-row capsule.
+    @ViewBuilder
+    private func dropSetCapsuleRow(exercise: WorkoutExercise) -> some View {
+        if let parentIdx = lastCompletedNonDropSetIndex {
+            HStack {
+                Spacer()
+                Button {
+                    dismissKeyboard()
+                    Haptics.light()
+                    let exerciseIndex = viewModel.focusExerciseIndex
+                    viewModel.addDropSet(exerciseIndex: exerciseIndex, parentSetIndex: parentIdx)
+                    // Drop set is inserted right after the parent — point focus
+                    // at it so the user lands on the new set immediately.
+                    if viewModel.exercises.indices.contains(exerciseIndex),
+                       viewModel.exercises[exerciseIndex].sets.indices.contains(parentIdx + 1) {
+                        viewModel.focusSetIndex = parentIdx + 1
+                    }
+                } label: {
+                    HStack(spacing: Theme.Spacing.tight) {
+                        Image(systemName: "arrow.down.right")
+                            .font(.caption.weight(.bold))
+                        Text("drop set")
+                            .font(.caption.weight(.bold))
+                    }
+                    .foregroundStyle(Theme.accent)
+                    .padding(.horizontal, 12)
+                    .frame(minHeight: 44)
+                    .background(Theme.accent.opacity(0.10))
+                    .clipShape(.capsule)
+                    .contentShape(.capsule)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Add drop set after set \(parentIdx + 1)")
+                .accessibilityHint("Inserts a drop set immediately after the most recently completed set with reduced weight")
+            }
         }
     }
 
@@ -552,79 +565,95 @@ struct WorkoutFocusView: View {
     /// Compact rest-timer banner rendered via `.safeAreaInset(edge: .bottom)`
     /// on the parent ZStack so it reserves its own layout row instead of
     /// compressing the top header under the Dynamic Island (#344-A).
-    /// Layout: `[timer ring + 0:23] [Lift] [expand glyph]` — the Lift button
-    /// ends the rest timer immediately without forcing the user to expand
-    /// the banner first (#344-F).
+    ///
+    /// Layout reimagined in #384 B — single ~64pt row, no truncation:
+    /// `[↗ expand]  [-1:41]  [REST]    ........    [+30s]  [Lift]`
+    /// Tapping anywhere on the background (not on a button) expands back to
+    /// the full-screen rest timer. Skip is intentionally absent — Lift is the
+    /// same action (skip rest + advance set).
     private var minimizedRestTimerBanner: some View {
-        VStack(spacing: 6) {
-            HStack(spacing: Theme.Spacing.sm) {
-                // Tappable timer-ring area — expands back to full-screen timer.
-                Button {
-                    withAnimation(.xomChill) { isRestTimerMinimized = false }
-                } label: {
-                    RestTimerView(
-                        restTimeRemaining: viewModel.restTimeRemaining,
-                        restDuration: viewModel.restDuration,
-                        onSkip: { viewModel.skipRestTimer() },
-                        onExtend: { viewModel.extendRestTimer() }
-                    )
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .layoutPriority(1)
-                .accessibilityElement(children: .combine)
-                .accessibilityLabel("Rest timer minimized. Tap to expand to full screen.")
-
-                // LIFT button — skips the rest timer right from the minimized
-                // banner so the user doesn't have to expand first (#344-F).
-                Button {
-                    Haptics.success()
-                    viewModel.skipRestTimer()
-                    isRestTimerMinimized = false
-                } label: {
-                    Text("Lift")
-                        .font(.subheadline.weight(.black))
-                        .foregroundStyle(.black)
-                        .padding(.horizontal, Theme.Spacing.md)
-                        .frame(minHeight: 44)
-                        .background(Theme.accent)
-                        .clipShape(.capsule)
-                        .contentShape(.capsule)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Lift — end rest and start next set")
-                .accessibilityHint("Ends the rest timer immediately")
-
-                // Discoverable expand affordance — chevron + diagonal arrows
-                // hint that tapping the timer area re-opens the full-screen
-                // timer. Itself tappable for users who target the glyph.
-                Button {
-                    withAnimation(.xomChill) { isRestTimerMinimized = false }
-                } label: {
-                    VStack(spacing: Theme.Spacing.tighter) {
-                        Image(systemName: "chevron.up")
-                            .font(.caption2.weight(.bold))
-                        Image(systemName: "arrow.up.left.and.arrow.down.right")
-                            .font(.caption2.weight(.semibold))
-                    }
+        HStack(spacing: Theme.Spacing.sm) {
+            // Expand glyph — far left, 44pt hit target.
+            Button {
+                Haptics.light()
+                withAnimation(.xomChill) { isRestTimerMinimized = false }
+            } label: {
+                Image(systemName: "arrow.up.left.and.arrow.down.right")
+                    .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Theme.accent)
-                    .frame(minWidth: 44, minHeight: 44)
+                    .frame(width: 44, height: 44)
                     .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Expand rest timer")
             }
-            if let nextEx = viewModel.upcomingExercise {
-                Text("Next: \(nextEx.exercise.name)")
-                    .font(.caption.weight(.semibold))
+            .buttonStyle(.plain)
+            .accessibilityLabel("Expand rest timer")
+
+            // Countdown — focal point. Large monospaced digits, red on overtime.
+            Text(restTimeString)
+                .font(.system(size: 28, weight: .black, design: .monospaced))
+                .monospacedDigit()
+                .foregroundStyle(restIsOvertime ? Theme.destructive : Theme.textPrimary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .accessibilityLabel("Rest time remaining \(restTimeString)")
+
+            // REST caption next to countdown.
+            Text("REST")
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(Theme.textSecondary)
+                .accessibilityHidden(true)
+
+            Spacer(minLength: Theme.Spacing.sm)
+
+            // +30s — secondary, accent-tinted capsule.
+            Button {
+                Haptics.light()
+                viewModel.extendRestTimer()
+            } label: {
+                Text("+30s")
+                    .font(.subheadline.weight(.bold))
                     .foregroundStyle(Theme.accent)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, Theme.Spacing.md)
+                    .frame(minHeight: 44)
+                    .background(Theme.accent.opacity(0.15))
+                    .clipShape(.capsule)
+                    .contentShape(.capsule)
             }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Add 30 seconds to rest timer")
+
+            // Lift — primary CTA. Same action as the old Skip (end rest +
+            // advance to next set), so Skip was dropped entirely (#384 B).
+            Button {
+                Haptics.success()
+                viewModel.skipRestTimer()
+                isRestTimerMinimized = false
+            } label: {
+                Text("Lift")
+                    .font(.subheadline.weight(.black))
+                    .foregroundStyle(.black)
+                    .padding(.horizontal, Theme.Spacing.md)
+                    .frame(minHeight: 44)
+                    .background(Theme.accent)
+                    .clipShape(.capsule)
+                    .contentShape(.capsule)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Lift — end rest and start next set")
+            .accessibilityHint("Ends the rest timer immediately")
         }
-        .padding(Theme.Spacing.sm)
-        .frame(maxWidth: .infinity)
-        .background(Theme.surface)
-        .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+        .padding(.horizontal, Theme.Spacing.sm)
+        .frame(maxWidth: .infinity, minHeight: 64)
+        .background(
+            // Tap-anywhere-on-background expands the banner. Restricted to a
+            // background layer so the buttons keep their own hit handling.
+            Theme.surface
+                .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    Haptics.light()
+                    withAnimation(.xomChill) { isRestTimerMinimized = false }
+                }
+        )
         .overlay(
             RoundedRectangle(cornerRadius: Theme.cornerRadius)
                 .stroke(Theme.accent.opacity(0.25), lineWidth: 1)
