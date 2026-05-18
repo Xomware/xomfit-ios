@@ -24,6 +24,12 @@ struct XomFitApp: App {
     @State private var showCoachSheet = false
     #endif
 
+    /// Force-quit recovery (#399). When the user (or the OS) terminates the app
+    /// mid-workout, the active session is persisted by `WorkoutLoggerViewModel`
+    /// and offered back on the next launch via this alert. `pendingRestoreInfo`
+    /// is non-nil only while the prompt is visible; resolved by Resume / Discard.
+    @State private var pendingRestoreInfo: WorkoutRestoreInfo? = nil
+
     var body: some Scene {
         WindowGroup {
             Group {
@@ -61,6 +67,30 @@ struct XomFitApp: App {
                                 workoutSession?.completeFocusedSetFromWatch()
                             }
                             evaluateFitnessQuestionnaireGate()
+                            evaluateActiveSessionRestore()
+                        }
+                        .alert(
+                            "Resume workout?",
+                            isPresented: Binding(
+                                get: { pendingRestoreInfo != nil },
+                                set: { if !$0 { pendingRestoreInfo = nil } }
+                            ),
+                            presenting: pendingRestoreInfo
+                        ) { info in
+                            Button("Resume") {
+                                Haptics.light()
+                                _ = workoutSession.restoreActiveSession()
+                                pendingRestoreInfo = nil
+                            }
+                            .accessibilityHint("Reopens the workout exactly where you left it.")
+                            Button("Discard", role: .destructive) {
+                                Haptics.warning()
+                                WorkoutLoggerViewModel.declineRestore()
+                                pendingRestoreInfo = nil
+                            }
+                            .accessibilityHint("Deletes the saved workout and ends the Live Activity.")
+                        } message: { info in
+                            Text("Your “\(info.workoutName)” workout was still running. Pick up where you left off — started \(info.startedRelative).")
                         }
                         .sheet(isPresented: Bindable(authService).needsProfileCompletion) {
                             ProfileCompletionView()
@@ -177,6 +207,44 @@ struct XomFitApp: App {
         }
     }
 
+    /// Force-quit recovery (#399). When the app launches and finds a persisted
+    /// in-progress workout, surface the resume alert so the user can pick up
+    /// where they left off. Stale (>12h) blobs are dropped silently — see
+    /// `WorkoutLoggerViewModel.restoreActiveSession`'s threshold.
+    @MainActor
+    private func evaluateActiveSessionRestore() {
+        // Don't double-prompt if a workout is already live (e.g. user navigated
+        // away and back without killing the app).
+        guard !workoutSession.isActive else { return }
+        guard let snapshot = WorkoutLoggerViewModel.peekSavedSession() else { return }
+
+        let age = Date().timeIntervalSince(snapshot.savedAt)
+        if age > WorkoutLoggerViewModel.staleSessionAge {
+            // Auto-clean stale blobs + any orphan Live Activity. Don't ask.
+            WorkoutLoggerViewModel.declineRestore()
+            return
+        }
+
+        // Skip under DEBUG bypass flags that seed their own workout — the
+        // seeded session would otherwise conflict with the resume alert.
+        #if DEBUG
+        let env = ProcessInfo.processInfo.environment
+        if env["XOMFIT_AUTO_START_WORKOUT"] == "1" {
+            WorkoutLoggerViewModel.declineRestore()
+            return
+        }
+        #endif
+
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .full
+        let startedRelative = formatter.localizedString(for: snapshot.startTime, relativeTo: Date())
+
+        pendingRestoreInfo = WorkoutRestoreInfo(
+            workoutName: snapshot.workoutName.isEmpty ? "Workout" : snapshot.workoutName,
+            startedRelative: startedRelative
+        )
+    }
+
     /// Decide whether to present the fitness questionnaire on this launch.
     /// Don't re-prompt once the user finishes it OR explicitly skipped — they can
     /// always reopen it from Settings -> Fitness Goals.
@@ -243,4 +311,13 @@ struct XomFitApp: App {
         workoutSession.isPresented = true
     }
     #endif
+}
+
+/// Lightweight value type passed to the resume alert (#399). Carries only the
+/// strings the prompt needs so we don't have to plumb the full `PersistedSession`
+/// through `@State` and `Binding` machinery.
+private struct WorkoutRestoreInfo: Identifiable {
+    let id = UUID()
+    let workoutName: String
+    let startedRelative: String
 }

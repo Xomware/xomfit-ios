@@ -215,10 +215,29 @@ final class WorkoutLoggerViewModel {
         SpotifyNowPlayingService.shared.startCapture()
         // SoundCloud capture runs in parallel — silent no-op when not signed in (#389).
         SoundCloudNowPlayingService.shared.startCapture()
+
+        // Persist the fresh session so a force-quit within the first second
+        // (rare but possible) still surfaces the resume alert (#399).
+        saveActiveSession(force: true)
     }
 
     func discardWorkout() {
+        // End the Live Activity for the in-memory session AND any stale activity
+        // started in a previous launch (#399). Use the global activities list so
+        // discards from a restored-but-rejected session also clean up.
         endLiveActivity()
+        Self.endAllOrphanLiveActivities()
+
+        // Cancel both the in-memory and any persisted rest-timer notifications so
+        // a discarded workout can't fire a "Rest done" banner.
+        NotificationService.shared.cancelRestTimerNotification(workoutId: workoutId)
+        if let savedId = Self.peekSavedWorkoutId(), savedId != workoutId {
+            NotificationService.shared.cancelRestTimerNotification(workoutId: savedId)
+        }
+
+        // Wipe the persisted session — discard means we don't want to offer a resume.
+        Self.clearSavedSession()
+
         workoutName = ""
         exercises = []
         isActive = false
@@ -291,6 +310,7 @@ final class WorkoutLoggerViewModel {
         }
         exercises = builtExercises
         updateLiveActivity()
+        saveActiveSession(force: true)
     }
 
     // MARK: - Timed Circuit (#370)
@@ -432,6 +452,7 @@ final class WorkoutLoggerViewModel {
         workoutExercise.selectedLaterality = exercise.defaultLaterality
         exercises.append(workoutExercise)
         updateLiveActivity()
+        saveActiveSession(force: true)
     }
 
     /// Find the most recent set for an exercise from workout history.
@@ -471,6 +492,7 @@ final class WorkoutLoggerViewModel {
         guard exercises.indices.contains(index) else { return }
         exercises.remove(at: index)
         updateLiveActivity()
+        saveActiveSession(force: true)
     }
 
     func moveExercise(from source: Int, direction: Int) {
@@ -631,6 +653,7 @@ final class WorkoutLoggerViewModel {
             }
         }
         updateLiveActivity()
+        saveActiveSession(force: true)
     }
 
     func removeSet(exerciseIndex: Int, setIndex: Int) {
@@ -1064,6 +1087,7 @@ final class WorkoutLoggerViewModel {
             isPaused = true
         }
         updateLiveActivity()
+        saveActiveSession(force: true)
     }
 
     // MARK: - PR Detection
@@ -1207,6 +1231,219 @@ final class WorkoutLoggerViewModel {
         let interval = isRestTimerActive ? 5 : 30
         if liveActivityUpdateCounter % interval == 0 {
             updateLiveActivity()
+            // Piggy-back a throttled session snapshot so a force-quit can recover
+            // even when the user hasn't logged a set in a while (#399).
+            saveActiveSession()
+        }
+    }
+
+    // MARK: - Active Session Persistence (#399)
+    //
+    // Keep a single in-flight workout serialized to UserDefaults so a force-quit
+    // (or OS-initiated kill) can be recovered on next launch. We snapshot every
+    // meaningful state change (set complete, exercise add/remove, focus jump,
+    // pause toggle, …) — small writes, no async hop. The restore alert in
+    // `XomfitApp` reads `peekSavedWorkoutId() != nil` to decide whether to ask.
+
+    private static let savedSessionKey = "xomfit_active_session_v1"
+
+    /// Bumped on every schema breakage so we don't try to decode a v1 blob into v2.
+    private static let savedSessionSchemaVersion = 1
+
+    /// Auto-save throttling — coalesce rapid mutations (e.g. tickRestTimer ticks
+    /// don't write every frame). 1 second is short enough that a force-quit
+    /// loses at most one second of work but doesn't thrash UserDefaults.
+    private var lastPersistAt: Date = .distantPast
+    private static let persistMinInterval: TimeInterval = 1.0
+
+    /// Snapshot of the in-progress workout. Restricted to JSON-friendly types so
+    /// the whole struct round-trips through `JSONEncoder`/`JSONDecoder`. New
+    /// fields must default to backwards-compatible values.
+    struct PersistedSession: Codable {
+        var schemaVersion: Int
+        var workoutId: String
+        var workoutName: String
+        var exercises: [WorkoutExercise]
+        var startTime: Date
+        var savedAt: Date
+        var totalPausedDuration: TimeInterval
+        var defaultRestDuration: Double
+        var focusExerciseIndex: Int
+        var focusSetIndex: Int
+        var kind: WorkoutKind
+        var durationGoalMinutes: Int?
+        var roundsGoal: Int?
+        var location: String
+        var rating: Int
+        var activeUserId: String
+    }
+
+    /// Serialize the current state. No-op when `isActive == false` so a fresh
+    /// app launch with no workout doesn't churn UserDefaults.
+    func saveActiveSession(force: Bool = false) {
+        guard isActive else { return }
+        if !force {
+            let elapsed = Date().timeIntervalSince(lastPersistAt)
+            guard elapsed >= Self.persistMinInterval else { return }
+        }
+        lastPersistAt = Date()
+
+        let snapshot = PersistedSession(
+            schemaVersion: Self.savedSessionSchemaVersion,
+            workoutId: workoutId,
+            workoutName: workoutName,
+            exercises: exercises,
+            startTime: startTime,
+            savedAt: Date(),
+            totalPausedDuration: totalPausedDuration,
+            defaultRestDuration: defaultRestDuration,
+            focusExerciseIndex: focusExerciseIndex,
+            focusSetIndex: focusSetIndex,
+            kind: kind,
+            durationGoalMinutes: durationGoalMinutes,
+            roundsGoal: roundsGoal,
+            location: location,
+            rating: rating,
+            activeUserId: activeUserId
+        )
+
+        do {
+            let data = try JSONEncoder().encode(snapshot)
+            UserDefaults.standard.set(data, forKey: Self.savedSessionKey)
+        } catch {
+            print("[WorkoutLogger] saveActiveSession failed: \(error)")
+        }
+    }
+
+    /// Read-only check for the saved session id. Used by `XomfitApp` to decide
+    /// whether to surface the resume alert before instantiating the runner.
+    nonisolated static func peekSavedWorkoutId() -> String? {
+        guard let data = UserDefaults.standard.data(forKey: savedSessionKey),
+              let snapshot = try? JSONDecoder().decode(PersistedSession.self, from: data) else {
+            return nil
+        }
+        return snapshot.workoutId
+    }
+
+    /// Inspect the saved session without restoring it. Returns nil when there
+    /// is nothing persisted, or when the blob is unreadable (schema drift).
+    nonisolated static func peekSavedSession() -> PersistedSession? {
+        guard let data = UserDefaults.standard.data(forKey: savedSessionKey) else { return nil }
+        return try? JSONDecoder().decode(PersistedSession.self, from: data)
+    }
+
+    /// Clear the saved session blob. Safe to call when none is present.
+    nonisolated static func clearSavedSession() {
+        UserDefaults.standard.removeObject(forKey: savedSessionKey)
+    }
+
+    /// Stale threshold for an auto-cleared restore. Anything older than this
+    /// almost certainly belongs to a session the user abandoned days ago.
+    static let staleSessionAge: TimeInterval = 60 * 60 * 12  // 12h
+
+    /// Restore an in-flight workout snapshot. Drops it (and ends any lingering
+    /// Live Activity / scheduled notifications) when older than `staleSessionAge`.
+    /// Returns `true` when the workout was successfully restored.
+    @discardableResult
+    func restoreActiveSession() -> Bool {
+        guard let snapshot = Self.peekSavedSession() else { return false }
+        guard snapshot.schemaVersion == Self.savedSessionSchemaVersion else {
+            // Schema mismatch — drop the orphan blob + kill any LA so the user
+            // doesn't keep seeing stale Dynamic Island data.
+            Self.clearSavedSession()
+            Self.endAllOrphanLiveActivities()
+            return false
+        }
+
+        let age = Date().timeIntervalSince(snapshot.savedAt)
+        if age > Self.staleSessionAge {
+            // Stale — wipe persisted blob, end any lingering Live Activity,
+            // and cancel any scheduled rest notification for that workoutId.
+            NotificationService.shared.cancelRestTimerNotification(workoutId: snapshot.workoutId)
+            Self.clearSavedSession()
+            Self.endAllOrphanLiveActivities()
+            return false
+        }
+
+        // Rehydrate.
+        workoutId = snapshot.workoutId
+        workoutName = snapshot.workoutName
+        exercises = snapshot.exercises
+        startTime = snapshot.startTime
+        totalPausedDuration = snapshot.totalPausedDuration
+        defaultRestDuration = snapshot.defaultRestDuration
+        focusExerciseIndex = snapshot.focusExerciseIndex
+        focusSetIndex = snapshot.focusSetIndex
+        kind = snapshot.kind
+        durationGoalMinutes = snapshot.durationGoalMinutes
+        roundsGoal = snapshot.roundsGoal
+        location = snapshot.location
+        rating = snapshot.rating
+        activeUserId = snapshot.activeUserId
+
+        // Reset volatile state — pause + rest timer don't survive a cold launch
+        // (the rest timer's wall-clock anchor is irrecoverable across kills).
+        isPaused = false
+        pausedAt = nil
+        isRestTimerActive = false
+        restTimeRemaining = 0
+        restDuration = 0
+        showExerciseTransition = false
+        showPRCelebration = false
+        manualTracks = []
+        removedTrackIDs = []
+
+        isActive = true
+        isPresented = true
+        // Start a fresh Live Activity for the resumed session — the previous
+        // one (if any) is killed below so we don't stack two.
+        Self.endAllOrphanLiveActivities()
+        startLiveActivity()
+
+        // Re-arm soundtrack capture so the user's existing music session resumes
+        // being recorded for the rest of the workout.
+        NowPlayingService.shared.startCapture()
+        SpotifyNowPlayingService.shared.startCapture()
+        SoundCloudNowPlayingService.shared.startCapture()
+
+        return true
+    }
+
+    /// Convenience: explicitly decline a restore. Same effect as `discardWorkout`
+    /// for cleanup purposes, but doesn't touch in-memory state (because there
+    /// isn't any yet) — just kills the persisted blob + any orphan LA.
+    nonisolated static func declineRestore() {
+        // Cancel any rest notification keyed to the persisted workout id.
+        let savedId = peekSavedWorkoutId()
+        clearSavedSession()
+        Task { @MainActor in
+            if let savedId {
+                NotificationService.shared.cancelRestTimerNotification(workoutId: savedId)
+            }
+            endAllOrphanLiveActivities()
+        }
+    }
+
+    /// End every Xomfit Live Activity currently tracked by ActivityKit, with
+    /// immediate dismissal. Use this when discarding / declining / detecting a
+    /// stale session — `liveActivity` may be nil on cold launch even though
+    /// the OS still shows the bar.
+    @MainActor
+    static func endAllOrphanLiveActivities() {
+        for activity in Activity<XomfitWidgetAttributes>.activities {
+            let finalState = XomfitWidgetAttributes.ContentState(
+                elapsedSeconds: 0,
+                completedSets: 0,
+                totalSets: 0,
+                currentExercise: "Ended",
+                totalExercises: 0
+            )
+            Task {
+                await activity.end(
+                    .init(state: finalState, staleDate: nil),
+                    dismissalPolicy: .immediate
+                )
+            }
         }
     }
 
