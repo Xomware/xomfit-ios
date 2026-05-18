@@ -313,13 +313,13 @@ struct OnboardingFriendsScreen: View {
 
     private func cancelRequest(targetId: String, friendshipId: String) {
         guard friendshipId != "pending" else {
-            relations[targetId] = .none
+            relations[targetId] = FriendshipRelation.none
             return
         }
         Task {
             do {
                 try await FriendsService.shared.cancelFriendRequest(friendshipId: friendshipId)
-                relations[targetId] = .none
+                relations[targetId] = FriendshipRelation.none
             } catch {
                 errorMessage = error.localizedDescription
             }
@@ -341,7 +341,7 @@ struct OnboardingFriendsScreen: View {
         Task {
             do {
                 try await FriendsService.shared.declineFriendRequest(friendshipId: friendshipId)
-                relations[targetId] = .none
+                relations[targetId] = FriendshipRelation.none
             } catch {
                 errorMessage = error.localizedDescription
             }
