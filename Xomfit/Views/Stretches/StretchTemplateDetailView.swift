@@ -1,17 +1,23 @@
 import SwiftUI
 
-/// Detail view for a curated `StretchTemplate` (#388).
+/// Detail view for a curated `StretchTemplate` (#388, edit mode added in #398).
 ///
 /// Shows the template's stretches in order with a "Start Stretching" CTA that
-/// presents the guided runner as a full-screen cover. Tapping a row opens the
-/// existing `StretchDetailSheet` so the user can read the long description.
+/// presents the guided runner as a full-screen cover. The user can flip into
+/// edit mode (pencil button) to reorder + delete stretches before starting;
+/// edits affect only the current session and never mutate
+/// `StretchTemplate.curated`. Tapping a row out of edit mode opens the
+/// existing `StretchDetailSheet`.
 struct StretchTemplateDetailView: View {
     let template: StretchTemplate
 
     @State private var stretchForDetail: Stretch?
     @State private var showRunner = false
-
-    private var stretches: [Stretch] { template.stretches }
+    /// Per-session, editable copy of the template's stretches. Initialized
+    /// from `template.stretches` and reset back to it via the "Reset" button.
+    @State private var sessionStretches: [Stretch] = []
+    /// Drives the swipe / drag affordances on the in-sequence list.
+    @State private var editMode: EditMode = .inactive
 
     var body: some View {
         ZStack {
@@ -33,12 +39,39 @@ struct StretchTemplateDetailView: View {
         .navigationTitle(template.name)
         .navigationBarTitleDisplayMode(.inline)
         .toolbarColorScheme(.dark, for: .navigationBar)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                editToolbarContent
+            }
+        }
+        .environment(\.editMode, $editMode)
+        .onAppear {
+            // Seed the editable copy lazily so we don't trample mid-session
+            // edits when the view re-renders from a state change.
+            if sessionStretches.isEmpty {
+                sessionStretches = template.stretches
+            }
+            #if DEBUG
+            // Agent screenshot helper: when XOMFIT_STRETCH_EDIT_MODE=1 is set,
+            // auto-flip into edit mode shortly after first render so the
+            // verification script can capture the drag/swipe affordances
+            // without scripted taps.
+            if ProcessInfo.processInfo.environment["XOMFIT_STRETCH_EDIT_MODE"] == "1" {
+                Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(400))
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        editMode = .active
+                    }
+                }
+            }
+            #endif
+        }
         .sheet(item: $stretchForDetail) { stretch in
             StretchDetailSheet(stretch: stretch)
         }
         .fullScreenCover(isPresented: $showRunner) {
             GuidedStretchRunnerView(
-                stretches: stretches,
+                stretches: sessionStretches,
                 templateName: template.name
             )
         }
@@ -73,8 +106,8 @@ struct StretchTemplateDetailView: View {
                 .fixedSize(horizontal: false, vertical: true)
 
             HStack(spacing: Theme.Spacing.md) {
-                metric(icon: "clock.fill", label: template.totalDurationLabel)
-                metric(icon: "list.bullet", label: "\(stretches.count) stretches")
+                metric(icon: "clock.fill", label: totalDurationLabel)
+                metric(icon: "list.bullet", label: "\(sessionStretches.count) stretches")
             }
             .accessibilityElement(children: .combine)
         }
@@ -98,26 +131,128 @@ struct StretchTemplateDetailView: View {
         .clipShape(.rect(cornerRadius: Theme.Radius.xs))
     }
 
+    private var totalDurationLabel: String {
+        let secs = sessionStretches.reduce(0) { $0 + $1.durationSeconds }
+        if secs < 60 { return "\(secs) sec" }
+        let mins = (secs + 30) / 60
+        return "\(mins) min"
+    }
+
+    // MARK: - Toolbar
+
+    @ViewBuilder
+    private var editToolbarContent: some View {
+        if editMode == .active {
+            HStack(spacing: Theme.Spacing.md) {
+                Button {
+                    Haptics.light()
+                    sessionStretches = template.stretches
+                } label: {
+                    Text("Reset")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Theme.alert)
+                }
+                .disabled(sessionStretches.map(\.id) == template.stretchIds)
+                .accessibilityLabel("Reset stretches to template order")
+
+                Button {
+                    Haptics.light()
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        editMode = .inactive
+                    }
+                } label: {
+                    Text("Done")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Theme.accent)
+                }
+                .accessibilityLabel("Finish editing stretches")
+            }
+        } else {
+            Button {
+                Haptics.light()
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    editMode = .active
+                }
+            } label: {
+                Image(systemName: "pencil")
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(Theme.accent)
+            }
+            .disabled(sessionStretches.isEmpty)
+            .accessibilityLabel("Edit stretches")
+            .accessibilityHint("Reorder or remove stretches before starting")
+        }
+    }
+
     // MARK: - Stretch List
 
     private var listSection: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            XomMetricLabel("In This Sequence")
-
-            VStack(spacing: Theme.Spacing.xs) {
-                ForEach(Array(stretches.enumerated()), id: \.element.id) { index, stretch in
-                    Button {
-                        Haptics.selection()
-                        stretchForDetail = stretch
-                    } label: {
-                        row(index: index, stretch: stretch)
-                    }
-                    .buttonStyle(PressableCardStyle())
-                    .accessibilityLabel("Stretch \(index + 1): \(stretch.name), \(stretch.durationSeconds) seconds")
-                    .accessibilityHint("Opens stretch details")
+            HStack(alignment: .firstTextBaseline) {
+                XomMetricLabel("In This Sequence")
+                Spacer()
+                if editMode == .active {
+                    Text("Drag to reorder · swipe to remove")
+                        .font(.caption2.weight(.medium))
+                        .foregroundStyle(Theme.textTertiary)
                 }
             }
+
+            if editMode == .active {
+                editableList
+            } else {
+                staticList
+            }
         }
+    }
+
+    /// Read-only list used out of edit mode. Each row stays tappable so the
+    /// user can pop the detail sheet without entering edit mode.
+    private var staticList: some View {
+        VStack(spacing: Theme.Spacing.xs) {
+            ForEach(Array(sessionStretches.enumerated()), id: \.element.id) { index, stretch in
+                Button {
+                    Haptics.selection()
+                    stretchForDetail = stretch
+                } label: {
+                    row(index: index, stretch: stretch)
+                }
+                .buttonStyle(PressableCardStyle())
+                .accessibilityLabel("Stretch \(index + 1): \(stretch.name), \(stretch.durationSeconds) seconds")
+                .accessibilityHint("Opens stretch details")
+            }
+        }
+    }
+
+    /// Edit-mode list. Uses SwiftUI `List` so we get drag handles + swipe to
+    /// delete for free. The fixed-height frame caps the visual size to match
+    /// the static list — it grows as needed because we set `.scrollDisabled`.
+    private var editableList: some View {
+        List {
+            ForEach(Array(sessionStretches.enumerated()), id: \.element.id) { index, stretch in
+                row(index: index, stretch: stretch)
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+                    .listRowSeparator(.hidden)
+                    .accessibilityLabel("Stretch \(index + 1): \(stretch.name), \(stretch.durationSeconds) seconds")
+            }
+            .onMove(perform: moveStretch)
+            .onDelete(perform: deleteStretch)
+        }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .scrollDisabled(true)
+        .frame(minHeight: CGFloat(sessionStretches.count) * 84)
+    }
+
+    private func moveStretch(from source: IndexSet, to destination: Int) {
+        Haptics.selection()
+        sessionStretches.move(fromOffsets: source, toOffset: destination)
+    }
+
+    private func deleteStretch(at offsets: IndexSet) {
+        Haptics.light()
+        sessionStretches.remove(atOffsets: offsets)
     }
 
     private func row(index: Int, stretch: Stretch) -> some View {
@@ -160,6 +295,9 @@ struct StretchTemplateDetailView: View {
         VStack(spacing: 0) {
             Button {
                 Haptics.medium()
+                // Leave edit mode before starting so the runner doesn't render
+                // behind a stale edit affordance.
+                if editMode == .active { editMode = .inactive }
                 showRunner = true
             } label: {
                 HStack(spacing: 10) {
@@ -168,9 +306,10 @@ struct StretchTemplateDetailView: View {
                 }
             }
             .buttonStyle(AccentButtonStyle())
+            .disabled(sessionStretches.isEmpty)
             .padding(.horizontal, Theme.Spacing.md)
             .padding(.bottom, Theme.Spacing.md)
-            .accessibilityLabel("Start guided stretching sequence")
+            .accessibilityLabel("Start guided stretching sequence with \(sessionStretches.count) stretches")
         }
         .background(
             LinearGradient(
