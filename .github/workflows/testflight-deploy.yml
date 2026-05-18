@@ -74,7 +74,10 @@ jobs:
         run: |
           MARKETING_VERSION=$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
           MARKETING_VERSION=${MARKETING_VERSION:-2.0.0}
-          BUILD_NUMBER=$(date +%Y%m%d%H%M)
+          # Build number must be strictly monotonic and unique across uploads
+          # (ITMS-90189 fires on collisions). Combine UTC seconds with the
+          # GitHub run id so two near-simultaneous workflows can't collide.
+          BUILD_NUMBER="$(date -u +%Y%m%d%H%M%S)${GITHUB_RUN_ID: -3}"
           echo "marketing=$MARKETING_VERSION" >> "$GITHUB_OUTPUT"
           echo "build=$BUILD_NUMBER" >> "$GITHUB_OUTPUT"
           echo "Marketing version: $MARKETING_VERSION"
