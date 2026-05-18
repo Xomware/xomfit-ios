@@ -124,6 +124,11 @@ struct XomFitApp: App {
                     SpotifyAuthService.shared.handleCallback(url: url)
                     return
                 }
+                if url.scheme == "xomfit", url.host == "soundcloud-callback" {
+                    // Same belt-and-suspenders pattern as Spotify (#389).
+                    SoundCloudAuthService.shared.handleCallback(url: url)
+                    return
+                }
                 #if DEBUG
                 if url.scheme == "xomfit", url.host == "coach" {
                     if authService.isAuthenticated {
