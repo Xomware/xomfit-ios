@@ -43,6 +43,11 @@ final class NowPlayingService {
     /// Number of unique tracks captured in the current session.
     var capturedCount: Int { captured.count }
 
+    /// Immutable snapshot of currently-captured tracks (#387). Used by
+    /// `WorkoutLoggerViewModel.curatedTracksSnapshot` to merge sources at
+    /// finish time without exposing the mutable backing array.
+    func capturedTracksSnapshot() -> [WorkoutTrack] { captured }
+
     /// Most recent track captured this session (or the last completed session).
     private(set) var lastCapturedTrack: WorkoutTrack?
 

@@ -12,6 +12,7 @@ enum AppDestination: String, CaseIterable, Identifiable, Hashable {
     case progress
     case profile
     case reports
+    case stretches
     case tools
     case settings
 
@@ -19,25 +20,27 @@ enum AppDestination: String, CaseIterable, Identifiable, Hashable {
 
     var title: String {
         switch self {
-        case .feed:     "Feed"
-        case .workout:  "Workout"
-        case .progress: "Progress"
-        case .profile:  "Profile"
-        case .reports:  "Reports"
-        case .tools:    "Tools"
-        case .settings: "Settings"
+        case .feed:      "Feed"
+        case .workout:   "Workout"
+        case .progress:  "Progress"
+        case .profile:   "Profile"
+        case .reports:   "Reports"
+        case .stretches: "Stretches"
+        case .tools:     "Tools"
+        case .settings:  "Settings"
         }
     }
 
     var iconSystemName: String {
         switch self {
-        case .feed:     "house.fill"
-        case .workout:  "dumbbell.fill"
-        case .progress: "chart.line.uptrend.xyaxis"
-        case .profile:  "person.fill"
-        case .reports:  "doc.text.fill"
-        case .tools:    "wrench.and.screwdriver.fill"
-        case .settings: "gearshape.fill"
+        case .feed:      "house.fill"
+        case .workout:   "dumbbell.fill"
+        case .progress:  "chart.line.uptrend.xyaxis"
+        case .profile:   "person.fill"
+        case .reports:   "doc.text.fill"
+        case .stretches: "figure.flexibility"
+        case .tools:     "wrench.and.screwdriver.fill"
+        case .settings:  "gearshape.fill"
         }
     }
 }
