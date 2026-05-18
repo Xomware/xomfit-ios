@@ -614,9 +614,18 @@ final class WorkoutLoggerViewModel {
                     return RemainingExercise(index: idx, name: ex.exercise.name)
                 }
 
-                // Suppress the transition card while still mid-superset round — the focus
-                // already advanced to the next member, so no card needed.
-                if !inSupersetRound {
+                // Suppress the transition card in these cases:
+                //   1. Mid-superset round — focus already advanced to the next
+                //      member, so no card needed.
+                //   2. Timed-circuit workouts — they have their own loop UI
+                //      (`TimedCircuitView`), no per-exercise transition (#387).
+                //   3. Final exercise of the session — when no other exercise
+                //      has incomplete sets left, the user is done and we want
+                //      them to head straight to the Finish flow without an
+                //      extra modal (#387). The existing "all complete" cue in
+                //      the persistent pill / footer is enough.
+                let isFinalExercise = nextExerciseIndex == nil
+                if !inSupersetRound && kind != .timedCircuit && !isFinalExercise {
                     showExerciseTransition = true
                 }
             }
@@ -936,13 +945,14 @@ final class WorkoutLoggerViewModel {
 
     // MARK: - Soundtrack curation (#387)
 
-    /// Merged snapshot of (Apple Music + Spotify + manual) tracks, minus anything
-    /// the user removed in the finish sheet. Sorted by capture time so the order
-    /// reflects play order across sources.
+    /// Merged snapshot of (Apple Music + Spotify + SoundCloud + manual) tracks,
+    /// minus anything the user removed in the finish sheet. Sorted by capture time
+    /// so the order reflects play order across sources.
     var curatedTracksSnapshot: [WorkoutTrack] {
         let apple = NowPlayingService.shared.capturedTracksSnapshot()
         let spotify = SpotifyNowPlayingService.shared.capturedTracksSnapshot()
-        let merged = (apple + spotify + manualTracks)
+        let soundCloud = SoundCloudNowPlayingService.shared.capturedTracksSnapshot()
+        let merged = (apple + spotify + soundCloud + manualTracks)
             .filter { !removedTrackIDs.contains($0.id) }
         return merged.sorted { $0.capturedAt < $1.capturedAt }
     }
