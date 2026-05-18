@@ -213,6 +213,8 @@ final class WorkoutLoggerViewModel {
         NowPlayingService.shared.startCapture()
         // Spotify capture runs in parallel — also a silent no-op when not signed in (#347).
         SpotifyNowPlayingService.shared.startCapture()
+        // SoundCloud capture runs in parallel — silent no-op when not signed in (#389).
+        SoundCloudNowPlayingService.shared.startCapture()
     }
 
     func discardWorkout() {
@@ -250,6 +252,7 @@ final class WorkoutLoggerViewModel {
         // Drop any captured Now Playing tracks — discarding the workout discards the soundtrack.
         _ = NowPlayingService.shared.stopCapture()
         _ = SpotifyNowPlayingService.shared.stopCapture()
+        _ = SoundCloudNowPlayingService.shared.stopCapture()
     }
 
     func startFromTemplate(_ template: WorkoutTemplate, userId: String) {
@@ -1263,14 +1266,10 @@ final class WorkoutLoggerViewModel {
 
         // Pull the Now Playing capture and attach it to the saved workout.
         // Empty list when the user denied Apple Music access or only used non-Apple Music sources.
-        // Spotify tracks (when authed) merge in alongside Apple Music — sort by capture time so
-        // the saved soundtrack reflects actual play order across sources (#347).
-        //
-        // Finish-sheet edits (#387): manual entries are appended; `removedTrackIDs`
-        // filters the union so user deletions stick.
         let appleMusicTracks = NowPlayingService.shared.stopCapture()
         let spotifyTracks = SpotifyNowPlayingService.shared.stopCapture()
-        let capturedTracks = (appleMusicTracks + spotifyTracks + manualTracks)
+        let soundCloudTracks = SoundCloudNowPlayingService.shared.stopCapture()
+        let capturedTracks = (appleMusicTracks + spotifyTracks + soundCloudTracks + manualTracks)
             .filter { !removedTrackIDs.contains($0.id) }
             .sorted { $0.capturedAt < $1.capturedAt }
 
