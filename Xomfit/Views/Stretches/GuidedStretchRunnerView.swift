@@ -2,10 +2,13 @@ import SwiftUI
 
 // MARK: - GuidedStretchRunnerView
 //
-// Full-screen guided stretching session for a curated template (#388).
-// Shows the current stretch, a per-stretch countdown ring, a top progress
-// bar, and skip/back/pause controls. Auto-advances when the timer hits 0;
-// finishes with a celebratory end card summarizing total time.
+// Full-screen guided stretching session for a curated template (#388, polished
+// in #398). Shows the current stretch, a per-stretch countdown ring, a top
+// progress bar, and skip/back/pause controls. The countdown keeps going past
+// zero into negative territory so the user can hold a stretch as long as they
+// want — the runner does NOT auto-advance; Skip / Done are manual. Mirrors
+// the workout Live Activity via `XomfitWidgetAttributes` so the current
+// stretch + countdown surface in the Dynamic Island / on the lock screen.
 
 struct GuidedStretchRunnerView: View {
     let stretches: [Stretch]
@@ -43,17 +46,37 @@ struct GuidedStretchRunnerView: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Close") {
                         Haptics.light()
-                        viewModel.pause()
+                        viewModel.teardown()
                         dismiss()
                     }
                     .foregroundStyle(Theme.textSecondary)
+                    .accessibilityLabel("Close stretching sequence")
                 }
             }
             .onAppear {
                 viewModel.start()
+                #if DEBUG
+                // Agent screenshot helper: jump-start the runner into the
+                // negative-countdown ("overtime") state so the red styling can
+                // be captured from a cold launch.
+                let env = ProcessInfo.processInfo.environment
+                if let raw = env["XOMFIT_STRETCH_FORCE_OVERTIME"], let secs = Int(raw) {
+                    Task { @MainActor in
+                        try? await Task.sleep(for: .milliseconds(400))
+                        // Tick the runner forward enough to push `secondsRemaining`
+                        // to roughly `-secs`. The view model owns the timer so
+                        // we use its public skip path to enter overtime.
+                        let target = viewModel.currentStretch?.durationSeconds ?? 0
+                        let tickCount = target + secs
+                        for _ in 0..<tickCount {
+                            viewModel.debugTickForOvertimeScreenshot()
+                        }
+                    }
+                }
+                #endif
             }
             .onDisappear {
-                viewModel.pause()
+                viewModel.teardown()
             }
         }
     }
@@ -131,20 +154,30 @@ struct GuidedStretchRunnerView: View {
                     .accessibilityAddTraits(.isHeader)
 
                 ZStack {
-                    RestTimerRingView(progress: viewModel.stretchProgress, color: Theme.accent, lineWidth: 10)
+                    // Ring color also flips red once the user holds past the
+                    // recommended time (#398). Progress stays clamped at 1.
+                    RestTimerRingView(
+                        progress: viewModel.stretchProgress,
+                        color: viewModel.isOvertime ? Theme.destructive : Theme.accent,
+                        lineWidth: 10
+                    )
                     VStack(spacing: 2) {
                         Text("\(viewModel.secondsRemaining)")
                             .font(.system(size: 56, weight: .heavy, design: .rounded))
                             .monospacedDigit()
-                            .foregroundStyle(Theme.textPrimary)
-                        Text("seconds")
+                            .foregroundStyle(viewModel.isOvertime ? Theme.destructive : Theme.textPrimary)
+                        Text(viewModel.isOvertime ? "over · tap skip" : "seconds")
                             .font(Theme.fontCaption)
-                            .foregroundStyle(Theme.textSecondary)
+                            .foregroundStyle(viewModel.isOvertime ? Theme.destructive : Theme.textSecondary)
                     }
                 }
                 .frame(width: 200, height: 200)
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel("\(viewModel.secondsRemaining) seconds remaining on \(stretch.name)")
+                .accessibilityLabel(
+                    viewModel.isOvertime
+                        ? "\(abs(viewModel.secondsRemaining)) seconds past target on \(stretch.name). Tap skip when ready."
+                        : "\(viewModel.secondsRemaining) seconds remaining on \(stretch.name)"
+                )
             }
         }
         .padding(Theme.Spacing.md)
@@ -317,6 +350,7 @@ struct GuidedStretchRunnerView: View {
 
             Button {
                 Haptics.medium()
+                viewModel.teardown()
                 dismiss()
             } label: {
                 Text("Done")

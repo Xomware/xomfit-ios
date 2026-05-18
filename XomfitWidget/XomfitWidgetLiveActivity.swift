@@ -50,12 +50,30 @@ struct XomfitWidgetLiveActivity: Widget {
         .foregroundStyle(.white.opacity(0.85))
     }
 
+    /// Color used for the per-stretch countdown. Goes red once the user holds
+    /// past the recommended time (#398).
+    private func stretchColor(_ state: XomfitWidgetAttributes.ContentState) -> Color {
+        state.stretchSecondsRemaining < 0 ? .red : Self.accentGreen
+    }
+
+    /// Per-stretch countdown text (e.g. "12s", "-5s"). The negative `Int`
+    /// renders its own minus sign for the overtime case.
+    private func stretchCountdownText(_ state: XomfitWidgetAttributes.ContentState) -> String {
+        "\(state.stretchSecondsRemaining)s"
+    }
+
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: XomfitWidgetAttributes.self) { context in
             // Lock screen / banner UI
-            lockScreenView(context: context)
-                .activityBackgroundTint(Self.darkBackground)
-                .activitySystemActionForegroundColor(.white)
+            Group {
+                if context.state.mode == .stretch {
+                    stretchLockScreenView(context: context)
+                } else {
+                    lockScreenView(context: context)
+                }
+            }
+            .activityBackgroundTint(Self.darkBackground)
+            .activitySystemActionForegroundColor(.white)
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
@@ -65,7 +83,13 @@ struct XomfitWidgetLiveActivity: Widget {
                         .lineLimit(1)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    if context.state.isPaused {
+                    if context.state.mode == .stretch {
+                        Text(stretchCountdownText(context.state))
+                            .font(.system(size: 14, weight: .semibold, design: .monospaced))
+                            .foregroundStyle(stretchColor(context.state))
+                            .monospacedDigit()
+                            .multilineTextAlignment(.trailing)
+                    } else if context.state.isPaused {
                         pausedLabel(font: .system(size: 14, weight: .semibold))
                     } else {
                         Text(context.attributes.startTime, style: .timer)
@@ -81,14 +105,30 @@ struct XomfitWidgetLiveActivity: Widget {
                         .lineLimit(1)
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    expandedBottomView(state: context.state)
+                    if context.state.mode == .stretch {
+                        stretchExpandedBottom(state: context.state)
+                    } else {
+                        expandedBottomView(state: context.state)
+                    }
                 }
             } compactLeading: {
-                Image(systemName: "dumbbell.fill")
-                    .font(.system(size: 12))
-                    .foregroundStyle(Self.accentGreen)
+                if context.state.mode == .stretch {
+                    Image(systemName: "figure.flexibility")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Self.accentGreen)
+                } else {
+                    Image(systemName: "dumbbell.fill")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Self.accentGreen)
+                }
             } compactTrailing: {
-                if context.state.isPaused {
+                if context.state.mode == .stretch {
+                    Text(stretchCountdownText(context.state))
+                        .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(stretchColor(context.state))
+                        .multilineTextAlignment(.trailing)
+                        .monospacedDigit()
+                } else if context.state.isPaused {
                     pausedLabel(font: .system(size: 12, weight: .semibold))
                 } else if context.state.isResting, let endDate = context.state.restEndDate {
                     restTimerCountdown(endDate: endDate, isOvertime: context.state.isOvertime)
@@ -103,7 +143,13 @@ struct XomfitWidgetLiveActivity: Widget {
                         .multilineTextAlignment(.trailing)
                 }
             } minimal: {
-                if context.state.isPaused {
+                if context.state.mode == .stretch {
+                    Text(stretchCountdownText(context.state))
+                        .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(stretchColor(context.state))
+                        .multilineTextAlignment(.center)
+                        .monospacedDigit()
+                } else if context.state.isPaused {
                     Image(systemName: "pause.fill")
                         .font(.system(size: 11, weight: .semibold))
                         .foregroundStyle(.white.opacity(0.85))
@@ -121,8 +167,8 @@ struct XomfitWidgetLiveActivity: Widget {
                         .monospacedDigit()
                 }
             }
-            .widgetURL(URL(string: "xomfit://workout"))
-            .keylineTint(restColor(context.state))
+            .widgetURL(URL(string: context.state.mode == .stretch ? "xomfit://stretch" : "xomfit://workout"))
+            .keylineTint(context.state.mode == .stretch ? stretchColor(context.state) : restColor(context.state))
         }
     }
 
@@ -270,9 +316,114 @@ struct XomfitWidgetLiveActivity: Widget {
         }
     }
 
+    // MARK: - Stretch Live Activity (#398)
+
+    /// Lock-screen card for the guided stretch sequence. Mirrors the workout
+    /// lock-screen layout (top row, middle row, progress bar) but swaps the
+    /// content for the active stretch + countdown.
+    @ViewBuilder
+    private func stretchLockScreenView(context: ActivityViewContext<XomfitWidgetAttributes>) -> some View {
+        let state = context.state
+        let progress: Double = state.stretchTotal > 0
+            ? min(1, max(0, Double(state.stretchIndex) / Double(state.stretchTotal)))
+            : 0
+
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                HStack(spacing: 6) {
+                    Image(systemName: "figure.flexibility")
+                        .font(.system(size: 14))
+                        .foregroundStyle(Self.accentGreen)
+                    Text(context.attributes.workoutName)
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+                }
+
+                Spacer()
+
+                Text(stretchCountdownText(state))
+                    .font(.system(size: 15, weight: .semibold, design: .monospaced))
+                    .foregroundStyle(stretchColor(state))
+                    .multilineTextAlignment(.trailing)
+                    .monospacedDigit()
+            }
+
+            HStack(spacing: 0) {
+                Text(state.stretchName.isEmpty ? " " : state.stretchName)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.85))
+                    .lineLimit(1)
+
+                Text("  \u{2022}  ")
+                    .foregroundStyle(.white.opacity(0.4))
+
+                Text("\(state.stretchIndex)/\(state.stretchTotal)")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.7))
+            }
+
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 3)
+                        .fill(.white.opacity(0.15))
+                        .frame(height: 6)
+                    RoundedRectangle(cornerRadius: 3)
+                        .fill(Self.accentGreen)
+                        .frame(width: max(0, geo.size.width * progress), height: 6)
+                }
+            }
+            .frame(height: 6)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+    }
+
+    /// Bottom region for the expanded Dynamic Island when in stretch mode.
+    /// Shows current stretch name, sequence progress, and a small label that
+    /// flips red when the user is past the recommended hold time.
+    @ViewBuilder
+    private func stretchExpandedBottom(state: XomfitWidgetAttributes.ContentState) -> some View {
+        let progress: Double = state.stretchTotal > 0
+            ? min(1, max(0, Double(state.stretchIndex) / Double(state.stretchTotal)))
+            : 0
+
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 0) {
+                Text(state.stretchName.isEmpty ? " " : state.stretchName)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.85))
+                    .lineLimit(1)
+
+                Spacer()
+
+                Text("\(state.stretchIndex)/\(state.stretchTotal)")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.7))
+            }
+
+            if state.stretchSecondsRemaining < 0 {
+                HStack(spacing: 4) {
+                    Image(systemName: "exclamationmark.circle.fill")
+                        .font(.system(size: 11))
+                    Text("Holding past target")
+                        .font(.system(size: 12, weight: .semibold))
+                }
+                .foregroundStyle(.red)
+            }
+
+            ProgressView(value: progress)
+                .tint(Self.accentGreen)
+                .scaleEffect(y: 1.5, anchor: .center)
+        }
+    }
+
     // MARK: - Helpers
 
     private func centerText(for state: XomfitWidgetAttributes.ContentState) -> String {
+        if state.mode == .stretch {
+            return state.stretchName.isEmpty ? "Stretching" : state.stretchName
+        }
         if state.isPaused { return "Paused" }
         if state.isResting { return "Resting" }
         return state.currentExercise
@@ -325,6 +476,36 @@ extension XomfitWidgetAttributes.ContentState {
             totalExercises: 6
         )
     }
+
+    fileprivate static var stretchMid: XomfitWidgetAttributes.ContentState {
+        XomfitWidgetAttributes.ContentState(
+            elapsedSeconds: 120,
+            completedSets: 0,
+            totalSets: 0,
+            currentExercise: "",
+            totalExercises: 0,
+            mode: .stretch,
+            stretchName: "Pigeon Pose",
+            stretchSecondsRemaining: 18,
+            stretchIndex: 3,
+            stretchTotal: 6
+        )
+    }
+
+    fileprivate static var stretchOvertime: XomfitWidgetAttributes.ContentState {
+        XomfitWidgetAttributes.ContentState(
+            elapsedSeconds: 220,
+            completedSets: 0,
+            totalSets: 0,
+            currentExercise: "",
+            totalExercises: 0,
+            mode: .stretch,
+            stretchName: "Couch Stretch",
+            stretchSecondsRemaining: -7,
+            stretchIndex: 4,
+            stretchTotal: 6
+        )
+    }
 }
 
 #Preview("Notification", as: .content, using: XomfitWidgetAttributes.preview) {
@@ -332,4 +513,6 @@ extension XomfitWidgetAttributes.ContentState {
 } contentStates: {
     XomfitWidgetAttributes.ContentState.midWorkout
     XomfitWidgetAttributes.ContentState.nearEnd
+    XomfitWidgetAttributes.ContentState.stretchMid
+    XomfitWidgetAttributes.ContentState.stretchOvertime
 }
