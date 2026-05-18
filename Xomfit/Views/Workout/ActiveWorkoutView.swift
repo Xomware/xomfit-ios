@@ -226,15 +226,18 @@ struct ActiveWorkoutView: View {
                     .foregroundStyle(Theme.accent)
                 }
             }
-            // Push the header below any active Dynamic Island (#289). Even with the
-            // existing top safe-area, an active island (e.g. music app) can still
-            // occlude the workout header — bump everything down deterministically.
+            // Push the header below any active Dynamic Island (#289/#399). With the
+            // new two-row layout the top row only carries corner controls (Discard /
+            // Minimize / Finish) and the second row carries the timer, so even an
+            // active island can't occlude the elapsed-time string. Keep an extra
+            // 8pt of breathing room above the natural top safe area.
             .safeAreaInset(edge: .top, spacing: 0) {
                 Color.clear.frame(height: Theme.Spacing.sm)
             }
+            // Reserve a hair above the home indicator so the floating Add Exercise
+            // pill / rest timer card never clip into the OS gesture area (#399).
             .safeAreaInset(edge: .bottom, spacing: 0) {
-                // Empty — just ensures keyboard inset is respected; actual toolbar is above
-                Color.clear.frame(height: 0)
+                Color.clear.frame(height: Theme.Spacing.xs)
             }
         }
         .onReceive(timer) { _ in
@@ -380,12 +383,35 @@ struct ActiveWorkoutView: View {
     }
 
     // MARK: - Header
+    //
+    // Two-row layout (#399) so nothing collides with the Dynamic Island. The
+    // top row only contains corner controls (Discard / Minimize / Finish) —
+    // they're far enough from center that they sit cleanly to the left/right
+    // of the island. The second row carries the timer + workout name +
+    // pause/focus toggles, which live BELOW the island so they're never
+    // occluded.
+    //
+    // Previous single-row design (#287/#289) tried to squeeze 6 controls into
+    // one row, which on iPhone 14/15/16/17 Pro models collided with the
+    // Dynamic Island and clipped the duration timer.
 
     private var headerBar: some View {
-        // Tighten horizontal spacing between adjacent controls so the rest pill
-        // doesn't get squeezed into multiple lines (#287).
+        VStack(spacing: Theme.Spacing.xs) {
+            headerTopRow
+            headerSecondRow
+        }
+        .padding(.horizontal, Theme.Spacing.md)
+        .padding(.top, Theme.Spacing.sm)
+        .padding(.bottom, Theme.Spacing.sm)
+        .background(Theme.surface)
+    }
+
+    /// Row 1 — corner controls only. Discard sits on the leading edge; Minimize
+    /// + Finish sit on the trailing edge. The center is intentionally empty so
+    /// the Dynamic Island can render without clipping anything.
+    private var headerTopRow: some View {
         HStack(spacing: Theme.Spacing.xs) {
-            // Discard button — compact
+            // Discard button — leading corner.
             Button {
                 Haptics.warning()
                 showDiscardAlert = true
@@ -395,13 +421,70 @@ struct ActiveWorkoutView: View {
                     .foregroundStyle(Theme.destructive)
                     .lineLimit(1)
                     .fixedSize(horizontal: true, vertical: false)
+                    .frame(minHeight: 44)
+                    .contentShape(Rectangle())
             }
+            .accessibilityLabel("Discard workout")
+            .accessibilityHint("Ends and deletes the in-progress workout without saving")
 
-            Spacer(minLength: Theme.Spacing.xs)
+            Spacer(minLength: 0)
 
-            // Timer cluster — total time prominent + rest timer chip so both stay visible
-            // around the Dynamic Island. Name is secondary (can be hidden by island).
-            VStack(spacing: Theme.Spacing.tighter) {
+            // Minimize — dismiss the cover and leave the workout running in the
+            // background. The persistent resume bar in MainTabView re-presents
+            // it via `xomfit://workout` or a tap.
+            Button {
+                Haptics.light()
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.82)) {
+                    viewModel.isPresented = false
+                }
+            } label: {
+                Image(systemName: "chevron.down")
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(Theme.textPrimary)
+                    .frame(width: 44, height: 44)
+                    .background(Theme.textSecondary.opacity(0.15))
+                    .clipShape(Circle())
+                    .contentShape(Rectangle())
+            }
+            .accessibilityLabel("Minimize workout")
+            .accessibilityHint("Hides the active workout and returns to the main app. The workout keeps running.")
+
+            // Finish button.
+            Button {
+                Haptics.success()
+                workoutDescription = ""
+                showFinishSheet = true
+            } label: {
+                if viewModel.isSaving {
+                    ProgressView()
+                        .tint(.black)
+                        .frame(width: 60, height: 28)
+                        .background(Theme.accent)
+                        .clipShape(.rect(cornerRadius: 8))
+                } else {
+                    Text("Finish")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.black)
+                        .lineLimit(1)
+                        .fixedSize(horizontal: true, vertical: false)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 7)
+                        .background(Theme.accent)
+                        .clipShape(.rect(cornerRadius: 8))
+                }
+            }
+            .disabled(viewModel.isSaving)
+            .accessibilityLabel("Finish workout")
+        }
+    }
+
+    /// Row 2 — timer + name on the leading edge, pause + focus toggle on the
+    /// trailing edge. Lives below the Dynamic Island so the duration string is
+    /// never clipped.
+    private var headerSecondRow: some View {
+        HStack(spacing: Theme.Spacing.sm) {
+            // Timer cluster — total time prominent + rest timer chip when active.
+            VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
                 HStack(spacing: 6) {
                     HStack(spacing: 3) {
                         Image(systemName: "clock.fill")
@@ -437,10 +520,6 @@ struct ActiveWorkoutView: View {
                 }
 
                 HStack(spacing: 4) {
-                    // Subtle "Apple Watch connected" cue (#256 follow-up).
-                    // Rendered next to the workout name so users know the
-                    // watch's Done Set button is live without taking extra
-                    // header space.
                     if WatchSyncService.shared.isWatchAvailable {
                         Image(systemName: "applewatch")
                             .font(.caption2.weight(.semibold))
@@ -457,8 +536,7 @@ struct ActiveWorkoutView: View {
 
             Spacer(minLength: Theme.Spacing.xs)
 
-            // Pause / Resume toggle — freezes elapsed time + rest timer
-            // Visually narrower (32pt) but keeps a 44pt tap target via contentShape.
+            // Pause / Resume toggle.
             Button {
                 Haptics.light()
                 withAnimation(.xomChill) {
@@ -468,7 +546,7 @@ struct ActiveWorkoutView: View {
                 Image(systemName: viewModel.isPaused ? "play.circle.fill" : "pause.circle.fill")
                     .font(.title3.weight(.semibold))
                     .foregroundStyle(viewModel.isPaused ? Theme.accent : Theme.textPrimary)
-                    .frame(width: 32, height: 44)
+                    .frame(width: 44, height: 44)
                     .contentShape(Rectangle())
             }
             .accessibilityLabel(viewModel.isPaused ? "Resume workout" : "Pause workout")
@@ -476,7 +554,7 @@ struct ActiveWorkoutView: View {
                 ? "Resumes the elapsed timer and rest countdown"
                 : "Freezes the elapsed timer and rest countdown")
 
-            // Focus mode toggle — visually narrower, 44pt tap area enforced.
+            // Focus mode toggle.
             Button {
                 withAnimation {
                     viewModel.focusMode.toggle()
@@ -498,38 +576,7 @@ struct ActiveWorkoutView: View {
                     .contentShape(Rectangle())
             }
             .accessibilityLabel(viewModel.focusMode ? "Switch to list view" : "Switch to focus view")
-
-            // Finish button — compact (smaller font + tighter padding to free up header space).
-            Button {
-                Haptics.success()
-                workoutDescription = ""
-                showFinishSheet = true
-            } label: {
-                if viewModel.isSaving {
-                    ProgressView()
-                        .tint(.black)
-                        .frame(width: 60, height: 28)
-                        .background(Theme.accent)
-                        .clipShape(.rect(cornerRadius: 8))
-                } else {
-                    Text("Finish")
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(.black)
-                        .lineLimit(1)
-                        .fixedSize(horizontal: true, vertical: false)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 7)
-                        .background(Theme.accent)
-                        .clipShape(.rect(cornerRadius: 8))
-                }
-            }
-            .disabled(viewModel.isSaving)
-            .accessibilityLabel("Finish workout")
         }
-        .padding(.horizontal, Theme.Spacing.md)
-        .padding(.top, Theme.Spacing.md)
-        .padding(.bottom, Theme.Spacing.md)
-        .background(Theme.surface)
     }
 
     // MARK: - Current Exercise Pill (#253)

@@ -34,18 +34,15 @@ final class SpotifyNowPlayingService {
     /// and the active-workout popover. Stays in sync with `captured.count`.
     var capturedCount: Int { captured.count }
 
-    /// Immutable snapshot of captured tracks (#387). Used by
-    /// `WorkoutLoggerViewModel.curatedTracksSnapshot` to merge sources at
-    /// finish time without exposing the mutable backing array.
-    func capturedTracksSnapshot() -> [WorkoutTrack] { captured }
-
     /// Most recent track added in this session, if any. Surfaced in `SpotifyConnectionView` so
     /// the user can confirm capture is working without opening an active workout.
     private(set) var lastCapturedTrack: WorkoutTrack?
 
     /// Read-only copy of the currently captured tracks for this session. Used by the
     /// finish-workout sheet (#387) to preview what will be saved without yet stopping
-    /// the capture loop. Does NOT mutate state — call `stopCapture()` to actually drain.
+    /// the capture loop, AND by `WorkoutLoggerViewModel.curatedTracksSnapshot` to
+    /// merge sources at finish time without exposing the mutable backing array.
+    /// Does NOT mutate state — call `stopCapture()` to actually drain.
     func capturedTracksSnapshot() -> [WorkoutTrack] {
         captured
     }
