@@ -258,9 +258,28 @@ struct XomFitApp: App {
     }
 
     #if DEBUG
-    /// Seed an in-progress workout for agent screenshot flows (#387). Adds two
-    /// real exercises and (optionally) completes the first or pops the finish
+    /// Seed an in-progress workout for agent screenshot flows (#387/#402).
+    /// Adds real exercises and (optionally) completes the first, pairs them as
+    /// a superset, enters focus mode, fires the rest timer, or pops the finish
     /// sheet so the new UI surfaces from a cold launch.
+    ///
+    /// Env vars:
+    ///   XOMFIT_AUTO_START_WORKOUT=1     → start workout, two exercises seeded
+    ///   XOMFIT_AUTO_COMPLETE_FIRST=1    → also complete every set on the first
+    ///                                     exercise so the transition card shows
+    ///   XOMFIT_AUTO_PRESENT_FINISH=1    → also present the finish sheet
+    ///   XOMFIT_AUTO_SEED_TRACKS=1       → add demo soundtrack tracks
+    ///   XOMFIT_AUTO_LONG_NAME=1         → swap second exercise for one with a
+    ///                                     long name so the superset-list card
+    ///                                     overflow fix can be verified (#402)
+    ///   XOMFIT_AUTO_GROUP_SUPERSET=1    → group the two seeded exercises into
+    ///                                     a superset so the "Superset A/B"
+    ///                                     badges + alternation logic render
+    ///   XOMFIT_AUTO_ENTER_FOCUS=1       → flip into focus mode on launch
+    ///   XOMFIT_AUTO_START_REST_TIMER=1  → fire the rest timer immediately so
+    ///                                     the fullscreen overlay renders
+    ///   XOMFIT_AUTO_MINIMIZE_REST=1     → start the rest timer in its minimized
+    ///                                     banner state (read by WorkoutFocusView)
     @MainActor
     private func seedDebugActiveWorkout() {
         let env = ProcessInfo.processInfo.environment
@@ -272,11 +291,23 @@ struct XomFitApp: App {
         }
 
         let userId = authService.currentUser?.id.uuidString.lowercased() ?? ""
-        workoutSession.startWorkout(name: "Screenshot Workout", userId: userId)
+        // Long workout name so the row-2 truncation behavior can be observed.
+        let name = env["XOMFIT_AUTO_LONG_NAME"] == "1"
+            ? "(s)arms" : "Screenshot Workout"
+        workoutSession.startWorkout(name: name, userId: userId)
 
-        // Two safe exercises from ExerciseDatabase. Picked deterministically by
+        // Two exercises from ExerciseDatabase. Picked deterministically by
         // id so the seeded workout looks consistent across screenshot runs.
-        let preferredIds = ["ex-bench-flat", "ex-lat-pulldown"]
+        // When XOMFIT_AUTO_LONG_NAME=1 we swap in the longest-named tricep
+        // exercise so the superset list-card overflow is reproducible.
+        let preferredIds: [String]
+        if env["XOMFIT_AUTO_LONG_NAME"] == "1" {
+            // Long-named exercise FIRST so the list-card overflow fix can be
+            // captured at the top of the scroll view (#402).
+            preferredIds = ["ex-cable-overhead-tri-ext", "ex-tricep-pushdown"]
+        } else {
+            preferredIds = ["ex-bench-flat", "ex-lat-pulldown"]
+        }
         var chosen: [Exercise] = []
         for id in preferredIds {
             if let match = ExerciseDatabase.all.first(where: { $0.id == id }) {
@@ -288,6 +319,14 @@ struct XomFitApp: App {
         }
         for ex in chosen {
             workoutSession.addExercise(ex)
+        }
+
+        // Group the two seeded exercises as a superset so the list-card layout,
+        // the focus-mode badge, and the alternation logic can all be exercised
+        // from a cold launch (#402).
+        if env["XOMFIT_AUTO_GROUP_SUPERSET"] == "1",
+           workoutSession.exercises.count >= 2 {
+            workoutSession.toggleSuperset(exerciseIndices: [0, 1])
         }
 
         // Optionally complete the first exercise so the transition card shows
@@ -305,6 +344,20 @@ struct XomFitApp: App {
         if env["XOMFIT_AUTO_SEED_TRACKS"] == "1" {
             workoutSession.addManualTrack(title: "Pump Anthem", artist: "Demo Artist")
             workoutSession.addManualTrack(title: "Heavy Lift", artist: "Squat Crew")
+        }
+
+        // Flip into focus mode so the gym-floor layout is the first thing the
+        // user / agent sees (#402).
+        if env["XOMFIT_AUTO_ENTER_FOCUS"] == "1" {
+            workoutSession.focusMode = true
+            workoutSession.syncFocusToCurrentExercise()
+        }
+
+        // Fire the rest timer immediately. Useful for screenshotting both the
+        // fullscreen rest timer overlay (focus mode) and the inline rest timer
+        // card (list mode) from a cold launch (#402).
+        if env["XOMFIT_AUTO_START_REST_TIMER"] == "1" {
+            workoutSession.startRestTimer(for: workoutSession.focusExerciseIndex)
         }
 
         // Optionally jump straight into the active runner so the cover renders.
