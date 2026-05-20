@@ -64,7 +64,8 @@ struct ActiveWorkoutView: View {
                 Theme.background.ignoresSafeArea()
 
                 VStack(spacing: 0) {
-                    // Header bar
+                    // Header bar — sits BELOW the Dynamic Island via explicit
+                    // safe-area padding inside the header itself (#402).
                     headerBar
 
                     // Persistent current-exercise pill (#253). Sits below the header so it
@@ -115,13 +116,12 @@ struct ActiveWorkoutView: View {
                                     }
                                     .padding(Theme.Spacing.md)
                                 }
-                                // Reserve scroll real estate for the sticky
-                                // Add Exercise FAB so the last set rows are
-                                // never covered by the floating control (#344-B).
-                                // Using `.contentMargins` keeps the FAB rendered
-                                // unconditionally (also on the empty state) while
-                                // still letting the list scroll cleanly past it.
-                                .contentMargins(.bottom, 88, for: .scrollContent)
+                                // Bottom inset that just clears the soundtrack
+                                // capture pill (when visible) — the Add Exercise
+                                // FAB is gone (#402); add-exercise lives in the
+                                // top header now. Keeping a generous 24pt so the
+                                // last set rows don't kiss the home indicator.
+                                .contentMargins(.bottom, Theme.Spacing.lg, for: .scrollContent)
                                 .onTapGesture {
                                     UIApplication.shared.sendAction(
                                         #selector(UIResponder.resignFirstResponder),
@@ -144,30 +144,12 @@ struct ActiveWorkoutView: View {
                 .animation(.xomChill, value: viewModel.showExerciseTransition)
                 .animation(.xomChill, value: viewModel.focusMode)
 
-                // Floating Add Exercise button (hidden in focus mode).
-                // The scrollview above reserves bottom inset via
-                // `.contentMargins` so this FAB never sits on top of set rows.
-                if !viewModel.focusMode {
-                    VStack(spacing: Theme.Spacing.xs) {
-                        Spacer()
-
-                        // Soundtrack capture pill (Spotify capture polish). Visible
-                        // only while at least one capture loop is alive. Tap opens
-                        // the captured-tracks-so-far popover.
-                        if spotifyCapture.isCapturing || appleMusicCapture.isCapturing {
-                            soundtrackCapturePill
-                        }
-
-                        XomButton("Add Exercise", variant: .primary, icon: "plus") {
-                            showExercisePicker = true
-                        }
-                        .padding(.horizontal, Theme.Spacing.xl)
-                        .padding(.vertical, Theme.Spacing.sm)
-                        .background(.ultraThinMaterial)
-                        .clipShape(.rect(cornerRadius: Theme.Radius.xl))
-                        .padding(.bottom, Theme.Spacing.md)
-                    }
-                }
+                // Soundtrack capture pill (Spotify capture polish). Visible only
+                // while at least one capture loop is alive. The Add Exercise FAB
+                // moved to the top header (#402) — remove it from the bottom
+                // entirely. The soundtrack pill rides above the home indicator
+                // via `.safeAreaInset(.bottom)` further down so it never overlaps
+                // set rows OR a fullscreen rest timer's LIFT button.
 
                 // PR Celebration Banner
                 if viewModel.showPRCelebration, let pr = viewModel.newPR {
@@ -216,6 +198,20 @@ struct ActiveWorkoutView: View {
                     .animation(.xomConfident, value: viewModel.showExerciseTransition)
                 }
             }
+            // Bottom safe-area inset (#402). When music capture is running,
+            // surface the soundtrack pill anchored above the home indicator —
+            // never floating over set rows or a fullscreen rest timer's LIFT
+            // button. Otherwise just a hair of padding so the last row clears
+            // the OS gesture area.
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                if !viewModel.focusMode &&
+                    (spotifyCapture.isCapturing || appleMusicCapture.isCapturing) {
+                    soundtrackCapturePill
+                        .padding(.bottom, Theme.Spacing.xs)
+                } else {
+                    Color.clear.frame(height: Theme.Spacing.xs)
+                }
+            }
             .toolbar(.hidden, for: .navigationBar)
             .toolbar {
                 ToolbarItemGroup(placement: .keyboard) {
@@ -225,19 +221,6 @@ struct ActiveWorkoutView: View {
                     }
                     .foregroundStyle(Theme.accent)
                 }
-            }
-            // Push the header below any active Dynamic Island (#289/#399). With the
-            // new two-row layout the top row only carries corner controls (Discard /
-            // Minimize / Finish) and the second row carries the timer, so even an
-            // active island can't occlude the elapsed-time string. Keep an extra
-            // 8pt of breathing room above the natural top safe area.
-            .safeAreaInset(edge: .top, spacing: 0) {
-                Color.clear.frame(height: Theme.Spacing.sm)
-            }
-            // Reserve a hair above the home indicator so the floating Add Exercise
-            // pill / rest timer card never clip into the OS gesture area (#399).
-            .safeAreaInset(edge: .bottom, spacing: 0) {
-                Color.clear.frame(height: Theme.Spacing.xs)
             }
         }
         .onReceive(timer) { _ in
@@ -395,20 +378,51 @@ struct ActiveWorkoutView: View {
     // one row, which on iPhone 14/15/16/17 Pro models collided with the
     // Dynamic Island and clipped the duration timer.
 
+    /// Header bar. `.toolbar(.hidden, for: .navigationBar)` + NavigationStack
+    /// on iOS 26 zeroes the implicit top safe-area for descendants, so we
+    /// can't trust `safeAreaPadding` or the system inset to push content past
+    /// the Dynamic Island. Instead we read the active window's top safe-area
+    /// inset directly via UIKit and apply it as explicit padding (#402).
     private var headerBar: some View {
         VStack(spacing: Theme.Spacing.xs) {
             headerTopRow
             headerSecondRow
         }
         .padding(.horizontal, Theme.Spacing.md)
-        .padding(.top, Theme.Spacing.sm)
+        // Clear the Dynamic Island. iPhone 17 Pro reports a 62pt top safe-area
+        // inset but `.toolbar(.hidden)` on iOS 26 NavigationStack swallows it
+        // when SwiftUI lays out the cover — so we use the larger of the
+        // UIKit-reported inset (with a 62pt floor) plus an extra 28pt of
+        // breathing room. End result on iPhone 17 Pro: ~90pt top padding.
+        .padding(.top, max(Self.topSafeAreaInset, 62) + 28)
         .padding(.bottom, Theme.Spacing.sm)
-        .background(Theme.surface)
+        .frame(maxWidth: .infinity)
+        .background(Theme.surface.ignoresSafeArea(edges: .top))
+    }
+
+    /// UIKit-derived top safe-area inset — used because `.toolbar(.hidden)` on
+    /// iOS 26 NavigationStack collapses SwiftUI's implicit top inset. Computed
+    /// per-access (not cached) so a cold launch where the scene's window isn't
+    /// fully laid out yet still gets the right value on the next render pass.
+    ///
+    /// Falls back to 59pt — iPhone Pro top safe-area inset — when no window
+    /// is available. That's enough to clear the Dynamic Island even on the
+    /// largest Pro Max device.
+    private static var topSafeAreaInset: CGFloat {
+        let scene = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first { $0.activationState == .foregroundActive }
+            ?? UIApplication.shared.connectedScenes
+                .compactMap { $0 as? UIWindowScene }
+                .first
+        let inset = scene?.windows.first?.safeAreaInsets.top ?? 0
+        return max(inset, 59)
     }
 
     /// Row 1 — corner controls only. Discard sits on the leading edge; Minimize
-    /// + Finish sit on the trailing edge. The center is intentionally empty so
-    /// the Dynamic Island can render without clipping anything.
+    /// + Finish sit on the trailing edge. The center reserves a 130pt-wide gap
+    /// so the Dynamic Island (≈125pt × 37pt on iPhone Pro models) never clips
+    /// any interactive content (#402).
     private var headerTopRow: some View {
         HStack(spacing: Theme.Spacing.xs) {
             // Discard button — leading corner.
@@ -426,6 +440,14 @@ struct ActiveWorkoutView: View {
             }
             .accessibilityLabel("Discard workout")
             .accessibilityHint("Ends and deletes the in-progress workout without saving")
+
+            // Hard-reserved center gap for the Dynamic Island. 130pt is wider
+            // than the island's pill (~125pt) so corner controls can never be
+            // covered (#402). Using a fixed-width Color.clear instead of a
+            // Spacer guarantees the gap even when leading content grows.
+            Color.clear
+                .frame(width: 130, height: 1)
+                .accessibilityHidden(true)
 
             Spacer(minLength: 0)
 
@@ -478,9 +500,9 @@ struct ActiveWorkoutView: View {
         }
     }
 
-    /// Row 2 — timer + name on the leading edge, pause + focus toggle on the
-    /// trailing edge. Lives below the Dynamic Island so the duration string is
-    /// never clipped.
+    /// Row 2 — timer + name on the leading edge, pause + focus toggle + add
+    /// exercise on the trailing edge. Lives below the Dynamic Island so the
+    /// duration string is never clipped (#402).
     private var headerSecondRow: some View {
         HStack(spacing: Theme.Spacing.sm) {
             // Timer cluster — total time prominent + rest timer chip when active.
@@ -576,6 +598,24 @@ struct ActiveWorkoutView: View {
                     .contentShape(Rectangle())
             }
             .accessibilityLabel(viewModel.focusMode ? "Switch to list view" : "Switch to focus view")
+
+            // Add Exercise — promoted from a bottom FAB to a top-bar control
+            // (#402). Lives in row 2 so it sits well below the Dynamic Island.
+            Button {
+                Haptics.selection()
+                showExercisePicker = true
+            } label: {
+                Image(systemName: "plus")
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(Theme.accent)
+                    .frame(width: Theme.Spacing.xl, height: Theme.Spacing.xl)
+                    .background(Theme.accent.opacity(0.15))
+                    .clipShape(Circle())
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
+            }
+            .accessibilityLabel("Add exercise")
+            .accessibilityHint("Opens the exercise picker to add a new exercise to this workout")
         }
     }
 
@@ -974,20 +1014,28 @@ private struct ExerciseCard: View {
             // Exercise header
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
+                    // Superset pill — moved to its OWN row so the title gets
+                    // the full card width. Previously sat to the left of the
+                    // title and shrunk it to ~2 chars per line on supersetted
+                    // exercises with long names (#402).
+                    if let letter = supersetLetter {
+                        Text("Superset \(letter)")
+                            .font(.caption2.weight(.black))
+                            .foregroundStyle(.black)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, Theme.Spacing.tighter)
+                            .background(Theme.accent)
+                            .clipShape(.capsule)
+                            .accessibilityLabel("Superset \(letter)")
+                    }
                     HStack(spacing: 6) {
-                        if let letter = supersetLetter {
-                            Text("Superset \(letter)")
-                                .font(.caption2.weight(.black))
-                                .foregroundStyle(.black)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, Theme.Spacing.tighter)
-                                .background(Theme.accent)
-                                .clipShape(.capsule)
-                                .accessibilityLabel("Superset \(letter)")
-                        }
                         Text(exercise.exercise.name)
                             .font(.body.weight(.bold))
                             .foregroundStyle(Theme.textPrimary)
+                            .lineLimit(2)
+                            .minimumScaleFactor(0.7)
+                            .multilineTextAlignment(.leading)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                     HStack(spacing: Theme.Spacing.tight) {
                         ForEach(exercise.exercise.muscleGroups.prefix(2), id: \.self) { mg in

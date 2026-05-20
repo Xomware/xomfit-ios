@@ -10,7 +10,15 @@ struct WorkoutFocusView: View {
     @FocusState private var weightFieldFocused: Bool
     @FocusState private var repsFieldFocused: Bool
     @State private var showExercisePicker = false
-    @State private var isRestTimerMinimized = false
+    @State private var isRestTimerMinimized: Bool = {
+        #if DEBUG
+        // Agent screenshot helper (#402) — start the rest timer minimized so
+        // the inline banner can be captured from a cold launch without a tap.
+        return ProcessInfo.processInfo.environment["XOMFIT_AUTO_MINIMIZE_REST"] == "1"
+        #else
+        return false
+        #endif
+    }()
     @AppStorage("restTimerSound") private var restTimerSound = false
 
     /// Set pill index targeted by a long-press, used to drive the delete
@@ -69,9 +77,9 @@ struct WorkoutFocusView: View {
                 // exerciseNavigation — never the minimized rest banner. The banner
                 // is rendered via `.safeAreaInset(edge: .bottom)` so it reserves its
                 // own real estate and does not steal vertical space from the header.
-                VStack(spacing: Theme.Spacing.lg) {
+                VStack(spacing: Theme.Spacing.md) {
                     // TOP — exercise header + config + set indicator
-                    VStack(spacing: Theme.Spacing.lg) {
+                    VStack(spacing: Theme.Spacing.md) {
                         exerciseHeader(exercise: exercise)
 
                         // Variant config (grip, attachment, position, laterality) + per-session extras
@@ -94,7 +102,7 @@ struct WorkoutFocusView: View {
                     // MIDDLE — weight / reps / done. Absorbs slack so the top
                     // header stays pinned under the Dynamic Island regardless of
                     // whether the minimized rest banner is showing (#344-A).
-                    VStack(spacing: Theme.Spacing.lg) {
+                    VStack(spacing: Theme.Spacing.md) {
                         weightDisplay(currentSet: currentSet)
                         repsDisplay(currentSet: currentSet)
                         // Drop-set capsule sits on its own row directly under
@@ -107,7 +115,17 @@ struct WorkoutFocusView: View {
                     .frame(maxHeight: .infinity)
 
                     // BOTTOM — exercise navigation (prev/next/add + rest config).
-                    exerciseNavigation
+                    // While the rest timer is minimized we show the rest-timer
+                    // banner here INSTEAD of exerciseNavigation (#402). Putting
+                    // it in the bottom slot — rather than as a sibling via
+                    // `.safeAreaInset(.bottom)` — guarantees the middle's DONE
+                    // button never gets compressed off-screen, and the banner
+                    // is always reachable below the weight/reps cards.
+                    if viewModel.isRestTimerActive && isRestTimerMinimized {
+                        minimizedRestTimerBanner
+                    } else {
+                        exerciseNavigation
+                    }
                 }
                 .id(viewModel.focusExerciseIndex)
                 .transition(.push(from: .trailing))
@@ -129,20 +147,13 @@ struct WorkoutFocusView: View {
                 emptyFocusState
             }
         }
-        // Push content below any active Dynamic Island (#289). Bumps content
-        // down deterministically when an island (e.g. music app) is present.
+        // Push content below any active Dynamic Island (#289/#402). Bumps
+        // content down deterministically when an island is present. The
+        // minimized rest banner is rendered inline in the bottom slot of the
+        // main VStack (replacing `exerciseNavigation` while active) so it
+        // never steals vertical real estate from the DONE button.
         .safeAreaInset(edge: .top, spacing: 0) {
             Color.clear.frame(height: Theme.Spacing.sm)
-        }
-        // Reserve a dedicated bottom row for the minimized rest banner so it
-        // never compresses the top header under the Dynamic Island (#344-A).
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            if viewModel.isRestTimerActive && isRestTimerMinimized {
-                minimizedRestTimerBanner
-                    .padding(.horizontal, Theme.Spacing.lg)
-                    .padding(.bottom, Theme.Spacing.sm)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-            }
         }
         .sheet(isPresented: $showExercisePicker) {
             ExercisePickerView { exercise in
@@ -408,7 +419,7 @@ struct WorkoutFocusView: View {
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, Theme.Spacing.md)
+        .padding(.vertical, Theme.Spacing.sm)
         .background(Theme.surface)
         .clipShape(.rect(cornerRadius: Theme.cornerRadius))
     }
@@ -454,7 +465,7 @@ struct WorkoutFocusView: View {
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, Theme.Spacing.md)
+        .padding(.vertical, Theme.Spacing.sm)
         .background(Theme.surface)
         .clipShape(.rect(cornerRadius: Theme.cornerRadius))
     }
@@ -473,7 +484,7 @@ struct WorkoutFocusView: View {
                 .font(.title3.weight(.black))
                 .foregroundStyle(isCompleted ? Theme.textSecondary : .black)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 18)
+                .padding(.vertical, 14)
                 .background(isCompleted ? Theme.surface : Theme.accent)
                 .clipShape(.rect(cornerRadius: Theme.cornerRadius))
         }
@@ -677,30 +688,43 @@ struct WorkoutFocusView: View {
         return String(format: "%d:%02d", total / 60, total % 60)
     }
 
+    /// Fullscreen rest-timer overlay. Layout reimagined in #402: minimize
+    /// chevron pinned to the TOP-LEFT corner; LIFT button pinned to the
+    /// BOTTOM with explicit bottom padding that always clears the home
+    /// indicator. The middle (ring + NEXT UP + +30s) sits inside a
+    /// Spacer-padded VStack so it centers between the two anchored slots.
+    ///
+    /// Uses inline layout (NOT `.safeAreaInset`) because the overlay is
+    /// already a sibling inside the focus view's ZStack — adding additional
+    /// safe-area insets there would push the button below the visible bounds.
     private var fullScreenRestTimer: some View {
         ZStack {
             Color.black.opacity(0.92).ignoresSafeArea()
 
-            VStack(spacing: Theme.Spacing.xl) {
-                // Minimize button
+            VStack(spacing: 0) {
+                // TOP — minimize chevron on the left.
                 HStack {
-                    Spacer()
                     Button {
+                        Haptics.light()
                         withAnimation(.xomChill) { isRestTimerMinimized = true }
                     } label: {
                         Image(systemName: "arrow.down.right.and.arrow.up.left")
-                            .font(Theme.fontBodyEmphasized)
-                            .foregroundStyle(Theme.textSecondary)
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(Theme.textPrimary)
                             .frame(width: 44, height: 44)
-                            .background(Theme.surface.opacity(0.3))
+                            .background(Theme.surface.opacity(0.6))
                             .clipShape(Circle())
+                            .contentShape(Rectangle())
                     }
                     .accessibilityLabel("Minimize rest timer")
+                    .accessibilityHint("Collapses the rest timer to a banner so you can see the next set")
+
+                    Spacer()
                 }
                 .padding(.horizontal, Theme.Spacing.lg)
-                .padding(.top, Theme.Spacing.md)
+                .padding(.top, Theme.Spacing.xs)
 
-                Spacer()
+                Spacer(minLength: Theme.Spacing.md)
 
                 // Large circular ring
                 ZStack {
@@ -723,7 +747,8 @@ struct WorkoutFocusView: View {
                             .foregroundStyle(restIsOvertime ? Theme.destructive : .white)
                     }
                 }
-                .frame(width: 240, height: 240)
+                .frame(width: 200, height: 200)
+                .padding(.vertical, Theme.Spacing.md)
 
                 // Next exercise hint
                 if let nextEx = viewModel.upcomingExercise {
@@ -735,6 +760,7 @@ struct WorkoutFocusView: View {
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(Theme.textPrimary)
                     }
+                    .padding(.bottom, Theme.Spacing.sm)
                 }
 
                 // +30s button
@@ -749,12 +775,18 @@ struct WorkoutFocusView: View {
                         .padding(.vertical, 10)
                         .background(Theme.accent.opacity(0.15))
                         .clipShape(.capsule)
+                        .frame(minHeight: 44)
                 }
                 .accessibilityLabel("Add 30 seconds to rest timer")
 
-                Spacer()
+                Spacer(minLength: Theme.Spacing.sm)
 
-                // LIFT button
+                // LIFT — anchored to the bottom of the VStack with a 100pt
+                // bottom Spacer separating it from the screen edge. The
+                // parent ZStack `.ignoresSafeArea()` lets the black backdrop
+                // run to the screen edges, but the VStack's bottom isn't
+                // automatically pulled up to the safe-area boundary — we have
+                // to do that ourselves (#402).
                 Button {
                     Haptics.success()
                     viewModel.skipRestTimer()
@@ -767,11 +799,19 @@ struct WorkoutFocusView: View {
                         .padding(.vertical, 22)
                         .background(Theme.accent)
                         .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+                        .contentShape(Rectangle())
                 }
                 .padding(.horizontal, Theme.Spacing.lg)
-                .padding(.bottom, Theme.Spacing.xl)
-                .accessibilityLabel("Skip rest timer and return to sets")
+                .accessibilityLabel("Skip rest timer and start the next set")
+                .accessibilityHint("Ends the rest timer immediately and returns to the lift")
+
+                // Hard bottom clearance: home indicator (~34pt) + soundtrack
+                // pill slot reserved by ActiveWorkoutView's bottom safeArea
+                // inset (~50pt when active, ~4pt otherwise) + breathing room.
+                // Sized to clear the largest reasonable bottom inset.
+                Color.clear.frame(height: 80)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
 

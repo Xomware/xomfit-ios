@@ -888,9 +888,22 @@ final class WorkoutLoggerViewModel {
     }
 
     /// Complete the focused set and auto-advance.
+    ///
+    /// `completeSet` may have already redirected focus to a superset sibling
+    /// (the alternate exercise in an A/B group). When that happened we MUST NOT
+    /// also call `focusAdvance()` — that would push the set index forward on
+    /// the sibling, skipping the set the user is supposed to lift next (#402).
     func completeFocusedSet() {
+        let priorEx = focusExerciseIndex
+        let priorSet = focusSetIndex
         completeSet(exerciseIndex: focusExerciseIndex, setIndex: focusSetIndex)
-        focusAdvance()
+
+        // Did the superset auto-advance inside `completeSet` move us elsewhere?
+        let supersetAdvanced =
+            focusExerciseIndex != priorEx || focusSetIndex != priorSet
+        if !supersetAdvanced {
+            focusAdvance()
+        }
     }
 
     /// Watch-triggered "Done Set". Marks the currently focused set complete
@@ -912,8 +925,15 @@ final class WorkoutLoggerViewModel {
         guard ex.sets[focusSetIndex].completedAt == Date.distantPast else { return }
 
         Haptics.success()
+        let priorEx = focusExerciseIndex
+        let priorSet = focusSetIndex
         completeSet(exerciseIndex: focusExerciseIndex, setIndex: focusSetIndex)
-        focusAdvance()
+        // Same superset-aware guard as `completeFocusedSet()` (#402).
+        let supersetAdvanced =
+            focusExerciseIndex != priorEx || focusSetIndex != priorSet
+        if !supersetAdvanced {
+            focusAdvance()
+        }
     }
 
     // MARK: - Exercise Transition Actions
