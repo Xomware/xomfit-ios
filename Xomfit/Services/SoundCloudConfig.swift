@@ -25,9 +25,11 @@ enum SoundCloudConfig {
     /// "Redirect URI" registered on the SoundCloud Developer Dashboard exactly.
     static let redirectURI = "xomfit://soundcloud-callback"
 
-    /// Scope string. `non-expiring` requests a long-lived token so the user doesn't have
-    /// to re-auth between workouts. See https://developers.soundcloud.com/docs/api/explorer
-    static let scopes = "non-expiring"
+    /// SoundCloud rejects `non-expiring` for newly-registered shared apps with
+    /// `403 — "Requesting non-expiring tokens is not allowed. Set scope=''."`
+    /// An empty scope yields a standard expiring access token + refresh token,
+    /// which `SoundCloudAuthService` already knows how to refresh.
+    static let scopes = ""
 
     static let authBaseURL = URL(string: "https://api.soundcloud.com/connect")!
     static let tokenURL = URL(string: "https://api.soundcloud.com/oauth2/token")!
