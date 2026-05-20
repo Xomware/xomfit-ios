@@ -7,6 +7,9 @@ struct ProfileHeaderView: View {
     let initials: String
     /// Public URL of the profile avatar. Nil falls back to initials (#368).
     var avatarURL: String? = nil
+    /// Optional profile anthem (#403). When present, renders an `AnthemRow`
+    /// with a play-the-30s-preview button under the bio.
+    var anthem: ProfileAnthem? = nil
     let isPrivate: Bool
     let isOwnProfile: Bool
     let feedItemCount: Int
@@ -106,6 +109,13 @@ struct ProfileHeaderView: View {
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+
+            // Anthem row (#403) — the user's profile "anthem" with a play
+            // affordance. Renders only when set, so non-anthem profiles look
+            // identical to before.
+            if let anthem {
+                AnthemRow(anthem: anthem, style: .profile)
+            }
 
             // Action button
             actionButton

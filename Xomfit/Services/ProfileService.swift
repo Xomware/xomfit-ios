@@ -11,6 +11,10 @@ struct ProfileRow: Codable {
     var avatarURL: String?
     var isPrivate: Bool
     var trainingGoals: [String]?
+    /// Optional profile anthem (#403). Persisted as JSON on the `profiles.anthem`
+    /// column. Decodes leniently: missing column or null both surface as nil so
+    /// existing rows keep loading until the column migration is applied.
+    var anthem: ProfileAnthem?
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -20,6 +24,7 @@ struct ProfileRow: Codable {
         case avatarURL = "avatar_url"
         case isPrivate = "is_private"
         case trainingGoals = "training_goals"
+        case anthem
     }
 }
 
@@ -32,6 +37,17 @@ final class ProfileService {
     private init() {}
 
     func fetchProfile(userId: String) async throws -> ProfileRow {
+        #if DEBUG
+        // #403 + #353 bypass — return a mocked profile row (incl. anthem) so the
+        // own-profile + pushed-profile views render under `XOMFIT_AUTH_BYPASS=1`
+        // without hitting Supabase. Falls through to the network path for any
+        // user id we don't have a fixture for.
+        if ProcessInfo.processInfo.environment["XOMFIT_AUTH_BYPASS"] == "1",
+           let row = DebugFixtures.profileRow(for: userId) {
+            return row
+        }
+        #endif
+
         let response: ProfileRow = try await supabase
             .from("profiles")
             .select()

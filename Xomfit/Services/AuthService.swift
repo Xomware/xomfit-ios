@@ -301,7 +301,32 @@ extension AppUser {
             favoriteExercise: "Bench Press"
         ),
         isPrivate: false,
-        createdAt: Date(timeIntervalSince1970: 1_700_000_000)
+        createdAt: Date(timeIntervalSince1970: 1_700_000_000),
+        // #403: seed an anthem so the bypass profile header renders the
+        // play-the-preview row and agents can verify the feature end-to-end.
+        anthem: ProfileAnthem(title: "Stronger", artist: "Kanye West")
+    )
+
+    /// A second debug user used to populate the feed in bypass mode with
+    /// posts authored by someone other than the signed-in mock user. Carries
+    /// its own anthem so agents see the row on at least one feed card.
+    static let mockDebugFriend = AppUser(
+        id: "00000000-0000-0000-0000-00000000FA17",
+        username: "lift_buddy",
+        displayName: "Lift Buddy",
+        avatarURL: nil,
+        bio: "Debug bypass friend (#403)",
+        stats: UserStats(
+            totalWorkouts: 51,
+            totalVolume: 312_000,
+            totalPRs: 8,
+            currentStreak: 4,
+            longestStreak: 22,
+            favoriteExercise: "Squat"
+        ),
+        isPrivate: false,
+        createdAt: Date(timeIntervalSince1970: 1_700_000_000),
+        anthem: ProfileAnthem(title: "Power", artist: "Kanye West")
     )
 }
 #endif
