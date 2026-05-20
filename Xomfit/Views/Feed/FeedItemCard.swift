@@ -29,6 +29,14 @@ struct FeedItemCard: View {
         XomCard(variant: .base) {
             VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                 headerRow
+
+                // Anthem row (#403) — surfaces the poster's profile anthem on
+                // each feed card with a play-the-30s-preview affordance. Nil
+                // when the user hasn't picked an anthem.
+                if let anthem = item.user.anthem {
+                    AnthemRow(anthem: anthem, style: .feed)
+                }
+
                 activityContent
 
                 if let caption = item.caption, !caption.isEmpty {

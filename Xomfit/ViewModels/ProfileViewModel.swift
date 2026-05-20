@@ -57,6 +57,9 @@ final class ProfileViewModel {
     var bio: String = ""
     var avatarURL: String? = nil
     var isPrivate: Bool = false
+    /// Profile anthem (#403). Surfaced in the header beneath the bio.
+    /// Nil when the user hasn't picked one.
+    var anthem: ProfileAnthem? = nil
 
     // MARK: - Edit buffer (populated when the edit sheet opens)
     var editUsername: String = ""
@@ -229,6 +232,7 @@ final class ProfileViewModel {
             bio = profile.bio
             avatarURL = profile.avatarURL
             isPrivate = profile.isPrivate
+            anthem = profile.anthem
         } catch {
             // Profile row may not exist on first login
         }
@@ -280,6 +284,7 @@ final class ProfileViewModel {
             bio = profile.bio
             avatarURL = profile.avatarURL
             isPrivate = profile.isPrivate
+            anthem = profile.anthem
         } catch {
             // Profile row may not exist on first login
         }

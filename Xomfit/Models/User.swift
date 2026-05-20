@@ -17,6 +17,11 @@ struct AppUser: Codable, Identifiable, Hashable {
     var stats: UserStats
     var isPrivate: Bool
     var createdAt: Date
+    /// Profile "anthem" — short audio teaser surfaced on feed cards + profile
+    /// header (#403). Nil when the user hasn't picked one. Persisted on the
+    /// `profiles.anthem` JSON column server-side; populated on `AppUser` via
+    /// the same fetch that builds the profile row.
+    var anthem: ProfileAnthem? = nil
     
     struct UserStats: Codable {
         var totalWorkouts: Int

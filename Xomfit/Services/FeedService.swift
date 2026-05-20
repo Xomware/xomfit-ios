@@ -107,6 +107,18 @@ final class FeedService {
     // MARK: - Fetch Feed
 
     func fetchFeed(userId: String, limit: Int = 20, offset: Int = 0) async throws -> [SocialFeedItem] {
+        #if DEBUG
+        // #403 + #353 bypass — return seeded feed items so agents can verify
+        // the per-card anthem row + playback from a cold launch with no real
+        // backend. Honors limit/offset so pagination behaves sanely.
+        if ProcessInfo.processInfo.environment["XOMFIT_AUTH_BYPASS"] == "1" {
+            let all = DebugFixtures.bypassFeed()
+            let start = min(offset, all.count)
+            let end = min(start + limit, all.count)
+            return Array(all[start..<end])
+        }
+        #endif
+
         print("[FeedService] fetchFeed — userId=\(userId) limit=\(limit) offset=\(offset)")
         let rows: [FeedItemRow] = try await supabase
             .from("feed_items")
@@ -132,6 +144,17 @@ final class FeedService {
     // MARK: - Fetch User Feed
 
     func fetchUserFeed(userId: String, limit: Int = 20, offset: Int = 0) async throws -> [SocialFeedItem] {
+        #if DEBUG
+        // #403 + #353 bypass — same as `fetchFeed` but filtered to a single
+        // user so the ProfileView feed tab populates from the bypass fixtures.
+        if ProcessInfo.processInfo.environment["XOMFIT_AUTH_BYPASS"] == "1" {
+            let all = DebugFixtures.bypassFeed().filter { $0.userId == userId }
+            let start = min(offset, all.count)
+            let end = min(start + limit, all.count)
+            return Array(all[start..<end])
+        }
+        #endif
+
         let rows: [FeedItemRow] = try await supabase
             .from("feed_items")
             .select()
@@ -496,6 +519,9 @@ final class FeedService {
 
     /// Builds an `AppUser` from a `ProfileRow`. Stats are zeroed because the
     /// feed/comments don't fetch aggregate stats per-user.
+    ///
+    /// `anthem` is copied through so feed cards can render the per-user anthem
+    /// row + play button (#403) without an extra fetch.
     private func buildAppUser(from profile: ProfileRow) -> AppUser {
         AppUser(
             id: profile.id,
@@ -512,7 +538,8 @@ final class FeedService {
                 favoriteExercise: nil
             ),
             isPrivate: profile.isPrivate,
-            createdAt: Date()
+            createdAt: Date(),
+            anthem: profile.anthem
         )
     }
 
