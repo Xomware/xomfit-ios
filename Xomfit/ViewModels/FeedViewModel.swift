@@ -77,6 +77,15 @@ final class FeedViewModel {
             feedItems = items
             offset = items.count
             hasMore = items.count == pageSize
+        } catch is CancellationError {
+            // A newer pull-to-refresh / view re-render replaced this task — leave
+            // the existing feed in place rather than blowing it away with a
+            // "cancelled" toast.
+            isLoading = false
+            return
+        } catch let urlError as URLError where urlError.code == .cancelled {
+            isLoading = false
+            return
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -111,6 +120,10 @@ final class FeedViewModel {
             feedItems.append(contentsOf: items)
             offset += items.count
             hasMore = items.count == pageSize
+        } catch is CancellationError {
+            return
+        } catch let urlError as URLError where urlError.code == .cancelled {
+            return
         } catch {
             // #311: keep `hasMore` true so the user can retry, and surface
             // a retry banner at the bottom of the feed instead of silently
