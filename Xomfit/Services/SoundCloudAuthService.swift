@@ -191,24 +191,28 @@ final class SoundCloudAuthService: NSObject {
     // MARK: - Token exchange
 
     private func exchangeCodeForToken(code: String, verifier: String) async throws {
-        var request = URLRequest(url: SoundCloudConfig.tokenURL)
+        // SoundCloud's `/oauth2/token` now demands `client_secret`, which we refuse to bake
+        // into the IPA. We POST to xomcloud-backend's auth proxy instead — it reads the
+        // secret from SSM and forwards to SoundCloud, returning the same JSON shape.
+        SoundCloudConfig.warnIfAuthProxyIsPlaceholder()
+
+        var request = URLRequest(url: SoundCloudConfig.authProxyTokenURL)
         request.httpMethod = "POST"
-        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
-        let body = formEncoded([
-            "client_id": SoundCloudConfig.sharedClientId,
-            "grant_type": "authorization_code",
-            "code": code,
-            "redirect_uri": SoundCloudConfig.redirectURI,
-            "code_verifier": verifier
-        ])
-        request.httpBody = body.data(using: .utf8)
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        let body = TokenExchangeRequest(
+            code: code,
+            code_verifier: verifier,
+            redirect_uri: SoundCloudConfig.redirectURI
+        )
+        request.httpBody = try JSONEncoder().encode(body)
 
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
             print("[SoundCloudAuth] token exchange non-2xx — \(String(data: data, encoding: .utf8) ?? "")")
-            // SoundCloud returns 401/403 with `invalid_client` when our shared id is not
-            // accepted — funnel that into the more useful `.apiClosed` so the UI can tell
-            // the user it's not their fault.
+            // 401/403 from the proxy almost always means SoundCloud rejected the upstream
+            // (either the shared client id or a quota issue) — funnel that into
+            // `.apiClosed` so the UI can tell the user it's not their fault.
             if let http = response as? HTTPURLResponse, http.statusCode == 401 || http.statusCode == 403 {
                 throw SoundCloudAuthError.apiClosed
             }
@@ -220,15 +224,16 @@ final class SoundCloudAuthService: NSObject {
 
     private func refreshAccessToken() async throws {
         guard !refreshToken.isEmpty else { throw SoundCloudAuthError.tokenExchangeFailed }
-        var request = URLRequest(url: SoundCloudConfig.tokenURL)
+        // See `exchangeCodeForToken` — refresh goes through the same xomcloud-backend
+        // proxy (`/auth/refresh`) so the client_secret never leaves the server.
+        SoundCloudConfig.warnIfAuthProxyIsPlaceholder()
+
+        var request = URLRequest(url: SoundCloudConfig.authProxyRefreshURL)
         request.httpMethod = "POST"
-        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
-        let body = formEncoded([
-            "client_id": SoundCloudConfig.sharedClientId,
-            "grant_type": "refresh_token",
-            "refresh_token": refreshToken
-        ])
-        request.httpBody = body.data(using: .utf8)
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        let body = RefreshRequest(refresh_token: refreshToken)
+        request.httpBody = try JSONEncoder().encode(body)
 
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
@@ -295,16 +300,6 @@ final class SoundCloudAuthService: NSObject {
         _ = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
         return Data(bytes).base64URLEncodedString()
     }
-
-    private func formEncoded(_ params: [String: String]) -> String {
-        params
-            .map { key, value in
-                let escapedKey = key.addingPercentEncoding(withAllowedCharacters: .urlQueryParamSoundCloudAllowed) ?? key
-                let escapedValue = value.addingPercentEncoding(withAllowedCharacters: .urlQueryParamSoundCloudAllowed) ?? value
-                return "\(escapedKey)=\(escapedValue)"
-            }
-            .joined(separator: "&")
-    }
 }
 
 // MARK: - Presentation context
@@ -355,6 +350,21 @@ private struct TokenResponse: Decodable {
     let scope: String?
 }
 
+/// Request body for `POST <authProxyBaseURL>/token`. The backend forwards `code`,
+/// `code_verifier`, and `redirect_uri` to SoundCloud's `/oauth2/token` after attaching
+/// `client_id` and `client_secret` from SSM.
+private struct TokenExchangeRequest: Encodable {
+    let code: String
+    let code_verifier: String
+    let redirect_uri: String
+}
+
+/// Request body for `POST <authProxyBaseURL>/refresh`. The backend forwards
+/// `refresh_token` to SoundCloud after attaching `client_id` + `client_secret`.
+private struct RefreshRequest: Encodable {
+    let refresh_token: String
+}
+
 private struct SoundCloudMeResponse: Decodable {
     let username: String?
     let permalink: String?
@@ -370,16 +380,4 @@ private extension Data {
             .replacingOccurrences(of: "/", with: "_")
             .replacingOccurrences(of: "=", with: "")
     }
-}
-
-private extension CharacterSet {
-    /// Strict `application/x-www-form-urlencoded` allowed set, scoped to SoundCloud's token
-    /// endpoint. Named distinctly from Spotify's equivalent to avoid stepping on it at the
-    /// file-private extension level (the global `.urlQueryParamAllowed` in
-    /// `SpotifyAuthService.swift` is file-private, but keeping a separate name is clearer).
-    static let urlQueryParamSoundCloudAllowed: CharacterSet = {
-        var allowed = CharacterSet.alphanumerics
-        allowed.insert(charactersIn: "-._~")
-        return allowed
-    }()
 }

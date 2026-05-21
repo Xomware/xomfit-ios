@@ -42,4 +42,50 @@ enum SoundCloudConfig {
 
     /// URL scheme component of `redirectURI` — what ASWebAuthenticationSession needs separately.
     static let callbackURLScheme = "xomfit"
+
+    // MARK: - xomcloud-backend Auth Proxy
+    //
+    // SoundCloud's token endpoint now requires `client_secret`, which we refuse to ship in
+    // the IPA. Instead, we POST to a tiny proxy on xomcloud-backend (`/auth/token` and
+    // `/auth/refresh`) that reads the secret out of SSM and forwards to SoundCloud. The
+    // proxy returns SoundCloud's JSON response unchanged.
+
+    /// Base URL of the xomcloud-backend SoundCloud auth proxy.
+    ///
+    /// Resolves to `https://api.xomcloud.xomware.com/auth` — the API Gateway custom domain
+    /// configured in `xomcloud-infrastructure/terraform/locals.tf` (`api_domain_name =
+    /// "api.${app_name}${domain_suffix}"` = `api.xomcloud.xomware.com`). The `/auth` prefix
+    /// matches the API Gateway resource path the backend agent is wiring up.
+    ///
+    /// TODO: if the backend's path prefix lands as something other than `/auth` (e.g.
+    /// `/soundcloud/auth`), update this constant before merging the corresponding backend PR.
+    static let authProxyBaseURL = URL(string: "https://api.xomcloud.xomware.com/auth")!
+
+    /// `true` while `authProxyBaseURL` still points at the placeholder host. Mirrors the
+    /// resolver pattern in `SpotifyConfig.resolvedClientId()` so failed proxy calls log a
+    /// clearly-labeled warning instead of failing silently.
+    static var authProxyIsPlaceholder: Bool {
+        // The URL is hard-coded above. As soon as someone replaces the host with the
+        // real custom-domain or `<apiId>.execute-api.us-east-1.amazonaws.com/dev` URL,
+        // this returns false. The check is intentionally string-based so we don't need
+        // to plumb a separate "isPlaceholder" flag through Config.swift.
+        let host = authProxyBaseURL.host ?? ""
+        return host.contains("PLACEHOLDER") || host.isEmpty
+    }
+
+    /// Token-exchange endpoint on the xomcloud-backend proxy (`POST /auth/token`).
+    static var authProxyTokenURL: URL { authProxyBaseURL.appendingPathComponent("token") }
+
+    /// Refresh endpoint on the xomcloud-backend proxy (`POST /auth/refresh`).
+    static var authProxyRefreshURL: URL { authProxyBaseURL.appendingPathComponent("refresh") }
+
+    /// Logs a one-shot console warning when the proxy base URL is still the placeholder.
+    /// Call sites: `exchangeCodeForToken` and `refreshAccessToken` — mirror the
+    /// `SpotifyConfig.resolvedClientId()` pattern.
+    static func warnIfAuthProxyIsPlaceholder() {
+        guard authProxyIsPlaceholder else { return }
+        print("[SoundCloudConfig] WARNING: SoundCloud auth proxy base URL is still a " +
+              "placeholder — token exchange will fail until SoundCloudConfig.authProxyBaseURL " +
+              "is replaced with the real xomcloud-backend custom domain.")
+    }
 }
