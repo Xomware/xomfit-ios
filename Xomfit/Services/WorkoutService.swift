@@ -263,6 +263,16 @@ final class WorkoutService {
     // MARK: - Fetch
 
     func fetchWorkout(id: String) async -> Workout? {
+        #if DEBUG
+        // #410 + #353 bypass — surface a mock workout with tracks + featured
+        // pick so FeedDetailView's expanded soundtrack list + deep-link buttons
+        // can be screenshot-verified from a cold launch.
+        if ProcessInfo.processInfo.environment["XOMFIT_AUTH_BYPASS"] == "1",
+           let mock = DebugFixtures.bypassWorkout(id: id) {
+            return mock
+        }
+        #endif
+
         do {
             let rows: [WorkoutWithRelations] = try await supabase
                 .from("workouts")

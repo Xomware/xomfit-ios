@@ -33,6 +33,26 @@ final class WorkoutLoggerViewModel {
     /// the merged snapshot of (Apple Music + Spotify + manual).
     var removedTrackIDs: Set<UUID> = []
 
+    /// Featured track id (the soundtrack pick surfaced on the feed card). Set
+    /// by tapping the star icon on a soundtrack row in the finish sheet (#410).
+    /// At most one track is featured at a time; tapping the same row clears it.
+    var featuredTrackId: UUID? = nil
+
+    /// When `false` only the featured track is shared on the feed; the rest of
+    /// the captured soundtrack stays private (#410). Default ON to preserve
+    /// existing behavior for users who don't touch the toggle.
+    var shareFullSoundtrack: Bool = true
+
+    /// Toggle the featured track id. Tapping the same row clears the pick so
+    /// the user can fully unstick a featured choice without leaving the sheet.
+    func toggleFeaturedTrack(_ id: UUID) {
+        if featuredTrackId == id {
+            featuredTrackId = nil
+        } else {
+            featuredTrackId = id
+        }
+    }
+
     // Rest timer
     var restTimeRemaining: Double = 0
     var restDuration: Double = 0
@@ -1551,6 +1571,15 @@ final class WorkoutLoggerViewModel {
             .filter { !removedTrackIDs.contains($0.id) }
             .sorted { $0.capturedAt < $1.capturedAt }
 
+        // Featured soundtrack pick (#410). Only carry through when the chosen
+        // track survived the curated soundtrack (i.e. wasn't removed before
+        // finish), otherwise drop it so we don't ship a dangling id.
+        let validFeaturedId: String? = {
+            guard let picked = featuredTrackId,
+                  capturedTracks.contains(where: { $0.id == picked }) else { return nil }
+            return picked.uuidString
+        }()
+
         let workout = Workout(
             id: UUID().uuidString,
             userId: userId,
@@ -1564,7 +1593,9 @@ final class WorkoutLoggerViewModel {
             tracks: capturedTracks,
             kind: kind,
             durationGoalMinutes: durationGoalMinutes,
-            roundsGoal: roundsGoal
+            roundsGoal: roundsGoal,
+            featuredTrackId: validFeaturedId,
+            shareFullSoundtrack: shareFullSoundtrack
         )
 
         do {

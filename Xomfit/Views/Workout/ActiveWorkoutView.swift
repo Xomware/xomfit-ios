@@ -1872,11 +1872,20 @@ private struct FinishWorkoutSheet: View {
             } else {
                 VStack(spacing: 0) {
                     ForEach(tracks) { track in
-                        SoundtrackRow(track: track) {
-                            withAnimation(.xomChill) {
-                                viewModel.removeCapturedTrack(id: track.id)
+                        SoundtrackRow(
+                            track: track,
+                            isFeatured: viewModel.featuredTrackId == track.id,
+                            onToggleFeatured: {
+                                withAnimation(.xomChill) {
+                                    viewModel.toggleFeaturedTrack(track.id)
+                                }
+                            },
+                            onRemove: {
+                                withAnimation(.xomChill) {
+                                    viewModel.removeCapturedTrack(id: track.id)
+                                }
                             }
-                        }
+                        )
                         if track.id != tracks.last?.id {
                             Divider()
                                 .background(Theme.textSecondary.opacity(0.15))
@@ -1890,6 +1899,25 @@ private struct FinishWorkoutSheet: View {
                     RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall)
                         .stroke(Theme.textSecondary.opacity(0.2), lineWidth: 1)
                 )
+
+                // Share-full-soundtrack toggle (#410). When OFF, only the
+                // featured track shows on the feed. Lives in the captured
+                // branch because there's nothing to share when no tracks
+                // exist.
+                Toggle(isOn: Bindable(viewModel).shareFullSoundtrack) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Share full soundtrack")
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(Theme.textPrimary)
+                        Text(viewModel.shareFullSoundtrack
+                             ? "Friends will see every track on this workout."
+                             : "Only the featured track will show on your feed.")
+                            .font(Theme.fontCaption)
+                            .foregroundStyle(Theme.textSecondary)
+                    }
+                }
+                .tint(Theme.accent)
+                .accessibilityHint("Toggle whether the full soundtrack is shared with friends or only the featured track.")
             }
 
             Button {
@@ -1918,10 +1946,12 @@ private struct FinishWorkoutSheet: View {
 // MARK: - Soundtrack Row (#387.2)
 
 /// Single captured-track row used by the finish sheet. Renders an icon + title
-/// + artist + source pill with a trailing trash button. Hit target on the trash
-/// is sized to 44pt per HIG.
+/// + artist + source pill with a leading featured-star button and a trailing
+/// trash button. Hit target on each button is sized to 44pt per HIG.
 private struct SoundtrackRow: View {
     let track: WorkoutTrack
+    let isFeatured: Bool
+    let onToggleFeatured: () -> Void
     let onRemove: () -> Void
 
     var body: some View {
@@ -1958,6 +1988,25 @@ private struct SoundtrackRow: View {
             }
             Spacer()
 
+            // Featured-star toggle (#410). Filled star = picked as featured;
+            // tapping again clears the pick. Color shifts to accent when on so
+            // the highlight reads at a glance.
+            Button {
+                Haptics.selection()
+                onToggleFeatured()
+            } label: {
+                Image(systemName: isFeatured ? "star.fill" : "star")
+                    .font(Theme.fontSubheadline.weight(.semibold))
+                    .foregroundStyle(isFeatured ? Theme.accent : Theme.textSecondary)
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(isFeatured
+                ? "Unset \(track.title) as featured track"
+                : "Set \(track.title) as featured track")
+            .accessibilityHint("Featured tracks show prominently on your feed card.")
+
             Button {
                 Haptics.light()
                 onRemove()
@@ -1974,8 +2023,7 @@ private struct SoundtrackRow: View {
         .padding(.horizontal, Theme.Spacing.md)
         .padding(.vertical, 8)
         .contentShape(Rectangle())
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(track.title)\(track.artist.map { ", \($0)" } ?? "") from \(track.sourceApp)")
+        .accessibilityElement(children: .contain)
     }
 
     private var sourceIcon: String {

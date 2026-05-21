@@ -311,6 +311,16 @@ final class FeedService {
         let trackCount: Int? = workout.tracks.isEmpty ? nil : workout.tracks.count
         let firstTrackTitle: String? = workout.tracks.first?.title
 
+        // Featured track payload (#410). When the poster picked a featured
+        // track we surface its title/artist/source/url so feed cards render
+        // the prominent anthem-style row without needing to fetch the full
+        // workout. Falls back to nil when no featured pick was made.
+        let featured = workout.featuredTrack
+        let featuredTrackTitle = featured?.title
+        let featuredTrackArtist = featured?.artist
+        let featuredTrackSource = featured?.sourceApp
+        let featuredTrackURL = featured?.url
+
         return WorkoutActivity(
             workoutId: workout.id,
             workoutName: workout.name,
@@ -324,7 +334,11 @@ final class FeedService {
             rating: workout.rating,
             photoURLs: photoURLs,
             trackCount: trackCount,
-            firstTrackTitle: firstTrackTitle
+            firstTrackTitle: firstTrackTitle,
+            featuredTrackTitle: featuredTrackTitle,
+            featuredTrackArtist: featuredTrackArtist,
+            featuredTrackSource: featuredTrackSource,
+            featuredTrackURL: featuredTrackURL
         )
     }
 

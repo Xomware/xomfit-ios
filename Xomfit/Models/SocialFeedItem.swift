@@ -64,6 +64,14 @@ struct WorkoutActivity: Codable {
     /// `trackCount` is 0 and `firstTrackTitle` is nil when the workout had no captured tracks.
     var trackCount: Int?
     var firstTrackTitle: String?
+    /// Featured track surfaced prominently on the feed card (#410). Filled in
+    /// by `FeedService.buildWorkoutActivity` when the workout has a
+    /// `featuredTrackId` — otherwise nil so the card falls back to the
+    /// `firstTrackTitle` teaser or no soundtrack chrome at all.
+    var featuredTrackTitle: String?
+    var featuredTrackArtist: String?
+    var featuredTrackSource: String?
+    var featuredTrackURL: String?
 
     struct ExerciseSummary: Codable, Identifiable {
         let id: String

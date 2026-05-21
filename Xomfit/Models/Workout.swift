@@ -38,6 +38,14 @@ struct Workout: Codable, Identifiable {
     /// Target round count. Used by `.amrap` (best-effort cap) and `.emom`
     /// (work intervals). Nil for `.setsReps` and `.timedCircuit`.
     var roundsGoal: Int? = nil
+    /// Featured soundtrack id — references one of `tracks` to display
+    /// prominently on the feed card. `nil` when the user didn't pick one (#410).
+    /// Stored as `String?` to match the `WorkoutTrack.id` UUID's `uuidString`.
+    var featuredTrackId: String? = nil
+    /// When `false` only the featured track is shown to other users in the feed
+    /// expanded view; the rest stay private. Defaults to `true` (share all) so
+    /// existing posts keep their behavior. (#410)
+    var shareFullSoundtrack: Bool = true
 
     var startDate: Date { startTime }
 
@@ -48,6 +56,7 @@ struct Workout: Codable, Identifiable {
     enum CodingKeys: String, CodingKey {
         case id, userId, name, exercises, startTime, endTime, notes, location, rating, tracks
         case kind, durationGoalMinutes, roundsGoal
+        case featuredTrackId, shareFullSoundtrack
     }
 
     init(
@@ -63,7 +72,9 @@ struct Workout: Codable, Identifiable {
         tracks: [WorkoutTrack] = [],
         kind: WorkoutKind = .setsReps,
         durationGoalMinutes: Int? = nil,
-        roundsGoal: Int? = nil
+        roundsGoal: Int? = nil,
+        featuredTrackId: String? = nil,
+        shareFullSoundtrack: Bool = true
     ) {
         self.id = id
         self.userId = userId
@@ -78,6 +89,8 @@ struct Workout: Codable, Identifiable {
         self.kind = kind
         self.durationGoalMinutes = durationGoalMinutes
         self.roundsGoal = roundsGoal
+        self.featuredTrackId = featuredTrackId
+        self.shareFullSoundtrack = shareFullSoundtrack
     }
 
     init(from decoder: Decoder) throws {
@@ -95,6 +108,15 @@ struct Workout: Codable, Identifiable {
         kind = try container.decodeIfPresent(WorkoutKind.self, forKey: .kind) ?? .setsReps
         durationGoalMinutes = try container.decodeIfPresent(Int.self, forKey: .durationGoalMinutes)
         roundsGoal = try container.decodeIfPresent(Int.self, forKey: .roundsGoal)
+        featuredTrackId = try container.decodeIfPresent(String.self, forKey: .featuredTrackId)
+        shareFullSoundtrack = try container.decodeIfPresent(Bool.self, forKey: .shareFullSoundtrack) ?? true
+    }
+
+    /// Convenience lookup for the featured `WorkoutTrack`. Returns `nil` if no
+    /// featured id is set or the id no longer points to a captured track.
+    var featuredTrack: WorkoutTrack? {
+        guard let featuredTrackId else { return nil }
+        return tracks.first { $0.id.uuidString == featuredTrackId }
     }
 
     var duration: TimeInterval {
