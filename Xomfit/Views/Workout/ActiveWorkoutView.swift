@@ -383,18 +383,27 @@ struct ActiveWorkoutView: View {
     /// can't trust `safeAreaPadding` or the system inset to push content past
     /// the Dynamic Island. Instead we read the active window's top safe-area
     /// inset directly via UIKit and apply it as explicit padding (#402).
+    ///
+    /// List mode keeps the headerBar anchored tight to the Dynamic Island
+    /// (#409) — the previous +28pt breathing room only made sense in focus
+    /// mode where the rest of the screen has plenty of negative space. In
+    /// list mode the toolbar was floating ~halfway down the screen on
+    /// iPhone 17 Pro TestFlight 2.1.0, so list mode now uses a minimal
+    /// 4pt buffer below the inset. Focus mode keeps the wider buffer.
     private var headerBar: some View {
-        VStack(spacing: Theme.Spacing.xs) {
+        let topClearance: CGFloat = max(Self.topSafeAreaInset, 62)
+        let extraBuffer: CGFloat = viewModel.focusMode ? 28 : Theme.Spacing.xs
+        return VStack(spacing: Theme.Spacing.xs) {
             headerTopRow
             headerSecondRow
         }
         .padding(.horizontal, Theme.Spacing.md)
-        // Clear the Dynamic Island. iPhone 17 Pro reports a 62pt top safe-area
-        // inset but `.toolbar(.hidden)` on iOS 26 NavigationStack swallows it
-        // when SwiftUI lays out the cover — so we use the larger of the
-        // UIKit-reported inset (with a 62pt floor) plus an extra 28pt of
-        // breathing room. End result on iPhone 17 Pro: ~90pt top padding.
-        .padding(.top, max(Self.topSafeAreaInset, 62) + 28)
+        // iPhone 17 Pro reports a 62pt top safe-area inset but
+        // `.toolbar(.hidden)` on iOS 26 NavigationStack swallows it when
+        // SwiftUI lays out the cover — so we use the larger of the
+        // UIKit-reported inset (with a 62pt floor) plus a mode-dependent
+        // breathing buffer. List mode: ~66pt total. Focus mode: ~90pt total.
+        .padding(.top, topClearance + extraBuffer)
         .padding(.bottom, Theme.Spacing.sm)
         .frame(maxWidth: .infinity)
         .background(Theme.surface.ignoresSafeArea(edges: .top))
@@ -520,24 +529,7 @@ struct ActiveWorkoutView: View {
                     .foregroundStyle(Theme.accent)
 
                     if viewModel.isRestTimerActive {
-                        let isOvertime = viewModel.restTimeRemaining <= 0
-                        HStack(spacing: 3) {
-                            Image(systemName: "timer")
-                                .font(Theme.fontCaption2)
-                            Text(headerRestString)
-                                .font(Theme.fontNumberMedium)
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.7)
-                                .fixedSize(horizontal: true, vertical: false)
-                        }
-                        .foregroundStyle(isOvertime ? Theme.destructive : Theme.textPrimary)
-                        .padding(.horizontal, 7)
-                        .padding(.vertical, Theme.Spacing.tighter)
-                        .background(
-                            Capsule()
-                                .fill((isOvertime ? Theme.destructive : Theme.accent).opacity(0.15))
-                        )
-                        .transition(.scale.combined(with: .opacity))
+                        restTimerChip
                     }
                 }
 
@@ -704,6 +696,76 @@ struct ActiveWorkoutView: View {
         let secs = total % 60
         let prefix = remaining < 0 ? "-" : ""
         return prefix + String(format: "%d:%02d", mins, secs)
+    }
+
+    /// Header rest-timer chip. Two rendering modes (#409):
+    ///
+    /// - Informational (default): plain capsule, no hit target. Used in list
+    ///   mode and in focus mode while the fullscreen overlay is up.
+    /// - Tappable: solid accent capsule with a chevron-up affordance + 44pt
+    ///   hit target. Only renders when focus mode + the rest overlay is
+    ///   minimized — tap re-expands the fullscreen overlay.
+    @ViewBuilder
+    private var restTimerChip: some View {
+        let isOvertime = viewModel.restTimeRemaining <= 0
+        let canExpand = viewModel.focusMode && viewModel.isRestTimerMinimized
+
+        if canExpand {
+            Button {
+                Haptics.light()
+                withAnimation(.xomChill) {
+                    viewModel.isRestTimerMinimized = false
+                }
+            } label: {
+                HStack(spacing: 3) {
+                    Image(systemName: "timer")
+                        .font(Theme.fontCaption2)
+                    Text(headerRestString)
+                        .font(Theme.fontNumberMedium)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                        .fixedSize(horizontal: true, vertical: false)
+                    Image(systemName: "chevron.up")
+                        .font(.caption2.weight(.bold))
+                }
+                // Black text on the accent / destructive capsule so the
+                // affordance reads as a primary CTA — matches the Finish pill
+                // styling.
+                .foregroundStyle(Theme.background)
+                .padding(.horizontal, 9)
+                .padding(.vertical, 4)
+                .frame(minHeight: 28)
+                .background(
+                    Capsule()
+                        .fill(isOvertime ? Theme.destructive : Theme.accent)
+                )
+                .contentShape(Capsule())
+            }
+            .buttonStyle(.plain)
+            .frame(minHeight: 44)
+            .transition(.scale.combined(with: .opacity))
+            .accessibilityLabel("Expand rest timer")
+            .accessibilityHint("Shows the full-screen countdown")
+        } else {
+            HStack(spacing: 3) {
+                Image(systemName: "timer")
+                    .font(Theme.fontCaption2)
+                Text(headerRestString)
+                    .font(Theme.fontNumberMedium)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .fixedSize(horizontal: true, vertical: false)
+            }
+            .foregroundStyle(isOvertime ? Theme.destructive : Theme.textPrimary)
+            .padding(.horizontal, 7)
+            .padding(.vertical, Theme.Spacing.tighter)
+            .background(
+                Capsule()
+                    .fill((isOvertime ? Theme.destructive : Theme.accent).opacity(0.15))
+            )
+            .transition(.scale.combined(with: .opacity))
+            .accessibilityLabel("Rest timer \(headerRestString) remaining")
+        }
     }
 
     // MARK: - Rest Timer Config
