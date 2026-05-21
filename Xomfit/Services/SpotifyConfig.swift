@@ -26,7 +26,7 @@ enum SpotifyConfig {
     /// from the Xomware Spotify Developer Dashboard before shipping. The matching Developer App
     /// must have `xomfit://spotify-callback` registered under "Redirect URIs" or sign-in will
     /// fail with `INVALID_CLIENT: Invalid redirect URI`.
-    static let sharedClientId: String = "PLACEHOLDER_SHARED_SPOTIFY_CLIENT_ID"
+    static let sharedClientId: String = "1c79964c237042fe88b87da133a231fc"
 
     /// `@AppStorage` key the legacy per-user override is persisted under. Kept as a named
     /// constant so the View, the AuthService, and the static resolver can't drift apart.
