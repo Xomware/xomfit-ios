@@ -61,8 +61,18 @@ final class FeedViewModel {
 
     // MARK: - Load Feed
 
+    /// Initial fetch (or full reload on error retry). Shows the full skeleton
+    /// while the network is in flight by flipping `isLoading`. Replaces the
+    /// existing feed wholesale on success. Use `refreshFeed` for pull-to-refresh
+    /// — that variant keeps the prior items visible so the system spinner
+    /// owns the loading affordance.
     func loadFeed(userId: String) async {
-        isLoading = true
+        // Only flip the loading skeleton when the feed is empty. Re-entering
+        // this function after a prior successful load (e.g. tab switch) keeps
+        // the existing rows on-screen while we refetch in the background so
+        // the user never sees a flash of the skeleton (#410).
+        let showSkeleton = feedItems.isEmpty
+        if showSkeleton { isLoading = true }
         errorMessage = nil
         loadMoreError = nil
         offset = 0
@@ -93,10 +103,38 @@ final class FeedViewModel {
         isLoading = false
     }
 
+    /// Pull-to-refresh entry point. Re-fetches the first page without touching
+    /// `isLoading` so the existing list stays mounted and the system pull
+    /// spinner owns the loading UI. The await chain runs all the way through
+    /// the network call so SwiftUI's `.refreshable` correctly dismisses its
+    /// spinner only after the new data is applied. (#410)
     func refreshFeed(userId: String) async {
+        // Don't trip `isLoading` — that swaps the list for the skeleton and
+        // races with the system pull-to-refresh spinner.
         isRefreshing = true
-        await loadFeed(userId: userId)
-        isRefreshing = false
+        defer { isRefreshing = false }
+
+        loadMoreError = nil
+
+        do {
+            let items = try await FeedService.shared.fetchFeed(
+                userId: userId,
+                limit: pageSize,
+                offset: 0
+            )
+            feedItems = items
+            offset = items.count
+            hasMore = items.count == pageSize
+            errorMessage = nil
+        } catch is CancellationError {
+            // A subsequent refresh replaced this one — leave the existing
+            // list intact.
+            return
+        } catch let urlError as URLError where urlError.code == .cancelled {
+            return
+        } catch {
+            errorMessage = error.localizedDescription
+        }
     }
 
     /// #311: re-applies the current filters without re-fetching, but flips

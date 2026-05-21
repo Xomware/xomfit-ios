@@ -148,12 +148,16 @@ final class SoundCloudNowPlayingService {
         // SoundCloud puts the uploader's display name on `user.username` — closest analogue
         // to a primary artist. Real "artist" metadata is rarely populated on SC uploads.
         let artist = latest.track?.user?.username
+        // Carry the permalink so the feed expanded view can deep-link straight
+        // back into SoundCloud (#410). Nil-safe fallback handled by the
+        // deep-link resolver — empty permalink degrades to a SoundCloud search.
         let track = WorkoutTrack(
             title: title,
             artist: (artist?.isEmpty == false) ? artist : nil,
             album: nil,
             capturedAt: Date(),
-            sourceApp: "SoundCloud"
+            sourceApp: "SoundCloud",
+            url: latest.track?.permalink_url
         )
         captured.append(track)
         lastCapturedTrack = track

@@ -56,8 +56,15 @@ enum DebugFixtures {
                     location: "Home Gym",
                     rating: 4,
                     photoURLs: nil,
-                    trackCount: nil,
-                    firstTrackTitle: nil
+                    trackCount: 3,
+                    firstTrackTitle: "Power",
+                    // #410 — seed a featured track + URL so the feed card +
+                    // expanded detail render the anthem-style row and the
+                    // deep-link buttons under bypass.
+                    featuredTrackTitle: "Power",
+                    featuredTrackArtist: "Kanye West",
+                    featuredTrackSource: "Spotify",
+                    featuredTrackURL: "https://open.spotify.com/track/2gZUPNdnz5Y45eiGxpHGSc"
                 ),
                 caption: "Felt strong on bench today.",
                 visibility: .friends
@@ -99,6 +106,72 @@ enum DebugFixtures {
                 visibility: .friends
             )
         ]
+    }
+
+    /// Mock workout used by `WorkoutService.fetchWorkout` under bypass (#410).
+    /// Includes a captured soundtrack with one featured track + per-track URLs
+    /// so the expanded feed view can render deep-link buttons end-to-end.
+    static func bypassWorkout(id: String) -> Workout? {
+        guard id == "bypass-w-1" else { return nil }
+        let now = Date()
+        let track1ID = UUID()
+        let track2ID = UUID()
+        let track3ID = UUID()
+        let tracks: [WorkoutTrack] = [
+            WorkoutTrack(
+                id: track1ID,
+                title: "Power",
+                artist: "Kanye West",
+                album: "My Beautiful Dark Twisted Fantasy",
+                capturedAt: now.addingTimeInterval(-3300),
+                sourceApp: "Spotify",
+                url: "https://open.spotify.com/track/2gZUPNdnz5Y45eiGxpHGSc"
+            ),
+            WorkoutTrack(
+                id: track2ID,
+                title: "Till I Collapse",
+                artist: "Eminem",
+                album: "The Eminem Show",
+                capturedAt: now.addingTimeInterval(-2700),
+                sourceApp: "Apple Music",
+                url: nil
+            ),
+            WorkoutTrack(
+                id: track3ID,
+                title: "Stronger",
+                artist: "Kanye West",
+                album: "Graduation",
+                capturedAt: now.addingTimeInterval(-1800),
+                sourceApp: "SoundCloud",
+                url: "https://soundcloud.com/kanyewest/stronger"
+            )
+        ]
+
+        return Workout(
+            id: id,
+            userId: AppUser.mockDebugFriend.id,
+            name: "Push Day",
+            exercises: [
+                WorkoutExercise(
+                    id: "bypass-we-1",
+                    exercise: .benchPress,
+                    sets: [
+                        WorkoutSet(id: "bypass-s-1", exerciseId: "ex-1", weight: 185, reps: 8, rpe: 7, isPersonalRecord: false, completedAt: now),
+                        WorkoutSet(id: "bypass-s-2", exerciseId: "ex-1", weight: 205, reps: 6, rpe: 8, isPersonalRecord: false, completedAt: now),
+                        WorkoutSet(id: "bypass-s-3", exerciseId: "ex-1", weight: 225, reps: 5, rpe: 9, isPersonalRecord: true, completedAt: now)
+                    ],
+                    notes: nil
+                )
+            ],
+            startTime: now.addingTimeInterval(-3300),
+            endTime: now.addingTimeInterval(-300),
+            notes: "Felt strong on bench today.",
+            location: "Home Gym",
+            rating: 4,
+            tracks: tracks,
+            featuredTrackId: track1ID.uuidString,
+            shareFullSoundtrack: true
+        )
     }
 
     // MARK: - Private

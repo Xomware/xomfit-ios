@@ -153,12 +153,26 @@ final class SpotifyNowPlayingService {
             seenKeys.insert(key)
 
             let artist = item.artists?.compactMap { $0.name }.joined(separator: ", ")
+            // Prefer the https web URL (#410) — opens cleanly in browser and
+            // on phones with the Spotify app installed it routes natively.
+            // Fall back to the `spotify:track:<id>` URI if neither is present
+            // we leave `url` nil and the feed deep link falls back to search.
+            let trackURL: String? = {
+                if let id = item.id, !id.isEmpty {
+                    return "https://open.spotify.com/track/\(id)"
+                }
+                if let uri = item.uri, !uri.isEmpty {
+                    return uri
+                }
+                return nil
+            }()
             let track = WorkoutTrack(
                 title: title,
                 artist: (artist?.isEmpty == false) ? artist : nil,
                 album: item.album?.name,
                 capturedAt: Date(),
-                sourceApp: "Spotify"
+                sourceApp: "Spotify",
+                url: trackURL
             )
             captured.append(track)
             lastCapturedTrack = track

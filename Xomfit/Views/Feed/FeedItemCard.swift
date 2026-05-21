@@ -37,6 +37,20 @@ struct FeedItemCard: View {
                     AnthemRow(anthem: anthem, style: .feed)
                 }
 
+                // Featured soundtrack row (#410) — surfaces the poster's
+                // featured-track pick from this workout in the same compact
+                // anthem-row style. Nil when no featured pick was made.
+                if let activity = item.workoutActivity,
+                   let featuredTitle = activity.featuredTrackTitle,
+                   !featuredTitle.isEmpty {
+                    FeaturedSoundtrackRow(
+                        title: featuredTitle,
+                        artist: activity.featuredTrackArtist ?? "",
+                        sourceApp: activity.featuredTrackSource ?? "",
+                        deepLinkURL: featuredDeepLinkURL(activity: activity)
+                    )
+                }
+
                 activityContent
 
                 if let caption = item.caption, !caption.isEmpty {
@@ -289,6 +303,23 @@ struct FeedItemCard: View {
         }
     }
 
+    // MARK: - Featured soundtrack helper (#410)
+
+    /// Builds a deep-link `URL` from the captured payload fields. Falls through
+    /// to a synthesized `WorkoutTrack` so we can reuse the shared resolver
+    /// without having to fetch the full workout just to render the feed card.
+    private func featuredDeepLinkURL(activity: WorkoutActivity) -> URL? {
+        guard let title = activity.featuredTrackTitle, !title.isEmpty else { return nil }
+        let synthesized = WorkoutTrack(
+            title: title,
+            artist: activity.featuredTrackArtist,
+            capturedAt: Date(),
+            sourceApp: activity.featuredTrackSource ?? "",
+            url: activity.featuredTrackURL
+        )
+        return WorkoutTrackDeepLink.url(for: synthesized)
+    }
+
     // MARK: - Share
 
     private func shareFeedItem() {
@@ -513,5 +544,87 @@ private struct StreakActivityContent: View {
         .accessibilityLabel(activity.isNewRecord
             ? "\(activity.currentStreak) day streak, new personal record"
             : "\(activity.currentStreak) day streak, previous best \(activity.previousBest) days")
+    }
+}
+
+// MARK: - Featured Soundtrack Row (#410)
+
+/// Compact "featured soundtrack" row used on each workout feed card. Visual
+/// matches `AnthemRow` (#403) so the two stacks read as siblings — the anthem
+/// is the poster's profile pick, the featured soundtrack is from this specific
+/// workout. Tapping the trailing button deep-links into the source service.
+private struct FeaturedSoundtrackRow: View {
+    let title: String
+    let artist: String
+    let sourceApp: String
+    let deepLinkURL: URL?
+
+    var body: some View {
+        HStack(spacing: Theme.Spacing.sm) {
+            ZStack {
+                Circle()
+                    .fill(Theme.accent)
+                    .frame(width: 28, height: 28)
+                Image(systemName: "star.fill")
+                    .font(.system(size: 12, weight: .black))
+                    .foregroundStyle(Theme.background)
+            }
+
+            VStack(alignment: .leading, spacing: 1) {
+                Text(title)
+                    .font(Theme.fontCaption.weight(.semibold))
+                    .foregroundStyle(Theme.textPrimary)
+                    .lineLimit(1)
+                HStack(spacing: 6) {
+                    if !artist.isEmpty {
+                        Text(artist)
+                            .font(Theme.fontCaption2)
+                            .foregroundStyle(Theme.textSecondary)
+                            .lineLimit(1)
+                        Text("\u{2022}")
+                            .font(.caption2.weight(.bold))
+                            .foregroundStyle(Theme.textTertiary)
+                            .accessibilityHidden(true)
+                    }
+                    if !sourceApp.isEmpty {
+                        Text(sourceApp)
+                            .font(Theme.fontCaption2)
+                            .foregroundStyle(Theme.textTertiary)
+                    }
+                }
+            }
+
+            Spacer(minLength: 0)
+
+            if let url = deepLinkURL {
+                Button {
+                    Haptics.light()
+                    UIApplication.shared.open(url)
+                } label: {
+                    Image(systemName: "arrow.up.right.square")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(Theme.accent)
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                // Don't bubble taps to the parent card (which opens detail).
+                .simultaneousGesture(TapGesture().onEnded {})
+                .accessibilityLabel(WorkoutTrackDeepLink.label(for: sourceApp))
+                .accessibilityHint("Opens this featured track in \(sourceApp).")
+            }
+        }
+        .padding(.vertical, Theme.Spacing.xs)
+        .padding(.horizontal, Theme.Spacing.sm)
+        .background(
+            RoundedRectangle(cornerRadius: Theme.Radius.sm)
+                .fill(Theme.accent.opacity(0.10))
+                .overlay(
+                    RoundedRectangle(cornerRadius: Theme.Radius.sm)
+                        .strokeBorder(Theme.accent.opacity(0.35), lineWidth: 0.5)
+                )
+        )
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Featured track: \(title)\(artist.isEmpty ? "" : ", by \(artist)")")
     }
 }

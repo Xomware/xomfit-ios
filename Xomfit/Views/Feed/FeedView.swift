@@ -74,16 +74,18 @@ struct FeedView: View {
                     } else {
                         ZStack {
                             feedList
-                            // #311: brief skeleton overlay while a refresh
-                            // or filter change is in flight so the list
-                            // doesn't pop without feedback.
-                            if viewModel.isRefreshing || viewModel.isFiltering {
+                            // #311: brief skeleton overlay while a filter
+                            // change is in flight so the list doesn't pop
+                            // without feedback. Pull-to-refresh is handled
+                            // by the system `.refreshable` spinner on the
+                            // list itself — overlaying a skeleton on top of
+                            // that caused a double-spinner glitch (#410).
+                            if viewModel.isFiltering {
                                 feedSkeleton
                                     .background(Theme.background)
                                     .transition(.opacity)
                             }
                         }
-                        .animation(.easeInOut(duration: 0.2), value: viewModel.isRefreshing)
                         .animation(.easeInOut(duration: 0.2), value: viewModel.isFiltering)
                     }
                 }

@@ -134,6 +134,15 @@ struct FeedDetailView: View {
 
                 // Real exercise data from DB
                 exerciseSection
+
+                // Soundtrack (#410). Respects `shareFullSoundtrack`:
+                // - own post: always show everything
+                // - other user's post: show all when share-full is on; show
+                //   only the featured track when off
+                if let workout = fetchedWorkout, !workout.tracks.isEmpty {
+                    XomDivider()
+                    soundtrackSection(workout: workout)
+                }
             }
 
             XomDivider()
@@ -388,6 +397,130 @@ struct FeedDetailView: View {
 
             Spacer()
         }
+    }
+
+    // MARK: - Soundtrack (#410)
+
+    /// Captured-soundtrack list shown under the workout summary. Respects the
+    /// poster's `shareFullSoundtrack` toggle for non-owner views — when off,
+    /// only the featured track surfaces. The owner always sees the full list
+    /// so they can review what's stored on the workout.
+    @ViewBuilder
+    private func soundtrackSection(workout: Workout) -> some View {
+        let visibleTracks = visibleTracks(in: workout)
+        if !visibleTracks.isEmpty {
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                HStack(spacing: 6) {
+                    Image(systemName: "music.note")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Theme.accent)
+                    Text("Soundtrack")
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(Theme.textPrimary)
+                    Spacer()
+                    Text("\(visibleTracks.count)")
+                        .font(.caption.weight(.semibold).monospaced())
+                        .foregroundStyle(Theme.textSecondary)
+                }
+
+                VStack(spacing: 0) {
+                    ForEach(Array(visibleTracks.enumerated()), id: \.element.id) { index, track in
+                        feedTrackRow(track: track, isFeatured: workout.featuredTrackId == track.id.uuidString)
+                        if index < visibleTracks.count - 1 {
+                            Divider()
+                                .background(Theme.textSecondary.opacity(0.15))
+                                .padding(.leading, Theme.Spacing.md)
+                        }
+                    }
+                }
+                .background(Theme.background)
+                .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
+
+                if !workout.shareFullSoundtrack && !isOwnPost {
+                    Text("Only the featured track was shared.")
+                        .font(Theme.fontSmall)
+                        .foregroundStyle(Theme.textTertiary)
+                }
+            }
+        }
+    }
+
+    /// Returns the slice of `workout.tracks` that should be displayed for the
+    /// current viewer. Owner sees everything; friends see everything when
+    /// `shareFullSoundtrack` is true, otherwise just the featured track.
+    private func visibleTracks(in workout: Workout) -> [WorkoutTrack] {
+        if isOwnPost || workout.shareFullSoundtrack {
+            return workout.tracks
+        }
+        if let featured = workout.featuredTrack {
+            return [featured]
+        }
+        return []
+    }
+
+    /// Single track row used inside the feed expanded soundtrack section. Wraps
+    /// title/artist/source plus a trailing deep-link button.
+    @ViewBuilder
+    private func feedTrackRow(track: WorkoutTrack, isFeatured: Bool) -> some View {
+        let deepLinkURL = WorkoutTrackDeepLink.url(for: track)
+        HStack(spacing: Theme.Spacing.sm) {
+            if isFeatured {
+                Image(systemName: "star.fill")
+                    .font(Theme.fontCaption.weight(.bold))
+                    .foregroundStyle(Theme.accent)
+                    .frame(width: 20)
+                    .accessibilityHidden(true)
+            } else {
+                Image(systemName: "music.note")
+                    .font(Theme.fontCaption)
+                    .foregroundStyle(Theme.textSecondary)
+                    .frame(width: 20)
+                    .accessibilityHidden(true)
+            }
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(track.title)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Theme.textPrimary)
+                    .lineLimit(1)
+                HStack(spacing: 6) {
+                    if let artist = track.artist, !artist.isEmpty {
+                        Text(artist)
+                            .font(Theme.fontCaption)
+                            .foregroundStyle(Theme.textSecondary)
+                            .lineLimit(1)
+                        Text("\u{2022}")
+                            .font(.caption2.weight(.bold))
+                            .foregroundStyle(Theme.textTertiary)
+                            .accessibilityHidden(true)
+                    }
+                    Text(track.sourceApp)
+                        .font(Theme.fontSmall)
+                        .foregroundStyle(Theme.textTertiary)
+                }
+            }
+
+            Spacer()
+
+            if let url = deepLinkURL {
+                Button {
+                    Haptics.light()
+                    UIApplication.shared.open(url)
+                } label: {
+                    Image(systemName: "arrow.up.right.square")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Theme.accent)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(WorkoutTrackDeepLink.label(for: track.sourceApp))
+                .accessibilityHint("Opens this track in \(track.sourceApp).")
+            }
+        }
+        .padding(.horizontal, Theme.Spacing.md)
+        .padding(.vertical, 8)
+        .accessibilityElement(children: .contain)
     }
 
     // MARK: - Helpers
