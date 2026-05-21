@@ -16,14 +16,17 @@ import Foundation
 /// not accepting new developer apps, sign-in will fail with a clear error and the user can
 /// still finish the workout — Apple Music + Spotify capture continue working untouched.
 enum SoundCloudConfig {
-    /// Public SoundCloud Developer client id shared across XomFit installs. Treated as
-    /// public per the PKCE flow — no client secret is needed or stored. Replace once
-    /// the SoundCloud Dev Dashboard accepts new app registrations.
-    static let sharedClientId: String = "PLACEHOLDER_SHARED_SOUNDCLOUD_CLIENT_ID"  // TODO replace
+    /// Public Xomcloud SoundCloud Developer App client id, shared across XomFit installs.
+    /// Treated as public per the PKCE flow — no client secret is needed or stored.
+    static let sharedClientId: String = "FdZcMJaQOlOuQVK54FFgoR2L8CMmQvfF"
 
-    /// Custom URL scheme that ASWebAuthenticationSession listens for. Must match the
-    /// "Redirect URI" registered on the SoundCloud Developer Dashboard exactly.
-    static let redirectURI = "xomfit://soundcloud-callback"
+    /// SoundCloud only allows one redirect URI per app, and the Xomcloud web app already
+    /// owns this one. The xomcloud-frontend `CallbackComponent` inspects the OAuth `state`
+    /// query param — when it starts with `xomfit-` it JS-redirects to
+    /// `xomfit://soundcloud-callback?<original params>`, which `ASWebAuthenticationSession`
+    /// then intercepts via `callbackURLScheme = "xomfit"`. SoundCloud verifies this URI
+    /// during the code → token exchange, so it MUST match the dashboard value exactly.
+    static let redirectURI = "https://xomcloud.xomware.com/callback"
 
     /// SoundCloud rejects `non-expiring` for newly-registered shared apps with
     /// `403 — "Requesting non-expiring tokens is not allowed. Set scope=''."`

@@ -65,7 +65,11 @@ final class SoundCloudAuthService: NSObject {
     func signIn() async throws -> Bool {
         let verifier = Self.generatePKCEVerifier()
         let challenge = Self.codeChallenge(for: verifier)
-        let state = Self.randomURLSafeString(length: 16)
+        // Prefix the OAuth `state` so the shared xomcloud.xomware.com/callback
+        // bridge can recognize XomFit-initiated auth and bounce back to the
+        // `xomfit://soundcloud-callback` deep link instead of completing the
+        // Xomcloud web flow. See xomcloud-frontend `callback.component.ts`.
+        let state = "xomfit-" + Self.randomURLSafeString(length: 16)
         pendingPKCEVerifier = verifier
         pendingState = state
 
