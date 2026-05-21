@@ -15,6 +15,10 @@ struct ExerciseJumperSheet: View {
     /// Called with the picked index after the VM jump completes. Parent uses
     /// this to scroll the list-mode `ScrollViewReader` to the card.
     var onJump: (Int) -> Void
+    /// Called when the user taps the toolbar `+` button. Parent should dismiss
+    /// this sheet and present the existing exercise picker. Optional so older
+    /// call sites without an add-exercise integration keep compiling.
+    var onAddExercise: (() -> Void)? = nil
 
     @Environment(\.dismiss) private var dismiss
 
@@ -27,6 +31,12 @@ struct ExerciseJumperSheet: View {
                     LazyVStack(spacing: Theme.Spacing.sm) {
                         ForEach(Array(viewModel.exercises.enumerated()), id: \.element.id) { idx, exercise in
                             row(idx: idx, exercise: exercise)
+                                .swipeToDelete(
+                                    accessibilityActionName: "Remove \(exercise.exercise.name) from workout"
+                                ) {
+                                    Haptics.warning()
+                                    viewModel.removeExercise(at: idx)
+                                }
                         }
                     }
                     .padding(Theme.Spacing.md)
@@ -38,6 +48,31 @@ struct ExerciseJumperSheet: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Done") { dismiss() }
                         .foregroundStyle(Theme.accent)
+                }
+                // `+` button — dismisses the sheet first so the parent can
+                // present the picker without a sheet-on-sheet stack. Only
+                // rendered when a callback is wired (back-compat for any
+                // call sites that don't yet route add-exercise).
+                if let onAddExercise {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button {
+                            Haptics.light()
+                            dismiss()
+                            // Defer so the dismissal animation completes before
+                            // the picker slides up on top of the parent.
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                                onAddExercise()
+                            }
+                        } label: {
+                            Image(systemName: "plus")
+                                .font(.body.weight(.semibold))
+                                .foregroundStyle(Theme.accent)
+                                .frame(minWidth: 44, minHeight: 44)
+                                .contentShape(Rectangle())
+                        }
+                        .accessibilityLabel("Add exercise to workout")
+                        .accessibilityHint("Opens the exercise picker")
+                    }
                 }
             }
         }

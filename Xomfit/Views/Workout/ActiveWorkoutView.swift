@@ -107,11 +107,17 @@ struct ActiveWorkoutView: View {
                                 ScrollView {
                                     LazyVStack(spacing: Theme.Spacing.md) {
                                         ForEach(viewModel.exercises.indices, id: \.self) { exIdx in
+                                            let exerciseName = viewModel.exercises[exIdx].exercise.name
                                             ExerciseCard(
                                                 exerciseIndex: exIdx,
                                                 viewModel: viewModel
                                             )
                                             .id(exIdx)
+                                            .swipeToDelete(
+                                                accessibilityActionName: "Remove \(exerciseName) from workout"
+                                            ) {
+                                                viewModel.removeExercise(at: exIdx)
+                                            }
                                         }
                                     }
                                     .padding(Theme.Spacing.md)
@@ -223,6 +229,17 @@ struct ActiveWorkoutView: View {
                 }
             }
         }
+        #if DEBUG
+        .task {
+            // Agent screenshot helper. Auto-open the mid-workout exercise
+            // jumper sheet on first appearance when `XOMFIT_AUTO_SHOW_JUMPER=1`
+            // so screenshots of the jumper UI don't require a tap.
+            if ProcessInfo.processInfo.environment["XOMFIT_AUTO_SHOW_JUMPER"] == "1" {
+                try? await Task.sleep(for: .milliseconds(600))
+                showExerciseJumper = true
+            }
+        }
+        #endif
         .onReceive(timer) { _ in
             viewModel.tickRestTimer()
             viewModel.tickLiveActivity()
@@ -283,12 +300,20 @@ struct ActiveWorkoutView: View {
             .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showExerciseJumper) {
-            ExerciseJumperSheet(viewModel: viewModel) { idx in
-                // Trigger list-mode scroll. In focus mode this is harmless —
-                // `.id(viewModel.focusExerciseIndex)` on the focus view drives
-                // the visual transition independently.
-                pendingScrollIndex = idx
-            }
+            ExerciseJumperSheet(
+                viewModel: viewModel,
+                onJump: { idx in
+                    // Trigger list-mode scroll. In focus mode this is harmless —
+                    // `.id(viewModel.focusExerciseIndex)` on the focus view drives
+                    // the visual transition independently.
+                    pendingScrollIndex = idx
+                },
+                onAddExercise: {
+                    // Jumper sheet dismisses itself before invoking this, so
+                    // presenting the picker here gives us a clean single-sheet stack.
+                    showExercisePicker = true
+                }
+            )
         }
         .sheet(isPresented: $showStartingExercisePicker) {
             NavigationStack {
@@ -1124,16 +1149,10 @@ private struct ExerciseCard: View {
                     ? "Removes this exercise from its superset"
                     : "Pairs this exercise with the next one for back-to-back sets")
 
-                Button {
-                    viewModel.removeExercise(at: exerciseIndex)
-                } label: {
-                    Image(systemName: "xmark")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(Theme.textSecondary)
-                        .frame(width: 44, height: 44)
-                        .contentShape(Rectangle())
-                }
-                .accessibilityLabel("Remove \(exercise.exercise.name)")
+                // Exercise removal moved to swipe-to-delete on the card (#xom).
+                // The inline xmark button used to live here; it's now redundant
+                // because the parent `LazyVStack` wraps the card with a swipe-
+                // gesture row that reveals a destructive Delete pill.
             }
 
             // Variant config (grip, attachment, position, laterality) + per-session extras
@@ -1231,10 +1250,19 @@ private struct ExerciseCard: View {
                         viewModel.addDropSet(exerciseIndex: exerciseIndex, parentSetIndex: setIdx)
                     },
                     lateralityLabel: exercise.selectedLaterality != .bilateral ? (exercise.exercise.muscleGroups.contains(where: { [.quads, .hamstrings, .glutes, .calves].contains($0) }) ? "/leg" : "/arm") : nil,
-                    lastSet: viewModel.lastSetForExercise(exercise.exercise.id),
+                    // "Last" prefers the previous completed set in THIS session
+                    // so progressive overload guidance reflects what the user
+                    // just lifted. Falls back to history when no prior in-session
+                    // set has been completed yet (e.g. set 1).
+                    lastSet: viewModel.lastSetHint(exerciseIndex: exerciseIndex, setIndex: setIdx),
                     personalRecord: viewModel.personalRecordForExercise(exercise.exercise.id),
                     isCurrentSet: setIdx == currentSetIdx
                 )
+                .swipeToDelete(
+                    accessibilityActionName: "Delete set \(setIdx + 1)"
+                ) {
+                    viewModel.removeSet(exerciseIndex: exerciseIndex, setIndex: setIdx)
+                }
             }
 
             // Add Set button

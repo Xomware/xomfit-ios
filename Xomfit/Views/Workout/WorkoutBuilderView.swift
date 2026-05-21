@@ -239,9 +239,13 @@ struct WorkoutBuilderView: View {
                             onUpdateReps: { viewModel.updateReps(at: index, reps: $0) },
                             onUpdateNotes: { viewModel.updateNotes(at: index, notes: $0) },
                             onUpdateRestSeconds: { viewModel.updateRestSeconds(at: index, seconds: $0) },
-                            onToggleSuperset: { viewModel.toggleSupersetWithNext(at: index) },
-                            onDelete: { viewModel.removeExercise(at: index) }
+                            onToggleSuperset: { viewModel.toggleSupersetWithNext(at: index) }
                         )
+                        .swipeToDelete(
+                            accessibilityActionName: "Remove \(exercise.exercise.name) from template"
+                        ) {
+                            viewModel.removeExercise(at: index)
+                        }
                     }
                 }
 
@@ -367,7 +371,6 @@ private struct BuilderExerciseRow: View {
     let onUpdateNotes: (String?) -> Void
     let onUpdateRestSeconds: (Int?) -> Void
     let onToggleSuperset: () -> Void
-    let onDelete: () -> Void
 
     /// Pulled from the same UserDefaults key the rest of the app reads. Lets the
     /// rest pill show the live default when the template doesn't override.
@@ -464,14 +467,9 @@ private struct BuilderExerciseRow: View {
                     ? "Removes this exercise from its superset"
                     : "Pairs this exercise with the next one for back-to-back sets")
 
-                Button(action: onDelete) {
-                    Image(systemName: "trash")
-                        .font(Theme.fontSubheadline)
-                        .foregroundStyle(Theme.destructive.opacity(0.8))
-                        .frame(width: 44, height: 44)
-                        .contentShape(Rectangle())
-                }
-                .accessibilityLabel("Remove \(exercise.exercise.name)")
+                // Exercise removal moved to swipe-to-delete on the row. The
+                // standalone trash button is gone; the parent `ForEach` wraps
+                // each row with a `.swipeToDelete` that calls `removeExercise`.
             }
 
             // Sets & Reps controls

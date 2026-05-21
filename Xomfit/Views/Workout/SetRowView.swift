@@ -164,18 +164,12 @@ struct SetRowView: View {
             }
 
             HStack(spacing: Theme.Spacing.sm) {
-                // Delete button. Visually compact (30pt slot) but the inner
-                // image carries the 44pt minimum so the actual hit target meets HIG.
-                Button(action: onDelete) {
-                    Image(systemName: "minus.circle.fill")
-                        .foregroundStyle(Theme.destructive)
-                        .font(isDropSet ? .subheadline : .headline)
-                        .frame(minWidth: 44, minHeight: 44)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .frame(width: 30)
-                .accessibilityLabel("Delete set \(setNumber)")
+                // Set deletion moved to swipe-to-delete on the row. The leading
+                // red minus.circle.fill button is gone; the same `onDelete`
+                // closure is now wired via `.swipeToDelete` at the call site
+                // in `ActiveWorkoutView`. Keep a small leading inset so the
+                // remaining content stays visually anchored where it was.
+                Spacer().frame(width: Theme.Spacing.xs)
 
                 // PR trophy / DROP badge / set number
                 if isPR {
@@ -305,8 +299,9 @@ struct SetRowView: View {
 
     private var hintRow: some View {
         HStack(spacing: Theme.Spacing.sm) {
-            // align under the weight/reps fields, past the delete + set number columns
-            Spacer().frame(width: 30 + Theme.Spacing.sm + 24)
+            // align under the weight field, past the (now-removed delete column),
+            // the leading inset, and the set-number column.
+            Spacer().frame(width: Theme.Spacing.xs + Theme.Spacing.sm + Theme.Spacing.lg)
 
             if let last = lastSet, last.weight > 0, last.reps > 0 {
                 hintChip(
@@ -376,7 +371,7 @@ struct SetRowView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .padding(.leading, Theme.Spacing.xl + 30)
+        .padding(.leading, Theme.Spacing.xl + Theme.Spacing.xs)
         .accessibilityLabel("Add drop set after set \(setNumber)")
     }
 }
