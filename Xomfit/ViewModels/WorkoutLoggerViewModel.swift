@@ -37,6 +37,11 @@ final class WorkoutLoggerViewModel {
     var restTimeRemaining: Double = 0
     var restDuration: Double = 0
     var isRestTimerActive: Bool = false
+    /// True when the focus-mode rest timer is collapsed to a banner. Lifted onto
+    /// the VM (#409) so the header chip in `ActiveWorkoutView` can tap-to-expand
+    /// the fullscreen overlay; `WorkoutFocusView` reads/writes this for its own
+    /// minimize chevron + banner background tap. In-memory only.
+    var isRestTimerMinimized: Bool = false
 
     // Pause state — freezes elapsed timer + rest countdown without ending the workout.
     // In-memory only (not persisted).
@@ -1040,6 +1045,9 @@ final class WorkoutLoggerViewModel {
         restDuration = duration
         restTimeRemaining = duration
         isRestTimerActive = true
+        // Every fresh rest period starts expanded — the user just finished a
+        // set and benefits from the full-screen countdown.
+        isRestTimerMinimized = false
         restTimerStartDate = Date()
         updateLiveActivity()
 
@@ -1069,6 +1077,8 @@ final class WorkoutLoggerViewModel {
     func skipRestTimer() {
         restTimeRemaining = 0
         isRestTimerActive = false
+        // Reset minimize state so the next rest period always starts fullscreen.
+        isRestTimerMinimized = false
         updateLiveActivity()
         // Cancel any pending local "rest done" notification (#369). Safe to call
         // when none is pending — also clears delivered notifications if the user
@@ -1406,6 +1416,7 @@ final class WorkoutLoggerViewModel {
         isPaused = false
         pausedAt = nil
         isRestTimerActive = false
+        isRestTimerMinimized = false
         restTimeRemaining = 0
         restDuration = 0
         showExerciseTransition = false

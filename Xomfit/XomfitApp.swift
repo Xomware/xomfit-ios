@@ -360,6 +360,13 @@ struct XomFitApp: App {
             workoutSession.startRestTimer(for: workoutSession.focusExerciseIndex)
         }
 
+        // Optionally seed the rest timer in its minimized banner state — the
+        // VM owns this flag now (#409) so both the focus view and the header
+        // chip can read/write it.
+        if env["XOMFIT_AUTO_MINIMIZE_REST"] == "1" {
+            workoutSession.isRestTimerMinimized = true
+        }
+
         // Optionally jump straight into the active runner so the cover renders.
         workoutSession.isPresented = true
     }

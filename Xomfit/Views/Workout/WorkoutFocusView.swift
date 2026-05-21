@@ -10,15 +10,9 @@ struct WorkoutFocusView: View {
     @FocusState private var weightFieldFocused: Bool
     @FocusState private var repsFieldFocused: Bool
     @State private var showExercisePicker = false
-    @State private var isRestTimerMinimized: Bool = {
-        #if DEBUG
-        // Agent screenshot helper (#402) — start the rest timer minimized so
-        // the inline banner can be captured from a cold launch without a tap.
-        return ProcessInfo.processInfo.environment["XOMFIT_AUTO_MINIMIZE_REST"] == "1"
-        #else
-        return false
-        #endif
-    }()
+    /// Minimized rest-timer state lives on the VM (#409) so the header chip
+    /// in `ActiveWorkoutView` can tap-to-expand the fullscreen overlay. Local
+    /// `@State` is gone — read/write through `viewModel.isRestTimerMinimized`.
     @AppStorage("restTimerSound") private var restTimerSound = false
 
     /// Set pill index targeted by a long-press, used to drive the delete
@@ -121,7 +115,7 @@ struct WorkoutFocusView: View {
                     // `.safeAreaInset(.bottom)` — guarantees the middle's DONE
                     // button never gets compressed off-screen, and the banner
                     // is always reachable below the weight/reps cards.
-                    if viewModel.isRestTimerActive && isRestTimerMinimized {
+                    if viewModel.isRestTimerActive && viewModel.isRestTimerMinimized {
                         minimizedRestTimerBanner
                     } else {
                         exerciseNavigation
@@ -133,13 +127,13 @@ struct WorkoutFocusView: View {
                 .padding(.top, Theme.Spacing.sm)
                 .padding(.horizontal, Theme.Spacing.lg)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .animation(.xomChill, value: isRestTimerMinimized)
+                .animation(.xomChill, value: viewModel.isRestTimerMinimized)
                 .animation(.xomChill, value: viewModel.isRestTimerActive)
 
                 // Full-screen rest timer — only when the timer is active AND not minimized.
                 // The minimized banner is rendered via `.safeAreaInset(edge: .bottom)`
                 // below so it reserves its own row instead of shrinking the header.
-                if viewModel.isRestTimerActive && !isRestTimerMinimized {
+                if viewModel.isRestTimerActive && !viewModel.isRestTimerMinimized {
                     fullScreenRestTimer
                         .transition(.opacity)
                 }
@@ -188,9 +182,9 @@ struct WorkoutFocusView: View {
         } message: {
             Text("Removes this set from the current exercise.")
         }
-        .onChange(of: viewModel.isRestTimerActive) { _, isActive in
-            if isActive { isRestTimerMinimized = false }
-        }
+        // `WorkoutLoggerViewModel.startRestTimer` + `skipRestTimer` now own the
+        // minimize-state reset, so the previous local `onChange(isRestTimerActive)`
+        // handler is gone (#409).
     }
 
     // MARK: - Exercise Header
@@ -587,7 +581,7 @@ struct WorkoutFocusView: View {
             // Expand glyph — far left, 44pt hit target.
             Button {
                 Haptics.light()
-                withAnimation(.xomChill) { isRestTimerMinimized = false }
+                withAnimation(.xomChill) { viewModel.isRestTimerMinimized = false }
             } label: {
                 Image(systemName: "arrow.up.left.and.arrow.down.right")
                     .font(.subheadline.weight(.semibold))
@@ -637,7 +631,6 @@ struct WorkoutFocusView: View {
             Button {
                 Haptics.success()
                 viewModel.skipRestTimer()
-                isRestTimerMinimized = false
             } label: {
                 Text("Lift")
                     .font(.subheadline.weight(.black))
@@ -662,7 +655,7 @@ struct WorkoutFocusView: View {
                 .contentShape(Rectangle())
                 .onTapGesture {
                     Haptics.light()
-                    withAnimation(.xomChill) { isRestTimerMinimized = false }
+                    withAnimation(.xomChill) { viewModel.isRestTimerMinimized = false }
                 }
         )
         .overlay(
@@ -706,7 +699,7 @@ struct WorkoutFocusView: View {
                 HStack {
                     Button {
                         Haptics.light()
-                        withAnimation(.xomChill) { isRestTimerMinimized = true }
+                        withAnimation(.xomChill) { viewModel.isRestTimerMinimized = true }
                     } label: {
                         Image(systemName: "arrow.down.right.and.arrow.up.left")
                             .font(.subheadline.weight(.semibold))
@@ -790,7 +783,6 @@ struct WorkoutFocusView: View {
                 Button {
                     Haptics.success()
                     viewModel.skipRestTimer()
-                    isRestTimerMinimized = false
                 } label: {
                     Text("LIFT")
                         .font(.title.weight(.black))
