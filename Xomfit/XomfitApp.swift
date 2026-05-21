@@ -284,6 +284,13 @@ struct XomFitApp: App {
     ///                                     focus mode so the keyboard-collapse
     ///                                     compact mode (#411 bug 6) renders.
     ///                                     Read by WorkoutFocusView's onAppear.
+    ///   XOMFIT_AUTO_COMPLETE_FIRST_SET=1 → mark only set 1 of the first exercise
+    ///                                     complete (90×7) without firing the rest
+    ///                                     timer — used to screenshot the in-session
+    ///                                     "Last 90×7" caption on set 2.
+    ///   XOMFIT_AUTO_SHOW_JUMPER=1       → auto-open the Switch Exercise sheet on
+    ///                                     first appearance — used to screenshot
+    ///                                     the new Add Exercise (+) toolbar button.
     @MainActor
     private func seedDebugActiveWorkout() {
         let env = ProcessInfo.processInfo.environment
@@ -340,6 +347,19 @@ struct XomFitApp: App {
             for setIdx in 0..<first.sets.count {
                 workoutSession.completeSet(exerciseIndex: 0, setIndex: setIdx)
             }
+        }
+
+        // Screenshot helper for the "Last shows prior in-session set" change:
+        // seed only set 1 of the first exercise with concrete weight/reps and
+        // mark it complete via direct field writes (no side effects). Skips
+        // the real `completeSet` path so the rest timer doesn't fire and the
+        // cover stays mounted on ActiveWorkoutView for the agent screenshot.
+        if env["XOMFIT_AUTO_COMPLETE_FIRST_SET"] == "1",
+           workoutSession.exercises.first != nil,
+           !workoutSession.exercises[0].sets.isEmpty {
+            workoutSession.exercises[0].sets[0].weight = 90
+            workoutSession.exercises[0].sets[0].reps = 7
+            workoutSession.exercises[0].sets[0].completedAt = Date()
         }
 
         // Seed two demo soundtrack tracks so the finish-sheet section renders

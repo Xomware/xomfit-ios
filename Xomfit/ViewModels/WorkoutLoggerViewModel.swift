@@ -496,6 +496,44 @@ final class WorkoutLoggerViewModel {
         return nil
     }
 
+    /// Returns the "Last" hint value for a specific set row inside the active
+    /// session — i.e. the most-recently-completed prior set for this exercise
+    /// **in this workout**, falling back to last workout's value when no
+    /// in-session set has been completed yet.
+    ///
+    /// This drives the "Last 90×7" caption beneath the next row, so the user
+    /// gets progressive-overload guidance based on what they just hit, instead
+    /// of always seeing yesterday's number.
+    ///
+    /// - Parameters:
+    ///   - exerciseIndex: Index into `exercises` of the row being rendered.
+    ///   - setIndex: Index of the current set row in that exercise's `sets`
+    ///     array; only completed sets with index < `setIndex` are considered
+    ///     for the in-session lookup. Drop sets are excluded so dramatic weight
+    ///     drops don't anchor the next working-set suggestion.
+    func lastSetHint(exerciseIndex: Int, setIndex: Int) -> WorkoutSet? {
+        guard exercises.indices.contains(exerciseIndex) else {
+            return nil
+        }
+        let exercise = exercises[exerciseIndex]
+        // Walk backwards through prior set indices and grab the first completed
+        // non-drop set. Prior sets in `sets` are session sets, so any completed
+        // entry here was just logged in this workout.
+        if setIndex > 0 {
+            for priorIdx in stride(from: setIndex - 1, through: 0, by: -1) {
+                guard exercise.sets.indices.contains(priorIdx) else { continue }
+                let prior = exercise.sets[priorIdx]
+                let isCompleted = prior.completedAt != Date.distantPast
+                if isCompleted, !prior.isDropSet, prior.weight > 0, prior.reps > 0 {
+                    return prior
+                }
+            }
+        }
+        // No in-session prior set logged yet — fall back to the historical
+        // "best last-time" lookup so the row still has a useful suggestion.
+        return lastSetForExercise(exercise.exercise.id)
+    }
+
     /// Find the highest-weight set ever performed for an exercise from cached workout history.
     /// Tie-breaks on reps so `145×6` beats `145×5`. Used by SetRowView for PR hint + new-PR badge (#250).
     func personalRecordForExercise(_ exerciseId: String) -> WorkoutSet? {
