@@ -280,6 +280,10 @@ struct XomFitApp: App {
     ///                                     the fullscreen overlay renders
     ///   XOMFIT_AUTO_MINIMIZE_REST=1     → start the rest timer in its minimized
     ///                                     banner state (read by WorkoutFocusView)
+    ///   XOMFIT_AUTO_FOCUS_WEIGHT=1      → auto-focus the weight TextField in
+    ///                                     focus mode so the keyboard-collapse
+    ///                                     compact mode (#411 bug 6) renders.
+    ///                                     Read by WorkoutFocusView's onAppear.
     @MainActor
     private func seedDebugActiveWorkout() {
         let env = ProcessInfo.processInfo.environment

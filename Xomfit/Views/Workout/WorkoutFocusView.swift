@@ -21,6 +21,13 @@ struct WorkoutFocusView: View {
     @State private var pendingDeleteSetIndex: Int?
     @State private var showDeleteSetConfirm = false
 
+    /// True when EITHER the weight or reps numeric field has the keyboard.
+    /// Drives the compact-mode collapse of the header + nav rows so the
+    /// keyboard never overlaps the active input (#411 bug 6).
+    private var keyboardCompactMode: Bool {
+        weightFieldFocused || repsFieldFocused
+    }
+
     private var exercise: WorkoutExercise? { viewModel.focusExercise }
     private var currentSet: WorkoutSet? { viewModel.focusSet }
 
@@ -64,33 +71,50 @@ struct WorkoutFocusView: View {
 
             if let exercise, let currentSet {
                 // Pinned top + flexible middle + pinned bottom (#344-A).
-                // The top header (exerciseHeader + config + set indicator) is anchored
-                // to the top so it respects the Dynamic Island via `.safeAreaInset`,
-                // the middle (weight/reps/done) absorbs slack via
-                // `.frame(maxHeight: .infinity)`, and the bottom slot holds
-                // exerciseNavigation — never the minimized rest banner. The banner
-                // is rendered via `.safeAreaInset(edge: .bottom)` so it reserves its
-                // own real estate and does not steal vertical space from the header.
+                // The top header (exerciseHeader + config + set indicator)
+                // collapses when a text field is focused so the keyboard
+                // never overlaps the active input (#411 bug 6). The middle
+                // (weight/reps/done) absorbs slack via `.frame(maxHeight:
+                // .infinity)`. The bottom slot is exerciseNavigation; the
+                // minimized rest banner now lives in a sibling `.safeAreaInset`
+                // (#411 bug 3) so it never steals vertical space from DONE.
                 VStack(spacing: Theme.Spacing.md) {
-                    // TOP — exercise header + config + set indicator
-                    VStack(spacing: Theme.Spacing.md) {
-                        exerciseHeader(exercise: exercise)
+                    // TOP — exercise header + config + set indicator.
+                    // Hidden while a numeric field is focused so the keyboard
+                    // can never overlap the active input (#411 bug 6).
+                    if !keyboardCompactMode {
+                        VStack(spacing: Theme.Spacing.md) {
+                            exerciseHeader(exercise: exercise)
 
-                        // Variant config (grip, attachment, position, laterality) + per-session extras
-                        // (notes / rest override). Shown unconditionally so the extras pills are
-                        // always reachable from focus mode.
-                        ExerciseConfigRow(
-                            exercise: exercise,
-                            onGripChanged: { grip in viewModel.setGrip(exerciseIndex: viewModel.focusExerciseIndex, grip: grip) },
-                            onAttachmentChanged: { att in viewModel.setAttachment(exerciseIndex: viewModel.focusExerciseIndex, attachment: att) },
-                            onPositionChanged: { pos in viewModel.setPosition(exerciseIndex: viewModel.focusExerciseIndex, position: pos) },
-                            onLateralityChanged: { lat in viewModel.setLaterality(exerciseIndex: viewModel.focusExerciseIndex, laterality: lat) },
-                            onNotesChanged: { notes in viewModel.setNotes(exerciseIndex: viewModel.focusExerciseIndex, notes: notes) },
-                            onRestSecondsChanged: { secs in viewModel.setRestSeconds(exerciseIndex: viewModel.focusExerciseIndex, seconds: secs) },
-                            defaultRestSeconds: Int(viewModel.defaultRestDuration)
-                        )
+                            // Variant config (grip, attachment, position, laterality) + per-session extras
+                            // (notes / rest override). Shown unconditionally so the extras pills are
+                            // always reachable from focus mode.
+                            ExerciseConfigRow(
+                                exercise: exercise,
+                                onGripChanged: { grip in viewModel.setGrip(exerciseIndex: viewModel.focusExerciseIndex, grip: grip) },
+                                onAttachmentChanged: { att in viewModel.setAttachment(exerciseIndex: viewModel.focusExerciseIndex, attachment: att) },
+                                onPositionChanged: { pos in viewModel.setPosition(exerciseIndex: viewModel.focusExerciseIndex, position: pos) },
+                                onLateralityChanged: { lat in viewModel.setLaterality(exerciseIndex: viewModel.focusExerciseIndex, laterality: lat) },
+                                onNotesChanged: { notes in viewModel.setNotes(exerciseIndex: viewModel.focusExerciseIndex, notes: notes) },
+                                onRestSecondsChanged: { secs in viewModel.setRestSeconds(exerciseIndex: viewModel.focusExerciseIndex, seconds: secs) },
+                                defaultRestSeconds: Int(viewModel.defaultRestDuration)
+                            )
 
-                        setIndicator(exercise: exercise)
+                            setIndicator(exercise: exercise)
+                        }
+                        .transition(.opacity.combined(with: .move(edge: .top)))
+                    } else {
+                        // Compact-mode marker: just the exercise name so the
+                        // user still knows what they're logging. No config
+                        // row, no set chips — keyboard has full vertical real
+                        // estate.
+                        Text(exercise.exercise.name)
+                            .font(.headline.weight(.bold))
+                            .foregroundStyle(Theme.textPrimary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                            .frame(maxWidth: .infinity)
+                            .transition(.opacity)
                     }
 
                     // MIDDLE — weight / reps / done. Absorbs slack so the top
@@ -102,23 +126,23 @@ struct WorkoutFocusView: View {
                         // Drop-set capsule sits on its own row directly under
                         // the reps card so the horizontal pill ScrollView stays
                         // tight (#384 A). Only renders when a non-drop set has
-                        // been completed in this exercise.
-                        dropSetCapsuleRow(exercise: exercise)
+                        // been completed in this exercise. Hidden in compact
+                        // keyboard mode.
+                        if !keyboardCompactMode {
+                            dropSetCapsuleRow(exercise: exercise)
+                        }
                         doneButton(currentSet: currentSet)
                     }
                     .frame(maxHeight: .infinity)
 
                     // BOTTOM — exercise navigation (prev/next/add + rest config).
-                    // While the rest timer is minimized we show the rest-timer
-                    // banner here INSTEAD of exerciseNavigation (#402). Putting
-                    // it in the bottom slot — rather than as a sibling via
-                    // `.safeAreaInset(.bottom)` — guarantees the middle's DONE
-                    // button never gets compressed off-screen, and the banner
-                    // is always reachable below the weight/reps cards.
-                    if viewModel.isRestTimerActive && viewModel.isRestTimerMinimized {
-                        minimizedRestTimerBanner
-                    } else {
+                    // The minimized rest banner used to live here (#402) but is
+                    // now rendered via `.safeAreaInset(edge: .bottom)` below
+                    // (#411 bug 3) so DONE always has guaranteed bottom
+                    // clearance. Bottom nav is hidden in compact keyboard mode.
+                    if !keyboardCompactMode {
                         exerciseNavigation
+                            .transition(.opacity)
                     }
                 }
                 .id(viewModel.focusExerciseIndex)
@@ -129,6 +153,7 @@ struct WorkoutFocusView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .animation(.xomChill, value: viewModel.isRestTimerMinimized)
                 .animation(.xomChill, value: viewModel.isRestTimerActive)
+                .animation(.xomChill, value: keyboardCompactMode)
 
                 // Full-screen rest timer — only when the timer is active AND not minimized.
                 // The minimized banner is rendered via `.safeAreaInset(edge: .bottom)`
@@ -142,12 +167,28 @@ struct WorkoutFocusView: View {
             }
         }
         // Push content below any active Dynamic Island (#289/#402). Bumps
-        // content down deterministically when an island is present. The
-        // minimized rest banner is rendered inline in the bottom slot of the
-        // main VStack (replacing `exerciseNavigation` while active) so it
-        // never steals vertical real estate from the DONE button.
+        // content down deterministically when an island is present.
         .safeAreaInset(edge: .top, spacing: 0) {
             Color.clear.frame(height: Theme.Spacing.sm)
+        }
+        // Minimized rest banner — rendered as a bottom safe-area inset so it
+        // reserves its own layout row OUTSIDE the main VStack (#411 bug 3).
+        // This guarantees DONE never gets visually overlapped by the banner.
+        // Adds Theme.Spacing.sm of bottom padding so the banner sits above
+        // the home indicator with breathing room.
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            if viewModel.isRestTimerActive
+                && viewModel.isRestTimerMinimized
+                && !keyboardCompactMode {
+                minimizedRestTimerBanner
+                    .padding(.horizontal, Theme.Spacing.lg)
+                    .padding(.top, Theme.Spacing.sm)
+                    .padding(.bottom, Theme.Spacing.xs)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .animation(.xomChill, value: viewModel.isRestTimerMinimized)
+            } else {
+                Color.clear.frame(height: 0)
+            }
         }
         .sheet(isPresented: $showExercisePicker) {
             ExercisePickerView { exercise in
@@ -185,6 +226,25 @@ struct WorkoutFocusView: View {
         // `WorkoutLoggerViewModel.startRestTimer` + `skipRestTimer` now own the
         // minimize-state reset, so the previous local `onChange(isRestTimerActive)`
         // handler is gone (#409).
+        #if DEBUG
+        .onAppear {
+            // Agent screenshot helper (#411 bug 6): auto-focus the weight
+            // field so the keyboard pops and the compact-mode collapse can
+            // be captured from a cold launch.
+            if ProcessInfo.processInfo.environment["XOMFIT_AUTO_FOCUS_WEIGHT"] == "1" {
+                Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(600))
+                    let w = viewModel.focusSet?.weight ?? 0
+                    weightText = w > 0 ? w.formattedWeight : ""
+                    isEditingWeight = true
+                    // Defer the focus assignment one frame so the TextField
+                    // is in the view hierarchy before @FocusState binds.
+                    try? await Task.sleep(for: .milliseconds(200))
+                    weightFieldFocused = true
+                }
+            }
+        }
+        #endif
     }
 
     // MARK: - Exercise Header
@@ -259,18 +319,34 @@ struct WorkoutFocusView: View {
                         viewModel.focusSetIndex = idx
                     } label: {
                         ZStack {
+                            // Outer pulse ring for the currently-focused
+                            // incomplete set — makes the active set
+                            // unmistakable on the gym floor (#411 bug 4).
+                            if isFocused && !isCompleted {
+                                Circle()
+                                    .stroke(Theme.accent.opacity(0.35), lineWidth: 4)
+                                    .frame(width: 46, height: 46)
+                            }
                             Circle()
-                                .fill(isCompleted ? Theme.accent : Color.clear)
+                                .fill(isCompleted
+                                      ? Theme.accent
+                                      : (isFocused ? Theme.accent.opacity(0.22) : Color.clear))
                                 .frame(width: 36, height: 36)
                             if !isCompleted {
                                 Circle()
-                                    .stroke(isFocused ? Theme.accent : Theme.textSecondary.opacity(0.5), lineWidth: isFocused ? 2 : 1.5)
+                                    .stroke(isFocused ? Theme.accent : Theme.textSecondary.opacity(0.5),
+                                            lineWidth: isFocused ? 2.5 : 1.5)
                                     .frame(width: 36, height: 36)
                             }
                             Text("\(idx + 1)")
                                 .font(.subheadline.weight(.bold))
                                 .foregroundStyle(isCompleted ? .black : (isFocused ? Theme.accent : Theme.textSecondary))
                         }
+                        // Scale the active chip up so it pops above its
+                        // siblings — `.animation(.xomChill)` smooths the
+                        // transition as the user advances sets.
+                        .scaleEffect(isFocused && !isCompleted ? 1.1 : 1.0)
+                        .animation(.xomChill, value: isFocused)
                         // Ensure 44pt min touch target around the 36pt visual
                         .frame(minWidth: 44, minHeight: 44)
                         .contentShape(Rectangle())
@@ -278,16 +354,29 @@ struct WorkoutFocusView: View {
                     .buttonStyle(.plain)
                     // Long-press to delete (#344 C). Guarded so the last
                     // remaining set is never deletable — every exercise needs
-                    // at least one set in focus mode.
+                    // at least one set in focus mode. Surfaced as both
+                    // long-press AND a context menu so the affordance is
+                    // discoverable (#411 bug 5).
                     .onLongPressGesture(minimumDuration: 0.5) {
                         guard canDelete else { return }
                         Haptics.selection()
                         pendingDeleteSetIndex = idx
                         showDeleteSetConfirm = true
                     }
+                    .contextMenu {
+                        if canDelete {
+                            Button(role: .destructive) {
+                                Haptics.warning()
+                                pendingDeleteSetIndex = idx
+                                showDeleteSetConfirm = true
+                            } label: {
+                                Label("Remove set", systemImage: "trash")
+                            }
+                        }
+                    }
                     .accessibilityLabel("Set \(idx + 1)\(isCompleted ? ", completed" : "")\(isFocused ? ", current" : "")")
                     .accessibilityHint(canDelete
-                        ? "Long press to delete"
+                        ? "Long press or use the context menu to delete this set"
                         : "Add another set before this one can be deleted")
                 }
 

@@ -16,6 +16,11 @@ struct SetRowView: View {
     /// Heaviest set the user has ever logged for this exercise (history only).
     /// Drives the "PR: 145×6" hint and the inline "NEW PR" badge when beat.
     var personalRecord: WorkoutSet? = nil
+    /// True when this row is the user's *active* set in the parent exercise —
+    /// the first incomplete set (or the last set if everything is complete).
+    /// Drives the accent border + tint so the lifter always knows where they
+    /// are in list mode (#411 bug 4).
+    var isCurrentSet: Bool = false
 
     @State private var weightText: String
     @State private var repsText: String
@@ -58,6 +63,15 @@ struct SetRowView: View {
         lastSet != nil || personalRecord != nil
     }
 
+    /// Background tint based on row state. Completed > current > default.
+    /// The current-set tint is a low-alpha accent fill so the row is
+    /// unmistakable even when surrounded by similar rows (#411 bug 4).
+    private var rowBackground: Color {
+        if isCompleted { return Theme.accent.opacity(0.08) }
+        if isCurrentSet { return Theme.accent.opacity(0.12) }
+        return .clear
+    }
+
     init(
         setNumber: Int,
         workoutSet: WorkoutSet,
@@ -69,7 +83,8 @@ struct SetRowView: View {
         onAddDropSet: (() -> Void)? = nil,
         lateralityLabel: String? = nil,
         lastSet: WorkoutSet? = nil,
-        personalRecord: WorkoutSet? = nil
+        personalRecord: WorkoutSet? = nil,
+        isCurrentSet: Bool = false
     ) {
         self.setNumber = setNumber
         self.workoutSet = workoutSet
@@ -82,6 +97,7 @@ struct SetRowView: View {
         self.lateralityLabel = lateralityLabel
         self.lastSet = lastSet
         self.personalRecord = personalRecord
+        self.isCurrentSet = isCurrentSet
 
         let w = workoutSet.weight
         let r = workoutSet.reps
@@ -101,8 +117,19 @@ struct SetRowView: View {
         }
         .padding(.leading, isDropSet ? Theme.Spacing.lg : 0)
         .frame(minHeight: isDropSet ? 44 : 52)
-        .background(isCompleted ? Theme.accent.opacity(0.08) : Color.clear)
+        .background(rowBackground)
         .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
+        .overlay(
+            // Accent border around the active set so the lifter can see which
+            // set they're on at a glance in list mode (#411 bug 4). Only
+            // applied to incomplete sets — once completed, the green tint
+            // already disambiguates it.
+            RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall)
+                .strokeBorder(
+                    isCurrentSet && !isCompleted ? Theme.accent : Color.clear,
+                    lineWidth: 1.5
+                )
+        )
         .animation(nil, value: workoutSet.completedAt)
         .onChange(of: workoutSet.weight) { _, newWeight in
             let formatted = newWeight > 0 ? newWeight.formattedWeight : ""

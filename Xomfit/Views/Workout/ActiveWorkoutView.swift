@@ -378,54 +378,33 @@ struct ActiveWorkoutView: View {
     // one row, which on iPhone 14/15/16/17 Pro models collided with the
     // Dynamic Island and clipped the duration timer.
 
-    /// Header bar. `.toolbar(.hidden, for: .navigationBar)` + NavigationStack
-    /// on iOS 26 zeroes the implicit top safe-area for descendants, so we
-    /// can't trust `safeAreaPadding` or the system inset to push content past
-    /// the Dynamic Island. Instead we read the active window's top safe-area
-    /// inset directly via UIKit and apply it as explicit padding (#402).
+    /// Header bar. The parent `ZStack` already respects the top safe-area
+    /// inset (only `Theme.background.ignoresSafeArea()` extends the BG to the
+    /// screen edge — content lives inside the inset). So the VStack content
+    /// already starts below the Dynamic Island; previous revisions stacked an
+    /// additional ~62pt manual inset on top, which doubled the offset and
+    /// floated the toolbar ~128pt down on iPhone 17 Pro (TestFlight 2.1.0 +
+    /// 2.1.1, #409 → #411).
     ///
-    /// List mode keeps the headerBar anchored tight to the Dynamic Island
-    /// (#409) — the previous +28pt breathing room only made sense in focus
-    /// mode where the rest of the screen has plenty of negative space. In
-    /// list mode the toolbar was floating ~halfway down the screen on
-    /// iPhone 17 Pro TestFlight 2.1.0, so list mode now uses a minimal
-    /// 4pt buffer below the inset. Focus mode keeps the wider buffer.
+    /// We now apply ONLY a small breathing buffer:
+    ///   - List mode: `Theme.Spacing.xs` (4pt) — anchor tight to the island.
+    ///   - Focus mode: `Theme.Spacing.lg` (24pt) — wider buffer keeps the
+    ///     gym-floor layout from feeling cramped under the island.
+    ///
+    /// The header background still extends past the safe area via
+    /// `.ignoresSafeArea(edges: .top)` so the status bar / island sit on the
+    /// surface color rather than the workout background.
     private var headerBar: some View {
-        let topClearance: CGFloat = max(Self.topSafeAreaInset, 62)
-        let extraBuffer: CGFloat = viewModel.focusMode ? 28 : Theme.Spacing.xs
+        let extraBuffer: CGFloat = viewModel.focusMode ? Theme.Spacing.lg : Theme.Spacing.xs
         return VStack(spacing: Theme.Spacing.xs) {
             headerTopRow
             headerSecondRow
         }
         .padding(.horizontal, Theme.Spacing.md)
-        // iPhone 17 Pro reports a 62pt top safe-area inset but
-        // `.toolbar(.hidden)` on iOS 26 NavigationStack swallows it when
-        // SwiftUI lays out the cover — so we use the larger of the
-        // UIKit-reported inset (with a 62pt floor) plus a mode-dependent
-        // breathing buffer. List mode: ~66pt total. Focus mode: ~90pt total.
-        .padding(.top, topClearance + extraBuffer)
+        .padding(.top, extraBuffer)
         .padding(.bottom, Theme.Spacing.sm)
         .frame(maxWidth: .infinity)
         .background(Theme.surface.ignoresSafeArea(edges: .top))
-    }
-
-    /// UIKit-derived top safe-area inset — used because `.toolbar(.hidden)` on
-    /// iOS 26 NavigationStack collapses SwiftUI's implicit top inset. Computed
-    /// per-access (not cached) so a cold launch where the scene's window isn't
-    /// fully laid out yet still gets the right value on the next render pass.
-    ///
-    /// Falls back to 59pt — iPhone Pro top safe-area inset — when no window
-    /// is available. That's enough to clear the Dynamic Island even on the
-    /// largest Pro Max device.
-    private static var topSafeAreaInset: CGFloat {
-        let scene = UIApplication.shared.connectedScenes
-            .compactMap { $0 as? UIWindowScene }
-            .first { $0.activationState == .foregroundActive }
-            ?? UIApplication.shared.connectedScenes
-                .compactMap { $0 as? UIWindowScene }
-                .first
-        let inset = scene?.windows.first?.safeAreaInsets.top ?? 0
-        return max(inset, 59)
     }
 
     /// Row 1 — corner controls only. Discard sits on the leading edge; Minimize
@@ -698,74 +677,35 @@ struct ActiveWorkoutView: View {
         return prefix + String(format: "%d:%02d", mins, secs)
     }
 
-    /// Header rest-timer chip. Two rendering modes (#409):
-    ///
-    /// - Informational (default): plain capsule, no hit target. Used in list
-    ///   mode and in focus mode while the fullscreen overlay is up.
-    /// - Tappable: solid accent capsule with a chevron-up affordance + 44pt
-    ///   hit target. Only renders when focus mode + the rest overlay is
-    ///   minimized — tap re-expands the fullscreen overlay.
-    @ViewBuilder
+    /// Header rest-timer chip. Single informational rendering across both
+    /// list and focus modes (#411 bug 3) — the previous tap-to-expand variant
+    /// (#409) created inconsistent visuals between list and focus mode and
+    /// duplicated the expand affordance already provided by the focus-mode
+    /// minimized banner. The chip is now a passive readout in both modes.
     private var restTimerChip: some View {
         let isOvertime = viewModel.restTimeRemaining <= 0
-        let canExpand = viewModel.focusMode && viewModel.isRestTimerMinimized
-
-        if canExpand {
-            Button {
-                Haptics.light()
-                withAnimation(.xomChill) {
-                    viewModel.isRestTimerMinimized = false
-                }
-            } label: {
-                HStack(spacing: 3) {
-                    Image(systemName: "timer")
-                        .font(Theme.fontCaption2)
-                    Text(headerRestString)
-                        .font(Theme.fontNumberMedium)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.7)
-                        .fixedSize(horizontal: true, vertical: false)
-                    Image(systemName: "chevron.up")
-                        .font(.caption2.weight(.bold))
-                }
-                // Black text on the accent / destructive capsule so the
-                // affordance reads as a primary CTA — matches the Finish pill
-                // styling.
-                .foregroundStyle(Theme.background)
-                .padding(.horizontal, 9)
-                .padding(.vertical, 4)
-                .frame(minHeight: 28)
-                .background(
-                    Capsule()
-                        .fill(isOvertime ? Theme.destructive : Theme.accent)
-                )
-                .contentShape(Capsule())
-            }
-            .buttonStyle(.plain)
-            .frame(minHeight: 44)
-            .transition(.scale.combined(with: .opacity))
-            .accessibilityLabel("Expand rest timer")
-            .accessibilityHint("Shows the full-screen countdown")
-        } else {
-            HStack(spacing: 3) {
-                Image(systemName: "timer")
-                    .font(Theme.fontCaption2)
-                Text(headerRestString)
-                    .font(Theme.fontNumberMedium)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
-                    .fixedSize(horizontal: true, vertical: false)
-            }
-            .foregroundStyle(isOvertime ? Theme.destructive : Theme.textPrimary)
-            .padding(.horizontal, 7)
-            .padding(.vertical, Theme.Spacing.tighter)
-            .background(
-                Capsule()
-                    .fill((isOvertime ? Theme.destructive : Theme.accent).opacity(0.15))
-            )
-            .transition(.scale.combined(with: .opacity))
-            .accessibilityLabel("Rest timer \(headerRestString) remaining")
+        return HStack(spacing: 3) {
+            Image(systemName: "timer")
+                .font(Theme.fontCaption2)
+            Text(headerRestString)
+                .font(Theme.fontNumberMedium)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                .fixedSize(horizontal: true, vertical: false)
         }
+        .foregroundStyle(isOvertime ? Theme.destructive : Theme.textPrimary)
+        .padding(.horizontal, 7)
+        .padding(.vertical, Theme.Spacing.tighter)
+        .background(
+            Capsule()
+                .fill((isOvertime ? Theme.destructive : Theme.accent).opacity(0.15))
+        )
+        .overlay(
+            Capsule()
+                .strokeBorder((isOvertime ? Theme.destructive : Theme.accent).opacity(0.35), lineWidth: 0.5)
+        )
+        .transition(.scale.combined(with: .opacity))
+        .accessibilityLabel("Rest timer \(headerRestString) remaining")
     }
 
     // MARK: - Rest Timer Config
@@ -1246,6 +1186,17 @@ private struct ExerciseCard: View {
                 .padding(.horizontal, Theme.Spacing.md)
             }
 
+            // Per-exercise current set index — first incomplete row, or the
+            // last row if all sets are complete. Drives the accent border +
+            // tint on the SetRowView so the lifter always knows where they
+            // are in list mode (#411 bug 4).
+            let currentSetIdx: Int? = {
+                if let firstIncomplete = exercise.sets.firstIndex(where: { $0.completedAt == Date.distantPast }) {
+                    return firstIncomplete
+                }
+                return exercise.sets.indices.last
+            }()
+
             // Sets — use stable element IDs to prevent state loss on expand/collapse
             ForEach(Array(exercise.sets.enumerated()), id: \.element.id) { setIdx, workoutSet in
                 SetRowView(
@@ -1281,7 +1232,8 @@ private struct ExerciseCard: View {
                     },
                     lateralityLabel: exercise.selectedLaterality != .bilateral ? (exercise.exercise.muscleGroups.contains(where: { [.quads, .hamstrings, .glutes, .calves].contains($0) }) ? "/leg" : "/arm") : nil,
                     lastSet: viewModel.lastSetForExercise(exercise.exercise.id),
-                    personalRecord: viewModel.personalRecordForExercise(exercise.exercise.id)
+                    personalRecord: viewModel.personalRecordForExercise(exercise.exercise.id),
+                    isCurrentSet: setIdx == currentSetIdx
                 )
             }
 

@@ -80,11 +80,13 @@ struct RestTimerView: View {
                             .foregroundStyle(Theme.textPrimary)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 7)
+                            .frame(minHeight: 44)
                             .background(Theme.surfaceElevated)
                             .clipShape(.capsule)
                             .overlay(
                                 Capsule().strokeBorder(Theme.hairline, lineWidth: 0.5)
                             )
+                            .contentShape(.capsule)
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Skip rest timer")
@@ -98,11 +100,35 @@ struct RestTimerView: View {
                             .foregroundStyle(Theme.accent)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 7)
+                            .frame(minHeight: 44)
                             .background(Theme.accentMuted)
                             .clipShape(.capsule)
+                            .contentShape(.capsule)
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Add 30 seconds to rest timer")
+
+                    // Lift — primary CTA. Same action as Skip (end rest +
+                    // advance to next set), but visually distinct as the
+                    // primary "I'm ready" affordance. Mirrors the focus-mode
+                    // minimized banner's Lift button (#411 bug 2).
+                    Button {
+                        Haptics.success()
+                        onSkip()
+                    } label: {
+                        Text("Lift")
+                            .font(.caption.weight(.black))
+                            .foregroundStyle(.black)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 7)
+                            .frame(minHeight: 44)
+                            .background(Theme.accent)
+                            .clipShape(.capsule)
+                            .contentShape(.capsule)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Lift — end rest and start next set")
+                    .accessibilityHint("Ends the rest timer immediately so you can begin the next set")
                 }
             }
 
