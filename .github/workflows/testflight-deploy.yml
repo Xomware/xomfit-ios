@@ -20,6 +20,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          # `git describe --tags` in the version-compute step needs the tag
+          # objects, which `fetch-depth: 0` alone doesn't pull on v4.
+          fetch-tags: true
 
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode.app
