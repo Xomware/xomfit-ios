@@ -826,8 +826,13 @@ struct ActiveWorkoutView: View {
         return "\(soundtrackPillLabel), \(countSuffix)"
     }
 
+    /// Total tracks visible on the pill — includes anything restored from a
+    /// pre-quit session (#411 follow-up) so the user can see the soundtrack
+    /// is still being recorded across re-launches.
     private var totalCapturedCount: Int {
-        spotifyCapture.capturedCount + appleMusicCapture.capturedCount
+        spotifyCapture.capturedCount
+            + appleMusicCapture.capturedCount
+            + viewModel.persistedCapturedTracks.count
     }
 
     /// Popover content surfacing per-source counts + last captured track so the user can

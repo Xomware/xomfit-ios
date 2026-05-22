@@ -249,6 +249,13 @@ extension Workout {
         let now = Date()
         let day: TimeInterval = 86_400
 
+        // Bypass-mode fixture tracks (#411 follow-up). Seeded onto the first
+        // mock workout so the workout-detail soundtrack edit UI has tracks
+        // to render under bypass — used by the agent screenshot harness.
+        let bypassTrack1 = UUID(uuidString: "00000000-0000-0000-0000-00000000B1A1") ?? UUID()
+        let bypassTrack2 = UUID(uuidString: "00000000-0000-0000-0000-00000000B1A2") ?? UUID()
+        let bypassTrack3 = UUID(uuidString: "00000000-0000-0000-0000-00000000B1A3") ?? UUID()
+
         return [
             Workout(
                 id: "mock-workout-1",
@@ -268,7 +275,35 @@ extension Workout {
                 ],
                 startTime: now.addingTimeInterval(-3_600),
                 endTime: now.addingTimeInterval(-300),
-                notes: "Solid push session"
+                notes: "Solid push session",
+                tracks: [
+                    WorkoutTrack(
+                        id: bypassTrack1,
+                        title: "Power",
+                        artist: "Kanye West",
+                        capturedAt: now.addingTimeInterval(-3_300),
+                        sourceApp: "Spotify",
+                        url: "https://open.spotify.com/track/2gZUPNdnz5Y45eiGxpHGSc"
+                    ),
+                    WorkoutTrack(
+                        id: bypassTrack2,
+                        title: "Till I Collapse",
+                        artist: "Eminem",
+                        capturedAt: now.addingTimeInterval(-2_700),
+                        sourceApp: "Apple Music",
+                        url: nil
+                    ),
+                    WorkoutTrack(
+                        id: bypassTrack3,
+                        title: "Stronger",
+                        artist: "Kanye West",
+                        capturedAt: now.addingTimeInterval(-1_800),
+                        sourceApp: "SoundCloud",
+                        url: "https://soundcloud.com/kanyewest/stronger"
+                    )
+                ],
+                featuredTrackId: bypassTrack1.uuidString,
+                shareFullSoundtrack: true
             ),
             Workout(
                 id: "mock-workout-2",

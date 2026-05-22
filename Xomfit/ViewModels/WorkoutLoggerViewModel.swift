@@ -33,6 +33,14 @@ final class WorkoutLoggerViewModel {
     /// the merged snapshot of (Apple Music + Spotify + manual).
     var removedTrackIDs: Set<UUID> = []
 
+    /// Captured tracks restored from a force-quit + relaunch. Lives separately
+    /// from the per-service in-memory caches (Apple Music / Spotify /
+    /// SoundCloud) because those reset on `startCapture()` and we don't want
+    /// to lose the songs that played BEFORE the quit. Merged into
+    /// `curatedTracksSnapshot` so the finish sheet and feed card both see
+    /// the full pre-quit + post-quit soundtrack.
+    var persistedCapturedTracks: [WorkoutTrack] = []
+
     /// Featured track id (the soundtrack pick surfaced on the feed card). Set
     /// by tapping the star icon on a soundtrack row in the finish sheet (#410).
     /// At most one track is featured at a time; tapping the same row clears it.
@@ -230,6 +238,9 @@ final class WorkoutLoggerViewModel {
         circuitCompletedRounds = [:]
         manualTracks = []
         removedTrackIDs = []
+        persistedCapturedTracks = []
+        featuredTrackId = nil
+        shareFullSoundtrack = true
         skipRestTimer()
         startLiveActivity()
 
@@ -285,6 +296,9 @@ final class WorkoutLoggerViewModel {
         rating = 0
         manualTracks = []
         removedTrackIDs = []
+        persistedCapturedTracks = []
+        featuredTrackId = nil
+        shareFullSoundtrack = true
         kind = .setsReps
         durationGoalMinutes = nil
         roundsGoal = nil
@@ -1051,16 +1065,22 @@ final class WorkoutLoggerViewModel {
 
     // MARK: - Soundtrack curation (#387)
 
-    /// Merged snapshot of (Apple Music + Spotify + SoundCloud + manual) tracks,
-    /// minus anything the user removed in the finish sheet. Sorted by capture time
-    /// so the order reflects play order across sources.
+    /// Merged snapshot of (Apple Music + Spotify + SoundCloud + manual +
+    /// pre-quit persisted) tracks, minus anything the user removed in the
+    /// finish sheet. Sorted by capture time so the order reflects play order
+    /// across sources. Deduped by track id so a song that was captured
+    /// pre-quit AND is still playing post-restore only appears once.
     var curatedTracksSnapshot: [WorkoutTrack] {
         let apple = NowPlayingService.shared.capturedTracksSnapshot()
         let spotify = SpotifyNowPlayingService.shared.capturedTracksSnapshot()
         let soundCloud = SoundCloudNowPlayingService.shared.capturedTracksSnapshot()
-        let merged = (apple + spotify + soundCloud + manualTracks)
-            .filter { !removedTrackIDs.contains($0.id) }
-        return merged.sorted { $0.capturedAt < $1.capturedAt }
+        let raw = apple + spotify + soundCloud + manualTracks + persistedCapturedTracks
+        var seen = Set<UUID>()
+        let deduped = raw.filter { track in
+            guard !removedTrackIDs.contains(track.id) else { return false }
+            return seen.insert(track.id).inserted
+        }
+        return deduped.sorted { $0.capturedAt < $1.capturedAt }
     }
 
     /// Append a manually-entered track. Trims whitespace, drops empty titles.
@@ -1347,6 +1367,10 @@ final class WorkoutLoggerViewModel {
     /// Snapshot of the in-progress workout. Restricted to JSON-friendly types so
     /// the whole struct round-trips through `JSONEncoder`/`JSONDecoder`. New
     /// fields must default to backwards-compatible values.
+    ///
+    /// Custom `init(from:)` so additive fields decode `nil`/default values
+    /// against older saved blobs without forcing a `schemaVersion` bump (which
+    /// would drop every in-flight session on upgrade).
     struct PersistedSession: Codable {
         var schemaVersion: Int
         var workoutId: String
@@ -1364,6 +1388,97 @@ final class WorkoutLoggerViewModel {
         var location: String
         var rating: Int
         var activeUserId: String
+
+        // MARK: - Soundtrack persistence (#411 follow-up)
+        //
+        // Captured + manual + featured + share state must round-trip across a
+        // force-quit. Captured tracks are snapshotted from the per-source
+        // services at save time because those services reset on `startCapture`
+        // — losing the songs that played BEFORE the quit otherwise.
+
+        var capturedTracks: [WorkoutTrack]
+        var manualTracks: [WorkoutTrack]
+        var removedTrackIDs: [UUID]
+        var featuredTrackId: UUID?
+        var shareFullSoundtrack: Bool
+
+        enum CodingKeys: String, CodingKey {
+            case schemaVersion, workoutId, workoutName, exercises, startTime, savedAt
+            case totalPausedDuration, defaultRestDuration, focusExerciseIndex, focusSetIndex
+            case kind, durationGoalMinutes, roundsGoal, location, rating, activeUserId
+            case capturedTracks, manualTracks, removedTrackIDs, featuredTrackId, shareFullSoundtrack
+        }
+
+        init(
+            schemaVersion: Int,
+            workoutId: String,
+            workoutName: String,
+            exercises: [WorkoutExercise],
+            startTime: Date,
+            savedAt: Date,
+            totalPausedDuration: TimeInterval,
+            defaultRestDuration: Double,
+            focusExerciseIndex: Int,
+            focusSetIndex: Int,
+            kind: WorkoutKind,
+            durationGoalMinutes: Int?,
+            roundsGoal: Int?,
+            location: String,
+            rating: Int,
+            activeUserId: String,
+            capturedTracks: [WorkoutTrack] = [],
+            manualTracks: [WorkoutTrack] = [],
+            removedTrackIDs: [UUID] = [],
+            featuredTrackId: UUID? = nil,
+            shareFullSoundtrack: Bool = true
+        ) {
+            self.schemaVersion = schemaVersion
+            self.workoutId = workoutId
+            self.workoutName = workoutName
+            self.exercises = exercises
+            self.startTime = startTime
+            self.savedAt = savedAt
+            self.totalPausedDuration = totalPausedDuration
+            self.defaultRestDuration = defaultRestDuration
+            self.focusExerciseIndex = focusExerciseIndex
+            self.focusSetIndex = focusSetIndex
+            self.kind = kind
+            self.durationGoalMinutes = durationGoalMinutes
+            self.roundsGoal = roundsGoal
+            self.location = location
+            self.rating = rating
+            self.activeUserId = activeUserId
+            self.capturedTracks = capturedTracks
+            self.manualTracks = manualTracks
+            self.removedTrackIDs = removedTrackIDs
+            self.featuredTrackId = featuredTrackId
+            self.shareFullSoundtrack = shareFullSoundtrack
+        }
+
+        init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            schemaVersion = try c.decode(Int.self, forKey: .schemaVersion)
+            workoutId = try c.decode(String.self, forKey: .workoutId)
+            workoutName = try c.decode(String.self, forKey: .workoutName)
+            exercises = try c.decode([WorkoutExercise].self, forKey: .exercises)
+            startTime = try c.decode(Date.self, forKey: .startTime)
+            savedAt = try c.decode(Date.self, forKey: .savedAt)
+            totalPausedDuration = try c.decode(TimeInterval.self, forKey: .totalPausedDuration)
+            defaultRestDuration = try c.decode(Double.self, forKey: .defaultRestDuration)
+            focusExerciseIndex = try c.decode(Int.self, forKey: .focusExerciseIndex)
+            focusSetIndex = try c.decode(Int.self, forKey: .focusSetIndex)
+            kind = try c.decode(WorkoutKind.self, forKey: .kind)
+            durationGoalMinutes = try c.decodeIfPresent(Int.self, forKey: .durationGoalMinutes)
+            roundsGoal = try c.decodeIfPresent(Int.self, forKey: .roundsGoal)
+            location = try c.decode(String.self, forKey: .location)
+            rating = try c.decode(Int.self, forKey: .rating)
+            activeUserId = try c.decode(String.self, forKey: .activeUserId)
+            capturedTracks = try c.decodeIfPresent([WorkoutTrack].self, forKey: .capturedTracks) ?? []
+            manualTracks = try c.decodeIfPresent([WorkoutTrack].self, forKey: .manualTracks) ?? []
+            removedTrackIDs = try c.decodeIfPresent([UUID].self, forKey: .removedTrackIDs) ?? []
+            featuredTrackId = try c.decodeIfPresent(UUID.self, forKey: .featuredTrackId)
+            shareFullSoundtrack = try c.decodeIfPresent(Bool.self, forKey: .shareFullSoundtrack) ?? true
+        }
     }
 
     /// Serialize the current state. No-op when `isActive == false` so a fresh
@@ -1375,6 +1490,20 @@ final class WorkoutLoggerViewModel {
             guard elapsed >= Self.persistMinInterval else { return }
         }
         lastPersistAt = Date()
+
+        // Snapshot captured tracks from every source so they survive a force-quit
+        // (#411 follow-up). The per-source services reset their in-memory caches
+        // on `startCapture()`, which fires again on `restoreActiveSession`, so
+        // anything captured pre-quit would be lost without this snapshot.
+        let appleSnapshot = NowPlayingService.shared.capturedTracksSnapshot()
+        let spotifySnapshot = SpotifyNowPlayingService.shared.capturedTracksSnapshot()
+        let soundCloudSnapshot = SoundCloudNowPlayingService.shared.capturedTracksSnapshot()
+        // Merge per-source snapshots with anything we restored from the prior
+        // saved blob so back-to-back saves don't drop pre-quit captures. Dedupe
+        // by id.
+        let allCaptured = appleSnapshot + spotifySnapshot + soundCloudSnapshot + persistedCapturedTracks
+        var seenCaptureIds = Set<UUID>()
+        let mergedCaptured = allCaptured.filter { seenCaptureIds.insert($0.id).inserted }
 
         let snapshot = PersistedSession(
             schemaVersion: Self.savedSessionSchemaVersion,
@@ -1392,7 +1521,12 @@ final class WorkoutLoggerViewModel {
             roundsGoal: roundsGoal,
             location: location,
             rating: rating,
-            activeUserId: activeUserId
+            activeUserId: activeUserId,
+            capturedTracks: mergedCaptured,
+            manualTracks: manualTracks,
+            removedTrackIDs: Array(removedTrackIDs),
+            featuredTrackId: featuredTrackId,
+            shareFullSoundtrack: shareFullSoundtrack
         )
 
         do {
@@ -1479,8 +1613,17 @@ final class WorkoutLoggerViewModel {
         restDuration = 0
         showExerciseTransition = false
         showPRCelebration = false
-        manualTracks = []
-        removedTrackIDs = []
+
+        // Restore soundtrack state (#411 follow-up). Captured tracks from
+        // BEFORE the quit are pushed onto `persistedCapturedTracks` so
+        // `curatedTracksSnapshot` continues to see them after the per-source
+        // services reset on the fresh `startCapture()` below. Manual / removed
+        // / featured / share-all all round-trip directly.
+        persistedCapturedTracks = snapshot.capturedTracks
+        manualTracks = snapshot.manualTracks
+        removedTrackIDs = Set(snapshot.removedTrackIDs)
+        featuredTrackId = snapshot.featuredTrackId
+        shareFullSoundtrack = snapshot.shareFullSoundtrack
 
         isActive = true
         isPresented = true
@@ -1605,8 +1748,15 @@ final class WorkoutLoggerViewModel {
         let appleMusicTracks = NowPlayingService.shared.stopCapture()
         let spotifyTracks = SpotifyNowPlayingService.shared.stopCapture()
         let soundCloudTracks = SoundCloudNowPlayingService.shared.stopCapture()
-        let capturedTracks = (appleMusicTracks + spotifyTracks + soundCloudTracks + manualTracks)
-            .filter { !removedTrackIDs.contains($0.id) }
+        // Merge with `persistedCapturedTracks` so songs captured BEFORE a
+        // force-quit + restore still attach to the saved workout (#411 follow-up).
+        let allCaptured = appleMusicTracks + spotifyTracks + soundCloudTracks + manualTracks + persistedCapturedTracks
+        var seenFinishIds = Set<UUID>()
+        let capturedTracks = allCaptured
+            .filter { track in
+                guard !removedTrackIDs.contains(track.id) else { return false }
+                return seenFinishIds.insert(track.id).inserted
+            }
             .sorted { $0.capturedAt < $1.capturedAt }
 
         // Featured soundtrack pick (#410). Only carry through when the chosen

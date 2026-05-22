@@ -48,8 +48,20 @@ struct WorkoutDetailView: View {
     /// `TemplateDetailView` so info is reachable from every workout surface.
     @State private var exerciseForDetail: Exercise?
 
+    /// Inline soundtrack-edit VM (#411 follow-up). Lazily seeded on first
+    /// appearance from `workout` so star/share toggles update Supabase + the
+    /// local cache + the feed item without going through full edit mode.
+    /// Only used when the viewing user authored the workout.
+    @State private var soundtrackEditVM: WorkoutSoundtrackEditViewModel?
+
     private var userId: String {
         authService.currentUser?.id.uuidString.lowercased() ?? ""
+    }
+
+    /// True when the signed-in user is the workout's author. Drives the
+    /// editable star + share-toggle controls vs. the read-only view.
+    private var isOwnWorkout: Bool {
+        !userId.isEmpty && workout.userId.lowercased() == userId
     }
 
     var body: some View {
@@ -193,6 +205,14 @@ struct WorkoutDetailView: View {
         }
         .sheet(item: $exerciseForDetail) { exercise in
             ExerciseDetailSheet(exercise: exercise)
+        }
+        .task {
+            // Lazy-seed the soundtrack edit VM (#411 follow-up). We only need
+            // it when the viewer is the author; the read-only branch reads
+            // values straight off `workout`.
+            if isOwnWorkout && soundtrackEditVM == nil {
+                soundtrackEditVM = WorkoutSoundtrackEditViewModel(workout: workout)
+            }
         }
     }
 
@@ -425,10 +445,20 @@ struct WorkoutDetailView: View {
 
     // MARK: - Soundtrack
 
-    /// Apple Music-only Now Playing capture (#302). See `NowPlayingService` for the iOS
-    /// platform restriction explaining why Spotify / Xomify won't ever appear here.
+    /// Soundtrack section. Behavior diverges by whether the viewing user is the
+    /// author of this workout.
+    ///
+    /// - Owner: editable. Star a track to feature it, toggle "Share full
+    ///   soundtrack" so non-friends only see the featured pick. Edits push
+    ///   through `WorkoutService.setFeaturedTrack` / `setShareFullSoundtrack`
+    ///   (tolerant of missing Supabase columns until the migration ships).
+    /// - Non-owner: read-only. When `shareFullSoundtrack` is false and a
+    ///   featured pick exists, only the featured track is shown with a
+    ///   "Soundtrack hidden" caption. Otherwise the full list shows with
+    ///   per-row deep-link buttons.
     @ViewBuilder
     private var soundtrackSection: some View {
+        let visibleTracks = visibleSoundtrackTracks
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
             HStack(spacing: 6) {
                 Image(systemName: "music.note")
@@ -438,8 +468,8 @@ struct WorkoutDetailView: View {
                     .font(.subheadline.weight(.bold))
                     .foregroundStyle(Theme.textPrimary)
                 Spacer()
-                if !workout.tracks.isEmpty {
-                    Text("\(workout.tracks.count)")
+                if !visibleTracks.isEmpty {
+                    Text("\(visibleTracks.count)")
                         .font(.caption.weight(.semibold).monospaced())
                         .foregroundStyle(Theme.textSecondary)
                 }
@@ -451,15 +481,51 @@ struct WorkoutDetailView: View {
                     .foregroundStyle(Theme.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
                     .accessibilityLabel("No tracks captured during this workout. Connect Spotify in Settings to capture from Spotify too.")
+            } else if visibleTracks.isEmpty {
+                // Edge case: not-author + share-off + no featured. Nothing to show.
+                Text("Soundtrack hidden")
+                    .font(Theme.fontSmall)
+                    .foregroundStyle(Theme.textTertiary)
             } else {
                 VStack(spacing: 0) {
-                    ForEach(Array(workout.tracks.enumerated()), id: \.element.id) { index, track in
+                    ForEach(Array(visibleTracks.enumerated()), id: \.element.id) { index, track in
                         soundtrackRow(track: track)
-                        if index < workout.tracks.count - 1 {
+                        if index < visibleTracks.count - 1 {
                             Divider()
                                 .background(Theme.textSecondary.opacity(0.15))
                         }
                     }
+                }
+
+                // Owner-only: share-all toggle. Lives in the captured branch
+                // because there's nothing to share when no tracks exist.
+                if isOwnWorkout, let editVM = soundtrackEditVM {
+                    Toggle(isOn: Binding(
+                        get: { editVM.shareFullSoundtrack },
+                        set: { editVM.setShareFullSoundtrack($0) }
+                    )) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Share full soundtrack")
+                                .font(.subheadline.weight(.medium))
+                                .foregroundStyle(Theme.textPrimary)
+                            Text(editVM.shareFullSoundtrack
+                                 ? "Friends will see every track on this workout."
+                                 : "Only the featured track will show on your feed.")
+                                .font(Theme.fontCaption)
+                                .foregroundStyle(Theme.textSecondary)
+                        }
+                    }
+                    .tint(Theme.accent)
+                    .accessibilityHint("Toggle whether the full soundtrack is shared with friends or only the featured track.")
+                    .padding(.top, Theme.Spacing.xs)
+                }
+
+                // Non-owner footer mirroring FeedDetailView (#410).
+                if !isOwnWorkout && !workout.shareFullSoundtrack && workout.featuredTrackId != nil {
+                    Text("Soundtrack hidden — only the featured track was shared.")
+                        .font(Theme.fontSmall)
+                        .foregroundStyle(Theme.textTertiary)
+                        .padding(.top, Theme.Spacing.xs)
                 }
             }
         }
@@ -468,31 +534,98 @@ struct WorkoutDetailView: View {
         .clipShape(.rect(cornerRadius: Theme.cornerRadius))
     }
 
+    /// Slice of `workout.tracks` the viewer is allowed to see. Mirrors the
+    /// `FeedDetailView.visibleTracks(in:)` rule so the detail view and the
+    /// expanded feed view stay consistent.
+    private var visibleSoundtrackTracks: [WorkoutTrack] {
+        if isOwnWorkout || workout.shareFullSoundtrack {
+            return workout.tracks
+        }
+        if let featured = workout.featuredTrack {
+            return [featured]
+        }
+        return []
+    }
+
+    @ViewBuilder
     private func soundtrackRow(track: WorkoutTrack) -> some View {
+        let featuredId = soundtrackEditVM?.featuredTrackId ?? workout.featuredTrackId
+        let isFeatured = featuredId == track.id.uuidString
+        let deepLinkURL = WorkoutTrackDeepLink.url(for: track)
+
         HStack(spacing: Theme.Spacing.sm) {
-            Image(systemName: "music.note")
-                .font(Theme.fontCaption)
-                .foregroundStyle(Theme.textSecondary)
-                .frame(width: 20)
+            // LEFT: play preview button. Always visible — owner and non-owner
+            // can scrub a 30s preview without leaving the screen.
+            DetailSoundtrackPlayButton(track: track)
 
             VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
                 Text(track.title)
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(Theme.textPrimary)
                     .lineLimit(1)
-                if let artist = track.artist, !artist.isEmpty {
-                    Text(artist)
+                HStack(spacing: 6) {
+                    if let artist = track.artist, !artist.isEmpty {
+                        Text(artist)
+                            .font(Theme.fontSmall)
+                            .foregroundStyle(Theme.textSecondary)
+                            .lineLimit(1)
+                        Text("\u{2022}")
+                            .font(.caption2.weight(.bold))
+                            .foregroundStyle(Theme.textTertiary)
+                            .accessibilityHidden(true)
+                    }
+                    Text(track.sourceApp)
                         .font(Theme.fontSmall)
-                        .foregroundStyle(Theme.textSecondary)
-                        .lineLimit(1)
+                        .foregroundStyle(Theme.textTertiary)
                 }
             }
 
             Spacer()
+
+            // RIGHT: featured-star (owner only) + deep-link (everyone).
+            if isOwnWorkout, let editVM = soundtrackEditVM {
+                Button {
+                    Haptics.selection()
+                    editVM.toggleFeatured(trackId: track.id.uuidString)
+                } label: {
+                    Image(systemName: isFeatured ? "star.fill" : "star")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(isFeatured ? Theme.accent : Theme.textSecondary)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(isFeatured
+                    ? "Unset \(track.title) as featured track"
+                    : "Set \(track.title) as featured track")
+                .accessibilityHint("Featured tracks show prominently on your feed card.")
+            } else if isFeatured {
+                Image(systemName: "star.fill")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Theme.accent)
+                    .frame(width: 28, height: 28)
+                    .accessibilityHidden(true)
+            }
+
+            if let url = deepLinkURL {
+                Button {
+                    Haptics.light()
+                    UIApplication.shared.open(url)
+                } label: {
+                    Image(systemName: "arrow.up.right.square")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(Theme.accent)
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(WorkoutTrackDeepLink.label(for: track.sourceApp))
+                .accessibilityHint("Opens this track in \(track.sourceApp).")
+            }
         }
         .padding(.vertical, Theme.Spacing.sm)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(accessibilityLabel(for: track))
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(accessibilityLabel(for: track) + (isFeatured ? ", featured" : ""))
     }
 
     private func accessibilityLabel(for track: WorkoutTrack) -> String {
@@ -679,6 +812,64 @@ struct WorkoutDetailView: View {
 private struct ShareImageWrapper: Identifiable {
     let id = UUID()
     let image: UIImage
+}
+
+// MARK: - Detail Soundtrack Play Button (#411 follow-up)
+
+/// 28pt play/pause button wired to `AnthemPlaybackService` so the user can
+/// preview a captured track from the workout-detail soundtrack list without
+/// leaving the screen. Mirrors the visuals of `AnthemRow` so the rest of the
+/// soundtrack surface reads as a sibling family of controls.
+private struct DetailSoundtrackPlayButton: View {
+    let track: WorkoutTrack
+
+    /// Live mirror of the playback singleton so `@Observable` updates flip
+    /// the play/pause icon on this button. Plain `let` matches `AnthemRow` —
+    /// SwiftUI observes via type tracking on `@Observable`.
+    private let playback = AnthemPlaybackService.shared
+
+    private var asAnthem: ProfileAnthem {
+        ProfileAnthem(
+            title: track.title,
+            artist: track.artist ?? "",
+            previewURL: nil,
+            artworkURL: nil,
+            appleMusicId: nil
+        )
+    }
+
+    private var isPlaying: Bool { playback.currentlyPlayingID == asAnthem.id }
+    private var isLoading: Bool { playback.isLoading(asAnthem) }
+
+    var body: some View {
+        Button {
+            Haptics.light()
+            Task { await playback.toggle(asAnthem) }
+        } label: {
+            ZStack {
+                Circle()
+                    .fill(Theme.accent)
+                    .frame(width: 28, height: 28)
+
+                if isLoading {
+                    ProgressView()
+                        .progressViewStyle(.circular)
+                        .tint(Theme.background)
+                        .scaleEffect(0.7)
+                } else {
+                    Image(systemName: isPlaying ? "pause.fill" : "play.fill")
+                        .font(.system(size: 12, weight: .black))
+                        .foregroundStyle(Theme.background)
+                        .offset(x: isPlaying ? 0 : 1)
+                }
+            }
+            .frame(minWidth: 44, minHeight: 44)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(isPlaying ? "Pause preview" : "Play preview of \(track.title)")
+        .accessibilityHint("Plays a 30 second preview inline.")
+    }
 }
 
 // MARK: - Edit Mode Body (#365)

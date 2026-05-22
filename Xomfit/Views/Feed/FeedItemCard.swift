@@ -47,7 +47,8 @@ struct FeedItemCard: View {
                         title: featuredTitle,
                         artist: activity.featuredTrackArtist ?? "",
                         sourceApp: activity.featuredTrackSource ?? "",
-                        deepLinkURL: featuredDeepLinkURL(activity: activity)
+                        deepLinkURL: featuredDeepLinkURL(activity: activity),
+                        autoPlay: shouldAutoPlay(featuredTitle: featuredTitle)
                     )
                 }
 
@@ -320,6 +321,21 @@ struct FeedItemCard: View {
         return WorkoutTrackDeepLink.url(for: synthesized)
     }
 
+    /// Debug auto-play hook used by the screenshot harness (#411 follow-up).
+    /// Enabled only when both `XOMFIT_AUTH_BYPASS=1` and
+    /// `XOMFIT_AUTO_PLAY_FEATURED=1` are set, and only for the bypass mock
+    /// "Power" featured track so we don't disturb real users' decks.
+    private func shouldAutoPlay(featuredTitle: String) -> Bool {
+        #if DEBUG
+        let env = ProcessInfo.processInfo.environment
+        return env["XOMFIT_AUTH_BYPASS"] == "1"
+            && env["XOMFIT_AUTO_PLAY_FEATURED"] == "1"
+            && featuredTitle == "Power"
+        #else
+        return false
+        #endif
+    }
+
     // MARK: - Share
 
     private func shareFeedItem() {
@@ -547,28 +563,53 @@ private struct StreakActivityContent: View {
     }
 }
 
-// MARK: - Featured Soundtrack Row (#410)
+// MARK: - Featured Soundtrack Row (#410 / soundtrack-inline-playback)
 
 /// Compact "featured soundtrack" row used on each workout feed card. Visual
 /// matches `AnthemRow` (#403) so the two stacks read as siblings — the anthem
 /// is the poster's profile pick, the featured soundtrack is from this specific
-/// workout. Tapping the trailing button deep-links into the source service.
+/// workout.
+///
+/// Tap the LEFT button to play the 30s preview inline via
+/// `AnthemPlaybackService` (resolves via iTunes Search when no `previewURL`).
+/// The RIGHT button deep-links into the source service (Spotify / Apple Music
+/// / SoundCloud) so the user can keep listening to the full track.
 private struct FeaturedSoundtrackRow: View {
     let title: String
     let artist: String
     let sourceApp: String
     let deepLinkURL: URL?
+    /// Debug-only — when true, triggers `playback.play(...)` on first appear
+    /// so the screenshot harness can capture the mid-playback state without
+    /// driving a tap on the simulator. Always `false` in Release.
+    var autoPlay: Bool = false
+
+    /// Live mirror of the playback service so `@Observable` changes flip the
+    /// play/pause icon on this row. Calls still go through `.shared`. Plain
+    /// `let` matches `AnthemRow` — SwiftUI observes via type tracking so
+    /// `@State` would actually drop the observation (the wrapper boxes the
+    /// reference and SwiftUI only watches the wrapper, not the underlying
+    /// object's properties).
+    private let playback = AnthemPlaybackService.shared
+
+    /// `ProfileAnthem`-shaped wrapper around the captured track so we can hand
+    /// it to `AnthemPlaybackService` (which is keyed on title/artist for the
+    /// iTunes Search resolver).
+    private var asAnthem: ProfileAnthem {
+        ProfileAnthem(title: title, artist: artist, previewURL: nil, artworkURL: nil, appleMusicId: nil)
+    }
+
+    /// Treat "playing" as `currentlyPlayingID == this anthem`. We don't sniff
+    /// AVPlayer's `timeControlStatus` here because the service sets that id
+    /// AFTER `player.play()`, so by the time SwiftUI reads it the player
+    /// might still be transitioning out of `.waitingToPlayAtSpecifiedRate`.
+    /// The service's `stop()` nils the id, so this stays accurate.
+    private var isPlaying: Bool { playback.currentlyPlayingID == asAnthem.id }
+    private var isLoading: Bool { playback.isLoading(asAnthem) }
 
     var body: some View {
         HStack(spacing: Theme.Spacing.sm) {
-            ZStack {
-                Circle()
-                    .fill(Theme.accent)
-                    .frame(width: 28, height: 28)
-                Image(systemName: "star.fill")
-                    .font(.system(size: 12, weight: .black))
-                    .foregroundStyle(Theme.background)
-            }
+            playButton
 
             VStack(alignment: .leading, spacing: 1) {
                 Text(title)
@@ -595,6 +636,14 @@ private struct FeaturedSoundtrackRow: View {
             }
 
             Spacer(minLength: 0)
+
+            // Featured marker so the row visibly reads as a starred pick even
+            // mid-playback. Hidden from VoiceOver because the row label below
+            // already says "Featured track".
+            Image(systemName: "star.fill")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(Theme.accent)
+                .accessibilityHidden(true)
 
             if let url = deepLinkURL {
                 Button {
@@ -626,5 +675,54 @@ private struct FeaturedSoundtrackRow: View {
         )
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Featured track: \(title)\(artist.isEmpty ? "" : ", by \(artist)")")
+        #if DEBUG
+        .task {
+            // Agent screenshot helper (#411 follow-up). Auto-kick playback
+            // when the harness flag is set so a mid-playback screenshot can
+            // be captured from a cold-launch script.
+            if autoPlay && !playback.isPlaying(asAnthem) {
+                try? await Task.sleep(for: .milliseconds(800))
+                await playback.play(asAnthem)
+            }
+        }
+        #endif
+    }
+
+    /// Inline play/pause button. Toggles `AnthemPlaybackService.shared` so only
+    /// one preview plays at a time across the app.
+    private var playButton: some View {
+        Button {
+            Haptics.light()
+            Task { await playback.toggle(asAnthem) }
+        } label: {
+            ZStack {
+                Circle()
+                    .fill(Theme.accent)
+                    .frame(width: 28, height: 28)
+
+                if isLoading {
+                    ProgressView()
+                        .progressViewStyle(.circular)
+                        .tint(Theme.background)
+                        .scaleEffect(0.7)
+                } else {
+                    Image(systemName: isPlaying ? "pause.fill" : "play.fill")
+                        .font(.system(size: 12, weight: .black))
+                        .foregroundStyle(Theme.background)
+                        // Optical centering — SF Symbol's play glyph sits
+                        // slightly left of the geometric center.
+                        .offset(x: isPlaying ? 0 : 1)
+                }
+            }
+            // 44pt minimum touch target.
+            .frame(minWidth: 44, minHeight: 44)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        // Stop tap from bubbling to the parent card (FeedItemCard wraps the
+        // whole row in a tap-to-open-detail gesture).
+        .simultaneousGesture(TapGesture().onEnded { })
+        .accessibilityLabel(isPlaying ? "Pause featured track preview" : "Play featured track preview")
+        .accessibilityHint("Plays a 30 second preview of \(title) inline.")
     }
 }
