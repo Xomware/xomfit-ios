@@ -22,6 +22,11 @@ struct XomFitApp: App {
     /// screenshot it without navigating the drawer (#371).
     #if DEBUG
     @State private var showCoachSheet = false
+
+    /// DEBUG-only: id of a workout to surface in a WorkoutDetailView modal
+    /// for the agent screenshot harness (#411 follow-up). Set via the
+    /// `XOMFIT_OPEN_WORKOUT_DETAIL=<id>` env var; cleared when dismissed.
+    @State private var debugWorkoutDetailId: String? = nil
     #endif
 
     /// Force-quit recovery (#399). When the user (or the OS) terminates the app
@@ -150,6 +155,26 @@ struct XomFitApp: App {
                                 try? await Task.sleep(for: .milliseconds(500))
                                 seedDebugActiveWorkout()
                             }
+
+                            // Agent screenshot helper (#411 follow-up): open
+                            // a specific workout's detail view from a cold
+                            // launch by setting `XOMFIT_OPEN_WORKOUT_DETAIL=<id>`.
+                            // Combine with XOMFIT_AUTH_BYPASS=1 to inspect the
+                            // soundtrack edit / read-only UI end-to-end.
+                            if let workoutId = ProcessInfo.processInfo.environment["XOMFIT_OPEN_WORKOUT_DETAIL"],
+                               !workoutId.isEmpty {
+                                try? await Task.sleep(for: .milliseconds(500))
+                                debugWorkoutDetailId = workoutId
+                            }
+                        }
+                        .fullScreenCover(item: Binding(
+                            get: { debugWorkoutDetailId.map { DebugWorkoutDetailRoute(id: $0) } },
+                            set: { debugWorkoutDetailId = $0?.id }
+                        )) { route in
+                            DebugWorkoutDetailHost(workoutId: route.id)
+                                .environment(authService)
+                                .environment(workoutSession)
+                                .preferredColorScheme(.dark)
                         }
                         #endif
                 } else {
@@ -405,3 +430,54 @@ private struct WorkoutRestoreInfo: Identifiable {
     let workoutName: String
     let startedRelative: String
 }
+
+#if DEBUG
+// MARK: - Debug Workout Detail Host (#411 follow-up)
+
+/// `Identifiable` wrapper so `fullScreenCover(item:)` can drive presentation
+/// from the `XOMFIT_OPEN_WORKOUT_DETAIL=<id>` env var.
+private struct DebugWorkoutDetailRoute: Identifiable {
+    let id: String
+}
+
+/// Loads a workout from `WorkoutService` and pushes `WorkoutDetailView` inside
+/// a NavigationStack. Used only by the agent screenshot harness so the
+/// soundtrack edit UI can be inspected from a cold launch.
+private struct DebugWorkoutDetailHost: View {
+    let workoutId: String
+    @State private var workout: Workout?
+    @State private var didError = false
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Theme.background.ignoresSafeArea()
+                if let workout {
+                    WorkoutDetailView(workout: workout)
+                        .navigationBarBackButtonHidden(false)
+                } else if didError {
+                    Text("Workout not found")
+                        .foregroundStyle(Theme.textSecondary)
+                } else {
+                    ProgressView()
+                        .tint(Theme.accent)
+                }
+            }
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Close") { dismiss() }
+                }
+            }
+        }
+        .task {
+            let fetched = await WorkoutService.shared.fetchWorkout(id: workoutId)
+            if let fetched {
+                workout = fetched
+            } else {
+                didError = true
+            }
+        }
+    }
+}
+#endif

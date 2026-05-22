@@ -222,7 +222,9 @@ final class WorkoutDetailViewModel {
             notes: draft.notes,
             location: draft.location,
             rating: draft.rating,
-            tracks: draft.tracks
+            tracks: draft.tracks,
+            featuredTrackId: draft.featuredTrackId,
+            shareFullSoundtrack: draft.shareFullSoundtrack
         )
 
         _ = await WorkoutService.shared.updateWorkout(finalWorkout)

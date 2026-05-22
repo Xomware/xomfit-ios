@@ -267,9 +267,18 @@ final class WorkoutService {
         // #410 + #353 bypass — surface a mock workout with tracks + featured
         // pick so FeedDetailView's expanded soundtrack list + deep-link buttons
         // can be screenshot-verified from a cold launch.
-        if ProcessInfo.processInfo.environment["XOMFIT_AUTH_BYPASS"] == "1",
-           let mock = DebugFixtures.bypassWorkout(id: id) {
-            return mock
+        if ProcessInfo.processInfo.environment["XOMFIT_AUTH_BYPASS"] == "1" {
+            if let mock = DebugFixtures.bypassWorkout(id: id) {
+                return mock
+            }
+            // Fall back to the local cache for own-user mock workouts seeded
+            // via `seedDebugFixtures` (#411 follow-up). Lets the agent
+            // screenshot harness open `mock-workout-1` from a cold launch
+            // without hitting Supabase.
+            if let cached = loadAllFromCache().first(where: { $0.id == id }) {
+                return cached
+            }
+            return nil
         }
         #endif
 
@@ -353,6 +362,83 @@ final class WorkoutService {
             .sorted { $0.startTime > $1.startTime }
             .prefix(limit)
             .map { $0 }
+    }
+
+    // MARK: - Soundtrack edits (post-save) (#411 follow-up)
+
+    /// Update the featured-track pick on a previously-saved workout. Writes the
+    /// new value to the local cache immediately and pushes to Supabase
+    /// best-effort. Patches the matching feed item so the card refreshes.
+    ///
+    /// Tolerant of missing columns — the `workouts.featured_track_id` /
+    /// `workouts.share_full_soundtrack` Supabase columns may not exist yet, in
+    /// which case the remote update is logged and swallowed so the local cache
+    /// + feed item still reflect the edit (the source of truth on first
+    /// hydration after the migration ships will be the local cache).
+    @discardableResult
+    func setFeaturedTrack(workoutId: String, trackId: String?) async -> Bool {
+        // 1. Patch local cache so the next read of this workout sees the edit.
+        var workouts = loadAllFromCache()
+        guard let idx = workouts.firstIndex(where: { $0.id == workoutId }) else { return false }
+        workouts[idx].featuredTrackId = trackId
+        let updated = workouts[idx]
+        let data = try? JSONEncoder().encode(workouts)
+        UserDefaults.standard.set(data, forKey: storageKey)
+
+        // 2. Push to Supabase — best effort, tolerant of missing columns.
+        var remoteOK = true
+        do {
+            try await supabase
+                .from("workouts")
+                .update(["featured_track_id": trackId])
+                .eq("id", value: workoutId)
+                .execute()
+        } catch {
+            remoteOK = false
+            print("[WorkoutService] setFeaturedTrack remote update failed (likely missing column — will retry once migration ships): \(error.localizedDescription)")
+        }
+
+        // 3. Patch the feed item activity payload so the card reflects the change.
+        do {
+            try await FeedService.shared.updateFeedItemForWorkout(workout: updated, userId: updated.userId)
+        } catch {
+            print("[WorkoutService] setFeaturedTrack feed patch failed: \(error.localizedDescription)")
+        }
+
+        return remoteOK
+    }
+
+    /// Update the share-full-soundtrack toggle on a previously-saved workout.
+    /// Same tolerance pattern as `setFeaturedTrack` — local cache and feed
+    /// item are always patched; the Supabase column update is best-effort.
+    @discardableResult
+    func setShareFullSoundtrack(workoutId: String, enabled: Bool) async -> Bool {
+        var workouts = loadAllFromCache()
+        guard let idx = workouts.firstIndex(where: { $0.id == workoutId }) else { return false }
+        workouts[idx].shareFullSoundtrack = enabled
+        let updated = workouts[idx]
+        let data = try? JSONEncoder().encode(workouts)
+        UserDefaults.standard.set(data, forKey: storageKey)
+
+        var remoteOK = true
+        do {
+            try await supabase
+                .from("workouts")
+                .update(["share_full_soundtrack": enabled])
+                .eq("id", value: workoutId)
+                .execute()
+        } catch {
+            remoteOK = false
+            print("[WorkoutService] setShareFullSoundtrack remote update failed (likely missing column): \(error.localizedDescription)")
+        }
+
+        do {
+            try await FeedService.shared.updateFeedItemForWorkout(workout: updated, userId: updated.userId)
+        } catch {
+            print("[WorkoutService] setShareFullSoundtrack feed patch failed: \(error.localizedDescription)")
+        }
+
+        return remoteOK
     }
 
     // MARK: - Delete
