@@ -17,8 +17,8 @@ struct ActiveWorkoutView: View {
     @State private var timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     @State private var restTimerHapticFired = false
     @State private var showStartingExercisePicker = false
-    /// Mid-workout exercise jumper (#253). Reachable any time via the persistent pill.
     @State private var showExerciseJumper = false
+    @State private var showReorderSheet = false
     /// Set after `jumpToExercise` runs; consumed by the list-mode `ScrollViewReader`
     /// to scroll to the picked card, then cleared.
     @State private var pendingScrollIndex: Int?
@@ -31,6 +31,7 @@ struct ActiveWorkoutView: View {
     /// `@Observable` changes — calls still go through `.shared`.
     @State private var spotifyCapture = SpotifyNowPlayingService.shared
     @State private var appleMusicCapture = NowPlayingService.shared
+    @State private var soundCloudCapture = SoundCloudNowPlayingService.shared
 
     // First-run polish (#310)
     /// Persisted flag — once dismissed, the active-workout tutorial overlay never re-shows.
@@ -127,6 +128,7 @@ struct ActiveWorkoutView: View {
                                 // FAB is gone (#402); add-exercise lives in the
                                 // top header now. Keeping a generous 24pt so the
                                 // last set rows don't kiss the home indicator.
+                                .contentMargins(.top, Theme.Spacing.xs, for: .scrollContent)
                                 .contentMargins(.bottom, Theme.Spacing.lg, for: .scrollContent)
                                 .onTapGesture {
                                     UIApplication.shared.sendAction(
@@ -150,12 +152,8 @@ struct ActiveWorkoutView: View {
                 .animation(.xomChill, value: viewModel.showExerciseTransition)
                 .animation(.xomChill, value: viewModel.focusMode)
 
-                // Soundtrack capture pill (Spotify capture polish). Visible only
-                // while at least one capture loop is alive. The Add Exercise FAB
-                // moved to the top header (#402) — remove it from the bottom
-                // entirely. The soundtrack pill rides above the home indicator
-                // via `.safeAreaInset(.bottom)` further down so it never overlaps
-                // set rows OR a fullscreen rest timer's LIFT button.
+                // Soundtrack capture icon — small circle in bottom-right corner,
+                // visible while at least one capture service is polling.
 
                 // PR Celebration Banner
                 if viewModel.showPRCelebration, let pr = viewModel.newPR {
@@ -204,18 +202,11 @@ struct ActiveWorkoutView: View {
                     .animation(.xomConfident, value: viewModel.showExerciseTransition)
                 }
             }
-            // Bottom safe-area inset (#402). When music capture is running,
-            // surface the soundtrack pill anchored above the home indicator —
-            // never floating over set rows or a fullscreen rest timer's LIFT
-            // button. Otherwise just a hair of padding so the last row clears
-            // the OS gesture area.
-            .safeAreaInset(edge: .bottom, spacing: 0) {
-                if !viewModel.focusMode &&
-                    (spotifyCapture.isCapturing || appleMusicCapture.isCapturing) {
-                    soundtrackCapturePill
-                        .padding(.bottom, Theme.Spacing.xs)
-                } else {
-                    Color.clear.frame(height: Theme.Spacing.xs)
+            .overlay(alignment: .bottomTrailing) {
+                if !viewModel.focusMode && isAnyCaptureActive {
+                    soundtrackCaptureIcon
+                        .padding(.trailing, Theme.Spacing.md)
+                        .padding(.bottom, Theme.Spacing.sm)
                 }
             }
             .toolbar(.hidden, for: .navigationBar)
@@ -253,8 +244,7 @@ struct ActiveWorkoutView: View {
         .onChange(of: viewModel.isRestTimerActive) { _, isActive in
             if isActive {
                 restTimerHapticFired = false
-                // First-time rest timer toast (#310). Surface a small explainer
-                // the very first time the rest timer fires, then never again.
+                pendingScrollIndex = viewModel.focusExerciseIndex
                 if !firstRestTimerSeen {
                     firstRestTimerSeen = true
                     restTimerToast = Toast(
@@ -357,6 +347,9 @@ struct ActiveWorkoutView: View {
                 }
             }
             .presentationDetents([.medium])
+        }
+        .sheet(isPresented: $showReorderSheet) {
+            ExerciseReorderSheet(viewModel: viewModel)
         }
         // First-run rest timer toast (#310). Uses the existing toast pattern
         // shared with launch streak/PR badges in MainTabView.
@@ -674,6 +667,13 @@ struct ActiveWorkoutView: View {
             .contentShape(Capsule())
         }
         .buttonStyle(.plain)
+        .contextMenu {
+            Button {
+                showReorderSheet = true
+            } label: {
+                Label("Reorder Exercises", systemImage: "arrow.up.arrow.down")
+            }
+        }
         .padding(.horizontal, Theme.Spacing.md)
         .padding(.top, Theme.Spacing.xs)
         .accessibilityLabel(pillAccessibilityLabel)
@@ -766,41 +766,41 @@ struct ActiveWorkoutView: View {
         .padding(.vertical, Theme.Spacing.sm)
     }
 
-    // MARK: - Soundtrack Capture Pill (Spotify capture polish)
+    // MARK: - Soundtrack Capture Icon
 
-    /// Compact, accent-tinted pill telling the user that workout music capture is running.
-    /// One pill total — sources are summarized in the label and the popover. Hidden when
-    /// neither service is actively polling.
-    private var soundtrackCapturePill: some View {
+    private var isAnyCaptureActive: Bool {
+        spotifyCapture.isCapturing || appleMusicCapture.isCapturing || soundCloudCapture.isCapturing
+    }
+
+    /// Small corner icon showing soundtrack capture is active. Tappable to
+    /// reveal per-source counts in a popover.
+    private var soundtrackCaptureIcon: some View {
         Button {
             Haptics.light()
             showSoundtrackPopover = true
         } label: {
-            HStack(spacing: Theme.Spacing.xs) {
+            ZStack(alignment: .topTrailing) {
                 Image(systemName: "music.note")
-                    .font(.caption.weight(.bold))
-                Text(soundtrackPillLabel)
-                    .font(.caption.weight(.semibold))
-                    .lineLimit(1)
+                    .font(.footnote.weight(.bold))
+                    .foregroundStyle(Theme.accent)
+                    .frame(width: 36, height: 36)
+                    .background(Theme.accent.opacity(0.15), in: Circle())
+                    .overlay(Circle().stroke(Theme.accent.opacity(0.35), lineWidth: 0.5))
+
                 if totalCapturedCount > 0 {
                     Text("\(totalCapturedCount)")
-                        .font(.caption2.weight(.heavy).monospacedDigit())
-                        .foregroundStyle(Theme.accent)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 1)
-                        .background(Theme.accent.opacity(0.22), in: Capsule())
+                        .font(.system(size: 10, weight: .heavy).monospacedDigit())
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 4)
+                        .frame(minWidth: 16, minHeight: 16)
+                        .background(Theme.accent, in: Capsule())
+                        .offset(x: 4, y: -4)
                 }
             }
-            .foregroundStyle(Theme.accent)
-            .padding(.horizontal, Theme.Spacing.sm)
-            .padding(.vertical, 6)
-            .frame(minHeight: 32)
-            .background(Theme.accent.opacity(0.12), in: Capsule())
-            .overlay(Capsule().stroke(Theme.accent.opacity(0.35), lineWidth: 0.5))
-            .contentShape(Capsule())
+            .contentShape(Circle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(soundtrackPillAccessibilityLabel)
+        .accessibilityLabel(soundtrackIconAccessibilityLabel)
         .accessibilityHint("Shows the songs captured so far for this workout's soundtrack")
         .popover(isPresented: $showSoundtrackPopover, attachmentAnchor: .point(.top)) {
             soundtrackPopoverContent
@@ -808,22 +808,12 @@ struct ActiveWorkoutView: View {
         }
     }
 
-    /// Pill label — composes from whichever services are currently capturing.
-    private var soundtrackPillLabel: String {
-        switch (spotifyCapture.isCapturing, appleMusicCapture.isCapturing) {
-        case (true, true):  return "Recording soundtrack"
-        case (true, false): return "Recording soundtrack via Spotify"
-        case (false, true): return "Recording soundtrack via Apple Music"
-        case (false, false): return "Recording soundtrack" // unreachable — pill is hidden
-        }
-    }
-
-    private var soundtrackPillAccessibilityLabel: String {
+    private var soundtrackIconAccessibilityLabel: String {
         let count = totalCapturedCount
         let countSuffix = count == 0
             ? "no tracks yet"
             : "\(count) track\(count == 1 ? "" : "s") captured"
-        return "\(soundtrackPillLabel), \(countSuffix)"
+        return "Recording soundtrack, \(countSuffix)"
     }
 
     /// Total tracks visible on the pill — includes anything restored from a
@@ -832,6 +822,7 @@ struct ActiveWorkoutView: View {
     private var totalCapturedCount: Int {
         spotifyCapture.capturedCount
             + appleMusicCapture.capturedCount
+            + soundCloudCapture.capturedCount
             + viewModel.persistedCapturedTracks.count
     }
 
@@ -860,6 +851,13 @@ struct ActiveWorkoutView: View {
                     name: "Apple Music",
                     count: appleMusicCapture.capturedCount,
                     last: appleMusicCapture.lastCapturedTrack
+                )
+            }
+            if soundCloudCapture.isCapturing {
+                soundtrackPopoverSource(
+                    name: "SoundCloud",
+                    count: soundCloudCapture.capturedCount,
+                    last: soundCloudCapture.lastCapturedTrack
                 )
             }
 
@@ -1017,10 +1015,8 @@ private struct ExerciseCard: View {
 
     @State private var showDetails = false
     @State private var showSupersetActionSheet = false
-    /// Driven by the visible link-icon button in the header. Distinct from
-    /// `showSupersetActionSheet` so the long-press and tap paths don't fight
-    /// over a single binding (#294).
     @State private var showSupersetToggleConfirm = false
+    @State private var isCollapsed = false
 
     private var isInSuperset: Bool {
         viewModel.exercises.indices.contains(exerciseIndex)
@@ -1095,42 +1091,23 @@ private struct ExerciseCard: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel("Show details for \(exercise.exercise.name)")
 
+                Button {
+                    Haptics.light()
+                    withAnimation(.xomConfident) {
+                        isCollapsed.toggle()
+                    }
+                } label: {
+                    Image(systemName: "chevron.down")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Theme.textSecondary)
+                        .rotationEffect(.degrees(isCollapsed ? -90 : 0))
+                        .frame(width: Theme.Spacing.xl, height: Theme.Spacing.xl)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(isCollapsed ? "Expand \(exercise.exercise.name)" : "Collapse \(exercise.exercise.name)")
+
                 Spacer()
-
-                // Reorder buttons
-                if exerciseIndex > 0 {
-                    Button {
-                        withAnimation(.xomConfident) {
-                            viewModel.moveExercise(from: exerciseIndex, direction: -1)
-                        }
-                    } label: {
-                        Image(systemName: "chevron.up")
-                            .font(.subheadline.weight(.bold))
-                            .foregroundStyle(Theme.textPrimary)
-                            .frame(width: 44, height: 44)
-                            .background(Theme.surface.opacity(0.5))
-                            .clipShape(Circle())
-                            .contentShape(Rectangle())
-                    }
-                    .accessibilityLabel("Move \(exercise.exercise.name) up")
-                }
-
-                if exerciseIndex < viewModel.exercises.count - 1 {
-                    Button {
-                        withAnimation(.xomConfident) {
-                            viewModel.moveExercise(from: exerciseIndex, direction: 1)
-                        }
-                    } label: {
-                        Image(systemName: "chevron.down")
-                            .font(.subheadline.weight(.bold))
-                            .foregroundStyle(Theme.textPrimary)
-                            .frame(width: 44, height: 44)
-                            .background(Theme.surface.opacity(0.5))
-                            .clipShape(Circle())
-                            .contentShape(Rectangle())
-                    }
-                    .accessibilityLabel("Move \(exercise.exercise.name) down")
-                }
 
                 // Superset toggle (#294) — visible affordance for grouping with the
                 // next exercise. Disabled (but still rendered) when neither action
@@ -1160,132 +1137,131 @@ private struct ExerciseCard: View {
                 // gesture row that reveals a destructive Delete pill.
             }
 
-            // Variant config (grip, attachment, position, laterality) + per-session extras
-            // (notes pill, rest override). The extras pills always render so the user can
-            // edit notes / rest even on exercises without grip/attachment/position variants.
-            ExerciseConfigRow(
-                exercise: exercise,
-                onGripChanged: { grip in viewModel.setGrip(exerciseIndex: exerciseIndex, grip: grip) },
-                onAttachmentChanged: { att in viewModel.setAttachment(exerciseIndex: exerciseIndex, attachment: att) },
-                onPositionChanged: { pos in viewModel.setPosition(exerciseIndex: exerciseIndex, position: pos) },
-                onLateralityChanged: { lat in viewModel.setLaterality(exerciseIndex: exerciseIndex, laterality: lat) },
-                onNotesChanged: { notes in viewModel.setNotes(exerciseIndex: exerciseIndex, notes: notes) },
-                onRestSecondsChanged: { secs in viewModel.setRestSeconds(exerciseIndex: exerciseIndex, seconds: secs) },
-                defaultRestSeconds: Int(viewModel.defaultRestDuration)
-            )
-
-            // Laterality badge
-            if exercise.exercise.supportsUnilateral && exercise.selectedLaterality != .bilateral {
-                HStack(spacing: Theme.Spacing.tight) {
-                    Image(systemName: "arrow.left.and.right")
-                        .font(Theme.fontCaption2)
-                    Text(exercise.selectedLaterality.displayName)
-                        .font(.caption2.weight(.semibold))
-                }
-                .foregroundStyle(Theme.accent)
-                .padding(.horizontal, 6)
-                .padding(.vertical, Theme.Spacing.tighter)
-                .background(Theme.accent.opacity(0.15))
-                .clipShape(.capsule)
-            }
-
-            // Column headers
-            if !exercise.sets.isEmpty {
+            if isCollapsed {
+                let completedCount = exercise.sets.filter { $0.completedAt != Date.distantPast }.count
                 HStack(spacing: Theme.Spacing.sm) {
-                    Spacer().frame(width: 30) // delete button spacer
-                    Text("SET")
-                        .frame(width: Theme.Spacing.lg)
-                    Spacer()
-                    Text("WEIGHT")
-                        .frame(maxWidth: .infinity)
-                    Text("")
-                        .frame(width: 40)
-                    Text("REPS")
-                        .frame(maxWidth: .infinity)
-                    Text("")
-                        .frame(width: 36)
+                    Text("\(completedCount)/\(exercise.sets.count) sets")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(Theme.textSecondary)
+                    if let topWeight = exercise.sets.map(\.weight).max(), topWeight > 0 {
+                        Text("· \(topWeight.formattedWeight) lbs")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(Theme.textSecondary)
+                    }
                 }
-                .font(Theme.fontSmall)
-                .foregroundStyle(Theme.textSecondary)
-                .padding(.horizontal, Theme.Spacing.md)
-            }
-
-            // Per-exercise current set index — first incomplete row, or the
-            // last row if all sets are complete. Drives the accent border +
-            // tint on the SetRowView so the lifter always knows where they
-            // are in list mode (#411 bug 4).
-            let currentSetIdx: Int? = {
-                if let firstIncomplete = exercise.sets.firstIndex(where: { $0.completedAt == Date.distantPast }) {
-                    return firstIncomplete
-                }
-                return exercise.sets.indices.last
-            }()
-
-            // Sets — use stable element IDs to prevent state loss on expand/collapse
-            ForEach(Array(exercise.sets.enumerated()), id: \.element.id) { setIdx, workoutSet in
-                SetRowView(
-                    setNumber: setIdx + 1,
-                    workoutSet: workoutSet,
-                    onWeightChange: { w in
-                        viewModel.updateSet(
-                            exerciseIndex: exerciseIndex,
-                            setIndex: setIdx,
-                            weight: w,
-                            reps: viewModel.exercises[exerciseIndex].sets[setIdx].reps
-                        )
-                    },
-                    onRepsChange: { r in
-                        viewModel.updateSet(
-                            exerciseIndex: exerciseIndex,
-                            setIndex: setIdx,
-                            weight: viewModel.exercises[exerciseIndex].sets[setIdx].weight,
-                            reps: r
-                        )
-                    },
-                    onComplete: {
-                        viewModel.completeSet(exerciseIndex: exerciseIndex, setIndex: setIdx)
-                    },
-                    onDelete: {
-                        viewModel.removeSet(exerciseIndex: exerciseIndex, setIndex: setIdx)
-                    },
-                    onToggleWeightMode: {
-                        viewModel.toggleWeightMode(exerciseIndex: exerciseIndex, setIndex: setIdx)
-                    },
-                    onAddDropSet: {
-                        viewModel.addDropSet(exerciseIndex: exerciseIndex, parentSetIndex: setIdx)
-                    },
-                    lateralityLabel: exercise.selectedLaterality != .bilateral ? (exercise.exercise.muscleGroups.contains(where: { [.quads, .hamstrings, .glutes, .calves].contains($0) }) ? "/leg" : "/arm") : nil,
-                    // "Last" prefers the previous completed set in THIS session
-                    // so progressive overload guidance reflects what the user
-                    // just lifted. Falls back to history when no prior in-session
-                    // set has been completed yet (e.g. set 1).
-                    lastSet: viewModel.lastSetHint(exerciseIndex: exerciseIndex, setIndex: setIdx),
-                    personalRecord: viewModel.personalRecordForExercise(exercise.exercise.id),
-                    isCurrentSet: setIdx == currentSetIdx
+            } else {
+                ExerciseConfigRow(
+                    exercise: exercise,
+                    onGripChanged: { grip in viewModel.setGrip(exerciseIndex: exerciseIndex, grip: grip) },
+                    onAttachmentChanged: { att in viewModel.setAttachment(exerciseIndex: exerciseIndex, attachment: att) },
+                    onPositionChanged: { pos in viewModel.setPosition(exerciseIndex: exerciseIndex, position: pos) },
+                    onLateralityChanged: { lat in viewModel.setLaterality(exerciseIndex: exerciseIndex, laterality: lat) },
+                    onNotesChanged: { notes in viewModel.setNotes(exerciseIndex: exerciseIndex, notes: notes) },
+                    onRestSecondsChanged: { secs in viewModel.setRestSeconds(exerciseIndex: exerciseIndex, seconds: secs) },
+                    defaultRestSeconds: Int(viewModel.defaultRestDuration)
                 )
-                .swipeToDelete(
-                    accessibilityActionName: "Delete set \(setIdx + 1)"
-                ) {
-                    viewModel.removeSet(exerciseIndex: exerciseIndex, setIndex: setIdx)
-                }
-            }
 
-            // Add Set button
-            Button {
-                viewModel.addSet(to: exerciseIndex)
-            } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: "plus")
-                    Text("Add Set")
+                if exercise.exercise.supportsUnilateral && exercise.selectedLaterality != .bilateral {
+                    HStack(spacing: Theme.Spacing.tight) {
+                        Image(systemName: "arrow.left.and.right")
+                            .font(Theme.fontCaption2)
+                        Text(exercise.selectedLaterality.displayName)
+                            .font(.caption2.weight(.semibold))
+                    }
+                    .foregroundStyle(Theme.accent)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, Theme.Spacing.tighter)
+                    .background(Theme.accent.opacity(0.15))
+                    .clipShape(.capsule)
                 }
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(Theme.accent)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 10)
-                .background(Theme.accent.opacity(0.08))
-                .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
+
+                if !exercise.sets.isEmpty {
+                    HStack(spacing: Theme.Spacing.sm) {
+                        Spacer().frame(width: 30)
+                        Text("SET")
+                            .frame(width: Theme.Spacing.lg)
+                        Spacer()
+                        Text("WEIGHT")
+                            .frame(maxWidth: .infinity)
+                        Text("")
+                            .frame(width: 40)
+                        Text("REPS")
+                            .frame(maxWidth: .infinity)
+                        Text("")
+                            .frame(width: 36)
+                    }
+                    .font(Theme.fontSmall)
+                    .foregroundStyle(Theme.textSecondary)
+                    .padding(.horizontal, Theme.Spacing.md)
+                }
+
+                let currentSetIdx: Int? = {
+                    if let firstIncomplete = exercise.sets.firstIndex(where: { $0.completedAt == Date.distantPast }) {
+                        return firstIncomplete
+                    }
+                    return exercise.sets.indices.last
+                }()
+
+                ForEach(Array(exercise.sets.enumerated()), id: \.element.id) { setIdx, workoutSet in
+                    SetRowView(
+                        setNumber: setIdx + 1,
+                        workoutSet: workoutSet,
+                        onWeightChange: { w in
+                            viewModel.updateSet(
+                                exerciseIndex: exerciseIndex,
+                                setIndex: setIdx,
+                                weight: w,
+                                reps: viewModel.exercises[exerciseIndex].sets[setIdx].reps
+                            )
+                        },
+                        onRepsChange: { r in
+                            viewModel.updateSet(
+                                exerciseIndex: exerciseIndex,
+                                setIndex: setIdx,
+                                weight: viewModel.exercises[exerciseIndex].sets[setIdx].weight,
+                                reps: r
+                            )
+                        },
+                        onComplete: {
+                            viewModel.completeSet(exerciseIndex: exerciseIndex, setIndex: setIdx)
+                        },
+                        onDelete: {
+                            viewModel.removeSet(exerciseIndex: exerciseIndex, setIndex: setIdx)
+                        },
+                        onToggleWeightMode: {
+                            viewModel.toggleWeightMode(exerciseIndex: exerciseIndex, setIndex: setIdx)
+                        },
+                        onAddDropSet: {
+                            viewModel.addDropSet(exerciseIndex: exerciseIndex, parentSetIndex: setIdx)
+                        },
+                        lateralityLabel: exercise.selectedLaterality != .bilateral ? (exercise.exercise.muscleGroups.contains(where: { [.quads, .hamstrings, .glutes, .calves].contains($0) }) ? "/leg" : "/arm") : nil,
+                        lastSet: viewModel.lastSetHint(exerciseIndex: exerciseIndex, setIndex: setIdx),
+                        personalRecord: viewModel.personalRecordForExercise(exercise.exercise.id),
+                        isCurrentSet: setIdx == currentSetIdx
+                    )
+                    .swipeToDelete(
+                        accessibilityActionName: "Delete set \(setIdx + 1)"
+                    ) {
+                        viewModel.removeSet(exerciseIndex: exerciseIndex, setIndex: setIdx)
+                    }
+                }
+
+                Button {
+                    viewModel.addSet(to: exerciseIndex)
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "plus")
+                        Text("Add Set")
+                    }
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Theme.accent)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 10)
+                    .background(Theme.accent.opacity(0.08))
+                    .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
+                }
+                .padding(.top, Theme.Spacing.tight)
             }
-            .padding(.top, Theme.Spacing.tight)
         }
         .padding(Theme.Spacing.md)
         .background(Theme.surface)
@@ -1637,30 +1613,13 @@ private struct FinishWorkoutSheet: View {
                             }
                         }
 
-                        // Location (#387.3) — single-line free-text input above
-                        // the soundtrack section. Placeholder steers the user to
-                        // any short label (gym, home, park...). Trimming happens
-                        // in the save path on the view model.
                         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                             Text("Location")
                                 .font(.subheadline.weight(.semibold))
                                 .foregroundStyle(Theme.textPrimary)
-                            HStack(spacing: Theme.Spacing.sm) {
-                                Image(systemName: "location.fill")
-                                    .font(Theme.fontCaption)
-                                    .foregroundStyle(Theme.textSecondary)
-                                TextField("Where? (gym, home, park...)", text: $location)
-                                    .font(Theme.fontBody)
-                                    .foregroundStyle(Theme.textPrimary)
-                                    .accessibilityLabel("Workout location")
-                                    .accessibilityHint("Optional. Where you did this workout — gym, home, park, etc.")
-                            }
-                            .padding(Theme.Spacing.sm)
-                            .background(Theme.surface)
-                            .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall)
-                                    .stroke(Theme.textSecondary.opacity(0.2), lineWidth: 1)
+                            LocationSearchField(
+                                text: $location,
+                                placeholder: "Search gym, home, park..."
                             )
                         }
 

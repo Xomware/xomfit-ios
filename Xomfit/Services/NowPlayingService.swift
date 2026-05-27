@@ -28,6 +28,9 @@ final class NowPlayingService {
     @ObservationIgnored private var seenKeys: Set<String> = []
     @ObservationIgnored private var pollTask: Task<Void, Never>?
     @ObservationIgnored private var isAuthorized: Bool = false
+    @ObservationIgnored private var pendingKey: String?
+    @ObservationIgnored private var pendingFirstSeen: Date?
+    @ObservationIgnored private let minimumListenDuration: TimeInterval = 25
 
     /// Becomes true after the user explicitly denies Apple Music access. Used to suppress
     /// repeated `MPMediaLibrary.requestAuthorization` traffic and noisy logs across multiple
@@ -111,6 +114,8 @@ final class NowPlayingService {
         // Reset session state up-front so a back-to-back start clears prior captures
         captured.removeAll()
         seenKeys.removeAll()
+        pendingKey = nil
+        pendingFirstSeen = nil
         lastCapturedTrack = nil
         pollTask?.cancel()
 
@@ -184,22 +189,28 @@ final class NowPlayingService {
         }
 
         let key = dedupeKey(title: title, artist: item.artist, persistentID: item.persistentID)
-        guard !seenKeys.contains(key) else {
-            print("[NowPlayingService] captureCurrentTrack: '\(title)' already captured, deduped")
-            return
-        }
-        seenKeys.insert(key)
+        guard !seenKeys.contains(key) else { return }
 
-        let track = WorkoutTrack(
-            title: title,
-            artist: item.artist,
-            album: item.albumTitle,
-            capturedAt: Date(),
-            sourceApp: "Apple Music"
-        )
-        captured.append(track)
-        lastCapturedTrack = track
-        print("[NowPlayingService] captured '\(title)' by \(item.artist ?? "unknown") — total: \(captured.count)")
+        if pendingKey == key, let firstSeen = pendingFirstSeen,
+           Date().timeIntervalSince(firstSeen) >= minimumListenDuration {
+            seenKeys.insert(key)
+            pendingKey = nil
+            pendingFirstSeen = nil
+
+            let track = WorkoutTrack(
+                title: title,
+                artist: item.artist,
+                album: item.albumTitle,
+                capturedAt: Date(),
+                sourceApp: "Apple Music"
+            )
+            captured.append(track)
+            lastCapturedTrack = track
+            print("[NowPlayingService] captured '\(title)' by \(item.artist ?? "unknown") — total: \(captured.count)")
+        } else if pendingKey != key {
+            pendingKey = key
+            pendingFirstSeen = Date()
+        }
     }
 
     private func dedupeKey(title: String, artist: String?, persistentID: MPMediaEntityPersistentID) -> String {

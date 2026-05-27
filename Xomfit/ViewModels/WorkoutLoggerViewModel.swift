@@ -579,6 +579,10 @@ final class WorkoutLoggerViewModel {
         exercises.swapAt(source, destination)
     }
 
+    func moveExercises(from source: IndexSet, to destination: Int) {
+        exercises.move(fromOffsets: source, toOffset: destination)
+    }
+
     // MARK: - Exercise Config (Grip / Attachment / Position)
 
     func setGrip(exerciseIndex: Int, grip: GripType) {

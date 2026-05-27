@@ -37,9 +37,15 @@ struct FeedItemCard: View {
                     AnthemRow(anthem: anthem, style: .feed)
                 }
 
-                // Featured soundtrack row (#410) — surfaces the poster's
-                // featured-track pick from this workout in the same compact
-                // anthem-row style. Nil when no featured pick was made.
+                activityContent
+
+                if let caption = item.caption, !caption.isEmpty {
+                    Text(caption)
+                        .font(Theme.fontBody)
+                        .foregroundStyle(Theme.textPrimary)
+                        .padding(.top, Theme.Spacing.tighter)
+                }
+
                 if let activity = item.workoutActivity,
                    let featuredTitle = activity.featuredTrackTitle,
                    !featuredTitle.isEmpty {
@@ -50,15 +56,6 @@ struct FeedItemCard: View {
                         deepLinkURL: featuredDeepLinkURL(activity: activity),
                         autoPlay: shouldAutoPlay(featuredTitle: featuredTitle)
                     )
-                }
-
-                activityContent
-
-                if let caption = item.caption, !caption.isEmpty {
-                    Text(caption)
-                        .font(Theme.fontBody)
-                        .foregroundStyle(Theme.textPrimary)
-                        .padding(.top, Theme.Spacing.tighter)
                 }
 
                 XomDivider()
