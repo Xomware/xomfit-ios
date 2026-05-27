@@ -229,6 +229,8 @@ struct ProfileView: View {
                 firstPRDate: viewModel.allPRs.map(\.date).min(),
                 onStartWorkout: statsEmptyStateAction
             )
+        case .music:
+            ProfileMusicView(tracks: viewModel.aggregatedTracks)
         }
     }
 

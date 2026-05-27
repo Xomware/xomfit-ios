@@ -1007,20 +1007,13 @@ private struct WorkoutEditMetadataCard: View {
     private var locationField: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
             fieldLabel("Location")
-            TextField("e.g. Home gym", text: Binding(
-                get: { viewModel.locationBinding },
-                set: { viewModel.locationBinding = $0 }
-            ))
-            .font(Theme.fontBody)
-            .foregroundStyle(Theme.textPrimary)
-            .padding(Theme.Spacing.sm)
-            .background(Theme.surfaceElevated)
-            .clipShape(.rect(cornerRadius: Theme.Radius.sm))
-            .overlay(
-                RoundedRectangle(cornerRadius: Theme.Radius.sm)
-                    .strokeBorder(Theme.hairline, lineWidth: 0.5)
+            LocationSearchField(
+                text: Binding(
+                    get: { viewModel.locationBinding },
+                    set: { viewModel.locationBinding = $0 }
+                ),
+                placeholder: "Search gym, home, park..."
             )
-            .accessibilityLabel("Workout location")
         }
     }
 

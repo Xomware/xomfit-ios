@@ -70,6 +70,7 @@ struct MainTabView: View {
     /// here subscribes the shell to capture-state changes via the `@Observable` macro.
     @State private var spotifyCapture = SpotifyNowPlayingService.shared
     @State private var appleMusicCapture = NowPlayingService.shared
+    @State private var soundCloudCapture = SoundCloudNowPlayingService.shared
 
     /// Default drawer width: ~78% of the screen, clamped so it doesn't grow
     /// absurd on iPad widths. iOS resolves this via GeometryReader below.
@@ -145,7 +146,7 @@ struct MainTabView: View {
                     // Live-updating via `@Observable` on the singletons (Spotify capture
                     // polish). When the workout is active and tracks have been captured,
                     // the resume bar surfaces a subtle "💿 N tracks" label.
-                    capturedTrackCount: spotifyCapture.capturedCount + appleMusicCapture.capturedCount,
+                    capturedTrackCount: spotifyCapture.capturedCount + appleMusicCapture.capturedCount + soundCloudCapture.capturedCount,
                     onTap: {
                         withAnimation(.spring(response: 0.35, dampingFraction: 0.82)) {
                             workoutSession.isPresented = true

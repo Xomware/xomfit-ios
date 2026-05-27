@@ -294,21 +294,9 @@ struct LogPastWorkoutView: View {
             Text("Location")
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(Theme.textPrimary)
-            HStack(spacing: Theme.Spacing.sm) {
-                Image(systemName: "location.fill")
-                    .font(Theme.fontCaption)
-                    .foregroundStyle(Theme.textSecondary)
-                TextField("Gym name", text: $viewModel.location)
-                    .font(Theme.fontBody)
-                    .foregroundStyle(Theme.textPrimary)
-                    .textInputAutocapitalization(.words)
-            }
-            .padding(Theme.Spacing.sm)
-            .background(Theme.surfaceElevated)
-            .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
-            .overlay(
-                RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall)
-                    .stroke(Theme.textSecondary.opacity(0.2), lineWidth: 1)
+            LocationSearchField(
+                text: $viewModel.location,
+                placeholder: "Search gym, home, park..."
             )
         }
     }

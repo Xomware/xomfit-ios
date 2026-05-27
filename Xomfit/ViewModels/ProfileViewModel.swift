@@ -9,6 +9,7 @@ enum ProfileTab: String, CaseIterable, Identifiable {
     case feed
     case calendar
     case stats
+    case music
 
     var id: String { rawValue }
 
@@ -17,6 +18,7 @@ enum ProfileTab: String, CaseIterable, Identifiable {
         case .feed: return "list.bullet"
         case .calendar: return "calendar"
         case .stats: return "chart.bar"
+        case .music: return "music.note"
         }
     }
 
@@ -25,8 +27,20 @@ enum ProfileTab: String, CaseIterable, Identifiable {
         case .feed: return "Feed"
         case .calendar: return "Calendar"
         case .stats: return "Stats"
+        case .music: return "Music"
         }
     }
+}
+
+struct AggregatedTrack: Identifiable, Hashable {
+    let title: String
+    let artist: String?
+    let sourceApp: String
+    let url: String?
+    var playCount: Int
+    var lastPlayed: Date
+
+    var id: String { "\(title.lowercased())|\(artist?.lowercased() ?? "")|\(sourceApp)" }
 }
 
 // MARK: - ProfileViewModel
@@ -103,6 +117,35 @@ final class ProfileViewModel {
     // MARK: - Muscle Group Heatmap
     var muscleGroupSetsThisWeek: [String: Int] = [:]
     var muscleGroupSetsThisMonth: [String: Int] = [:]
+
+    // MARK: - Music (aggregated listening history)
+    var aggregatedTracks: [AggregatedTrack] = []
+
+    func computeAggregatedTracks() {
+        var trackMap: [String: AggregatedTrack] = [:]
+        for workout in workouts {
+            for track in workout.tracks {
+                let key = "\(track.title.lowercased())|\(track.artist?.lowercased() ?? "")|\(track.sourceApp)"
+                if var existing = trackMap[key] {
+                    existing.playCount += 1
+                    if track.capturedAt > existing.lastPlayed {
+                        existing.lastPlayed = track.capturedAt
+                    }
+                    trackMap[key] = existing
+                } else {
+                    trackMap[key] = AggregatedTrack(
+                        title: track.title,
+                        artist: track.artist,
+                        sourceApp: track.sourceApp,
+                        url: track.url,
+                        playCount: 1,
+                        lastPlayed: track.capturedAt
+                    )
+                }
+            }
+        }
+        aggregatedTracks = trackMap.values.sorted { $0.playCount > $1.playCount }
+    }
 
     // MARK: - Tab state
     var selectedTab: ProfileTab = .feed
@@ -260,6 +303,7 @@ final class ProfileViewModel {
         totalVolume = fetchedWorkouts.reduce(0) { $0 + $1.totalVolume }
         loadCalendarData(workouts: fetchedWorkouts)
         computeMuscleGroupSets(workouts: fetchedWorkouts)
+        computeAggregatedTracks()
 
         await prsTask
         await feedTask

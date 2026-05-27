@@ -23,6 +23,9 @@ final class SpotifyNowPlayingService {
     private var captured: [WorkoutTrack] = []
     @ObservationIgnored private var seenKeys: Set<String> = []
     @ObservationIgnored private var pollTask: Task<Void, Never>?
+    @ObservationIgnored private var pendingKey: String?
+    @ObservationIgnored private var pendingFirstSeen: Date?
+    @ObservationIgnored private let minimumListenDuration: TimeInterval = 25
 
     // MARK: - Observable surface (Spotify capture polish)
 
@@ -57,6 +60,8 @@ final class SpotifyNowPlayingService {
         print("[SpotifyNowPlayingService] startCapture called — resetting session state")
         captured.removeAll()
         seenKeys.removeAll()
+        pendingKey = nil
+        pendingFirstSeen = nil
         lastCapturedTrack = nil
         pollTask?.cancel()
 
@@ -146,37 +151,38 @@ final class SpotifyNowPlayingService {
             guard !title.isEmpty else { return }
 
             let key = dedupeKey(uri: item.uri, id: item.id, title: title)
-            guard !seenKeys.contains(key) else {
-                print("[SpotifyNowPlayingService] '\(title)' already captured, deduped")
-                return
-            }
-            seenKeys.insert(key)
+            guard !seenKeys.contains(key) else { return }
 
-            let artist = item.artists?.compactMap { $0.name }.joined(separator: ", ")
-            // Prefer the https web URL (#410) — opens cleanly in browser and
-            // on phones with the Spotify app installed it routes natively.
-            // Fall back to the `spotify:track:<id>` URI if neither is present
-            // we leave `url` nil and the feed deep link falls back to search.
-            let trackURL: String? = {
-                if let id = item.id, !id.isEmpty {
-                    return "https://open.spotify.com/track/\(id)"
-                }
-                if let uri = item.uri, !uri.isEmpty {
-                    return uri
-                }
-                return nil
-            }()
-            let track = WorkoutTrack(
-                title: title,
-                artist: (artist?.isEmpty == false) ? artist : nil,
-                album: item.album?.name,
-                capturedAt: Date(),
-                sourceApp: "Spotify",
-                url: trackURL
-            )
-            captured.append(track)
-            lastCapturedTrack = track
-            print("[SpotifyNowPlayingService] captured '\(title)' by \(artist ?? "unknown") — total: \(captured.count)")
+            if pendingKey == key, let firstSeen = pendingFirstSeen,
+               Date().timeIntervalSince(firstSeen) >= minimumListenDuration {
+                seenKeys.insert(key)
+                pendingKey = nil
+                pendingFirstSeen = nil
+
+                let artist = item.artists?.compactMap { $0.name }.joined(separator: ", ")
+                let trackURL: String? = {
+                    if let id = item.id, !id.isEmpty {
+                        return "https://open.spotify.com/track/\(id)"
+                    }
+                    if let uri = item.uri, !uri.isEmpty { return uri }
+                    return nil
+                }()
+                let track = WorkoutTrack(
+                    title: title,
+                    artist: (artist?.isEmpty == false) ? artist : nil,
+                    album: item.album?.name,
+                    capturedAt: Date(),
+                    sourceApp: "Spotify",
+                    url: trackURL
+                )
+                captured.append(track)
+                lastCapturedTrack = track
+                print("[SpotifyNowPlayingService] captured '\(title)' by \(artist ?? "unknown") — total: \(captured.count)")
+            } else if pendingKey != key {
+                pendingKey = key
+                pendingFirstSeen = Date()
+                print("[SpotifyNowPlayingService] pending '\(title)' — will capture after \(Int(minimumListenDuration))s")
+            }
         } catch {
             // Network blips happen — log and continue. Polling will retry on the next tick.
             print("[SpotifyNowPlayingService] poll error: \(error)")
