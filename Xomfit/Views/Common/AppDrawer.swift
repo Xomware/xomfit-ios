@@ -6,15 +6,13 @@ import SwiftUI
 // Replaces the previous 4-tab `FloatingTabBar`. Each case carries its title
 // (shown in the shell top bar + drawer row) and SF Symbol icon.
 
-enum AppDestination: String, CaseIterable, Identifiable, Hashable {
+enum AppDestination: String, Identifiable, Hashable {
     case feed
     case workout
+    case stretches
     case progress
     case stats
     case profile
-    case reports
-    case stretches
-    case tools
     case settings
 
     var id: String { rawValue }
@@ -23,12 +21,10 @@ enum AppDestination: String, CaseIterable, Identifiable, Hashable {
         switch self {
         case .feed:      "Feed"
         case .workout:   "Workout"
+        case .stretches: "Stretches"
         case .progress:  "Progress"
         case .stats:     "Stats"
         case .profile:   "Profile"
-        case .reports:   "Reports"
-        case .stretches: "Stretches"
-        case .tools:     "Tools"
         case .settings:  "Settings"
         }
     }
@@ -37,13 +33,26 @@ enum AppDestination: String, CaseIterable, Identifiable, Hashable {
         switch self {
         case .feed:      "house.fill"
         case .workout:   "dumbbell.fill"
+        case .stretches: "figure.flexibility"
         case .progress:  "chart.line.uptrend.xyaxis"
         case .stats:     "chart.bar.fill"
         case .profile:   "person.fill"
-        case .reports:   "doc.text.fill"
-        case .stretches: "figure.flexibility"
-        case .tools:     "wrench.and.screwdriver.fill"
         case .settings:  "gearshape.fill"
+        }
+    }
+
+    /// Grouped drawer sections for visual hierarchy.
+    enum Section: CaseIterable {
+        case main
+        case insights
+        case account
+
+        var destinations: [AppDestination] {
+            switch self {
+            case .main:     [.feed, .workout, .stretches]
+            case .insights: [.progress, .stats]
+            case .account:  [.profile, .settings]
+            }
         }
     }
 }
@@ -79,9 +88,19 @@ struct AppDrawer: View {
                 .overlay(Theme.hairline)
 
             ScrollView {
-                VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                    ForEach(AppDestination.allCases) { destination in
-                        drawerRow(for: destination)
+                VStack(alignment: .leading, spacing: 0) {
+                    ForEach(Array(AppDestination.Section.allCases.enumerated()), id: \.element) { index, section in
+                        if index > 0 {
+                            Divider()
+                                .overlay(Theme.hairline)
+                                .padding(.vertical, Theme.Spacing.sm)
+                                .padding(.horizontal, Theme.Spacing.md)
+                        }
+                        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                            ForEach(section.destinations) { destination in
+                                drawerRow(for: destination)
+                            }
+                        }
                     }
                 }
                 .padding(.horizontal, Theme.Spacing.sm)
