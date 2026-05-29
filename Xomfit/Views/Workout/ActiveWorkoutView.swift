@@ -574,6 +574,10 @@ struct ActiveWorkoutView: View {
                         if viewModel.completedSets == 0 && viewModel.exercises.count > 1 {
                             showStartingExercisePicker = true
                         }
+                    } else {
+                        // Exiting focus mode — scroll the list to the current exercise
+                        // so the user doesn't lose their place (#430).
+                        pendingScrollIndex = viewModel.focusExerciseIndex
                     }
                 }
             } label: {
