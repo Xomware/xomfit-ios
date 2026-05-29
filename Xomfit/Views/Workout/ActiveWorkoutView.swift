@@ -130,12 +130,7 @@ struct ActiveWorkoutView: View {
                                 // last set rows don't kiss the home indicator.
                                 .contentMargins(.top, Theme.Spacing.xs, for: .scrollContent)
                                 .contentMargins(.bottom, Theme.Spacing.lg, for: .scrollContent)
-                                .onTapGesture {
-                                    UIApplication.shared.sendAction(
-                                        #selector(UIResponder.resignFirstResponder),
-                                        to: nil, from: nil, for: nil
-                                    )
-                                }
+                                .scrollDismissesKeyboard(.interactively)
                                 .onChange(of: pendingScrollIndex) { _, newValue in
                                     guard let idx = newValue else { return }
                                     withAnimation(.xomChill) {

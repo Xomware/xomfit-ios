@@ -25,6 +25,13 @@ struct SwipeToDeleteRow<Content: View>: View {
     /// Set true once the user releases past the snap threshold so the delete pill
     /// renders its label without the trailing icon flicker during drag.
     @State private var isOpen = false
+    /// Tracks whether we've determined this gesture is horizontal (swipe) vs vertical (scroll).
+    /// Once locked, we commit to that direction for the rest of the gesture.
+    @State private var gestureAxis: GestureAxis = .undetermined
+
+    private enum GestureAxis {
+        case undetermined, horizontal, vertical
+    }
 
     /// Width of the trailing Delete pill. Wide enough to comfortably show the
     /// "Delete" label + trash glyph and meet the 44pt minimum touch target.
@@ -34,6 +41,8 @@ struct SwipeToDeleteRow<Content: View>: View {
     private let autoDeleteThreshold: CGFloat = 140
     /// Below this absolute drag distance a release snaps closed; above it snaps open.
     private let snapOpenThreshold: CGFloat = 32
+    /// Minimum distance before we lock in a gesture direction. Higher = easier scrolling.
+    private let axisLockThreshold: CGFloat = 15
 
     var body: some View {
         ZStack(alignment: .trailing) {
@@ -62,22 +71,38 @@ struct SwipeToDeleteRow<Content: View>: View {
             content()
                 .background(Theme.background) // keep underlying delete hidden when closed
                 .offset(x: currentOffset)
-                .simultaneousGesture(
-                    DragGesture(minimumDistance: 12)
+                .gesture(
+                    DragGesture(minimumDistance: 8)
                         .onChanged { value in
-                            // Only react to predominantly-horizontal drags so vertical
-                            // scrolling in the parent ScrollView still works smoothly.
-                            guard abs(value.translation.width) > abs(value.translation.height) else { return }
+                            let dx = abs(value.translation.width)
+                            let dy = abs(value.translation.height)
+
+                            // Lock axis once we've moved past the threshold
+                            if gestureAxis == .undetermined {
+                                let total = dx + dy
+                                if total > axisLockThreshold {
+                                    // Require clearly horizontal (2:1 ratio) to claim as swipe
+                                    gestureAxis = (dx > dy * 2) ? .horizontal : .vertical
+                                }
+                            }
+
+                            // Only handle horizontal swipes; let vertical pass through to ScrollView
+                            guard gestureAxis == .horizontal else { return }
+
                             let raw = committedOffset + value.translation.width
                             // Clamp: never positive (no rightward reveal), and don't
                             // stretch past 1.5x the action width.
                             dragOffset = min(0, max(raw, -actionWidth * 1.5))
                         }
                         .onEnded { value in
-                            guard abs(value.translation.width) > abs(value.translation.height) else {
+                            let wasHorizontal = gestureAxis == .horizontal
+                            gestureAxis = .undetermined // Reset for next gesture
+
+                            guard wasHorizontal else {
                                 snapClosed()
                                 return
                             }
+
                             let final = committedOffset + value.translation.width
                             if final < -autoDeleteThreshold {
                                 // Past the auto-commit line — fire the destructive callback.
