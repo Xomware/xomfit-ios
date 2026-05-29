@@ -270,12 +270,10 @@ struct MainTabView: View {
             switch destination {
             case .feed:      FeedView()
             case .workout:   WorkoutView()
+            case .stretches: StretchesView()
             case .progress:  XomProgressView()
             case .stats:     StatsView()
             case .profile:   ProfileView()
-            case .reports:   ReportsListView()
-            case .stretches: StretchesView()
-            case .tools:     ToolsView()
             case .settings:  SettingsView()
             }
         }
