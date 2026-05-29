@@ -125,17 +125,26 @@ final class SoundCloudNowPlayingService {
         print("[SoundCloudNowPlayingService] snapshot complete — \(seenKeys.count) prior entry/entries skipped")
     }
 
-    /// Poll once and capture only the LATEST history entry if it's new since last tick.
+    /// Poll once and capture only the LATEST track activity if it's new since last tick.
     /// Looking at just the head is intentional — if the user plays 3 tracks in quick
     /// succession we'll catch the most recent on this tick and the others on prior /
     /// subsequent ticks (the 30s cadence vs typical 3-4 minute song length leaves plenty
     /// of margin in practice).
+    ///
+    /// NOTE: We filter for "track" type activities to only capture direct plays, not
+    /// reposts or playlist activities (#432).
     private func captureLatestTrack() async {
-        guard let entries = await fetchHistory(), let latest = entries.first else {
-            return
-        }
+        guard let entries = await fetchHistory() else { return }
 
-        let title = latest.track?.title ?? ""
+        // Filter for track-type activities only (not reposts)
+        let trackActivities = entries.filter { entry in
+            // Accept "track" type or entries with no type (legacy play-history format)
+            entry.type == "track" || entry.type == nil
+        }
+        guard let latest = trackActivities.first else { return }
+
+        let resolvedTrack = latest.resolvedTrack
+        let title = resolvedTrack?.title ?? ""
         guard !title.isEmpty else { return }
 
         let key = dedupeKey(for: latest)
@@ -147,7 +156,7 @@ final class SoundCloudNowPlayingService {
 
         // SoundCloud puts the uploader's display name on `user.username` — closest analogue
         // to a primary artist. Real "artist" metadata is rarely populated on SC uploads.
-        let artist = latest.track?.user?.username
+        let artist = resolvedTrack?.user?.username
         // Carry the permalink so the feed expanded view can deep-link straight
         // back into SoundCloud (#410). Nil-safe fallback handled by the
         // deep-link resolver — empty permalink degrades to a SoundCloud search.
@@ -157,7 +166,7 @@ final class SoundCloudNowPlayingService {
             album: nil,
             capturedAt: Date(),
             sourceApp: "SoundCloud",
-            url: latest.track?.permalink_url
+            url: resolvedTrack?.permalink_url
         )
         captured.append(track)
         lastCapturedTrack = track
@@ -184,7 +193,7 @@ final class SoundCloudNowPlayingService {
             case 200:
                 break
             case 401:
-                print("[SoundCloudNowPlayingService] 401 from /play-history — token rejected")
+                print("[SoundCloudNowPlayingService] 401 from /activities — token rejected")
                 return nil
             case 429:
                 print("[SoundCloudNowPlayingService] rate-limited (429) — skipping this tick")
@@ -206,27 +215,46 @@ final class SoundCloudNowPlayingService {
     }
 
     private func dedupeKey(for entry: SoundCloudHistoryEntry) -> String {
-        // Prefer the track id (stable, numeric), then the permalink, then a (title + played_at)
-        // fallback. Including `played_at` in the fallback prevents the same song played twice
+        // Prefer the track id (stable, numeric), then the permalink, then a (title + created_at)
+        // fallback. Including the timestamp in the fallback prevents the same song played twice
         // from being deduped against itself.
-        if let id = entry.track?.id { return "id|\(id)" }
-        if let permalink = entry.track?.permalink_url, !permalink.isEmpty { return "permalink|\(permalink)" }
-        let title = entry.track?.title ?? ""
-        let played = entry.played_at ?? 0
-        return "title|\(title.lowercased())|\(played)"
+        let track = entry.resolvedTrack
+        if let id = track?.id { return "id|\(id)" }
+        if let permalink = track?.permalink_url, !permalink.isEmpty { return "permalink|\(permalink)" }
+        let title = track?.title ?? ""
+        // Use created_at (activities) or played_at (legacy) as the timestamp component
+        let timestamp = entry.created_at ?? String(entry.played_at ?? 0)
+        return "title|\(title.lowercased())|\(timestamp)"
     }
 }
 
 // MARK: - SoundCloud payload shapes
+//
+// NOTE: SoundCloud's `/me/activities/tracks` returns activity objects, not raw
+// play-history. Each activity has a `type` (e.g. "track", "track-repost") and
+// an `origin` containing the track details. We only capture activities where
+// type == "track" (direct plays), ignoring reposts. (#432)
 
 private struct SoundCloudHistoryResponse: Decodable {
     let collection: [SoundCloudHistoryEntry]
 }
 
 private struct SoundCloudHistoryEntry: Decodable {
-    /// Unix millisecond timestamp of when the play was recorded.
+    /// Activity type: "track", "track-repost", "playlist", "playlist-repost", etc.
+    let type: String?
+    /// ISO 8601 timestamp of when the activity occurred.
+    let created_at: String?
+    /// The track object (for track-type activities).
+    let origin: SoundCloudTrack?
+
+    // Legacy fields for backwards compatibility if play-history ever returns
     let played_at: Int64?
     let track: SoundCloudTrack?
+
+    /// Returns the track, preferring `origin` (activities format) over `track` (legacy).
+    var resolvedTrack: SoundCloudTrack? {
+        origin ?? track
+    }
 }
 
 private struct SoundCloudTrack: Decodable {

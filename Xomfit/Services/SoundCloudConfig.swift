@@ -38,10 +38,14 @@ enum SoundCloudConfig {
     static let tokenURL = URL(string: "https://api.soundcloud.com/oauth2/token")!
 
     /// SoundCloud's recent listening history endpoint. Unlike Spotify, SoundCloud does
-    /// not expose a real-time "currently playing" — only `play-history` (most recent 50
-    /// tracks). We poll and look at the LATEST entry; if it's new since last tick, we
-    /// capture it. This is best-effort and may lag a few seconds behind playback.
-    static let recentlyPlayedURL = URL(string: "https://api.soundcloud.com/me/play-history/tracks?limit=5")!
+    /// not expose a real-time "currently playing". We use `/me/activities/tracks` which
+    /// returns the user's recent track interactions (plays, likes, reposts). We poll and
+    /// look for track activities; if one is new since last tick, we capture it.
+    /// This is best-effort and may lag a few seconds behind playback.
+    ///
+    /// NOTE: The `/me/play-history/tracks` endpoint does not exist in SoundCloud's public
+    /// API. Using `/me/activities/tracks` as the closest available alternative (#432).
+    static let recentlyPlayedURL = URL(string: "https://api.soundcloud.com/me/activities/tracks?limit=10")!
 
     /// URL scheme component of `redirectURI` — what ASWebAuthenticationSession needs separately.
     static let callbackURLScheme = "xomfit"
