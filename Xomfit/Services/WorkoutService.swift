@@ -320,9 +320,14 @@ final class WorkoutService {
     }
 
     func fetchWorkoutsFromCache(userId: String) -> [Workout] {
+        // UUIDs are case-insensitive identifiers. Callers normalize to lowercase
+        // (`uuidString.lowercased()`) while some writers (e.g. the DEBUG auth
+        // bypass fixtures) cache the raw uppercase `uuidString`, so compare
+        // case-insensitively to avoid spurious empty results.
+        let needle = userId.lowercased()
         let all = loadAllFromCache()
         return all
-            .filter { $0.userId == userId }
+            .filter { $0.userId.lowercased() == needle }
             .sorted { $0.startTime > $1.startTime }
     }
 

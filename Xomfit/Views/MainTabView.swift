@@ -271,6 +271,7 @@ struct MainTabView: View {
             case .feed:      FeedView()
             case .workout:   WorkoutView()
             case .progress:  XomProgressView()
+            case .stats:     StatsView()
             case .profile:   ProfileView()
             case .reports:   ReportsListView()
             case .stretches: StretchesView()
