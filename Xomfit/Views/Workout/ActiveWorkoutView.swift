@@ -12,6 +12,7 @@ struct ActiveWorkoutView: View {
     @State private var showFinishSheet = false
     @State private var workoutDescription = ""
     @State private var saveAsTemplate = false
+    @State private var templateName = ""
     @State private var selectedPhotos: [PhotosPickerItem] = []
     @State private var photoImages: [UIImage] = []
     @State private var timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
@@ -272,6 +273,8 @@ struct ActiveWorkoutView: View {
         .sheet(isPresented: $showFinishSheet) {
             FinishWorkoutSheet(
                 viewModel: viewModel,
+                workoutName: Bindable(viewModel).workoutName,
+                templateName: $templateName,
                 description: $workoutDescription,
                 location: $viewModel.location,
                 rating: $viewModel.rating,
@@ -921,21 +924,32 @@ struct ActiveWorkoutView: View {
         let userId = user.id.uuidString.lowercased()
         let notes = workoutDescription.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        // Save as template if requested
+        // Save as template if requested (#432) — only include exercises that have
+        // at least one completed set, and use the user-provided template name.
         if saveAsTemplate {
-            let templateExercises = viewModel.exercises.map { ex in
-                WorkoutTemplate.TemplateExercise(
+            let completedExercises = viewModel.exercises.filter { ex in
+                ex.sets.contains { $0.completedAt != Date.distantPast }
+            }
+            guard !completedExercises.isEmpty else {
+                // Nothing to save — skip silently
+                saveAsTemplate = false
+                return
+            }
+            let templateExercises = completedExercises.map { ex in
+                let completedSets = ex.sets.filter { $0.completedAt != Date.distantPast }
+                return WorkoutTemplate.TemplateExercise(
                     id: UUID().uuidString,
                     exercise: ex.exercise,
-                    targetSets: ex.sets.count,
-                    targetReps: ex.bestSet.map { "\($0.reps)" } ?? "8",
+                    targetSets: completedSets.count,
+                    targetReps: completedSets.first.map { "\($0.reps)" } ?? "8",
                     notes: ex.notes,
                     restSeconds: ex.restSeconds
                 )
             }
+            let finalTemplateName = templateName.trimmingCharacters(in: .whitespacesAndNewlines)
             let template = WorkoutTemplate(
                 id: UUID().uuidString,
-                name: viewModel.workoutName,
+                name: finalTemplateName.isEmpty ? viewModel.workoutName : finalTemplateName,
                 description: notes.isEmpty ? "Custom template" : notes,
                 exercises: templateExercises,
                 estimatedDuration: Int(Date().timeIntervalSince(viewModel.startTime) / 60),
@@ -1551,6 +1565,8 @@ private struct FinishWorkoutSheet: View {
     /// call methods + read computed properties; `@Observable` already invalidates
     /// the body on mutations to those properties.
     let viewModel: WorkoutLoggerViewModel
+    @Binding var workoutName: String
+    @Binding var templateName: String
     @Binding var description: String
     @Binding var location: String
     @Binding var rating: Int
@@ -1570,6 +1586,23 @@ private struct FinishWorkoutSheet: View {
 
                 ScrollView {
                     VStack(spacing: Theme.Spacing.lg) {
+                        // Workout Name (#432)
+                        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                            Text("Workout Name")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(Theme.textPrimary)
+                            TextField("Workout", text: $workoutName)
+                                .font(Theme.fontBody)
+                                .foregroundStyle(Theme.textPrimary)
+                                .padding(Theme.Spacing.sm)
+                                .background(Theme.surface)
+                                .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall)
+                                        .stroke(Theme.textSecondary.opacity(0.2), lineWidth: 1)
+                                )
+                        }
+
                         // Star Rating
                         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                             Text("How was your workout?")
@@ -1644,6 +1677,29 @@ private struct FinishWorkoutSheet: View {
                             }
                         }
                         .tint(Theme.accent)
+
+                        // Template name field (#432) — only shows when saving as template
+                        if saveAsTemplate {
+                            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                                Text("Template Name")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(Theme.textPrimary)
+                                Text("Only exercises you completed sets for will be saved.")
+                                    .font(Theme.fontCaption)
+                                    .foregroundStyle(Theme.textSecondary)
+                                TextField("My Template", text: $templateName)
+                                    .font(Theme.fontBody)
+                                    .foregroundStyle(Theme.textPrimary)
+                                    .padding(Theme.Spacing.sm)
+                                    .background(Theme.surface)
+                                    .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall)
+                                            .stroke(Theme.textSecondary.opacity(0.2), lineWidth: 1)
+                                    )
+                            }
+                            .transition(.opacity.combined(with: .move(edge: .top)))
+                        }
 
                         // Photos
                         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
