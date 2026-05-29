@@ -52,8 +52,54 @@ struct ProfileStatsView: View {
             topExercisesSection
             heatmapSection
             prSection
+            seeAllStatsLink
         }
         .padding(.horizontal, Theme.Spacing.md)
+    }
+
+    // MARK: - See All Stats Link
+    //
+    // Deep-links to the full Stats hub (the same view rendered by the Stats
+    // drawer destination). Only shown on your own profile — `userId` is nil for
+    // other people's profiles, mirroring the Body link gate above.
+
+    @ViewBuilder
+    private var seeAllStatsLink: some View {
+        if let userId, !userId.isEmpty {
+            NavigationLink {
+                StatsView()
+                    .hideTabBar()
+            } label: {
+                XomCard {
+                    HStack(spacing: Theme.Spacing.md) {
+                        Image(systemName: "chart.bar.fill")
+                            .font(Theme.fontTitle3)
+                            .foregroundStyle(Theme.accent)
+                            .frame(width: Theme.Spacing.xl, height: Theme.Spacing.xl)
+                            .background(Theme.accentMuted)
+                            .clipShape(Circle())
+
+                        VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
+                            Text("See All Stats")
+                                .font(Theme.fontSubheadline.weight(.semibold))
+                                .foregroundStyle(Theme.textPrimary)
+                            Text("Radar balance, comparisons, and more")
+                                .font(Theme.fontSmall)
+                                .foregroundStyle(Theme.textSecondary)
+                        }
+
+                        Spacer()
+
+                        Image(systemName: "chevron.right")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(Theme.textTertiary)
+                    }
+                }
+            }
+            .buttonStyle(PressableCardStyle())
+            .accessibilityLabel("See all stats")
+            .accessibilityHint("Opens the full stats hub")
+        }
     }
 
     // MARK: - First-Workout Empty State (#311)

@@ -10,6 +10,7 @@ enum AppDestination: String, CaseIterable, Identifiable, Hashable {
     case feed
     case workout
     case progress
+    case stats
     case profile
     case reports
     case stretches
@@ -23,6 +24,7 @@ enum AppDestination: String, CaseIterable, Identifiable, Hashable {
         case .feed:      "Feed"
         case .workout:   "Workout"
         case .progress:  "Progress"
+        case .stats:     "Stats"
         case .profile:   "Profile"
         case .reports:   "Reports"
         case .stretches: "Stretches"
@@ -36,6 +38,7 @@ enum AppDestination: String, CaseIterable, Identifiable, Hashable {
         case .feed:      "house.fill"
         case .workout:   "dumbbell.fill"
         case .progress:  "chart.line.uptrend.xyaxis"
+        case .stats:     "chart.bar.fill"
         case .profile:   "person.fill"
         case .reports:   "doc.text.fill"
         case .stretches: "figure.flexibility"

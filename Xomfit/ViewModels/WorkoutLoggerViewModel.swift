@@ -580,7 +580,23 @@ final class WorkoutLoggerViewModel {
     }
 
     func moveExercises(from source: IndexSet, to destination: Int) {
+        // Preserve focus on the *same* exercise across the reorder. Without this
+        // the integer `focusExerciseIndex` keeps pointing at whatever lift now
+        // occupies that slot, silently switching the user's "current exercise".
+        let focusedId = exercises.indices.contains(focusExerciseIndex)
+            ? exercises[focusExerciseIndex].id
+            : nil
+
         exercises.move(fromOffsets: source, toOffset: destination)
+
+        if let focusedId, let newIndex = exercises.firstIndex(where: { $0.id == focusedId }) {
+            focusExerciseIndex = newIndex
+        }
+
+        // Match removeExercise: keep the Live Activity in sync and persist the
+        // new order so it survives an app quit mid-workout.
+        updateLiveActivity()
+        saveActiveSession(force: true)
     }
 
     // MARK: - Exercise Config (Grip / Attachment / Position)

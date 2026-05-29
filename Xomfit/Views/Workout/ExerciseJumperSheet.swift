@@ -19,6 +19,9 @@ struct ExerciseJumperSheet: View {
     /// this sheet and present the existing exercise picker. Optional so older
     /// call sites without an add-exercise integration keep compiling.
     var onAddExercise: (() -> Void)? = nil
+    /// Called when the user taps the toolbar reorder button. Parent should
+    /// dismiss this sheet and present the reorder sheet. Optional for back-compat.
+    var onReorder: (() -> Void)? = nil
 
     @Environment(\.dismiss) private var dismiss
 
@@ -49,12 +52,32 @@ struct ExerciseJumperSheet: View {
                     Button("Done") { dismiss() }
                         .foregroundStyle(Theme.accent)
                 }
-                // `+` button — dismisses the sheet first so the parent can
-                // present the picker without a sheet-on-sheet stack. Only
-                // rendered when a callback is wired (back-compat for any
-                // call sites that don't yet route add-exercise).
-                if let onAddExercise {
-                    ToolbarItem(placement: .confirmationAction) {
+                // Trailing controls — reorder + add. Each dismisses the sheet
+                // first so the parent can present its own sheet without a
+                // sheet-on-sheet stack. Rendered only when their callback is
+                // wired (back-compat for call sites that don't route them).
+                ToolbarItemGroup(placement: .topBarTrailing) {
+                    if let onReorder {
+                        Button {
+                            Haptics.light()
+                            dismiss()
+                            // Defer so this sheet finishes dismissing before the
+                            // reorder sheet slides up on top of the parent.
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                                onReorder()
+                            }
+                        } label: {
+                            Image(systemName: "arrow.up.arrow.down")
+                                .font(.body.weight(.semibold))
+                                .foregroundStyle(Theme.accent)
+                                .frame(minWidth: 44, minHeight: 44)
+                                .contentShape(Rectangle())
+                        }
+                        .accessibilityLabel("Reorder exercises")
+                        .accessibilityHint("Opens a list where you can drag exercises into a new order")
+                    }
+
+                    if let onAddExercise {
                         Button {
                             Haptics.light()
                             dismiss()

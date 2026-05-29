@@ -290,17 +290,18 @@ struct TemplateDetailView: View {
                 emptyState
             } else {
                 ForEach(Array(draft.exercises.enumerated()), id: \.element.id) { index, exercise in
+                    let exerciseId = exercise.id
                     EditableExerciseRow(
                         index: index + 1,
                         exercise: exercise,
-                        targetWeight: bindingForWeight(exerciseId: exercise.id),
+                        targetWeight: bindingForWeight(exerciseId: exerciseId),
                         canMoveUp: index > 0,
                         canMoveDown: index < draft.exercises.count - 1,
-                        onUpdateSets: { newValue in updateSets(at: index, value: newValue) },
-                        onUpdateReps: { newValue in updateReps(at: index, value: newValue) },
-                        onMoveUp: { moveExercise(at: index, direction: -1) },
-                        onMoveDown: { moveExercise(at: index, direction: 1) },
-                        onDelete: { removeExercise(at: index) }
+                        onUpdateSets: { newValue in updateSetsById(exerciseId, value: newValue) },
+                        onUpdateReps: { newValue in updateRepsById(exerciseId, value: newValue) },
+                        onMoveUp: { moveExerciseById(exerciseId, direction: -1) },
+                        onMoveDown: { moveExerciseById(exerciseId, direction: 1) },
+                        onDelete: { removeExerciseById(exerciseId) }
                     )
                 }
             }
@@ -466,6 +467,16 @@ struct TemplateDetailView: View {
         markDirty()
     }
 
+    /// ID-based remove — looks up current index at call time to avoid stale captures.
+    private func removeExerciseById(_ id: String) {
+        guard let index = draft.exercises.firstIndex(where: { $0.id == id }) else { return }
+        withAnimation(.xomConfident) {
+            let removed = draft.exercises.remove(at: index)
+            targetWeights.removeValue(forKey: removed.id)
+        }
+        markDirty()
+    }
+
     /// Swap an exercise with the row above (`direction = -1`) or below (`direction = 1`).
     /// No-ops cleanly at the boundaries so callers don't need their own guards.
     private func moveExercise(at index: Int, direction: Int) {
@@ -476,6 +487,35 @@ struct TemplateDetailView: View {
         withAnimation(.xomConfident) {
             draft.exercises.swapAt(index, target)
         }
+        markDirty()
+    }
+
+    /// ID-based move — looks up current index at call time to avoid stale captures.
+    private func moveExerciseById(_ id: String, direction: Int) {
+        guard let index = draft.exercises.firstIndex(where: { $0.id == id }) else { return }
+        let target = index + direction
+        guard draft.exercises.indices.contains(target) else { return }
+        Haptics.selection()
+        withAnimation(.xomConfident) {
+            draft.exercises.swapAt(index, target)
+        }
+        markDirty()
+    }
+
+    /// ID-based sets update — looks up current index at call time.
+    private func updateSetsById(_ id: String, value: Int) {
+        guard let index = draft.exercises.firstIndex(where: { $0.id == id }) else { return }
+        let clamped = max(1, value)
+        guard draft.exercises[index].targetSets != clamped else { return }
+        draft.exercises[index].targetSets = clamped
+        markDirty()
+    }
+
+    /// ID-based reps update — looks up current index at call time.
+    private func updateRepsById(_ id: String, value: String) {
+        guard let index = draft.exercises.firstIndex(where: { $0.id == id }) else { return }
+        guard draft.exercises[index].targetReps != value else { return }
+        draft.exercises[index].targetReps = value
         markDirty()
     }
 

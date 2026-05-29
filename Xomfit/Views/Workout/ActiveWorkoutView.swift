@@ -302,6 +302,11 @@ struct ActiveWorkoutView: View {
                     // Jumper sheet dismisses itself before invoking this, so
                     // presenting the picker here gives us a clean single-sheet stack.
                     showExercisePicker = true
+                },
+                onReorder: {
+                    // Same single-sheet handoff as add-exercise: the jumper has
+                    // already dismissed, so presenting the reorder sheet here is clean.
+                    showReorderSheet = true
                 }
             )
         }
@@ -1014,7 +1019,6 @@ private struct ExerciseCard: View {
     let viewModel: WorkoutLoggerViewModel
 
     @State private var showDetails = false
-    @State private var showSupersetActionSheet = false
     @State private var showSupersetToggleConfirm = false
     @State private var isCollapsed = false
 
@@ -1275,37 +1279,14 @@ private struct ExerciseCard: View {
             }
         }
         .clipShape(.rect(cornerRadius: Theme.cornerRadius))
-        .onLongPressGesture(minimumDuration: 0.5) {
-            // Only present the menu when there is something actionable
-            guard isInSuperset || canGroupWithNext else { return }
-            Haptics.selection()
-            showSupersetActionSheet = true
-        }
-        .confirmationDialog(
-            exercise.exercise.name,
-            isPresented: $showSupersetActionSheet,
-            titleVisibility: .visible
-        ) {
-            if isInSuperset {
-                Button("Ungroup Superset", role: .destructive) {
-                    Haptics.light()
-                    viewModel.toggleSupersetWithNext(exerciseIndex: exerciseIndex)
-                }
-            }
-            if canGroupWithNext {
-                Button("Group with Next Exercise") {
-                    Haptics.success()
-                    viewModel.toggleSupersetWithNext(exerciseIndex: exerciseIndex)
-                }
-            }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text(isInSuperset
-                 ? "This exercise is part of a superset."
-                 : "Group this exercise with the next one for back-to-back sets.")
-        }
-        // Visible-affordance dialog (#294). Mirrors the long-press menu but
-        // surfaces a single primary action so the icon-button intent is clear.
+        // NOTE: no card-wide `.onLongPressGesture` here. A 0.5s long-press
+        // recognizer on every row inside the `ScrollView` + `LazyVStack` defers
+        // touch-down and fought the vertical scroll pan, making the list feel
+        // stuck/unscrollable. Superset grouping is fully covered by the visible
+        // link button + the confirmation dialog below, so the long-press path
+        // was redundant and is gone.
+        // Visible-affordance dialog (#294) — surfaces a single primary action
+        // so the link-button intent is clear.
         .confirmationDialog(
             isInSuperset ? "Ungroup Superset?" : "Group with Next Exercise?",
             isPresented: $showSupersetToggleConfirm,
@@ -1642,7 +1623,7 @@ private struct FinishWorkoutSheet: View {
 
                         TextEditor(text: $description)
                             .font(Theme.fontBody)
-                            .foregroundStyle(Theme.textPrimary)
+                            .foregroundColor(Theme.textPrimary)
                             .scrollContentBackground(.hidden)
                             .padding(Theme.Spacing.sm)
                             .frame(minHeight: 80, maxHeight: 120)
