@@ -39,6 +39,26 @@ struct FeedItemCard: View {
 
                 activityContent
 
+                // PR highlight (#415) — surface personal records prominently on
+                // the card front, above the caption, so they don't get buried in
+                // the workout activity content.
+                if item.activityType == .workout,
+                   let activity = item.workoutActivity,
+                   activity.prCount > 0 {
+                    HStack(spacing: Theme.Spacing.sm) {
+                        Image(systemName: "trophy.fill")
+                            .font(.subheadline.weight(.bold))
+                            .foregroundStyle(Theme.prGold)
+                        Text("\(activity.prCount) Personal Record\(activity.prCount > 1 ? "s" : "")!")
+                            .font(.subheadline.weight(.bold))
+                            .foregroundStyle(Theme.prGold)
+                        Spacer()
+                    }
+                    .padding(Theme.Spacing.sm)
+                    .background(Theme.prGold.opacity(0.12))
+                    .clipShape(.rect(cornerRadius: Theme.Radius.sm))
+                }
+
                 if let caption = item.caption, !caption.isEmpty {
                     Text(caption)
                         .font(Theme.fontBody)

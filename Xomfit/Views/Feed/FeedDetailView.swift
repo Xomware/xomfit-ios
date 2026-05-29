@@ -130,6 +130,10 @@ struct FeedDetailView: View {
                     }
                 }
 
+                // Personal Records (#415) — dedicated gold section listing each
+                // exercise that set a PR with the PR set details (weight × reps).
+                personalRecordsSection
+
                 XomDivider()
 
                 // Real exercise data from DB
@@ -152,6 +156,51 @@ struct FeedDetailView: View {
         .padding(Theme.Spacing.md)
         .background(Theme.surface)
         .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+    }
+
+    // MARK: - Personal Records Section
+
+    /// Gold-themed list of every exercise that set a PR in this workout, showing
+    /// the specific PR set (weight × reps). Sourced from `fetchedWorkout` so it
+    /// only renders once the real set data loads and a PR set actually exists.
+    @ViewBuilder
+    private var personalRecordsSection: some View {
+        if let workout = fetchedWorkout {
+            let prExercises = workout.exercises.filter { exercise in
+                exercise.sets.contains(where: { $0.isPersonalRecord })
+            }
+            if !prExercises.isEmpty {
+                VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                    HStack(spacing: Theme.Spacing.sm) {
+                        Image(systemName: "trophy.fill")
+                            .font(.subheadline.weight(.bold))
+                            .foregroundStyle(Theme.prGold)
+                        Text("Personal Records")
+                            .font(.subheadline.weight(.bold))
+                            .foregroundStyle(Theme.prGold)
+                        Spacer()
+                    }
+
+                    ForEach(prExercises) { exercise in
+                        ForEach(exercise.sets.filter { $0.isPersonalRecord }) { prSet in
+                            HStack(spacing: Theme.Spacing.sm) {
+                                Text(exercise.exercise.name)
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(Theme.textPrimary)
+                                    .lineLimit(1)
+                                Spacer()
+                                Text("\(prSet.weight.formattedWeight)lb × \(prSet.reps)")
+                                    .font(.subheadline.weight(.semibold).monospaced())
+                                    .foregroundStyle(Theme.prGold)
+                            }
+                        }
+                    }
+                }
+                .padding(Theme.Spacing.sm)
+                .background(Theme.prGold.opacity(0.12))
+                .clipShape(.rect(cornerRadius: Theme.Radius.sm))
+            }
+        }
     }
 
     // MARK: - Exercise Section
@@ -310,7 +359,8 @@ struct FeedDetailView: View {
                 HStack(spacing: Theme.Spacing.sm) {
                     XomAvatar(
                         name: localItem.user.displayName.isEmpty ? localItem.user.username : localItem.user.displayName,
-                        size: 48
+                        size: 48,
+                        imageURL: localItem.user.avatarURL.flatMap { URL(string: $0) }
                     )
 
                     VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
