@@ -1,0 +1,80 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Workout/ExerciseJumperSheet.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Switch Exercise",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 48
+        }
+      },
+      {
+        "comment": "",
+        "key": "Switches focus to this exercise",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 193
+        }
+      },
+      {
+        "comment": "",
+        "key": "Done",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 52
+        }
+      },
+      {
+        "comment": "",
+        "key": "Reorder exercises",
+        "location": {
+          "startingColumn": 45,
+          "startingLine": 76
+        }
+      },
+      {
+        "comment": "",
+        "key": "Opens a list where you can drag exercises into a new order",
+        "location": {
+          "startingColumn": 44,
+          "startingLine": 77
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add exercise to workout",
+        "location": {
+          "startingColumn": 45,
+          "startingLine": 96
+        }
+      },
+      {
+        "comment": "",
+        "key": "Opens the exercise picker",
+        "location": {
+          "startingColumn": 44,
+          "startingLine": 97
+        }
+      },
+      {
+        "comment": "",
+        "key": "Current",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 137
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld/%lld",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 161
+        }
+      }
+    ]
+  },
+  "version": 1
+}

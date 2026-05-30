@@ -1,0 +1,384 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Workout/LogPastWorkoutView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Discard entry?",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 91
+        }
+      },
+      {
+        "comment": "",
+        "key": "Log Past Workout",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 44
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add exercise to past workout",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 241
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 49
+        }
+      },
+      {
+        "comment": "",
+        "key": "Save",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 66
+        }
+      },
+      {
+        "comment": "",
+        "key": "Done",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 75
+        }
+      },
+      {
+        "comment": "",
+        "key": "Discard",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 92
+        }
+      },
+      {
+        "comment": "",
+        "key": "Keep Editing",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 96
+        }
+      },
+      {
+        "comment": "",
+        "key": "Your entered data will be lost.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 98
+        }
+      },
+      {
+        "comment": "",
+        "key": "Name",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 136
+        }
+      },
+      {
+        "comment": "",
+        "key": "Date & Time",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 153
+        }
+      },
+      {
+        "comment": "",
+        "key": "",
+        "location": {
+          "startingColumn": 21,
+          "startingLine": 157
+        }
+      },
+      {
+        "comment": "",
+        "key": "Workout date and time",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 165
+        }
+      },
+      {
+        "comment": "",
+        "key": "Duration (minutes, optional)",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 170
+        }
+      },
+      {
+        "comment": "",
+        "key": "No exercises yet",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 210
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add the lifts you did",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 213
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add Exercise",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 228
+        }
+      },
+      {
+        "comment": "",
+        "key": "How was your workout?",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 265
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld star%@",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 283
+        }
+      },
+      {
+        "comment": "",
+        "key": "Location",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 294
+        }
+      },
+      {
+        "comment": "",
+        "key": "Caption",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 308
+        }
+      },
+      {
+        "comment": "",
+        "key": "Optional — appears on your feed post.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 311
+        }
+      },
+      {
+        "comment": "",
+        "key": "Workout caption",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 326
+        }
+      },
+      {
+        "comment": "",
+        "key": "Soundtrack",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 332
+        }
+      },
+      {
+        "comment": "",
+        "key": "Past workouts don't capture Now Playing automatically. Add songs manually.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 335
+        }
+      },
+      {
+        "comment": "",
+        "key": "Remove %@",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 373
+        }
+      },
+      {
+        "comment": "",
+        "key": "Song title",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 384
+        }
+      },
+      {
+        "comment": "",
+        "key": "Artist (optional)",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 395
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add song to soundtrack",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 427
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add Song",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 416
+        }
+      },
+      {
+        "comment": "",
+        "key": "Photos",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 436
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add up to 4 photos from this workout.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 439
+        }
+      },
+      {
+        "comment": "",
+        "key": "Remove photo %lld",
+        "location": {
+          "startingColumn": 53,
+          "startingLine": 471
+        }
+      },
+      {
+        "comment": "",
+        "key": "e.g. 45",
+        "location": {
+          "startingColumn": 19,
+          "startingLine": 524
+        }
+      },
+      {
+        "comment": "",
+        "key": "Duration in minutes, optional",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 544
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add set to %@",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 640
+        }
+      },
+      {
+        "comment": "",
+        "key": "Remove %@",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 589
+        }
+      },
+      {
+        "comment": "",
+        "key": "SET",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 594
+        }
+      },
+      {
+        "comment": "",
+        "key": "WEIGHT (LBS)",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 596
+        }
+      },
+      {
+        "comment": "",
+        "key": "REPS",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 598
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add Set",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 631
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 682
+        }
+      },
+      {
+        "comment": "",
+        "key": "0",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 687
+        }
+      },
+      {
+        "comment": "",
+        "key": "Weight for set %lld",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 709
+        }
+      },
+      {
+        "comment": "",
+        "key": "0",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 711
+        }
+      },
+      {
+        "comment": "",
+        "key": "Reps for set %lld",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 733
+        }
+      },
+      {
+        "comment": "",
+        "key": "Delete set %lld",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 746
+        }
+      }
+    ]
+  },
+  "version": 1
+}

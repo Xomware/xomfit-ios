@@ -1,0 +1,72 @@
+{
+  "/Users/dom/Code/xomfit-ios/Xomfit/Views/Profile/BadgesSection.swift" : {
+    "const-values" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/BadgesSection.swiftconstvalues",
+    "dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/BadgesSection.d",
+    "diagnostics" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/BadgesSection.dia",
+    "object" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/BadgesSection.o",
+    "swift-dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/BadgesSection.swiftdeps"
+  },
+  "/Users/dom/Code/xomfit-ios/Xomfit/Views/Profile/BodyHeatmapView.swift" : {
+    "const-values" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/BodyHeatmapView.swiftconstvalues",
+    "dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/BodyHeatmapView.d",
+    "diagnostics" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/BodyHeatmapView.dia",
+    "object" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/BodyHeatmapView.o",
+    "swift-dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/BodyHeatmapView.swiftdeps"
+  },
+  "/Users/dom/Code/xomfit-ios/Xomfit/Views/Profile/FullBodyHeatmapView.swift" : {
+    "const-values" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/FullBodyHeatmapView.swiftconstvalues",
+    "dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/FullBodyHeatmapView.d",
+    "diagnostics" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/FullBodyHeatmapView.dia",
+    "object" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/FullBodyHeatmapView.o",
+    "swift-dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/FullBodyHeatmapView.swiftdeps"
+  },
+  "/Users/dom/Code/xomfit-ios/Xomfit/Views/Profile/MeasurementKindDetailView.swift" : {
+    "const-values" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/MeasurementKindDetailView.swiftconstvalues",
+    "dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/MeasurementKindDetailView.d",
+    "diagnostics" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/MeasurementKindDetailView.dia",
+    "object" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/MeasurementKindDetailView.o",
+    "swift-dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/MeasurementKindDetailView.swiftdeps"
+  },
+  "/Users/dom/Code/xomfit-ios/Xomfit/Views/Profile/MeasurementsView.swift" : {
+    "const-values" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/MeasurementsView.swiftconstvalues",
+    "dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/MeasurementsView.d",
+    "diagnostics" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/MeasurementsView.dia",
+    "object" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/MeasurementsView.o",
+    "swift-dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/MeasurementsView.swiftdeps"
+  },
+  "/Users/dom/Code/xomfit-ios/Xomfit/Views/Profile/MuscleDetailSheet.swift" : {
+    "const-values" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/MuscleDetailSheet.swiftconstvalues",
+    "dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/MuscleDetailSheet.d",
+    "diagnostics" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/MuscleDetailSheet.dia",
+    "object" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/MuscleDetailSheet.o",
+    "swift-dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/MuscleDetailSheet.swiftdeps"
+  },
+  "/Users/dom/Code/xomfit-ios/Xomfit/Views/Profile/ProfileCalendarView.swift" : {
+    "const-values" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/ProfileCalendarView.swiftconstvalues",
+    "dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/ProfileCalendarView.d",
+    "diagnostics" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/ProfileCalendarView.dia",
+    "object" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/ProfileCalendarView.o",
+    "swift-dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/ProfileCalendarView.swiftdeps"
+  },
+  "/Users/dom/Code/xomfit-ios/Xomfit/Views/Profile/ProfileFeedView.swift" : {
+    "const-values" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/ProfileFeedView.swiftconstvalues",
+    "dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/ProfileFeedView.d",
+    "diagnostics" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/ProfileFeedView.dia",
+    "object" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/ProfileFeedView.o",
+    "swift-dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/ProfileFeedView.swiftdeps"
+  },
+  "/Users/dom/Code/xomfit-ios/Xomfit/Views/Profile/ProfileStatsView.swift" : {
+    "const-values" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/ProfileStatsView.swiftconstvalues",
+    "dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/ProfileStatsView.d",
+    "diagnostics" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/ProfileStatsView.dia",
+    "object" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/ProfileStatsView.o",
+    "swift-dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/ProfileStatsView.swiftdeps"
+  },
+  "/Users/dom/Code/xomfit-ios/Xomfit/Views/Profile/ProfileTabPicker.swift" : {
+    "const-values" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/ProfileTabPicker.swiftconstvalues",
+    "dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/ProfileTabPicker.d",
+    "diagnostics" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/ProfileTabPicker.dia",
+    "object" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/ProfileTabPicker.o",
+    "swift-dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/Xomfit.build/Objects-normal/arm64/ProfileTabPicker.swiftdeps"
+  }
+}

@@ -699,173 +699,169 @@ private struct EditableExerciseRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            // Header row
-            HStack(spacing: 12) {
+            // Header row: index + name on left, action buttons on right
+            HStack(alignment: .top, spacing: 10) {
+                // Index badge
                 Text("\(index)")
                     .font(.caption.weight(.bold).monospaced())
                     .foregroundStyle(Theme.accent)
-                    .frame(width: Theme.Spacing.lg, height: Theme.Spacing.lg)
+                    .frame(width: 24, height: 24)
                     .background(Theme.accent.opacity(0.15))
-                    .clipShape(.rect(cornerRadius: Theme.Radius.xs))
+                    .clipShape(.rect(cornerRadius: 6))
 
-                VStack(alignment: .leading, spacing: 3) {
+                // Exercise info - takes remaining space
+                VStack(alignment: .leading, spacing: 2) {
                     Text(exercise.exercise.name)
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(Theme.textPrimary)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
 
-                    HStack(spacing: 6) {
+                    HStack(spacing: 4) {
                         ForEach(exercise.exercise.muscleGroups.prefix(2), id: \.self) { mg in
                             Text(mg.displayName)
-                                .font(Theme.fontSmall)
+                                .font(.caption2)
                                 .foregroundStyle(Theme.textSecondary)
                         }
                     }
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
 
-                Spacer()
+                // Compact action buttons - fixed width group
+                HStack(spacing: 2) {
+                    if canMoveUp {
+                        Button {
+                            onMoveUp()
+                        } label: {
+                            Image(systemName: "chevron.up")
+                                .font(.caption.weight(.bold))
+                                .foregroundStyle(Theme.textSecondary)
+                                .frame(width: 32, height: 32)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Move up")
+                    }
 
-                // Reorder buttons — mirror ActiveWorkoutView's ExerciseCard chevrons.
-                // Hidden at the boundaries (no up on first row, no down on last).
-                if canMoveUp {
+                    if canMoveDown {
+                        Button {
+                            onMoveDown()
+                        } label: {
+                            Image(systemName: "chevron.down")
+                                .font(.caption.weight(.bold))
+                                .foregroundStyle(Theme.textSecondary)
+                                .frame(width: 32, height: 32)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Move down")
+                    }
+
                     Button {
-                        onMoveUp()
+                        Haptics.selection()
+                        showDetails = true
                     } label: {
-                        Image(systemName: "chevron.up")
-                            .font(.subheadline.weight(.bold))
-                            .foregroundStyle(Theme.textPrimary)
-                            .frame(width: 44, height: 44)
-                            .background(Theme.surface.opacity(0.5))
-                            .clipShape(Circle())
+                        Image(systemName: "info.circle")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(Theme.textSecondary)
+                            .frame(width: 32, height: 32)
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel("Move \(exercise.exercise.name) up")
-                }
+                    .accessibilityLabel("Details")
 
-                if canMoveDown {
                     Button {
-                        onMoveDown()
+                        Haptics.light()
+                        onDelete()
                     } label: {
-                        Image(systemName: "chevron.down")
-                            .font(.subheadline.weight(.bold))
-                            .foregroundStyle(Theme.textPrimary)
-                            .frame(width: 44, height: 44)
-                            .background(Theme.surface.opacity(0.5))
-                            .clipShape(Circle())
+                        Image(systemName: "trash")
+                            .font(.caption)
+                            .foregroundStyle(Theme.destructive.opacity(0.85))
+                            .frame(width: 32, height: 32)
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel("Move \(exercise.exercise.name) down")
+                    .accessibilityLabel("Delete")
                 }
-
-                Button {
-                    Haptics.selection()
-                    showDetails = true
-                } label: {
-                    Image(systemName: "info.circle")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(Theme.textSecondary)
-                        .frame(width: Theme.Spacing.xl, height: Theme.Spacing.xl)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Show details for \(exercise.exercise.name)")
-
-                Button {
-                    Haptics.light()
-                    onDelete()
-                } label: {
-                    Image(systemName: "trash")
-                        .font(Theme.fontSubheadline)
-                        .foregroundStyle(Theme.destructive.opacity(0.85))
-                        .frame(width: 44, height: 44)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Remove \(exercise.exercise.name)")
             }
 
-            // Editable controls: sets stepper, reps, weight
-            HStack(alignment: .center, spacing: Theme.Spacing.sm) {
+            // Editable controls: sets stepper, reps, weight — evenly distributed
+            HStack(spacing: 12) {
                 // Sets stepper
-                VStack(alignment: .leading, spacing: Theme.Spacing.tight) {
+                VStack(alignment: .center, spacing: 4) {
                     Text("Sets")
-                        .font(Theme.fontSmall)
+                        .font(.caption2)
                         .foregroundStyle(Theme.textSecondary)
-                    HStack(spacing: Theme.Spacing.tight) {
+                    HStack(spacing: 4) {
                         Button {
                             Haptics.selection()
                             onUpdateSets(exercise.targetSets - 1)
                         } label: {
-                            Image(systemName: "minus.circle")
+                            Image(systemName: "minus.circle.fill")
+                                .font(.title3)
                                 .foregroundStyle(exercise.targetSets > 1 ? Theme.accent : Theme.textSecondary.opacity(0.3))
-                                .frame(minWidth: 44, minHeight: 44)
                         }
                         .buttonStyle(.plain)
                         .disabled(exercise.targetSets <= 1)
-                        .accessibilityLabel("Decrease sets")
 
                         Text("\(exercise.targetSets)")
-                            .font(.subheadline.weight(.bold).monospaced())
+                            .font(.body.weight(.bold).monospaced())
                             .foregroundStyle(Theme.textPrimary)
-                            .frame(minWidth: 22)
+                            .frame(minWidth: 20)
 
                         Button {
                             Haptics.selection()
                             onUpdateSets(exercise.targetSets + 1)
                         } label: {
-                            Image(systemName: "plus.circle")
+                            Image(systemName: "plus.circle.fill")
+                                .font(.title3)
                                 .foregroundStyle(Theme.accent)
-                                .frame(minWidth: 44, minHeight: 44)
                         }
                         .buttonStyle(.plain)
-                        .accessibilityLabel("Increase sets")
                     }
                 }
+                .frame(maxWidth: .infinity)
 
                 // Reps text field
-                VStack(alignment: .leading, spacing: Theme.Spacing.tight) {
+                VStack(alignment: .center, spacing: 4) {
                     Text("Reps")
-                        .font(Theme.fontSmall)
+                        .font(.caption2)
                         .foregroundStyle(Theme.textSecondary)
                     TextField("8-12", text: $repsText)
-                        .font(.subheadline.weight(.semibold).monospaced())
+                        .font(.body.weight(.semibold).monospaced())
                         .foregroundStyle(Theme.textPrimary)
                         .keyboardType(.numbersAndPunctuation)
                         .multilineTextAlignment(.center)
-                        .frame(width: 64)
-                        .padding(.horizontal, Theme.Spacing.sm)
-                        .padding(.vertical, Theme.Spacing.sm)
+                        .frame(width: 56)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 6)
                         .background(Theme.surfaceElevated)
-                        .clipShape(.rect(cornerRadius: Theme.Radius.sm))
+                        .clipShape(.rect(cornerRadius: 8))
                         .onChange(of: repsText) { _, newValue in
                             onUpdateReps(newValue)
                         }
-                        .accessibilityLabel("Target reps")
                 }
+                .frame(maxWidth: .infinity)
 
                 // Target weight text field
-                VStack(alignment: .leading, spacing: Theme.Spacing.tight) {
+                VStack(alignment: .center, spacing: 4) {
                     Text("Weight")
-                        .font(Theme.fontSmall)
+                        .font(.caption2)
                         .foregroundStyle(Theme.textSecondary)
-                    TextField("0", text: $weightText)
-                        .font(.subheadline.weight(.semibold).monospaced())
+                    TextField("—", text: $weightText)
+                        .font(.body.weight(.semibold).monospaced())
                         .foregroundStyle(Theme.textPrimary)
                         .keyboardType(.decimalPad)
                         .multilineTextAlignment(.center)
-                        .frame(width: 70)
-                        .padding(.horizontal, Theme.Spacing.sm)
-                        .padding(.vertical, Theme.Spacing.sm)
+                        .frame(width: 56)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 6)
                         .background(Theme.surfaceElevated)
-                        .clipShape(.rect(cornerRadius: Theme.Radius.sm))
+                        .clipShape(.rect(cornerRadius: 8))
                         .onChange(of: weightText) { _, newValue in
                             let parsed = Double(newValue) ?? 0
                             if parsed != targetWeight {
                                 targetWeight = parsed
                             }
                         }
-                        .accessibilityLabel("Target weight")
                 }
-
-                Spacer(minLength: 0)
+                .frame(maxWidth: .infinity)
             }
         }
         .padding(Theme.Spacing.md)

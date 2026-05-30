@@ -1,0 +1,56 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Profile/FullBodyHeatmapView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Time Range",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 91
+        }
+      },
+      {
+        "comment": "",
+        "key": "Time range",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 97
+        }
+      },
+      {
+        "comment": "",
+        "key": "Intensity legend: None, Light, Some, Moderate, Heavy",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 172
+        }
+      },
+      {
+        "comment": "",
+        "key": "Muscle Heatmap",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 77
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tap a muscle to see what hit it",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 80
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ view",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 133
+        }
+      }
+    ]
+  },
+  "version": 1
+}

@@ -1,0 +1,48 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Profile/PRListView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Personal Records",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 57
+        }
+      },
+      {
+        "comment": "",
+        "key": "1RM Estimate",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 41
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ lbs by %lld reps on %@",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 152
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ lbs × %lld reps",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 125
+        }
+      },
+      {
+        "comment": "",
+        "key": "Prev: %@",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 142
+        }
+      }
+    ]
+  },
+  "version": 1
+}

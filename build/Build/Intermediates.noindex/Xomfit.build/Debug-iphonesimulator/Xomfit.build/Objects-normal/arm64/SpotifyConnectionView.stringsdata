@@ -1,0 +1,176 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Profile/SpotifyConnectionView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Spotify error: %@",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 49
+        }
+      },
+      {
+        "comment": "",
+        "key": "Last captured: %@%@",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 126
+        }
+      },
+      {
+        "comment": "",
+        "key": "Removes Spotify access and stops capturing tracks",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 180
+        }
+      },
+      {
+        "comment": "",
+        "key": "Opens the Spotify login web view",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 202
+        }
+      },
+      {
+        "comment": "",
+        "key": "Power users only. Override the Spotify Client ID that ships with XomFit.",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 162
+        }
+      },
+      {
+        "comment": "",
+        "key": "Spotify",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 67
+        }
+      },
+      {
+        "comment": "",
+        "key": "Connected%@",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 70
+        }
+      },
+      {
+        "comment": "",
+        "key": "Not connected",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 71
+        }
+      },
+      {
+        "comment": "",
+        "key": "Spotify connected",
+        "location": {
+          "startingColumn": 71,
+          "startingLine": 74
+        }
+      },
+      {
+        "comment": "",
+        "key": "Spotify not connected",
+        "location": {
+          "startingColumn": 93,
+          "startingLine": 74
+        }
+      },
+      {
+        "comment": "",
+        "key": "Spotify capture in progress",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 101
+        }
+      },
+      {
+        "comment": "",
+        "key": "Recording",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 95
+        }
+      },
+      {
+        "comment": "",
+        "key": "Last captured",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 113
+        }
+      },
+      {
+        "comment": "",
+        "key": "Leave empty to use the Spotify app shipped with XomFit. Paste your own Client ID here to point sign-in at your personal Spotify Developer App.",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 147
+        }
+      },
+      {
+        "comment": "",
+        "key": "Override Spotify Client ID",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 139
+        }
+      },
+      {
+        "comment": "",
+        "key": "Spotify Client ID override",
+        "location": {
+          "startingColumn": 45,
+          "startingLine": 144
+        }
+      },
+      {
+        "comment": "",
+        "key": "Optional. Paste a Spotify Developer App client id to override the one shipped with XomFit.",
+        "location": {
+          "startingColumn": 44,
+          "startingLine": 145
+        }
+      },
+      {
+        "comment": "",
+        "key": "Advanced (override Client ID)",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 157
+        }
+      },
+      {
+        "comment": "",
+        "key": "Disconnect Spotify",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 176
+        }
+      },
+      {
+        "comment": "",
+        "key": "Connecting...",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 197
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sign In with Spotify",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 197
+        }
+      }
+    ]
+  },
+  "version": 1
+}

@@ -1,0 +1,56 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Workout/StretchDetailSheet.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Done",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 31
+        }
+      },
+      {
+        "comment": "",
+        "key": "Warmup stretch",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 53
+        }
+      },
+      {
+        "comment": "",
+        "key": "Hold Time",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 72
+        }
+      },
+      {
+        "comment": "",
+        "key": "Targets",
+        "location": {
+          "startingColumn": 61,
+          "startingLine": 92
+        }
+      },
+      {
+        "comment": "",
+        "key": "Target",
+        "location": {
+          "startingColumn": 73,
+          "startingLine": 92
+        }
+      },
+      {
+        "comment": "",
+        "key": "How To",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 115
+        }
+      }
+    ]
+  },
+  "version": 1
+}

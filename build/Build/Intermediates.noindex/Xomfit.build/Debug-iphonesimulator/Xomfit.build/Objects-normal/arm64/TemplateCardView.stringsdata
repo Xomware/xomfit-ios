@@ -1,0 +1,48 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Workout/TemplateCardView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "%@ template, %lld exercises, about %lld minutes",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 37
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ template, %lld exercises, about %lld minutes",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 42
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld ex",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 63
+        }
+      },
+      {
+        "comment": "",
+        "key": "~%lldm",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 64
+        }
+      },
+      {
+        "comment": "",
+        "key": "•",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 67
+        }
+      }
+    ]
+  },
+  "version": 1
+}

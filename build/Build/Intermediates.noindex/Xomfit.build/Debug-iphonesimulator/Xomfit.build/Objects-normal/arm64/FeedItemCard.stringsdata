@@ -1,0 +1,360 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Feed/FeedItemCard.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Delete Post",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 103
+        }
+      },
+      {
+        "comment": "",
+        "key": "Edit Caption",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 109
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld Personal Record%@!",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 52
+        }
+      },
+      {
+        "comment": "",
+        "key": "Edit Caption",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 92
+        }
+      },
+      {
+        "comment": "",
+        "key": "Delete Post",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 99
+        }
+      },
+      {
+        "comment": "",
+        "key": "Delete",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 104
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 105
+        }
+      },
+      {
+        "comment": "",
+        "key": "Are you sure you want to delete this post? This cannot be undone.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 107
+        }
+      },
+      {
+        "comment": "",
+        "key": "Caption",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 110
+        }
+      },
+      {
+        "comment": "",
+        "key": "Save",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 111
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 112
+        }
+      },
+      {
+        "comment": "",
+        "key": "View profile of @%@",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 154
+        }
+      },
+      {
+        "comment": "",
+        "key": "Opens this user's profile",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 155
+        }
+      },
+      {
+        "comment": "",
+        "key": "Post options",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 183
+        }
+      },
+      {
+        "comment": "",
+        "key": "Edit caption or delete this post",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 184
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ · %@",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 144
+        }
+      },
+      {
+        "comment": "",
+        "key": "Edit Caption",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 166
+        }
+      },
+      {
+        "comment": "",
+        "key": "Delete Post",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 173
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@, %lld likes",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 264
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld comments",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 280
+        }
+      },
+      {
+        "comment": "",
+        "key": "Opens the comment thread",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 281
+        }
+      },
+      {
+        "comment": "",
+        "key": "Share",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 294
+        }
+      },
+      {
+        "comment": "",
+        "key": "Save workout",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 308
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 255
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 272
+        }
+      },
+      {
+        "comment": "",
+        "key": "Duration %@, Volume %@, %lld sets",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 434
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rated %lld of 5 stars",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 411
+        }
+      },
+      {
+        "comment": "",
+        "key": "Workout photo",
+        "location": {
+          "startingColumn": 53,
+          "startingLine": 463
+        }
+      },
+      {
+        "comment": "",
+        "key": "Opens full-screen viewer",
+        "location": {
+          "startingColumn": 52,
+          "startingLine": 464
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ %@ × %lld reps",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 517
+        }
+      },
+      {
+        "comment": "",
+        "key": "Previous best: %@ %@",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 523
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ %@, %lld reps",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 520
+        }
+      },
+      {
+        "comment": "",
+        "key": "Milestone: %@, %@, badge %@",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 551
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld day streak, new personal record",
+        "location": {
+          "startingColumn": 15,
+          "startingLine": 578
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld day streak, previous best %lld days",
+        "location": {
+          "startingColumn": 15,
+          "startingLine": 579
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld Day Streak",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 562
+        }
+      },
+      {
+        "comment": "",
+        "key": "New personal streak record!",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 567
+        }
+      },
+      {
+        "comment": "",
+        "key": "Previous best: %lld days",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 571
+        }
+      },
+      {
+        "comment": "",
+        "key": "Featured track: %@%@",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 694
+        }
+      },
+      {
+        "comment": "",
+        "key": "Opens this featured track in %@.",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 680
+        }
+      },
+      {
+        "comment": "",
+        "key": "Pause featured track preview",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 742
+        }
+      },
+      {
+        "comment": "",
+        "key": "Play featured track preview",
+        "location": {
+          "startingColumn": 74,
+          "startingLine": 742
+        }
+      },
+      {
+        "comment": "",
+        "key": "Plays a 30 second preview of %@ inline.",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 743
+        }
+      },
+      {
+        "comment": "",
+        "key": "•",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 642
+        }
+      }
+    ]
+  },
+  "version": 1
+}

@@ -1,0 +1,56 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Profile/ProfileMusicView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "No listening history yet",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 33
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tracks will appear here after workouts with music capture enabled.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 36
+        }
+      },
+      {
+        "comment": "",
+        "key": "· %@",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 123
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 132
+        }
+      },
+      {
+        "comment": "",
+        "key": "play",
+        "location": {
+          "startingColumn": 45,
+          "startingLine": 135
+        }
+      },
+      {
+        "comment": "",
+        "key": "plays",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 135
+        }
+      }
+    ]
+  },
+  "version": 1
+}

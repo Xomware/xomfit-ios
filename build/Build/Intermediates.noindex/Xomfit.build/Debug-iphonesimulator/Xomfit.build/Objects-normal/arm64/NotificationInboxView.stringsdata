@@ -1,0 +1,40 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Notifications/NotificationInboxView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Notifications",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 29
+        }
+      },
+      {
+        "comment": "",
+        "key": "Close",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 34
+        }
+      },
+      {
+        "comment": "",
+        "key": "Mark All as Read",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 43
+        }
+      },
+      {
+        "comment": "",
+        "key": "Clear All",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 48
+        }
+      }
+    ]
+  },
+  "version": 1
+}

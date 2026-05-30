@@ -1,0 +1,232 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/AICoach/AICoachView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Coach",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 69
+        }
+      },
+      {
+        "comment": "",
+        "key": "Clear conversation?",
+        "location": {
+          "startingColumn": 13,
+          "startingLine": 101
+        }
+      },
+      {
+        "comment": "",
+        "key": "Past conversations",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 82
+        }
+      },
+      {
+        "comment": "",
+        "key": "Clear conversation",
+        "location": {
+          "startingColumn": 45,
+          "startingLine": 92
+        }
+      },
+      {
+        "comment": "",
+        "key": "Clear",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 105
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 109
+        }
+      },
+      {
+        "comment": "",
+        "key": "This deletes the saved chat history on this device.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 111
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sends this prompt to your AI Coach",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 181
+        }
+      },
+      {
+        "comment": "",
+        "key": "Regenerate last reply",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 251
+        }
+      },
+      {
+        "comment": "",
+        "key": "Discards the last reply and asks again",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 252
+        }
+      },
+      {
+        "comment": "",
+        "key": "Regenerate",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 239
+        }
+      },
+      {
+        "comment": "",
+        "key": "Dismiss error",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 301
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ask your coach…",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 320
+        }
+      },
+      {
+        "comment": "",
+        "key": "Message",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 340
+        }
+      },
+      {
+        "comment": "",
+        "key": "Send message",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 354
+        }
+      },
+      {
+        "comment": "",
+        "key": "Past Conversations",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 418
+        }
+      },
+      {
+        "comment": "",
+        "key": "Multi-thread chats coming soon",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 408
+        }
+      },
+      {
+        "comment": "",
+        "key": "For now your AI Coach is one rolling conversation. We'll add per-topic threads in a future update.",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 411
+        }
+      },
+      {
+        "comment": "",
+        "key": "Done",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 422
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ said: %@",
+        "location": {
+          "startingColumn": 21,
+          "startingLine": 485
+        }
+      },
+      {
+        "comment": "",
+        "key": "Suggested workout: %@, %lld exercises",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 579
+        }
+      },
+      {
+        "comment": "",
+        "key": "No matching exercises in your catalog yet.",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 528
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld exercise%@ skipped (unknown id)",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 533
+        }
+      },
+      {
+        "comment": "",
+        "key": "Save as Template",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 545
+        }
+      },
+      {
+        "comment": "",
+        "key": "Start Now",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 559
+        }
+      },
+      {
+        "comment": "",
+        "key": "~%lld min · %lld exercise%@",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 591
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld exercise%@",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 595
+        }
+      },
+      {
+        "comment": "",
+        "key": "Coach is typing",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 654
+        }
+      }
+    ]
+  },
+  "version": 1
+}

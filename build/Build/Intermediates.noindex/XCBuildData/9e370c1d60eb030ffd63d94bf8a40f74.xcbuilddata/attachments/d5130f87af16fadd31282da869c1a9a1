@@ -1,0 +1,79 @@
+{
+  "" : {
+    "diagnostics" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/XomfitWidgetExtension-primary.dia",
+    "emit-module-dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/XomfitWidgetExtension-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/XomfitWidgetExtension-primary-emit-module.dia",
+    "pch" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/XomfitWidgetExtension-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/XomfitWidgetExtension-primary.swiftdeps"
+  },
+  "/Users/dom/Code/xomfit-ios/XomfitWidget/AppIntent.swift" : {
+    "const-values" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/AppIntent.swiftconstvalues",
+    "dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/AppIntent.d",
+    "diagnostics" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/AppIntent.dia",
+    "index-unit-output-path" : "/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/AppIntent.o",
+    "llvm-bc" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/AppIntent.bc",
+    "object" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/AppIntent.o",
+    "swift-dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/AppIntent.swiftdeps",
+    "swiftmodule" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/AppIntent~partial.swiftmodule"
+  },
+  "/Users/dom/Code/xomfit-ios/XomfitWidget/XomfitWidget.swift" : {
+    "const-values" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/XomfitWidget.swiftconstvalues",
+    "dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/XomfitWidget.d",
+    "diagnostics" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/XomfitWidget.dia",
+    "index-unit-output-path" : "/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/XomfitWidget.o",
+    "llvm-bc" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/XomfitWidget.bc",
+    "object" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/XomfitWidget.o",
+    "swift-dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/XomfitWidget.swiftdeps",
+    "swiftmodule" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/XomfitWidget~partial.swiftmodule"
+  },
+  "/Users/dom/Code/xomfit-ios/XomfitWidget/XomfitWidgetAttributes.swift" : {
+    "const-values" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/XomfitWidgetAttributes.swiftconstvalues",
+    "dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/XomfitWidgetAttributes.d",
+    "diagnostics" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/XomfitWidgetAttributes.dia",
+    "index-unit-output-path" : "/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/XomfitWidgetAttributes.o",
+    "llvm-bc" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/XomfitWidgetAttributes.bc",
+    "object" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/XomfitWidgetAttributes.o",
+    "swift-dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/XomfitWidgetAttributes.swiftdeps",
+    "swiftmodule" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/XomfitWidgetAttributes~partial.swiftmodule"
+  },
+  "/Users/dom/Code/xomfit-ios/XomfitWidget/XomfitWidgetBundle.swift" : {
+    "const-values" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/XomfitWidgetBundle.swiftconstvalues",
+    "dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/XomfitWidgetBundle.d",
+    "diagnostics" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/XomfitWidgetBundle.dia",
+    "index-unit-output-path" : "/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/XomfitWidgetBundle.o",
+    "llvm-bc" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/XomfitWidgetBundle.bc",
+    "object" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/XomfitWidgetBundle.o",
+    "swift-dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/XomfitWidgetBundle.swiftdeps",
+    "swiftmodule" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/XomfitWidgetBundle~partial.swiftmodule"
+  },
+  "/Users/dom/Code/xomfit-ios/XomfitWidget/XomfitWidgetControl.swift" : {
+    "const-values" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/XomfitWidgetControl.swiftconstvalues",
+    "dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/XomfitWidgetControl.d",
+    "diagnostics" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/XomfitWidgetControl.dia",
+    "index-unit-output-path" : "/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/XomfitWidgetControl.o",
+    "llvm-bc" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/XomfitWidgetControl.bc",
+    "object" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/XomfitWidgetControl.o",
+    "swift-dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/XomfitWidgetControl.swiftdeps",
+    "swiftmodule" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/XomfitWidgetControl~partial.swiftmodule"
+  },
+  "/Users/dom/Code/xomfit-ios/XomfitWidget/XomfitWidgetLiveActivity.swift" : {
+    "const-values" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/XomfitWidgetLiveActivity.swiftconstvalues",
+    "dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/XomfitWidgetLiveActivity.d",
+    "diagnostics" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/XomfitWidgetLiveActivity.dia",
+    "index-unit-output-path" : "/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/XomfitWidgetLiveActivity.o",
+    "llvm-bc" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/XomfitWidgetLiveActivity.bc",
+    "object" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/XomfitWidgetLiveActivity.o",
+    "swift-dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/XomfitWidgetLiveActivity.swiftdeps",
+    "swiftmodule" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/XomfitWidgetLiveActivity~partial.swiftmodule"
+  },
+  "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/DerivedSources/GeneratedAssetSymbols.swift" : {
+    "const-values" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftconstvalues",
+    "dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/GeneratedAssetSymbols.d",
+    "diagnostics" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/GeneratedAssetSymbols.dia",
+    "index-unit-output-path" : "/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "llvm-bc" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/GeneratedAssetSymbols.bc",
+    "object" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "swift-dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftdeps",
+    "swiftmodule" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Xomfit.build/Debug-iphonesimulator/XomfitWidgetExtension.build/Objects-normal/arm64/GeneratedAssetSymbols~partial.swiftmodule"
+  }
+}

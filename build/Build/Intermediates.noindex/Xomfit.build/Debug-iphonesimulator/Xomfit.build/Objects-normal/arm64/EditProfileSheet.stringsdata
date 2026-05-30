@@ -1,0 +1,144 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Profile/EditProfileSheet.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Edit Profile",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 81
+        }
+      },
+      {
+        "comment": "",
+        "key": "Username",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 30
+        }
+      },
+      {
+        "comment": "",
+        "key": "Display Name",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 56
+        }
+      },
+      {
+        "comment": "",
+        "key": "Bio",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 62
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tap your photo to change it.",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 25
+        }
+      },
+      {
+        "comment": "",
+        "key": "username",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 31
+        }
+      },
+      {
+        "comment": "",
+        "key": "Checking availability...",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 43
+        }
+      },
+      {
+        "comment": "",
+        "key": "Your name",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 57
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tell people about yourself",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 63
+        }
+      },
+      {
+        "comment": "",
+        "key": "Private Account",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 70
+        }
+      },
+      {
+        "comment": "",
+        "key": "Only friends can see your activity when your account is private.",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 75
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 86
+        }
+      },
+      {
+        "comment": "",
+        "key": "Save",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 93
+        }
+      },
+      {
+        "comment": "",
+        "key": "Change profile photo",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 160
+        }
+      },
+      {
+        "comment": "",
+        "key": "Profile Photo",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 171
+        }
+      },
+      {
+        "comment": "",
+        "key": "Uploading...",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 175
+        }
+      },
+      {
+        "comment": "",
+        "key": "JPEG, square crop recommended.",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 179
+        }
+      }
+    ]
+  },
+  "version": 1
+}

@@ -1,0 +1,48 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Profile/ProfileWorkoutListView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "No matching workouts",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 35
+        }
+      },
+      {
+        "comment": "",
+        "key": "Search workout history",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 54
+        }
+      },
+      {
+        "comment": "",
+        "key": "Delete",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 87
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld PRs",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 130
+        }
+      },
+      {
+        "comment": "",
+        "key": "No workouts yet",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 172
+        }
+      }
+    ]
+  },
+  "version": 1
+}

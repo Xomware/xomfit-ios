@@ -1,0 +1,32 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Reports/ReportsListView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Reports",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 36
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ report, %@%@",
+        "location": {
+          "startingColumn": 13,
+          "startingLine": 203
+        }
+      },
+      {
+        "comment": "",
+        "key": "Unread",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 187
+        }
+      }
+    ]
+  },
+  "version": 1
+}

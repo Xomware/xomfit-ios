@@ -1,0 +1,16 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Tools/ToolsView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Tools",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 45
+        }
+      }
+    ]
+  },
+  "version": 1
+}

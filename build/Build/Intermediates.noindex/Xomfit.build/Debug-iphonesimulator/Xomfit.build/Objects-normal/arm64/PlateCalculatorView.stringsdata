@@ -1,0 +1,160 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Tools/PlateCalculatorView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Plate Calculator",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 60
+        }
+      },
+      {
+        "comment": "",
+        "key": "Done",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 65
+        }
+      },
+      {
+        "comment": "",
+        "key": "lbs",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 88
+        }
+      },
+      {
+        "comment": "",
+        "key": "0",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 78
+        }
+      },
+      {
+        "comment": "",
+        "key": "Target weight in pounds",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 87
+        }
+      },
+      {
+        "comment": "",
+        "key": "Use custom bar weight",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 133
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ pound bar",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 117
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 108
+        }
+      },
+      {
+        "comment": "",
+        "key": "Custom",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 124
+        }
+      },
+      {
+        "comment": "",
+        "key": "lbs",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 150
+        }
+      },
+      {
+        "comment": "",
+        "key": "e.g. 15",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 138
+        }
+      },
+      {
+        "comment": "",
+        "key": "Custom bar weight in pounds",
+        "location": {
+          "startingColumn": 45,
+          "startingLine": 149
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tap to toggle which plates you have on hand.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 174
+        }
+      },
+      {
+        "comment": "",
+        "key": "Enter a target weight to see the plate stack.",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 187
+        }
+      },
+      {
+        "comment": "",
+        "key": "Target is lighter than the bar (%@ lbs).",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 195
+        }
+      },
+      {
+        "comment": "",
+        "key": "Couldn't load exactly. %@ lbs short per side with selected plates.",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 206
+        }
+      },
+      {
+        "comment": "",
+        "key": "Just the bar",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 235
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ %@",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 312
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ pound plate",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 412
+        }
+      }
+    ]
+  },
+  "version": 1
+}

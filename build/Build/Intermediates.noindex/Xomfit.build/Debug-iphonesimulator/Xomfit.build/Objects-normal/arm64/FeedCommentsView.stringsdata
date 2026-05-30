@@ -1,0 +1,160 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Feed/FeedCommentsView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Comments",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 94
+        }
+      },
+      {
+        "comment": "",
+        "key": "No comments yet. Be the first to comment.",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 75
+        }
+      },
+      {
+        "comment": "",
+        "key": "No comments yet",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 67
+        }
+      },
+      {
+        "comment": "",
+        "key": "Be the first to comment",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 70
+        }
+      },
+      {
+        "comment": "",
+        "key": "Replying to ",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 125
+        }
+      },
+      {
+        "comment": "",
+        "key": "@%@",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 128
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel reply",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 143
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add a comment...",
+        "location": {
+          "startingColumn": 47,
+          "startingLine": 157
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add a reply...",
+        "location": {
+          "startingColumn": 68,
+          "startingLine": 157
+        }
+      },
+      {
+        "comment": "",
+        "key": "Post comment",
+        "location": {
+          "startingColumn": 57,
+          "startingLine": 195
+        }
+      },
+      {
+        "comment": "",
+        "key": "Post reply",
+        "location": {
+          "startingColumn": 74,
+          "startingLine": 195
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld/%lld",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 204
+        }
+      },
+      {
+        "comment": "",
+        "key": "Over limit by %lld characters",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 210
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld characters remaining",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 211
+        }
+      },
+      {
+        "comment": "",
+        "key": "View profile of @%@",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 322
+        }
+      },
+      {
+        "comment": "",
+        "key": "Opens this user's profile",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 323
+        }
+      },
+      {
+        "comment": "",
+        "key": "Reply to %@",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 349
+        }
+      },
+      {
+        "comment": "",
+        "key": "Adds a threaded reply under this comment",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 350
+        }
+      },
+      {
+        "comment": "",
+        "key": "Reply",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 340
+        }
+      }
+    ]
+  },
+  "version": 1
+}

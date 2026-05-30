@@ -1,0 +1,16 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Profile/ProfileTabPicker.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "%@ tab",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 40
+        }
+      }
+    ]
+  },
+  "version": 1
+}

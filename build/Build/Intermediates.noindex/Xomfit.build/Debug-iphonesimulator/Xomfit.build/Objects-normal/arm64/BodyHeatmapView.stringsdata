@@ -1,0 +1,48 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Profile/BodyHeatmapView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Front",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 25
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@: %lld sets",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 73
+        }
+      },
+      {
+        "comment": "",
+        "key": "Back",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 37
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 64
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ intensity",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 121
+        }
+      }
+    ]
+  },
+  "version": 1
+}

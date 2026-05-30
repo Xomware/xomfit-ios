@@ -1,0 +1,24 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Profile/StreakCard.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Current streak %lld days. Longest streak %lld days.",
+        "location": {
+          "startingColumn": 15,
+          "startingLine": 60
+        }
+      },
+      {
+        "comment": "",
+        "key": "No active streak. Longest streak %lld days.",
+        "location": {
+          "startingColumn": 15,
+          "startingLine": 61
+        }
+      }
+    ]
+  },
+  "version": 1
+}

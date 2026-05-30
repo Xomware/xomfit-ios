@@ -1,0 +1,96 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Workout/ExerciseDetailSheet.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Done",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 42
+        }
+      },
+      {
+        "comment": "",
+        "key": "Estimate one rep max",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 96
+        }
+      },
+      {
+        "comment": "",
+        "key": "Opens the 1RM estimator",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 97
+        }
+      },
+      {
+        "comment": "",
+        "key": "Estimate 1RM",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 87
+        }
+      },
+      {
+        "comment": "",
+        "key": "Variations",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 135
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@: %@",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 187
+        }
+      },
+      {
+        "comment": "",
+        "key": "How To",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 192
+        }
+      },
+      {
+        "comment": "",
+        "key": "Form Tips",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 208
+        }
+      },
+      {
+        "comment": "",
+        "key": "Muscles Worked",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 243
+        }
+      },
+      {
+        "comment": "",
+        "key": "Muscles worked diagram. Highlights: %@",
+        "location": {
+          "startingColumn": 17,
+          "startingLine": 254
+        }
+      },
+      {
+        "comment": "",
+        "key": "Can be performed one side at a time. Toggle laterality from the exercise config.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 281
+        }
+      }
+    ]
+  },
+  "version": 1
+}

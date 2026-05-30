@@ -1,0 +1,72 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Profile/BadgesSection.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Badges",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 23
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld / %lld",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 27
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@, unlocked. %@",
+        "location": {
+          "startingColumn": 15,
+          "startingLine": 97
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@, locked. %@",
+        "location": {
+          "startingColumn": 15,
+          "startingLine": 98
+        }
+      },
+      {
+        "comment": "",
+        "key": "Badge",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 163
+        }
+      },
+      {
+        "comment": "",
+        "key": "Unlocked",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 150
+        }
+      },
+      {
+        "comment": "",
+        "key": "Locked",
+        "location": {
+          "startingColumn": 64,
+          "startingLine": 150
+        }
+      },
+      {
+        "comment": "",
+        "key": "Done",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 168
+        }
+      }
+    ]
+  },
+  "version": 1
+}

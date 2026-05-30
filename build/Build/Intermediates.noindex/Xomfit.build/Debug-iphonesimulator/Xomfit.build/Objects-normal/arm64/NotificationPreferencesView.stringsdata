@@ -1,0 +1,24 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Notifications/NotificationPreferencesView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Notification Settings",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 73
+        }
+      },
+      {
+        "comment": "",
+        "key": "Local alerts that ping you when a rest or warmup timer completes — useful when your phone is in your pocket.",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 42
+        }
+      }
+    ]
+  },
+  "version": 1
+}

@@ -1,0 +1,48 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Profile/WorkoutHistorySearchView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Search History",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 53
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@, %@",
+        "location": {
+          "startingColumn": 57,
+          "startingLine": 44
+        }
+      },
+      {
+        "comment": "",
+        "key": "Done",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 58
+        }
+      },
+      {
+        "comment": "",
+        "key": "Close search",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 63
+        }
+      },
+      {
+        "comment": "",
+        "key": "No matching workouts. Try a broader filter.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 76
+        }
+      }
+    ]
+  },
+  "version": 1
+}

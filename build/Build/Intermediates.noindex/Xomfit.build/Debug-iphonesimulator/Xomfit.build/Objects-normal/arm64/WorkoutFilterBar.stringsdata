@@ -1,0 +1,48 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Workout/WorkoutFilterBar.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Search workouts...",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 25
+        }
+      },
+      {
+        "comment": "",
+        "key": "Search workouts",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 28
+        }
+      },
+      {
+        "comment": "",
+        "key": "Clear search",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 39
+        }
+      },
+      {
+        "comment": "",
+        "key": "All muscle groups",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 65
+        }
+      },
+      {
+        "comment": "",
+        "key": "All equipment",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 97
+        }
+      }
+    ]
+  },
+  "version": 1
+}

@@ -1,0 +1,144 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Onboarding/OnboardingFriendsScreen.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Cancel friend request?",
+        "location": {
+          "startingColumn": 13,
+          "startingLine": 114
+        }
+      },
+      {
+        "comment": "",
+        "key": "Error",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 129
+        }
+      },
+      {
+        "comment": "",
+        "key": "Find Your Crew",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 26
+        }
+      },
+      {
+        "comment": "",
+        "key": "Training is better with friends",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 31
+        }
+      },
+      {
+        "comment": "",
+        "key": "Search by username",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 42
+        }
+      },
+      {
+        "comment": "",
+        "key": "Clear search",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 58
+        }
+      },
+      {
+        "comment": "",
+        "key": "No users found",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 80
+        }
+      },
+      {
+        "comment": "",
+        "key": "Search by username to find friends",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 89
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel Request",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 118
+        }
+      },
+      {
+        "comment": "",
+        "key": "Keep",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 125
+        }
+      },
+      {
+        "comment": "",
+        "key": "OK",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 133
+        }
+      },
+      {
+        "comment": "",
+        "key": "@%@",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 155
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add friend",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 180
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel friend request",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 191
+        }
+      },
+      {
+        "comment": "",
+        "key": "Accept friend request",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 202
+        }
+      },
+      {
+        "comment": "",
+        "key": "Decline friend request",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 213
+        }
+      },
+      {
+        "comment": "",
+        "key": "Decline",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 208
+        }
+      }
+    ]
+  },
+  "version": 1
+}

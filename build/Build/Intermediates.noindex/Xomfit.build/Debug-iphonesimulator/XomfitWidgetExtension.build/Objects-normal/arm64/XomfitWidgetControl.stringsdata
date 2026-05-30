@@ -1,0 +1,40 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/XomfitWidget/XomfitWidgetControl.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Start Workout",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 21
+        }
+      },
+      {
+        "comment": "",
+        "key": "Quickly start a new workout in XomFit.",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 22
+        }
+      },
+      {
+        "comment": "",
+        "key": "Start Workout",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 18
+        }
+      },
+      {
+        "comment": "",
+        "key": "Start Workout",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 27
+        }
+      }
+    ]
+  },
+  "version": 1
+}

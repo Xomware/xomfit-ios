@@ -1,0 +1,136 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Workout/TimedCircuitView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "End Circuit?",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 55
+        }
+      },
+      {
+        "comment": "",
+        "key": "Discard",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 56
+        }
+      },
+      {
+        "comment": "",
+        "key": "Keep Going",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 60
+        }
+      },
+      {
+        "comment": "",
+        "key": "Your progress so far will be lost.",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 62
+        }
+      },
+      {
+        "comment": "",
+        "key": "Discard circuit workout",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 87
+        }
+      },
+      {
+        "comment": "",
+        "key": "Finish circuit and save",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 123
+        }
+      },
+      {
+        "comment": "",
+        "key": "Discard",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 81
+        }
+      },
+      {
+        "comment": "",
+        "key": "",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 107
+        }
+      },
+      {
+        "comment": "",
+        "key": "Done",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 107
+        }
+      },
+      {
+        "comment": "",
+        "key": "remaining",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 149
+        }
+      },
+      {
+        "comment": "",
+        "key": "No exercises queued",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 209
+        }
+      },
+      {
+        "comment": "",
+        "key": "Unmark round %lld",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 248
+        }
+      },
+      {
+        "comment": "",
+        "key": "Mark round %lld complete",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 249
+        }
+      },
+      {
+        "comment": "",
+        "key": "Round %lld complete",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 231
+        }
+      },
+      {
+        "comment": "",
+        "key": "Mark round %lld complete",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 232
+        }
+      },
+      {
+        "comment": "",
+        "key": "Next exercise in %llds",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 259
+        }
+      }
+    ]
+  },
+  "version": 1
+}

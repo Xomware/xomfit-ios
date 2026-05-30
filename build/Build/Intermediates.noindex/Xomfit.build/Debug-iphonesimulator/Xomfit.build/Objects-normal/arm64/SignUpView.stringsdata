@@ -1,0 +1,80 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Auth/SignUpView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Create Account",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 28
+        }
+      },
+      {
+        "comment": "",
+        "key": "Start your fitness journey",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 31
+        }
+      },
+      {
+        "comment": "",
+        "key": "Password",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 49
+        }
+      },
+      {
+        "comment": "",
+        "key": "Min 8 characters",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 52
+        }
+      },
+      {
+        "comment": "",
+        "key": "Confirm Password",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 64
+        }
+      },
+      {
+        "comment": "",
+        "key": "Repeat password",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 67
+        }
+      },
+      {
+        "comment": "",
+        "key": "Create Account",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 85
+        }
+      },
+      {
+        "comment": "",
+        "key": "Already have an account?",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 97
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sign In",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 103
+        }
+      }
+    ]
+  },
+  "version": 1
+}

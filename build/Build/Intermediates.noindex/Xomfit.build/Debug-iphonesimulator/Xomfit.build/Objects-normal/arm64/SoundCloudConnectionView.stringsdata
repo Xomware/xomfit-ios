@@ -1,0 +1,128 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Profile/SoundCloudConnectionView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "SoundCloud error: %@",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 38
+        }
+      },
+      {
+        "comment": "",
+        "key": "Last captured: %@%@",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 111
+        }
+      },
+      {
+        "comment": "",
+        "key": "Removes SoundCloud access and stops capturing tracks",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 129
+        }
+      },
+      {
+        "comment": "",
+        "key": "Opens the SoundCloud login web view",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 148
+        }
+      },
+      {
+        "comment": "",
+        "key": "SoundCloud",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 52
+        }
+      },
+      {
+        "comment": "",
+        "key": "Connected%@",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 55
+        }
+      },
+      {
+        "comment": "",
+        "key": "Not connected",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 56
+        }
+      },
+      {
+        "comment": "",
+        "key": "SoundCloud connected",
+        "location": {
+          "startingColumn": 74,
+          "startingLine": 59
+        }
+      },
+      {
+        "comment": "",
+        "key": "SoundCloud not connected",
+        "location": {
+          "startingColumn": 99,
+          "startingLine": 59
+        }
+      },
+      {
+        "comment": "",
+        "key": "SoundCloud capture in progress",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 86
+        }
+      },
+      {
+        "comment": "",
+        "key": "Recording",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 80
+        }
+      },
+      {
+        "comment": "",
+        "key": "Last captured",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 98
+        }
+      },
+      {
+        "comment": "",
+        "key": "Disconnect SoundCloud",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 125
+        }
+      },
+      {
+        "comment": "",
+        "key": "Connecting...",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 143
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sign In with SoundCloud",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 143
+        }
+      }
+    ]
+  },
+  "version": 1
+}

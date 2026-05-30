@@ -1,0 +1,72 @@
+{
+  "/Users/dom/Code/xomfit-ios/build/SourcePackages/checkouts/swift-crypto/Sources/Crypto/ASN1/Basic ASN1 Types/ASN1Boolean.swift" : {
+    "const-values" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/ASN1Boolean.swiftconstvalues",
+    "dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/ASN1Boolean.d",
+    "diagnostics" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/ASN1Boolean.dia",
+    "object" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/ASN1Boolean.o",
+    "swift-dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/ASN1Boolean.swiftdeps"
+  },
+  "/Users/dom/Code/xomfit-ios/build/SourcePackages/checkouts/swift-crypto/Sources/Crypto/ASN1/Basic ASN1 Types/ASN1Identifier.swift" : {
+    "const-values" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/ASN1Identifier.swiftconstvalues",
+    "dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/ASN1Identifier.d",
+    "diagnostics" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/ASN1Identifier.dia",
+    "object" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/ASN1Identifier.o",
+    "swift-dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/ASN1Identifier.swiftdeps"
+  },
+  "/Users/dom/Code/xomfit-ios/build/SourcePackages/checkouts/swift-crypto/Sources/Crypto/ASN1/Basic ASN1 Types/ASN1Integer.swift" : {
+    "const-values" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/ASN1Integer.swiftconstvalues",
+    "dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/ASN1Integer.d",
+    "diagnostics" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/ASN1Integer.dia",
+    "object" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/ASN1Integer.o",
+    "swift-dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/ASN1Integer.swiftdeps"
+  },
+  "/Users/dom/Code/xomfit-ios/build/SourcePackages/checkouts/swift-crypto/Sources/Crypto/ASN1/Basic ASN1 Types/ASN1Null.swift" : {
+    "const-values" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/ASN1Null.swiftconstvalues",
+    "dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/ASN1Null.d",
+    "diagnostics" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/ASN1Null.dia",
+    "object" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/ASN1Null.o",
+    "swift-dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/ASN1Null.swiftdeps"
+  },
+  "/Users/dom/Code/xomfit-ios/build/SourcePackages/checkouts/swift-crypto/Sources/Crypto/ASN1/Basic ASN1 Types/ASN1OctetString.swift" : {
+    "const-values" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/ASN1OctetString.swiftconstvalues",
+    "dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/ASN1OctetString.d",
+    "diagnostics" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/ASN1OctetString.dia",
+    "object" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/ASN1OctetString.o",
+    "swift-dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/ASN1OctetString.swiftdeps"
+  },
+  "/Users/dom/Code/xomfit-ios/build/SourcePackages/checkouts/swift-crypto/Sources/Crypto/ASN1/Basic ASN1 Types/ASN1Strings.swift" : {
+    "const-values" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/ASN1Strings.swiftconstvalues",
+    "dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/ASN1Strings.d",
+    "diagnostics" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/ASN1Strings.dia",
+    "object" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/ASN1Strings.o",
+    "swift-dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/ASN1Strings.swiftdeps"
+  },
+  "/Users/dom/Code/xomfit-ios/build/SourcePackages/checkouts/swift-crypto/Sources/Crypto/ASN1/Basic ASN1 Types/ArraySliceBigint.swift" : {
+    "const-values" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/ArraySliceBigint.swiftconstvalues",
+    "dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/ArraySliceBigint.d",
+    "diagnostics" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/ArraySliceBigint.dia",
+    "object" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/ArraySliceBigint.o",
+    "swift-dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/ArraySliceBigint.swiftdeps"
+  },
+  "/Users/dom/Code/xomfit-ios/build/SourcePackages/checkouts/swift-crypto/Sources/Crypto/ASN1/Basic ASN1 Types/GeneralizedTime.swift" : {
+    "const-values" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/GeneralizedTime.swiftconstvalues",
+    "dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/GeneralizedTime.d",
+    "diagnostics" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/GeneralizedTime.dia",
+    "object" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/GeneralizedTime.o",
+    "swift-dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/GeneralizedTime.swiftdeps"
+  },
+  "/Users/dom/Code/xomfit-ios/build/SourcePackages/checkouts/swift-crypto/Sources/Crypto/ASN1/Basic ASN1 Types/ObjectIdentifier.swift" : {
+    "const-values" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/ObjectIdentifier.swiftconstvalues",
+    "dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/ObjectIdentifier.d",
+    "diagnostics" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/ObjectIdentifier.dia",
+    "object" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/ObjectIdentifier.o",
+    "swift-dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/ObjectIdentifier.swiftdeps"
+  },
+  "/Users/dom/Code/xomfit-ios/build/SourcePackages/checkouts/swift-crypto/Sources/Crypto/ASN1/ECDSASignature.swift" : {
+    "const-values" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/ECDSASignature.swiftconstvalues",
+    "dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/ECDSASignature.d",
+    "diagnostics" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/ECDSASignature.dia",
+    "object" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/ECDSASignature.o",
+    "swift-dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/swift-crypto.build/Debug-iphonesimulator/Crypto.build/Objects-normal/arm64/ECDSASignature.swiftdeps"
+  }
+}

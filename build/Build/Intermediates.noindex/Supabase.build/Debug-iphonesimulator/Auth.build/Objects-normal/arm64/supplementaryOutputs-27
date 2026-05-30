@@ -1,0 +1,23 @@
+{
+  "/Users/dom/Code/xomfit-ios/build/SourcePackages/checkouts/supabase-swift/Sources/Auth/Exports.swift" : {
+    "const-values" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Supabase.build/Debug-iphonesimulator/Auth.build/Objects-normal/arm64/Exports.swiftconstvalues",
+    "dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Supabase.build/Debug-iphonesimulator/Auth.build/Objects-normal/arm64/Exports.d",
+    "diagnostics" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Supabase.build/Debug-iphonesimulator/Auth.build/Objects-normal/arm64/Exports.dia",
+    "object" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Supabase.build/Debug-iphonesimulator/Auth.build/Objects-normal/arm64/Exports.o",
+    "swift-dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Supabase.build/Debug-iphonesimulator/Auth.build/Objects-normal/arm64/Exports.swiftdeps"
+  },
+  "/Users/dom/Code/xomfit-ios/build/SourcePackages/checkouts/supabase-swift/Sources/Auth/Internal/APIClient.swift" : {
+    "const-values" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Supabase.build/Debug-iphonesimulator/Auth.build/Objects-normal/arm64/APIClient.swiftconstvalues",
+    "dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Supabase.build/Debug-iphonesimulator/Auth.build/Objects-normal/arm64/APIClient.d",
+    "diagnostics" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Supabase.build/Debug-iphonesimulator/Auth.build/Objects-normal/arm64/APIClient.dia",
+    "object" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Supabase.build/Debug-iphonesimulator/Auth.build/Objects-normal/arm64/APIClient.o",
+    "swift-dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Supabase.build/Debug-iphonesimulator/Auth.build/Objects-normal/arm64/APIClient.swiftdeps"
+  },
+  "/Users/dom/Code/xomfit-ios/build/SourcePackages/checkouts/supabase-swift/Sources/Auth/Internal/CodeVerifierStorage.swift" : {
+    "const-values" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Supabase.build/Debug-iphonesimulator/Auth.build/Objects-normal/arm64/CodeVerifierStorage.swiftconstvalues",
+    "dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Supabase.build/Debug-iphonesimulator/Auth.build/Objects-normal/arm64/CodeVerifierStorage.d",
+    "diagnostics" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Supabase.build/Debug-iphonesimulator/Auth.build/Objects-normal/arm64/CodeVerifierStorage.dia",
+    "object" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Supabase.build/Debug-iphonesimulator/Auth.build/Objects-normal/arm64/CodeVerifierStorage.o",
+    "swift-dependencies" : "/Users/dom/Code/xomfit-ios/build/Build/Intermediates.noindex/Supabase.build/Debug-iphonesimulator/Auth.build/Objects-normal/arm64/CodeVerifierStorage.swiftdeps"
+  }
+}

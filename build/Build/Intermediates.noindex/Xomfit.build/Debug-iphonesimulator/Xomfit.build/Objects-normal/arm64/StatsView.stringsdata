@@ -1,0 +1,48 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Stats/StatsView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Jump to %@",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 128
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ volume",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 189
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld %@",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 212
+        }
+      },
+      {
+        "comment": "",
+        "key": "Relative training volume by muscle group",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 229
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 292
+        }
+      }
+    ]
+  },
+  "version": 1
+}

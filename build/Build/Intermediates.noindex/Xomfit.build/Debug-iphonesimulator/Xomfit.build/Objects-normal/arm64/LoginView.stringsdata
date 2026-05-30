@@ -1,0 +1,88 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Auth/LoginView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Track. Lift. Grow.",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 33
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sign in with Google",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 71
+        }
+      },
+      {
+        "comment": "",
+        "key": "or",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 86
+        }
+      },
+      {
+        "comment": "",
+        "key": "Email",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 96
+        }
+      },
+      {
+        "comment": "",
+        "key": "you@example.com",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 99
+        }
+      },
+      {
+        "comment": "",
+        "key": "Password",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 114
+        }
+      },
+      {
+        "comment": "",
+        "key": "••••••••",
+        "location": {
+          "startingColumn": 45,
+          "startingLine": 117
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sign In",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 135
+        }
+      },
+      {
+        "comment": "",
+        "key": "Don't have an account?",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 146
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sign Up",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 150
+        }
+      }
+    ]
+  },
+  "version": 1
+}

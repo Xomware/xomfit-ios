@@ -1,0 +1,40 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Profile/ProfileFriendsView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "No friends yet",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 108
+        }
+      },
+      {
+        "comment": "",
+        "key": "Opens this user's profile",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 44
+        }
+      },
+      {
+        "comment": "",
+        "key": "@%@",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 77
+        }
+      },
+      {
+        "comment": "",
+        "key": "No friends yet",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 101
+        }
+      }
+    ]
+  },
+  "version": 1
+}

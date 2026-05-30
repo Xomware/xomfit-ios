@@ -1,0 +1,160 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Profile/ProfileStatsView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "No stats yet. Log your first workout to unlock stats.",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 120
+        }
+      },
+      {
+        "comment": "",
+        "key": "Body measurements",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 159
+        }
+      },
+      {
+        "comment": "",
+        "key": "Opens weight, body fat, and circumference tracker",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 160
+        }
+      },
+      {
+        "comment": "",
+        "key": "See all stats",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 100
+        }
+      },
+      {
+        "comment": "",
+        "key": "Opens the full stats hub",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 101
+        }
+      },
+      {
+        "comment": "",
+        "key": "See All Stats",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 83
+        }
+      },
+      {
+        "comment": "",
+        "key": "Radar balance, comparisons, and more",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 86
+        }
+      },
+      {
+        "comment": "",
+        "key": "Body",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 142
+        }
+      },
+      {
+        "comment": "",
+        "key": "Track weight, body fat, and measurements",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 145
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ Volume",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 173
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld %@",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 191
+        }
+      },
+      {
+        "comment": "",
+        "key": "Volume Trend (30d)",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 201
+        }
+      },
+      {
+        "comment": "",
+        "key": "Consistency",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 220
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 259
+        }
+      },
+      {
+        "comment": "",
+        "key": "Top Exercises",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 282
+        }
+      },
+      {
+        "comment": "",
+        "key": "No personal records yet",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 398
+        }
+      },
+      {
+        "comment": "",
+        "key": "Recent PRs",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 318
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ %@ × %lld",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 360
+        }
+      },
+      {
+        "comment": "",
+        "key": "No PRs yet",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 391
+        }
+      }
+    ]
+  },
+  "version": 1
+}

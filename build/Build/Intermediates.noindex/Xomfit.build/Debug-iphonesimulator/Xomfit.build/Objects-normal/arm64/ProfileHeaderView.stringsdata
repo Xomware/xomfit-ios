@@ -1,0 +1,104 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Profile/ProfileHeaderView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Profile avatar",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 45
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld Friends",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 73
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld %@",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 143
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 61
+        }
+      },
+      {
+        "comment": "",
+        "key": "@%@",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 92
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 131
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel friend request?",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 170
+        }
+      },
+      {
+        "comment": "",
+        "key": "Remove friend?",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 198
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel Request",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 174
+        }
+      },
+      {
+        "comment": "",
+        "key": "Keep",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 177
+        }
+      },
+      {
+        "comment": "",
+        "key": "Remove Friend",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 202
+        }
+      },
+      {
+        "comment": "",
+        "key": "Keep",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 205
+        }
+      }
+    ]
+  },
+  "version": 1
+}

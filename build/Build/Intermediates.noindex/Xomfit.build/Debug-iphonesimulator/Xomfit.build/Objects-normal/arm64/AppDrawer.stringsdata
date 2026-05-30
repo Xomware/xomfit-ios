@@ -1,0 +1,40 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Common/AppDrawer.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Sign out",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 199
+        }
+      },
+      {
+        "comment": "",
+        "key": "Close drawer",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 138
+        }
+      },
+      {
+        "comment": "",
+        "key": "@%@",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 119
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sign Out",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 188
+        }
+      }
+    ]
+  },
+  "version": 1
+}

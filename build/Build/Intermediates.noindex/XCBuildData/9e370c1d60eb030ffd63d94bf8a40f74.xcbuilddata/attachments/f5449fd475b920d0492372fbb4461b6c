@@ -1,0 +1,11 @@
+/Users/dom/Code/xomfit-ios/build/SourcePackages/checkouts/swift-concurrency-extras/Sources/ConcurrencyExtras/ActorIsolated.swift
+/Users/dom/Code/xomfit-ios/build/SourcePackages/checkouts/swift-concurrency-extras/Sources/ConcurrencyExtras/AnyHashableSendable.swift
+/Users/dom/Code/xomfit-ios/build/SourcePackages/checkouts/swift-concurrency-extras/Sources/ConcurrencyExtras/AsyncStream.swift
+/Users/dom/Code/xomfit-ios/build/SourcePackages/checkouts/swift-concurrency-extras/Sources/ConcurrencyExtras/AsyncThrowingStream.swift
+/Users/dom/Code/xomfit-ios/build/SourcePackages/checkouts/swift-concurrency-extras/Sources/ConcurrencyExtras/Internal/Locking.swift
+/Users/dom/Code/xomfit-ios/build/SourcePackages/checkouts/swift-concurrency-extras/Sources/ConcurrencyExtras/Internal/UncheckedBox.swift
+/Users/dom/Code/xomfit-ios/build/SourcePackages/checkouts/swift-concurrency-extras/Sources/ConcurrencyExtras/LockIsolated.swift
+/Users/dom/Code/xomfit-ios/build/SourcePackages/checkouts/swift-concurrency-extras/Sources/ConcurrencyExtras/MainSerialExecutor.swift
+/Users/dom/Code/xomfit-ios/build/SourcePackages/checkouts/swift-concurrency-extras/Sources/ConcurrencyExtras/Result.swift
+/Users/dom/Code/xomfit-ios/build/SourcePackages/checkouts/swift-concurrency-extras/Sources/ConcurrencyExtras/Task.swift
+/Users/dom/Code/xomfit-ios/build/SourcePackages/checkouts/swift-concurrency-extras/Sources/ConcurrencyExtras/UncheckedSendable.swift

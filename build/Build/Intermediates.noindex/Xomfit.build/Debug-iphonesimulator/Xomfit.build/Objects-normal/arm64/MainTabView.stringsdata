@@ -1,0 +1,88 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/MainTabView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Open navigation drawer",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 224
+        }
+      },
+      {
+        "comment": "",
+        "key": "Notifications, %lld unread",
+        "location": {
+          "startingColumn": 19,
+          "startingLine": 252
+        }
+      },
+      {
+        "comment": "",
+        "key": "Notifications",
+        "location": {
+          "startingColumn": 19,
+          "startingLine": 253
+        }
+      },
+      {
+        "comment": "",
+        "key": "Paused workout %@",
+        "location": {
+          "startingColumn": 15,
+          "startingLine": 504
+        }
+      },
+      {
+        "comment": "",
+        "key": "Resume workout %@",
+        "location": {
+          "startingColumn": 15,
+          "startingLine": 505
+        }
+      },
+      {
+        "comment": "",
+        "key": "Reopens the active workout screen",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 506
+        }
+      },
+      {
+        "comment": "",
+        "key": "Apple Watch connected",
+        "location": {
+          "startingColumn": 45,
+          "startingLine": 482
+        }
+      },
+      {
+        "comment": "",
+        "key": "Paused",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 453
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld track%@ captured",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 471
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld track%@",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 467
+        }
+      }
+    ]
+  },
+  "version": 1
+}

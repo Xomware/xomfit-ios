@@ -1,0 +1,48 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Profile/MuscleDetailSheet.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Done",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 43
+        }
+      },
+      {
+        "comment": "",
+        "key": "Exercises",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 101
+        }
+      },
+      {
+        "comment": "",
+        "key": "Opens exercise details",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 115
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld sets · best %@",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 135
+        }
+      },
+      {
+        "comment": "",
+        "key": "Volume",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 146
+        }
+      }
+    ]
+  },
+  "version": 1
+}

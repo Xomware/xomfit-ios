@@ -1,0 +1,16 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Stats/RadarChartView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Muscle balance radar chart",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 41
+        }
+      }
+    ]
+  },
+  "version": 1
+}

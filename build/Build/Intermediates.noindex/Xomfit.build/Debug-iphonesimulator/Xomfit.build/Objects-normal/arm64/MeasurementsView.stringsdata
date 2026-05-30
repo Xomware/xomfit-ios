@@ -1,0 +1,72 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Profile/MeasurementsView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Body",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 28
+        }
+      },
+      {
+        "comment": "",
+        "key": "Log %@",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 88
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tap to log",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 105
+        }
+      },
+      {
+        "comment": "",
+        "key": "Opens chart and log entry form",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 131
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@%@ %@ · 30d",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 199
+        }
+      },
+      {
+        "comment": "",
+        "key": "No trend yet",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 203
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tap to log",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 184
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ %@",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 176
+        }
+      }
+    ]
+  },
+  "version": 1
+}

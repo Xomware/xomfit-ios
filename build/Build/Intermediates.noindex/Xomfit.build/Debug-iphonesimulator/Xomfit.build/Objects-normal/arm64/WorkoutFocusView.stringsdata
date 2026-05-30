@@ -1,0 +1,512 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Workout/WorkoutFocusView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Delete this set?",
+        "location": {
+          "startingColumn": 13,
+          "startingLine": 204
+        }
+      },
+      {
+        "comment": "",
+        "key": "Set completed",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 575
+        }
+      },
+      {
+        "comment": "",
+        "key": "Complete set",
+        "location": {
+          "startingColumn": 61,
+          "startingLine": 575
+        }
+      },
+      {
+        "comment": "",
+        "key": "Delete set",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 208
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 220
+        }
+      },
+      {
+        "comment": "",
+        "key": "Removes this set from the current exercise.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 224
+        }
+      },
+      {
+        "comment": "",
+        "key": "Superset %@",
+        "location": {
+          "startingColumn": 45,
+          "startingLine": 265
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add set",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 408
+        }
+      },
+      {
+        "comment": "",
+        "key": "Adds a new set to the current exercise",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 409
+        }
+      },
+      {
+        "comment": "",
+        "key": "Set %lld%@%@",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 377
+        }
+      },
+      {
+        "comment": "",
+        "key": "Long press or use the context menu to delete this set",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 379
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add another set before this one can be deleted",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 380
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 341
+        }
+      },
+      {
+        "comment": "",
+        "key": "Remove set",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 373
+        }
+      },
+      {
+        "comment": "",
+        "key": "Set",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 397
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add drop set after set %lld",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 454
+        }
+      },
+      {
+        "comment": "",
+        "key": "Inserts a drop set immediately after the most recently completed set with reduced weight",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 455
+        }
+      },
+      {
+        "comment": "",
+        "key": "drop set",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 443
+        }
+      },
+      {
+        "comment": "",
+        "key": "WEIGHT",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 464
+        }
+      },
+      {
+        "comment": "",
+        "key": "lbs x2 (per side)",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 495
+        }
+      },
+      {
+        "comment": "",
+        "key": "lbs",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 499
+        }
+      },
+      {
+        "comment": "",
+        "key": "0",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 469
+        }
+      },
+      {
+        "comment": "",
+        "key": "Weight: %@ pounds. Tap to edit.",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 490
+        }
+      },
+      {
+        "comment": "",
+        "key": "REPS",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 514
+        }
+      },
+      {
+        "comment": "",
+        "key": "0",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 519
+        }
+      },
+      {
+        "comment": "",
+        "key": "Reps: %lld. Tap to edit.",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 540
+        }
+      },
+      {
+        "comment": "",
+        "key": "per leg",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 545
+        }
+      },
+      {
+        "comment": "",
+        "key": "per arm",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 545
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 536
+        }
+      },
+      {
+        "comment": "",
+        "key": "COMPLETED",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 566
+        }
+      },
+      {
+        "comment": "",
+        "key": "DONE",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 566
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld / %lld",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 597
+        }
+      },
+      {
+        "comment": "",
+        "key": "Previous exercise",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 595
+        }
+      },
+      {
+        "comment": "",
+        "key": "Next exercise",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 613
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add exercise",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 626
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rest:",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 634
+        }
+      },
+      {
+        "comment": "",
+        "key": "Off",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 638
+        }
+      },
+      {
+        "comment": "",
+        "key": "30s",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 639
+        }
+      },
+      {
+        "comment": "",
+        "key": "60s",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 640
+        }
+      },
+      {
+        "comment": "",
+        "key": "90s",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 641
+        }
+      },
+      {
+        "comment": "",
+        "key": "120s",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 642
+        }
+      },
+      {
+        "comment": "",
+        "key": "180s",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 643
+        }
+      },
+      {
+        "comment": "",
+        "key": "%llds",
+        "location": {
+          "startingColumn": 62,
+          "startingLine": 645
+        }
+      },
+      {
+        "comment": "",
+        "key": "Off",
+        "location": {
+          "startingColumn": 105,
+          "startingLine": 645
+        }
+      },
+      {
+        "comment": "",
+        "key": "REST",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 694
+        }
+      },
+      {
+        "comment": "",
+        "key": "Expand rest timer",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 682
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rest time remaining %@",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 691
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add 30 seconds to rest timer",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 716
+        }
+      },
+      {
+        "comment": "",
+        "key": "Lift — end rest and start next set",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 734
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ends the rest timer immediately",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 735
+        }
+      },
+      {
+        "comment": "",
+        "key": "+30s",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 706
+        }
+      },
+      {
+        "comment": "",
+        "key": "Lift",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 724
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add 30 seconds to rest timer",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 862
+        }
+      },
+      {
+        "comment": "",
+        "key": "Skip rest timer and start the next set",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 886
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ends the rest timer immediately and returns to the lift",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 887
+        }
+      },
+      {
+        "comment": "",
+        "key": "Minimize rest timer",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 801
+        }
+      },
+      {
+        "comment": "",
+        "key": "Collapses the rest timer to a banner so you can see the next set",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 802
+        }
+      },
+      {
+        "comment": "",
+        "key": "REST",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 823
+        }
+      },
+      {
+        "comment": "",
+        "key": "NEXT UP",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 838
+        }
+      },
+      {
+        "comment": "",
+        "key": "+30s",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 853
+        }
+      },
+      {
+        "comment": "",
+        "key": "LIFT",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 876
+        }
+      },
+      {
+        "comment": "",
+        "key": "No exercises yet",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 906
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add an exercise to use Focus Mode",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 909
+        }
+      }
+    ]
+  },
+  "version": 1
+}

@@ -1,0 +1,24 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Feed/PhotoZoomView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Close",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 117
+        }
+      },
+      {
+        "comment": "",
+        "key": "Closes the full-screen photo viewer",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 118
+        }
+      }
+    ]
+  },
+  "version": 1
+}

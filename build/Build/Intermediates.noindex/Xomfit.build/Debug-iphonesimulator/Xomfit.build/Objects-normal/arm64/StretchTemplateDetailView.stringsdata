@@ -1,0 +1,120 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Stretches/StretchTemplateDetailView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Edit stretches",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 182
+        }
+      },
+      {
+        "comment": "",
+        "key": "Reorder or remove stretches before starting",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 183
+        }
+      },
+      {
+        "comment": "",
+        "key": "Reset stretches to template order",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 156
+        }
+      },
+      {
+        "comment": "",
+        "key": "Finish editing stretches",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 168
+        }
+      },
+      {
+        "comment": "",
+        "key": "Reset",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 151
+        }
+      },
+      {
+        "comment": "",
+        "key": "Done",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 164
+        }
+      },
+      {
+        "comment": "",
+        "key": "Drag to reorder · swipe to remove",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 195
+        }
+      },
+      {
+        "comment": "",
+        "key": "Stretch %lld: %@, %lld seconds",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 221
+        }
+      },
+      {
+        "comment": "",
+        "key": "Opens stretch details",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 222
+        }
+      },
+      {
+        "comment": "",
+        "key": "Stretch %lld: %@, %lld seconds",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 237
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 260
+        }
+      },
+      {
+        "comment": "",
+        "key": "%llds",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 281
+        }
+      },
+      {
+        "comment": "",
+        "key": "Start guided stretching sequence with %lld stretches",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 312
+        }
+      },
+      {
+        "comment": "",
+        "key": "Start Stretching",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 305
+        }
+      }
+    ]
+  },
+  "version": 1
+}

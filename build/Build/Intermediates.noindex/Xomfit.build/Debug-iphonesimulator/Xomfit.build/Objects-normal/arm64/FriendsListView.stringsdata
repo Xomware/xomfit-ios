@@ -1,0 +1,16 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Profile/FriendsListView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Friends",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 28
+        }
+      }
+    ]
+  },
+  "version": 1
+}

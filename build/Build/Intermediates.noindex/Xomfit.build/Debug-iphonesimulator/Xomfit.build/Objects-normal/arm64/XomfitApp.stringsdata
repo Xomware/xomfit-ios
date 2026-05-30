@@ -1,0 +1,72 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/XomfitApp.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Resume workout?",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 78
+        }
+      },
+      {
+        "comment": "",
+        "key": "Resume",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 85
+        }
+      },
+      {
+        "comment": "",
+        "key": "Reopens the workout exactly where you left it.",
+        "location": {
+          "startingColumn": 48,
+          "startingLine": 90
+        }
+      },
+      {
+        "comment": "",
+        "key": "Discard",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 91
+        }
+      },
+      {
+        "comment": "",
+        "key": "Deletes the saved workout and ends the Live Activity.",
+        "location": {
+          "startingColumn": 48,
+          "startingLine": 96
+        }
+      },
+      {
+        "comment": "",
+        "key": "Your “%@” workout was still running. Pick up where you left off — started %@.",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 98
+        }
+      },
+      {
+        "comment": "",
+        "key": "Workout not found",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 460
+        }
+      },
+      {
+        "comment": "",
+        "key": "Close",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 469
+        }
+      }
+    ]
+  },
+  "version": 1
+}

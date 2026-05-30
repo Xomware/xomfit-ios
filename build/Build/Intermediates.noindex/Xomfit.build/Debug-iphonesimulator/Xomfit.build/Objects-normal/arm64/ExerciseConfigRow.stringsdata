@@ -1,0 +1,168 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Workout/ExerciseConfigRow.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Edit note: %@",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 137
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add note",
+        "location": {
+          "startingColumn": 78,
+          "startingLine": 137
+        }
+      },
+      {
+        "comment": "",
+        "key": "Opens the per-exercise note editor",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 138
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rest %@%@",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 163
+        }
+      },
+      {
+        "comment": "",
+        "key": "Adjusts rest time for this exercise",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 164
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add note",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 124
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rest: %@",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 151
+        }
+      },
+      {
+        "comment": "",
+        "key": "Notes for this exercise stay with the workout — perfect for form cues, weight setups, or how it felt.",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 237
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld / %lld",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 262
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld of %lld characters used",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 265
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 277
+        }
+      },
+      {
+        "comment": "",
+        "key": "Save",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 281
+        }
+      },
+      {
+        "comment": "",
+        "key": "Override the workout's default rest just for this exercise. Range: 1m–10m in 30s steps.",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 325
+        }
+      },
+      {
+        "comment": "",
+        "key": "Default: %@",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 380
+        }
+      },
+      {
+        "comment": "",
+        "key": "Reset rest to default %@",
+        "location": {
+          "startingColumn": 45,
+          "startingLine": 378
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rest %@",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 333
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rest seconds",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 340
+        }
+      },
+      {
+        "comment": "",
+        "key": "Reset to default (%@)",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 368
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 395
+        }
+      },
+      {
+        "comment": "",
+        "key": "Save",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 399
+        }
+      }
+    ]
+  },
+  "version": 1
+}

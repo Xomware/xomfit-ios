@@ -1,0 +1,200 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Stretches/GuidedStretchRunnerView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Close",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 47
+        }
+      },
+      {
+        "comment": "",
+        "key": "Close stretching sequence",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 53
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sequence progress",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 123
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld percent complete",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 124
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld of %lld",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 130
+        }
+      },
+      {
+        "comment": "",
+        "key": "Paused",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 138
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld seconds past target on %@. Tap skip when ready.",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 178
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld seconds remaining on %@",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 179
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 165
+        }
+      },
+      {
+        "comment": "",
+        "key": "over · tap skip",
+        "location": {
+          "startingColumn": 53,
+          "startingLine": 169
+        }
+      },
+      {
+        "comment": "",
+        "key": "seconds",
+        "location": {
+          "startingColumn": 74,
+          "startingLine": 169
+        }
+      },
+      {
+        "comment": "",
+        "key": "Up next: %@, %lld seconds",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 242
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 222
+        }
+      },
+      {
+        "comment": "",
+        "key": "%llds",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 233
+        }
+      },
+      {
+        "comment": "",
+        "key": "Previous stretch",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 261
+        }
+      },
+      {
+        "comment": "",
+        "key": "Next stretch",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 268
+        }
+      },
+      {
+        "comment": "",
+        "key": "Pause sequence",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 319
+        }
+      },
+      {
+        "comment": "",
+        "key": "Resume sequence",
+        "location": {
+          "startingColumn": 70,
+          "startingLine": 319
+        }
+      },
+      {
+        "comment": "",
+        "key": "Pause",
+        "location": {
+          "startingColumn": 44,
+          "startingLine": 310
+        }
+      },
+      {
+        "comment": "",
+        "key": "Play",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 310
+        }
+      },
+      {
+        "comment": "",
+        "key": "Finish and close",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 361
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nice work",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 339
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld stretches in %@.",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 342
+        }
+      },
+      {
+        "comment": "",
+        "key": "Done",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 356
+        }
+      }
+    ]
+  },
+  "version": 1
+}
