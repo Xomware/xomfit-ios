@@ -1,0 +1,16 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Common/XomMetricLabel.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "custom text",
+        "location": {
+          "startingColumn": 1,
+          "startingLine": 41
+        }
+      }
+    ]
+  },
+  "version": 1
+}

@@ -1,0 +1,56 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Utils/WorkoutImageRenderer.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "EXERCISES",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 110
+        }
+      },
+      {
+        "comment": "",
+        "key": "+ %lld more",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 120
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 132
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld sets",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 144
+        }
+      },
+      {
+        "comment": "",
+        "key": "PR",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 154
+        }
+      },
+      {
+        "comment": "",
+        "key": "XomFit",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 175
+        }
+      }
+    ]
+  },
+  "version": 1
+}

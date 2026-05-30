@@ -1,0 +1,72 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Reports/ReportDetailView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Generated %@",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 88
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rank %lld, %@, %lld sets, volume %@",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 201
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 178
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld set%@",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 187
+        }
+      },
+      {
+        "comment": "",
+        "key": "New PR %@, %@ for %lld reps",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 243
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ × %lld",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 236
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ feedback",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 333
+        }
+      },
+      {
+        "comment": "",
+        "key": "Optional comment (what worked, what didn't)",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 283
+        }
+      }
+    ]
+  },
+  "version": 1
+}

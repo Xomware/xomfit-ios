@@ -1,0 +1,56 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Onboarding/FitnessQuestionnaireView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Back",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 176
+        }
+      },
+      {
+        "comment": "",
+        "key": "Maybe later",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 187
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 191
+        }
+      },
+      {
+        "comment": "",
+        "key": "Step %lld of %lld",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 264
+        }
+      },
+      {
+        "comment": "",
+        "key": "Selected",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 375
+        }
+      },
+      {
+        "comment": "",
+        "key": "Not selected",
+        "location": {
+          "startingColumn": 55,
+          "startingLine": 375
+        }
+      }
+    ]
+  },
+  "version": 1
+}

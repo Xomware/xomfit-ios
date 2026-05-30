@@ -1,0 +1,992 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Workout/ActiveWorkoutView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Discard Workout?",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 268
+        }
+      },
+      {
+        "comment": "",
+        "key": "Opens the exercise list to switch exercises",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 685
+        }
+      },
+      {
+        "comment": "",
+        "key": "Shows the songs captured so far for this workout's soundtrack",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 809
+        }
+      },
+      {
+        "comment": "",
+        "key": "Done",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 216
+        }
+      },
+      {
+        "comment": "",
+        "key": "Discard",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 269
+        }
+      },
+      {
+        "comment": "",
+        "key": "Keep Going",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 273
+        }
+      },
+      {
+        "comment": "",
+        "key": "All logged sets will be lost.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 275
+        }
+      },
+      {
+        "comment": "",
+        "key": "Start With",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 344
+        }
+      },
+      {
+        "comment": "",
+        "key": "All exercises complete!",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 320
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld sets left",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 336
+        }
+      },
+      {
+        "comment": "",
+        "key": "First",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 348
+        }
+      },
+      {
+        "comment": "",
+        "key": "Discard workout",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 452
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ends and deletes the in-progress workout without saving",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 453
+        }
+      },
+      {
+        "comment": "",
+        "key": "Minimize workout",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 482
+        }
+      },
+      {
+        "comment": "",
+        "key": "Hides the active workout and returns to the main app. The workout keeps running.",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 483
+        }
+      },
+      {
+        "comment": "",
+        "key": "Finish workout",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 510
+        }
+      },
+      {
+        "comment": "",
+        "key": "Discard",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 444
+        }
+      },
+      {
+        "comment": "",
+        "key": "Finish",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 498
+        }
+      },
+      {
+        "comment": "",
+        "key": "Resume workout",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 568
+        }
+      },
+      {
+        "comment": "",
+        "key": "Pause workout",
+        "location": {
+          "startingColumn": 73,
+          "startingLine": 568
+        }
+      },
+      {
+        "comment": "",
+        "key": "Resumes the elapsed timer and rest countdown",
+        "location": {
+          "startingColumn": 19,
+          "startingLine": 570
+        }
+      },
+      {
+        "comment": "",
+        "key": "Freezes the elapsed timer and rest countdown",
+        "location": {
+          "startingColumn": 19,
+          "startingLine": 571
+        }
+      },
+      {
+        "comment": "",
+        "key": "Switch to list view",
+        "location": {
+          "startingColumn": 55,
+          "startingLine": 594
+        }
+      },
+      {
+        "comment": "",
+        "key": "Switch to focus view",
+        "location": {
+          "startingColumn": 79,
+          "startingLine": 594
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add exercise",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 611
+        }
+      },
+      {
+        "comment": "",
+        "key": "Opens the exercise picker to add a new exercise to this workout",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 612
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rest timer %@ remaining",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 738
+        }
+      },
+      {
+        "comment": "",
+        "key": "Apple Watch connected",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 543
+        }
+      },
+      {
+        "comment": "",
+        "key": "All exercises complete",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 632
+        }
+      },
+      {
+        "comment": "",
+        "key": "—",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 651
+        }
+      },
+      {
+        "comment": "",
+        "key": "•",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 642
+        }
+      },
+      {
+        "comment": "",
+        "key": "Set %lld/%lld",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 646
+        }
+      },
+      {
+        "comment": "",
+        "key": "Reorder Exercises",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 679
+        }
+      },
+      {
+        "comment": "",
+        "key": "Off",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 755
+        }
+      },
+      {
+        "comment": "",
+        "key": "30s",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 756
+        }
+      },
+      {
+        "comment": "",
+        "key": "60s",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 757
+        }
+      },
+      {
+        "comment": "",
+        "key": "90s",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 758
+        }
+      },
+      {
+        "comment": "",
+        "key": "120s",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 759
+        }
+      },
+      {
+        "comment": "",
+        "key": "180s",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 760
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 796
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nothing captured yet — start playing music and we'll log it.",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 870
+        }
+      },
+      {
+        "comment": "",
+        "key": "Soundtrack capture",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 842
+        }
+      },
+      {
+        "comment": "",
+        "key": "Last: %@%@",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 892
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld track%@",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 887
+        }
+      },
+      {
+        "comment": "",
+        "key": "New personal record: %@, %@ lbs for %lld reps",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 1011
+        }
+      },
+      {
+        "comment": "",
+        "key": "Dismiss new PR banner",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 1001
+        }
+      },
+      {
+        "comment": "",
+        "key": "New Personal Record!",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 982
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ — %@ lbs × %lld",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 985
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ungroup Superset?",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 1291
+        }
+      },
+      {
+        "comment": "",
+        "key": "Group with Next Exercise?",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 1291
+        }
+      },
+      {
+        "comment": "",
+        "key": "Show details for %@",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 1096
+        }
+      },
+      {
+        "comment": "",
+        "key": "Expand %@",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 1112
+        }
+      },
+      {
+        "comment": "",
+        "key": "Collapse %@",
+        "location": {
+          "startingColumn": 88,
+          "startingLine": 1112
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ungroup superset",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 1132
+        }
+      },
+      {
+        "comment": "",
+        "key": "Group with next exercise as superset",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 1133
+        }
+      },
+      {
+        "comment": "",
+        "key": "Removes this exercise from its superset",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 1135
+        }
+      },
+      {
+        "comment": "",
+        "key": "Pairs this exercise with the next one for back-to-back sets",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 1136
+        }
+      },
+      {
+        "comment": "",
+        "key": "Superset %@",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 1054
+        }
+      },
+      {
+        "comment": "",
+        "key": "Superset %@",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 1061
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld/%lld sets",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 1147
+        }
+      },
+      {
+        "comment": "",
+        "key": "· %@ lbs",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 1151
+        }
+      },
+      {
+        "comment": "",
+        "key": "SET",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 1185
+        }
+      },
+      {
+        "comment": "",
+        "key": "WEIGHT",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 1188
+        }
+      },
+      {
+        "comment": "",
+        "key": "",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 1190
+        }
+      },
+      {
+        "comment": "",
+        "key": "REPS",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 1192
+        }
+      },
+      {
+        "comment": "",
+        "key": "",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 1194
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add Set",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 1258
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ungroup Superset",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 1296
+        }
+      },
+      {
+        "comment": "",
+        "key": "Group with Next Exercise",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 1301
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 1306
+        }
+      },
+      {
+        "comment": "",
+        "key": "Removes %@ from its superset.",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 1309
+        }
+      },
+      {
+        "comment": "",
+        "key": "Pairs %@ with the next exercise for back-to-back sets.",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 1310
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add another set to %@",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 1370
+        }
+      },
+      {
+        "comment": "",
+        "key": "Move to %@",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 1395
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ Complete",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 1334
+        }
+      },
+      {
+        "comment": "",
+        "key": "Dismiss",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 1348
+        }
+      },
+      {
+        "comment": "",
+        "key": "Do Another Set",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 1358
+        }
+      },
+      {
+        "comment": "",
+        "key": "Move to %@",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 1381
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add another exercise or finish your workout.",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 1410
+        }
+      },
+      {
+        "comment": "",
+        "key": "All exercises complete!",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 1405
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add Exercise",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 1423
+        }
+      },
+      {
+        "comment": "",
+        "key": "Finish Workout",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 1446
+        }
+      },
+      {
+        "comment": "",
+        "key": "Choose a different exercise",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 1484
+        }
+      },
+      {
+        "comment": "",
+        "key": "Choose Different",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 1472
+        }
+      },
+      {
+        "comment": "",
+        "key": "Switch to %@",
+        "location": {
+          "startingColumn": 53,
+          "startingLine": 1506
+        }
+      },
+      {
+        "comment": "",
+        "key": "Finish Workout",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 1758
+        }
+      },
+      {
+        "comment": "",
+        "key": "How was your workout?",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 1576
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld star%@",
+        "location": {
+          "startingColumn": 57,
+          "startingLine": 1591
+        }
+      },
+      {
+        "comment": "",
+        "key": "Location",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 1598
+        }
+      },
+      {
+        "comment": "",
+        "key": "Caption",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 1615
+        }
+      },
+      {
+        "comment": "",
+        "key": "Optional — appears on your feed post.",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 1618
+        }
+      },
+      {
+        "comment": "",
+        "key": "Save as Template",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 1642
+        }
+      },
+      {
+        "comment": "",
+        "key": "Photos",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 1651
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add up to 4 photos from your workout.",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 1654
+        }
+      },
+      {
+        "comment": "",
+        "key": "Remove photo %lld",
+        "location": {
+          "startingColumn": 69,
+          "startingLine": 1693
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add Photos",
+        "location": {
+          "startingColumn": 64,
+          "startingLine": 1707
+        }
+      },
+      {
+        "comment": "",
+        "key": "Change Photos",
+        "location": {
+          "startingColumn": 79,
+          "startingLine": 1707
+        }
+      },
+      {
+        "comment": "",
+        "key": "Finish Workout",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 1744
+        }
+      },
+      {
+        "comment": "",
+        "key": "No songs captured. Add one manually or play music during your next workout.",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 1792
+        }
+      },
+      {
+        "comment": "",
+        "key": "Toggle whether the full soundtrack is shared with friends or only the featured track.",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 1845
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add a track manually",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 1865
+        }
+      },
+      {
+        "comment": "",
+        "key": "Opens a form to enter a song title and artist",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 1866
+        }
+      },
+      {
+        "comment": "",
+        "key": "Soundtrack",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 1777
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 1781
+        }
+      },
+      {
+        "comment": "",
+        "key": "Share full soundtrack",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 1834
+        }
+      },
+      {
+        "comment": "",
+        "key": "Friends will see every track on this workout.",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 1838
+        }
+      },
+      {
+        "comment": "",
+        "key": "Only the featured track will show on your feed.",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 1839
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add manual track",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 1854
+        }
+      },
+      {
+        "comment": "",
+        "key": "Unset %@ as featured track",
+        "location": {
+          "startingColumn": 19,
+          "startingLine": 1931
+        }
+      },
+      {
+        "comment": "",
+        "key": "Set %@ as featured track",
+        "location": {
+          "startingColumn": 19,
+          "startingLine": 1932
+        }
+      },
+      {
+        "comment": "",
+        "key": "Featured tracks show prominently on your feed card.",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 1933
+        }
+      },
+      {
+        "comment": "",
+        "key": "Remove %@ from soundtrack",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 1946
+        }
+      },
+      {
+        "comment": "",
+        "key": "•",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 1901
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add Track",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 2047
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add track",
+        "location": {
+          "startingColumn": 45,
+          "startingLine": 2042
+        }
+      },
+      {
+        "comment": "",
+        "key": "Title",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 1990
+        }
+      },
+      {
+        "comment": "",
+        "key": "Song title",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 1993
+        }
+      },
+      {
+        "comment": "",
+        "key": "Song title",
+        "location": {
+          "startingColumn": 53,
+          "startingLine": 2006
+        }
+      },
+      {
+        "comment": "",
+        "key": "Artist",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 2010
+        }
+      },
+      {
+        "comment": "",
+        "key": "Artist (optional)",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 2013
+        }
+      },
+      {
+        "comment": "",
+        "key": "Artist (optional)",
+        "location": {
+          "startingColumn": 53,
+          "startingLine": 2026
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add Track",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 2032
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 2051
+        }
+      }
+    ]
+  },
+  "version": 1
+}

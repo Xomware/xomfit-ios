@@ -1,0 +1,16 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Components/LocationSearchField.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Workout location",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 23
+        }
+      }
+    ]
+  },
+  "version": 1
+}

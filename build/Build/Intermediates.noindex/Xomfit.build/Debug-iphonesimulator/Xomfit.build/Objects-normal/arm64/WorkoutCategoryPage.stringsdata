@@ -1,0 +1,80 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Workout/WorkoutCategoryPage.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Warm up first?",
+        "location": {
+          "startingColumn": 13,
+          "startingLine": 122
+        }
+      },
+      {
+        "comment": "",
+        "key": "Yes, %lld min",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 126
+        }
+      },
+      {
+        "comment": "",
+        "key": "No, skip",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 130
+        }
+      },
+      {
+        "comment": "",
+        "key": "Just this once",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 134
+        }
+      },
+      {
+        "comment": "",
+        "key": "A 5-10 minute stretch routine helps loosen up before lifting.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 138
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@, %@",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 182
+        }
+      },
+      {
+        "comment": "",
+        "key": "Friend workout: %@",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 233
+        }
+      },
+      {
+        "comment": "",
+        "key": "No matches",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 290
+        }
+      },
+      {
+        "comment": "",
+        "key": "Try clearing a filter or search term.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 293
+        }
+      }
+    ]
+  },
+  "version": 1
+}

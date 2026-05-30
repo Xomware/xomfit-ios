@@ -1,0 +1,48 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Shared/AnthemRow.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Anthem: %@ by %@",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 65
+        }
+      },
+      {
+        "comment": "",
+        "key": "Double tap to pause preview",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 66
+        }
+      },
+      {
+        "comment": "",
+        "key": "Double tap to play 30 second preview",
+        "location": {
+          "startingColumn": 72,
+          "startingLine": 66
+        }
+      },
+      {
+        "comment": "",
+        "key": "Pause anthem preview",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 103
+        }
+      },
+      {
+        "comment": "",
+        "key": "Play anthem preview",
+        "location": {
+          "startingColumn": 66,
+          "startingLine": 103
+        }
+      }
+    ]
+  },
+  "version": 1
+}

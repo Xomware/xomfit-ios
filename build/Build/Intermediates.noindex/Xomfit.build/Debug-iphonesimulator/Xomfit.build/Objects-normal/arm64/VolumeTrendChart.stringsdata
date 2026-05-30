@@ -1,0 +1,48 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Profile/VolumeTrendChart.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Volume change: %@",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 46
+        }
+      },
+      {
+        "comment": "",
+        "key": "Volume trend chart",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 80
+        }
+      },
+      {
+        "comment": "",
+        "key": "Week",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 52
+        }
+      },
+      {
+        "comment": "",
+        "key": "Volume",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 53
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ %@",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 58
+        }
+      }
+    ]
+  },
+  "version": 1
+}

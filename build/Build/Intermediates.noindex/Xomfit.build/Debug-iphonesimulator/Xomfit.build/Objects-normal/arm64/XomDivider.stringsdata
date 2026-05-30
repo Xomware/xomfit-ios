@@ -1,0 +1,24 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Common/XomDivider.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Above",
+        "location": {
+          "startingColumn": 1,
+          "startingLine": 16
+        }
+      },
+      {
+        "comment": "",
+        "key": "Below",
+        "location": {
+          "startingColumn": 1,
+          "startingLine": 16
+        }
+      }
+    ]
+  },
+  "version": 1
+}

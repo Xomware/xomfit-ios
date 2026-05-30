@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>colors</key>
+	<array/>
+	<key>images</key>
+	<array>
+		<dict>
+			<key>catalogPath</key>
+			<string>/Users/dom/Code/xomfit-ios/Xomfit/Assets.xcassets</string>
+			<key>objcSymbol</key>
+			<string>ACImageNameXomFitBanner</string>
+			<key>relativePath</key>
+			<string>./XomFitBanner.imageset</string>
+			<key>swiftSymbol</key>
+			<string>xomFitBanner</string>
+		</dict>
+		<dict>
+			<key>catalogPath</key>
+			<string>/Users/dom/Code/xomfit-ios/Xomfit/Assets.xcassets</string>
+			<key>objcSymbol</key>
+			<string>ACImageNameXomFitLogo</string>
+			<key>relativePath</key>
+			<string>./XomFitLogo.imageset</string>
+			<key>swiftSymbol</key>
+			<string>xomFitLogo</string>
+		</dict>
+	</array>
+	<key>symbols</key>
+	<array/>
+</dict>
+</plist>

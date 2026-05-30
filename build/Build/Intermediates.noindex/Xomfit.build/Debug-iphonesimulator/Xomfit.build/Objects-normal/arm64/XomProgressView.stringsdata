@@ -1,0 +1,160 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Progress/XomProgressView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Progress",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 25
+        }
+      },
+      {
+        "comment": "",
+        "key": "Leaderboard",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 35
+        }
+      },
+      {
+        "comment": "",
+        "key": "Log your first workout to see progress here",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 56
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@: %lld",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 122
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@: %@",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 137
+        }
+      },
+      {
+        "comment": "",
+        "key": "No data for this exercise",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 190
+        }
+      },
+      {
+        "comment": "",
+        "key": "Est. 1RM (lbs)",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 210
+        }
+      },
+      {
+        "comment": "",
+        "key": "Strength Over Time",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 152
+        }
+      },
+      {
+        "comment": "",
+        "key": "Date",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 197
+        }
+      },
+      {
+        "comment": "",
+        "key": "Est. 1RM",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 198
+        }
+      },
+      {
+        "comment": "",
+        "key": "Date",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 204
+        }
+      },
+      {
+        "comment": "",
+        "key": "Est. 1RM",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 205
+        }
+      },
+      {
+        "comment": "",
+        "key": "Weekly Volume",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 241
+        }
+      },
+      {
+        "comment": "",
+        "key": "Week",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 248
+        }
+      },
+      {
+        "comment": "",
+        "key": "Volume",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 249
+        }
+      },
+      {
+        "comment": "",
+        "key": "Muscle Groups",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 288
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sets",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 295
+        }
+      },
+      {
+        "comment": "",
+        "key": "Muscle",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 296
+        }
+      },
+      {
+        "comment": "",
+        "key": "Recent PRs",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 364
+        }
+      }
+    ]
+  },
+  "version": 1
+}

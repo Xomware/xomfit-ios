@@ -1,0 +1,56 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Onboarding/OnboardingPermissionsScreen.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Get the most out of XomFit",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 26
+        }
+      },
+      {
+        "comment": "",
+        "key": "Two quick permissions unlock the best parts of your workout.",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 31
+        }
+      },
+      {
+        "comment": "",
+        "key": "Allowed",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 187
+        }
+      },
+      {
+        "comment": "",
+        "key": "Denied. Open Settings to enable.",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 207
+        }
+      },
+      {
+        "comment": "",
+        "key": "Allowed",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 177
+        }
+      },
+      {
+        "comment": "",
+        "key": "Denied — open Settings",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 194
+        }
+      }
+    ]
+  },
+  "version": 1
+}

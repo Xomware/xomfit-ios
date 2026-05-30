@@ -1,0 +1,160 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Workout/WorkoutView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Name Your Workout",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 53
+        }
+      },
+      {
+        "comment": "",
+        "key": "Warm up first?",
+        "location": {
+          "startingColumn": 13,
+          "startingLine": 65
+        }
+      },
+      {
+        "comment": "",
+        "key": "Workout",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 202
+        }
+      },
+      {
+        "comment": "",
+        "key": "e.g. Push Day",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 54
+        }
+      },
+      {
+        "comment": "",
+        "key": "Start",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 55
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 62
+        }
+      },
+      {
+        "comment": "",
+        "key": "Yes, %lld min",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 69
+        }
+      },
+      {
+        "comment": "",
+        "key": "No, skip",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 73
+        }
+      },
+      {
+        "comment": "",
+        "key": "Just this once",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 77
+        }
+      },
+      {
+        "comment": "",
+        "key": "A 5-10 minute stretch routine helps loosen up before lifting.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 82
+        }
+      },
+      {
+        "comment": "",
+        "key": "Long press to reset warmup preference",
+        "location": {
+          "startingColumn": 44,
+          "startingLine": 150
+        }
+      },
+      {
+        "comment": "",
+        "key": "Start Workout",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 135
+        }
+      },
+      {
+        "comment": "",
+        "key": "Log a past workout",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 175
+        }
+      },
+      {
+        "comment": "",
+        "key": "Build",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 160
+        }
+      },
+      {
+        "comment": "",
+        "key": "Log Past",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 171
+        }
+      },
+      {
+        "comment": "",
+        "key": "Welcome to XomFit!",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 223
+        }
+      },
+      {
+        "comment": "",
+        "key": "Start with a guided workout to learn the ropes. We'll walk you through logging sets, using the rest timer, and more.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 227
+        }
+      },
+      {
+        "comment": "",
+        "key": "Start Guided Workout",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 247
+        }
+      },
+      {
+        "comment": "",
+        "key": "Skip — I know what I'm doing",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 255
+        }
+      }
+    ]
+  },
+  "version": 1
+}

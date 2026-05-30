@@ -1,0 +1,64 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Profile/PrivateProfileView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Send friend request to %@",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 60
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel friend request?",
+        "location": {
+          "startingColumn": 21,
+          "startingLine": 69
+        }
+      },
+      {
+        "comment": "",
+        "key": "@%@",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 30
+        }
+      },
+      {
+        "comment": "",
+        "key": "This account is private",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 42
+        }
+      },
+      {
+        "comment": "",
+        "key": "Send a friend request to see their activity.",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 46
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel Request",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 73
+        }
+      },
+      {
+        "comment": "",
+        "key": "Keep",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 74
+        }
+      }
+    ]
+  },
+  "version": 1
+}

@@ -1,0 +1,16 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Onboarding/OnboardingWelcomeScreen.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Your lifting, social.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 24
+        }
+      }
+    ]
+  },
+  "version": 1
+}

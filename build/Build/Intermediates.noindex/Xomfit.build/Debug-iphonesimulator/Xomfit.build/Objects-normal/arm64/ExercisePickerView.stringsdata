@@ -1,0 +1,56 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Workout/ExercisePickerView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Add Exercise",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 167
+        }
+      },
+      {
+        "comment": "",
+        "key": "Search exercises...",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 61
+        }
+      },
+      {
+        "comment": "",
+        "key": "Clear search",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 71
+        }
+      },
+      {
+        "comment": "",
+        "key": "Recently Used",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 136
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 172
+        }
+      },
+      {
+        "comment": "",
+        "key": "Show details for %@",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 222
+        }
+      }
+    ]
+  },
+  "version": 1
+}

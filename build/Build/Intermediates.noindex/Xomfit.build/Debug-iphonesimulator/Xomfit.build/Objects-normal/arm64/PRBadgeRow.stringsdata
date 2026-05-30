@@ -1,0 +1,24 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Shared/PRBadgeRow.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "%@, %@ pounds for %lld reps%@",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 32
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ × %lld",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 20
+        }
+      }
+    ]
+  },
+  "version": 1
+}

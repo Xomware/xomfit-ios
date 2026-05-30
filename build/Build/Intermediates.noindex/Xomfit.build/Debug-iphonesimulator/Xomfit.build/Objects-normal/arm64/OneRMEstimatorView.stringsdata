@@ -1,0 +1,128 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Tools/OneRMEstimatorView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "1RM Estimator",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 55
+        }
+      },
+      {
+        "comment": "",
+        "key": "Done",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 60
+        }
+      },
+      {
+        "comment": "",
+        "key": "Weight in pounds",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 74
+        }
+      },
+      {
+        "comment": "",
+        "key": "Repetitions",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 76
+        }
+      },
+      {
+        "comment": "",
+        "key": "Estimates are unreliable above 12 reps. Use a heavier set.",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 82
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ lbs",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 107
+        }
+      },
+      {
+        "comment": "",
+        "key": "Epley is the most common gym estimator. Treat it as a ceiling, not a guarantee.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 112
+        }
+      },
+      {
+        "comment": "",
+        "key": "Recommended estimate, Epley",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 104
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ pounds",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 110
+        }
+      },
+      {
+        "comment": "",
+        "key": "Recommended (Epley)",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 99
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ estimate: %@ pounds. %@",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 156
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ lbs",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 150
+        }
+      },
+      {
+        "comment": "",
+        "key": "Estimates extrapolate from your set. Always work up gradually with a spotter before testing a true 1RM.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 163
+        }
+      },
+      {
+        "comment": "",
+        "key": "Enter a weight and a rep count between 1 and 12 to see estimates.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 175
+        }
+      },
+      {
+        "comment": "",
+        "key": "0",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 193
+        }
+      }
+    ]
+  },
+  "version": 1
+}

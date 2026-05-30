@@ -1,0 +1,32 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Workout/WorkoutCategoryTabs.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Workout category",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 12
+        }
+      },
+      {
+        "comment": "",
+        "key": "Workout category",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 20
+        }
+      },
+      {
+        "comment": "",
+        "key": "Switches between recents, your workouts, saved or friends workouts, and pre-generated templates",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 21
+        }
+      }
+    ]
+  },
+  "version": 1
+}

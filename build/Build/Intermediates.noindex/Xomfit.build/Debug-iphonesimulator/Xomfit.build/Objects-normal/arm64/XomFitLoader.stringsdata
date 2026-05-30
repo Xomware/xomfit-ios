@@ -1,0 +1,56 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Common/XomFitLoader.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Loading",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 54
+        }
+      },
+      {
+        "comment": "",
+        "key": "Loading",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 86
+        }
+      },
+      {
+        "comment": "",
+        "key": "Loading",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 105
+        }
+      },
+      {
+        "comment": "",
+        "key": "Paint",
+        "location": {
+          "startingColumn": 1,
+          "startingLine": 111
+        }
+      },
+      {
+        "comment": "",
+        "key": "Pulse",
+        "location": {
+          "startingColumn": 1,
+          "startingLine": 111
+        }
+      },
+      {
+        "comment": "",
+        "key": "Spin",
+        "location": {
+          "startingColumn": 1,
+          "startingLine": 111
+        }
+      }
+    ]
+  },
+  "version": 1
+}

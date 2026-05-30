@@ -1,0 +1,392 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Workout/TemplateDetailView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Save changes?",
+        "location": {
+          "startingColumn": 17,
+          "startingLine": 80
+        }
+      },
+      {
+        "comment": "",
+        "key": "Unsaved changes",
+        "location": {
+          "startingColumn": 17,
+          "startingLine": 101
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add exercise to template",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 346
+        }
+      },
+      {
+        "comment": "",
+        "key": "Start %@ workout",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 370
+        }
+      },
+      {
+        "comment": "",
+        "key": "Update this template",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 85
+        }
+      },
+      {
+        "comment": "",
+        "key": "Save as new template",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 89
+        }
+      },
+      {
+        "comment": "",
+        "key": "Save as workout (logged now)",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 93
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 96
+        }
+      },
+      {
+        "comment": "",
+        "key": "You have unsaved changes to this template.",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 98
+        }
+      },
+      {
+        "comment": "",
+        "key": "Update this template",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 106
+        }
+      },
+      {
+        "comment": "",
+        "key": "Save as new template",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 113
+        }
+      },
+      {
+        "comment": "",
+        "key": "Save as workout (logged now)",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 117
+        }
+      },
+      {
+        "comment": "",
+        "key": "Discard changes",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 123
+        }
+      },
+      {
+        "comment": "",
+        "key": "Keep editing",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 127
+        }
+      },
+      {
+        "comment": "",
+        "key": "Save as template, save as workout, or discard?",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 129
+        }
+      },
+      {
+        "comment": "",
+        "key": "Close",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 139
+        }
+      },
+      {
+        "comment": "",
+        "key": "Save changes",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 160
+        }
+      },
+      {
+        "comment": "",
+        "key": "Share template",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 169
+        }
+      },
+      {
+        "comment": "",
+        "key": "Edit template details",
+        "location": {
+          "startingColumn": 45,
+          "startingLine": 179
+        }
+      },
+      {
+        "comment": "",
+        "key": "Save",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 156
+        }
+      },
+      {
+        "comment": "",
+        "key": "Targets: %@",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 254
+        }
+      },
+      {
+        "comment": "",
+        "key": "Targets",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 241
+        }
+      },
+      {
+        "comment": "",
+        "key": "Exercises",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 285
+        }
+      },
+      {
+        "comment": "",
+        "key": "No exercises yet",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 315
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add exercises to fill out this workout",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 318
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add Exercise",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 333
+        }
+      },
+      {
+        "comment": "",
+        "key": "Start Lift",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 358
+        }
+      },
+      {
+        "comment": "",
+        "key": "Start Workout",
+        "location": {
+          "startingColumn": 57,
+          "startingLine": 358
+        }
+      },
+      {
+        "comment": "",
+        "key": "Save as New",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 398
+        }
+      },
+      {
+        "comment": "",
+        "key": "Name your new template",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 382
+        }
+      },
+      {
+        "comment": "",
+        "key": "Template name",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 387
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 403
+        }
+      },
+      {
+        "comment": "",
+        "key": "Save",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 407
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 663
+        }
+      },
+      {
+        "comment": "",
+        "key": "Move %@ up",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 700
+        }
+      },
+      {
+        "comment": "",
+        "key": "Move %@ down",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 715
+        }
+      },
+      {
+        "comment": "",
+        "key": "Show details for %@",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 729
+        }
+      },
+      {
+        "comment": "",
+        "key": "Remove %@",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 741
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sets",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 748
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 764
+        }
+      },
+      {
+        "comment": "",
+        "key": "Decrease sets",
+        "location": {
+          "startingColumn": 45,
+          "startingLine": 762
+        }
+      },
+      {
+        "comment": "",
+        "key": "Increase sets",
+        "location": {
+          "startingColumn": 45,
+          "startingLine": 778
+        }
+      },
+      {
+        "comment": "",
+        "key": "Reps",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 784
+        }
+      },
+      {
+        "comment": "",
+        "key": "8-12",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 787
+        }
+      },
+      {
+        "comment": "",
+        "key": "Target reps",
+        "location": {
+          "startingColumn": 45,
+          "startingLine": 800
+        }
+      },
+      {
+        "comment": "",
+        "key": "Weight",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 805
+        }
+      },
+      {
+        "comment": "",
+        "key": "0",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 808
+        }
+      },
+      {
+        "comment": "",
+        "key": "Target weight",
+        "location": {
+          "startingColumn": 45,
+          "startingLine": 824
+        }
+      }
+    ]
+  },
+  "version": 1
+}

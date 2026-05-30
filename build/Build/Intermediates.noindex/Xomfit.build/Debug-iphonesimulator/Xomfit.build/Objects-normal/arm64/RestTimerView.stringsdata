@@ -1,0 +1,80 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Workout/RestTimerView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Rest timer, %@ overtime",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 64
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rest timer, %@ remaining",
+        "location": {
+          "startingColumn": 85,
+          "startingLine": 64
+        }
+      },
+      {
+        "comment": "",
+        "key": "Skip rest timer",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 92
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add 30 seconds to rest timer",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 109
+        }
+      },
+      {
+        "comment": "",
+        "key": "Lift — end rest and start next set",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 130
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ends the rest timer immediately so you can begin the next set",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 131
+        }
+      },
+      {
+        "comment": "",
+        "key": "Skip",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 78
+        }
+      },
+      {
+        "comment": "",
+        "key": "+30s",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 98
+        }
+      },
+      {
+        "comment": "",
+        "key": "Lift",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 119
+        }
+      }
+    ]
+  },
+  "version": 1
+}

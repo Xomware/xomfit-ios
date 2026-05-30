@@ -1,0 +1,392 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Workout/WorkoutBuilderView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "What do you want to do with this workout?",
+        "location": {
+          "startingColumn": 13,
+          "startingLine": 81
+        }
+      },
+      {
+        "comment": "",
+        "key": "Warm up first?",
+        "location": {
+          "startingColumn": 13,
+          "startingLine": 108
+        }
+      },
+      {
+        "comment": "",
+        "key": "Build Workout",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 50
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add exercise to workout",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 299
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 55
+        }
+      },
+      {
+        "comment": "",
+        "key": "Save",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 59
+        }
+      },
+      {
+        "comment": "",
+        "key": "Save as Template",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 85
+        }
+      },
+      {
+        "comment": "",
+        "key": "Start Now",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 90
+        }
+      },
+      {
+        "comment": "",
+        "key": "Save AND Start",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 95
+        }
+      },
+      {
+        "comment": "",
+        "key": "Discard",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 100
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 103
+        }
+      },
+      {
+        "comment": "",
+        "key": "You can save it for later, jump in now, or both.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 105
+        }
+      },
+      {
+        "comment": "",
+        "key": "Yes, %lld min",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 112
+        }
+      },
+      {
+        "comment": "",
+        "key": "No, skip",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 116
+        }
+      },
+      {
+        "comment": "",
+        "key": "Just this once",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 120
+        }
+      },
+      {
+        "comment": "",
+        "key": "A 5-10 minute stretch routine helps loosen up before lifting.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 124
+        }
+      },
+      {
+        "comment": "",
+        "key": "Workout Name",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 162
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ category",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 217
+        }
+      },
+      {
+        "comment": "",
+        "key": "~%lld min estimated",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 253
+        }
+      },
+      {
+        "comment": "",
+        "key": "No exercises yet",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 266
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add exercises to build your workout",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 269
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add Exercise",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 286
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ungroup Superset?",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 570
+        }
+      },
+      {
+        "comment": "",
+        "key": "Group with Next Exercise?",
+        "location": {
+          "startingColumn": 50,
+          "startingLine": 570
+        }
+      },
+      {
+        "comment": "",
+        "key": "Show details for %@",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 446
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ungroup superset",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 464
+        }
+      },
+      {
+        "comment": "",
+        "key": "Group with next exercise as superset",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 465
+        }
+      },
+      {
+        "comment": "",
+        "key": "Removes this exercise from its superset",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 467
+        }
+      },
+      {
+        "comment": "",
+        "key": "Pairs this exercise with the next one for back-to-back sets",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 468
+        }
+      },
+      {
+        "comment": "",
+        "key": "Superset %@",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 404
+        }
+      },
+      {
+        "comment": "",
+        "key": "Superset %@",
+        "location": {
+          "startingColumn": 53,
+          "startingLine": 411
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sets",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 479
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 494
+        }
+      },
+      {
+        "comment": "",
+        "key": "Decrease sets",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 492
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld sets",
+        "location": {
+          "startingColumn": 45,
+          "startingLine": 498
+        }
+      },
+      {
+        "comment": "",
+        "key": "Increase sets",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 508
+        }
+      },
+      {
+        "comment": "",
+        "key": "Reps",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 515
+        }
+      },
+      {
+        "comment": "",
+        "key": "8-12",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 519
+        }
+      },
+      {
+        "comment": "",
+        "key": "Edit note: %@",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 620
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add note",
+        "location": {
+          "startingColumn": 78,
+          "startingLine": 620
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rest %@%@",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 643
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ungroup Superset",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 575
+        }
+      },
+      {
+        "comment": "",
+        "key": "Group with Next Exercise",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 580
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 585
+        }
+      },
+      {
+        "comment": "",
+        "key": "Removes %@ from its superset.",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 588
+        }
+      },
+      {
+        "comment": "",
+        "key": "Pairs %@ with the next exercise for back-to-back sets.",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 589
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add note",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 609
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rest: %@",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 633
+        }
+      }
+    ]
+  },
+  "version": 1
+}

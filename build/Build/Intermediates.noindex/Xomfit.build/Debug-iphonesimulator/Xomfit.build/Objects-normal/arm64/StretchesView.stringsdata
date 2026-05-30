@@ -1,0 +1,96 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Stretches/StretchesView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Guided stretching sequences",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 94
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 90
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@, %lld stretches, %@",
+        "location": {
+          "startingColumn": 45,
+          "startingLine": 105
+        }
+      },
+      {
+        "comment": "",
+        "key": "Opens template details",
+        "location": {
+          "startingColumn": 44,
+          "startingLine": 106
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 123
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 147
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@, %lld seconds",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 164
+        }
+      },
+      {
+        "comment": "",
+        "key": "Opens stretch details",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 165
+        }
+      },
+      {
+        "comment": "",
+        "key": "·",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 210
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld stretches",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 213
+        }
+      },
+      {
+        "comment": "",
+        "key": "%llds",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 256
+        }
+      }
+    ]
+  },
+  "version": 1
+}

@@ -1,0 +1,88 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Feed/FeedView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Feed",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 102
+        }
+      },
+      {
+        "comment": "",
+        "key": "Notifications, %lld unread",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 122
+        }
+      },
+      {
+        "comment": "",
+        "key": "Notifications",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 123
+        }
+      },
+      {
+        "comment": "",
+        "key": "Search users",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 131
+        }
+      },
+      {
+        "comment": "",
+        "key": "Friends and requests",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 140
+        }
+      },
+      {
+        "comment": "",
+        "key": "You're all caught up!",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 241
+        }
+      },
+      {
+        "comment": "",
+        "key": "Hide",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 227
+        }
+      },
+      {
+        "comment": "",
+        "key": "Retry loading more posts",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 286
+        }
+      },
+      {
+        "comment": "",
+        "key": "Couldn't load more posts",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 264
+        }
+      },
+      {
+        "comment": "",
+        "key": "Retry",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 276
+        }
+      }
+    ]
+  },
+  "version": 1
+}

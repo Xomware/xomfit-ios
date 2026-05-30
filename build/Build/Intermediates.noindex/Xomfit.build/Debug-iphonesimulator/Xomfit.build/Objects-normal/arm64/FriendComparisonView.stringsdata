@@ -1,0 +1,40 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Stats/FriendComparisonView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Pick a friend to compare your month.",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 29
+        }
+      },
+      {
+        "comment": "",
+        "key": "Select friend to compare",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 80
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@: you %@, friend %@",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 202
+        }
+      },
+      {
+        "comment": "",
+        "key": "You",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 133
+        }
+      }
+    ]
+  },
+  "version": 1
+}

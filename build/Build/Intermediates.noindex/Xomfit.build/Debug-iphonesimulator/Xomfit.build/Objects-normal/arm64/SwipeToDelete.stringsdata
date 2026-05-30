@@ -1,0 +1,32 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Utils/SwipeToDelete.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Delete",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 94
+        }
+      },
+      {
+        "comment": "",
+        "key": "Swipe left to delete, or use the Delete rotor action",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 97
+        }
+      },
+      {
+        "comment": "",
+        "key": "Delete",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 48
+        }
+      }
+    ]
+  },
+  "version": 1
+}

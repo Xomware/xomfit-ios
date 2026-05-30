@@ -1,0 +1,56 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Workout/FirstWorkoutTutorial.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Dismiss tutorial",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 45
+        }
+      },
+      {
+        "comment": "",
+        "key": "Dismiss tutorial",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 89
+        }
+      },
+      {
+        "comment": "",
+        "key": "Closes the quick tour. It won't show again.",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 90
+        }
+      },
+      {
+        "comment": "",
+        "key": "Quick tour",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 57
+        }
+      },
+      {
+        "comment": "",
+        "key": "Three things to know before your first set.",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 61
+        }
+      },
+      {
+        "comment": "",
+        "key": "Got it",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 80
+        }
+      }
+    ]
+  },
+  "version": 1
+}

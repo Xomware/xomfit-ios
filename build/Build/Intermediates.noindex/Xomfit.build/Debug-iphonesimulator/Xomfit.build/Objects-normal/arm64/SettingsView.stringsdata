@@ -1,0 +1,504 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Profile/SettingsView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Settings",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 86
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sign Out?",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 90
+        }
+      },
+      {
+        "comment": "",
+        "key": "Delete Account?",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 98
+        }
+      },
+      {
+        "comment": "",
+        "key": "Couldn't delete account",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 106
+        }
+      },
+      {
+        "comment": "",
+        "key": "Couldn't export workouts",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 114
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sign Out",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 91
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 94
+        }
+      },
+      {
+        "comment": "",
+        "key": "You will be returned to the login screen.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 96
+        }
+      },
+      {
+        "comment": "",
+        "key": "Delete",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 99
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 102
+        }
+      },
+      {
+        "comment": "",
+        "key": "This permanently removes your account and workouts. This cannot be undone.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 104
+        }
+      },
+      {
+        "comment": "",
+        "key": "OK",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 110
+        }
+      },
+      {
+        "comment": "",
+        "key": "OK",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 118
+        }
+      },
+      {
+        "comment": "",
+        "key": "Master switch for workout reminder push notifications",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 159
+        }
+      },
+      {
+        "comment": "",
+        "key": "Workout reminders",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 148
+        }
+      },
+      {
+        "comment": "",
+        "key": "Push permission required",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 151
+        }
+      },
+      {
+        "comment": "",
+        "key": "Notification Settings",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 168
+        }
+      },
+      {
+        "comment": "",
+        "key": "Weight unit",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 187
+        }
+      },
+      {
+        "comment": "",
+        "key": "Weight unit",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 190
+        }
+      },
+      {
+        "comment": "",
+        "key": "Weight unit",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 196
+        }
+      },
+      {
+        "comment": "",
+        "key": "lbs",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 191
+        }
+      },
+      {
+        "comment": "",
+        "key": "kg",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 192
+        }
+      },
+      {
+        "comment": "",
+        "key": "Default rest duration",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 215
+        }
+      },
+      {
+        "comment": "",
+        "key": "Default rest",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 206
+        }
+      },
+      {
+        "comment": "",
+        "key": "Week starts on",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 224
+        }
+      },
+      {
+        "comment": "",
+        "key": "Week starts on",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 227
+        }
+      },
+      {
+        "comment": "",
+        "key": "Week starts on",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 233
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sun",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 228
+        }
+      },
+      {
+        "comment": "",
+        "key": "Mon",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 229
+        }
+      },
+      {
+        "comment": "",
+        "key": "Theme",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 241
+        }
+      },
+      {
+        "comment": "",
+        "key": "Theme",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 244
+        }
+      },
+      {
+        "comment": "",
+        "key": "Theme",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 251
+        }
+      },
+      {
+        "comment": "",
+        "key": "System",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 245
+        }
+      },
+      {
+        "comment": "",
+        "key": "Light",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 246
+        }
+      },
+      {
+        "comment": "",
+        "key": "Dark",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 247
+        }
+      },
+      {
+        "comment": "",
+        "key": "Fitness Goals",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 264
+        }
+      },
+      {
+        "comment": "",
+        "key": "Fitness Goals",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 272
+        }
+      },
+      {
+        "comment": "",
+        "key": "Reports",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 291
+        }
+      },
+      {
+        "comment": "",
+        "key": "AI Coach",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 313
+        }
+      },
+      {
+        "comment": "",
+        "key": "Anthropic API Key",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 323
+        }
+      },
+      {
+        "comment": "",
+        "key": "Anthropic API Key",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 328
+        }
+      },
+      {
+        "comment": "",
+        "key": "Stored on this device only",
+        "location": {
+          "startingColumn": 40,
+          "startingLine": 329
+        }
+      },
+      {
+        "comment": "",
+        "key": "AI Coach model",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 348
+        }
+      },
+      {
+        "comment": "",
+        "key": "Pick which Anthropic model the coach uses",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 349
+        }
+      },
+      {
+        "comment": "",
+        "key": "Model",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 344
+        }
+      },
+      {
+        "comment": "",
+        "key": "Stored on this device only. Get a key at console.anthropic.com.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 354
+        }
+      },
+      {
+        "comment": "",
+        "key": "Export workouts",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 380
+        }
+      },
+      {
+        "comment": "",
+        "key": "Builds a CSV of your sets and opens the share sheet",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 381
+        }
+      },
+      {
+        "comment": "",
+        "key": "Export workouts",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 371
+        }
+      },
+      {
+        "comment": "",
+        "key": "Delete account",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 390
+        }
+      },
+      {
+        "comment": "",
+        "key": "Opens Mail with a prefilled feedback message",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 414
+        }
+      },
+      {
+        "comment": "",
+        "key": "Prompts the App Store rating sheet",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 427
+        }
+      },
+      {
+        "comment": "",
+        "key": "Opens xomware.com/privacy in your browser",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 442
+        }
+      },
+      {
+        "comment": "",
+        "key": "Send feedback",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 410
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rate XomFit",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 423
+        }
+      },
+      {
+        "comment": "",
+        "key": "Privacy Policy",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 434
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sign Out",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 470
+        }
+      },
+      {
+        "comment": "",
+        "key": "Apple Music: %@",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 685
+        }
+      },
+      {
+        "comment": "",
+        "key": "XomFit captures songs that played during your workout. Apple Music reads from system permission; Spotify and SoundCloud require sign-in.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 640
+        }
+      },
+      {
+        "comment": "",
+        "key": "Open Settings",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 674
+        }
+      },
+      {
+        "comment": "",
+        "key": "Opens the iOS Settings app where you can grant Apple Music access",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 681
+        }
+      },
+      {
+        "comment": "",
+        "key": "Apple Music",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 666
+        }
+      }
+    ]
+  },
+  "version": 1
+}

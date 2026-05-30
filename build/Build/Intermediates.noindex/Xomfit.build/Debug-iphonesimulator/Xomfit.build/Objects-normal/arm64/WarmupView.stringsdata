@@ -1,0 +1,240 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Workout/WarmupView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Warmup",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 80
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 85
+        }
+      },
+      {
+        "comment": "",
+        "key": "Start warmup timer",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 129
+        }
+      },
+      {
+        "comment": "",
+        "key": "Skip warmup and start workout",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 141
+        }
+      },
+      {
+        "comment": "",
+        "key": "Start Warmup",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 125
+        }
+      },
+      {
+        "comment": "",
+        "key": "Skip",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 137
+        }
+      },
+      {
+        "comment": "",
+        "key": "Warmup",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 160
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tap a stretch to see how it's done.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 171
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld stretches · %@",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 167
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@, %lld seconds. %@",
+        "location": {
+          "startingColumn": 37,
+          "startingLine": 191
+        }
+      },
+      {
+        "comment": "",
+        "key": "Opens stretch details",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 192
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 199
+        }
+      },
+      {
+        "comment": "",
+        "key": "%llds",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 212
+        }
+      },
+      {
+        "comment": "",
+        "key": "Skip remaining warmup and start workout",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 440
+        }
+      },
+      {
+        "comment": "",
+        "key": "Loosen up first",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 269
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld stretches to get you ready",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 272
+        }
+      },
+      {
+        "comment": "",
+        "key": "Total warmup time remaining: %@",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 295
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld seconds left on this stretch",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 335
+        }
+      },
+      {
+        "comment": "",
+        "key": "Now: %@",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 316
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 328
+        }
+      },
+      {
+        "comment": "",
+        "key": "Show stretch details",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 360
+        }
+      },
+      {
+        "comment": "",
+        "key": "Skip to next stretch",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 372
+        }
+      },
+      {
+        "comment": "",
+        "key": "Details",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 350
+        }
+      },
+      {
+        "comment": "",
+        "key": "Next stretch",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 368
+        }
+      },
+      {
+        "comment": "",
+        "key": "Up next",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 387
+        }
+      },
+      {
+        "comment": "",
+        "key": "Up next: %@, %lld seconds",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 424
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 402
+        }
+      },
+      {
+        "comment": "",
+        "key": "%llds",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 415
+        }
+      },
+      {
+        "comment": "",
+        "key": "Skip to workout",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 434
+        }
+      }
+    ]
+  },
+  "version": 1
+}
