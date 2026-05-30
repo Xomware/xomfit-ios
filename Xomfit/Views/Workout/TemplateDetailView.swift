@@ -56,6 +56,7 @@ struct TemplateDetailView: View {
                         .padding(Theme.Spacing.md)
                         .padding(.bottom, 80)
                     }
+                    .scrollDismissesKeyboard(.interactively)
 
                     startButton
                 }
@@ -735,8 +736,8 @@ private struct EditableExerciseRow: View {
                             .frame(width: 44, height: 44)
                             .background(Theme.surface.opacity(0.5))
                             .clipShape(Circle())
-                            .contentShape(Rectangle())
                     }
+                    .buttonStyle(.plain)
                     .accessibilityLabel("Move \(exercise.exercise.name) up")
                 }
 
@@ -750,8 +751,8 @@ private struct EditableExerciseRow: View {
                             .frame(width: 44, height: 44)
                             .background(Theme.surface.opacity(0.5))
                             .clipShape(Circle())
-                            .contentShape(Rectangle())
                     }
+                    .buttonStyle(.plain)
                     .accessibilityLabel("Move \(exercise.exercise.name) down")
                 }
 
@@ -776,8 +777,8 @@ private struct EditableExerciseRow: View {
                         .font(Theme.fontSubheadline)
                         .foregroundStyle(Theme.destructive.opacity(0.85))
                         .frame(width: 44, height: 44)
-                        .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
                 .accessibilityLabel("Remove \(exercise.exercise.name)")
             }
 
@@ -795,10 +796,10 @@ private struct EditableExerciseRow: View {
                         } label: {
                             Image(systemName: "minus.circle")
                                 .foregroundStyle(exercise.targetSets > 1 ? Theme.accent : Theme.textSecondary.opacity(0.3))
+                                .frame(minWidth: 44, minHeight: 44)
                         }
+                        .buttonStyle(.plain)
                         .disabled(exercise.targetSets <= 1)
-                        .frame(minWidth: 44, minHeight: 44)
-                        .contentShape(Rectangle())
                         .accessibilityLabel("Decrease sets")
 
                         Text("\(exercise.targetSets)")
@@ -812,9 +813,9 @@ private struct EditableExerciseRow: View {
                         } label: {
                             Image(systemName: "plus.circle")
                                 .foregroundStyle(Theme.accent)
+                                .frame(minWidth: 44, minHeight: 44)
                         }
-                        .frame(minWidth: 44, minHeight: 44)
-                        .contentShape(Rectangle())
+                        .buttonStyle(.plain)
                         .accessibilityLabel("Increase sets")
                     }
                 }
