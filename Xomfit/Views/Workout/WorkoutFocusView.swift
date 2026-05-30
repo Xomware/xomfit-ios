@@ -832,18 +832,8 @@ struct WorkoutFocusView: View {
                 .frame(width: 200, height: 200)
                 .padding(.vertical, Theme.Spacing.md)
 
-                // Next exercise hint
-                if let nextEx = viewModel.upcomingExercise {
-                    VStack(spacing: Theme.Spacing.tight) {
-                        Text("NEXT UP")
-                            .font(.caption2.weight(.bold))
-                            .foregroundStyle(Theme.accent)
-                        Text(nextEx.exercise.name)
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(Theme.textPrimary)
-                    }
-                    .padding(.bottom, Theme.Spacing.sm)
-                }
+                // Next set context - always show what exercise/set is coming up
+                restTimerNextUpSection
 
                 // +30s button
                 Button {
@@ -894,6 +884,85 @@ struct WorkoutFocusView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+    }
+
+    // MARK: - Rest Timer Next Up Section
+
+    /// Contextual info shown in the fullscreen rest timer: exercise name,
+    /// set number, typical weight, and PR proximity.
+    @ViewBuilder
+    private var restTimerNextUpSection: some View {
+        // When the current exercise is fully done, show the next exercise.
+        // Otherwise show the focused exercise (user is resting before their next set).
+        if let nextEx = viewModel.upcomingExercise {
+            // Current exercise done - show what's coming next
+            VStack(spacing: Theme.Spacing.tight) {
+                Text("NEXT UP")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(Theme.accent)
+                Text(nextEx.exercise.name)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Theme.textPrimary)
+            }
+            .padding(.bottom, Theme.Spacing.sm)
+        } else if let focusEx = viewModel.focusExercise {
+            // Still on current exercise - show upcoming set context
+            let exerciseId = focusEx.exercise.id
+            let totalSets = focusEx.sets.count
+            let nextSetNumber = viewModel.focusSetIndex + 1
+            let lastSet = viewModel.lastSetForExercise(exerciseId)
+            let prSet = viewModel.personalRecordForExercise(exerciseId)
+
+            VStack(spacing: Theme.Spacing.xs) {
+                // Exercise name
+                Text(focusEx.exercise.name)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Theme.textPrimary)
+
+                // Set number
+                Text("Set \(nextSetNumber) of \(totalSets)")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(Theme.textSecondary)
+
+                // Typical weight (from last workout)
+                if let last = lastSet, last.weight > 0 {
+                    Text("Last: \(formatWeight(last.weight)) x \(last.reps)")
+                        .font(.caption)
+                        .foregroundStyle(Theme.textSecondary)
+                }
+
+                // PR proximity hint
+                if let pr = prSet, pr.weight > 0 {
+                    let currentWeight = viewModel.focusSet?.weight ?? 0
+                    if currentWeight > 0 && currentWeight >= pr.weight {
+                        Text("PR territory!")
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(Theme.accent)
+                    } else if currentWeight > 0 {
+                        let diff = pr.weight - currentWeight
+                        if diff <= 10 {
+                            Text("\(formatWeight(diff)) from PR")
+                                .font(.caption)
+                                .foregroundStyle(Theme.textSecondary.opacity(0.8))
+                        }
+                    } else {
+                        // No current weight entered yet, just show the PR
+                        Text("PR: \(formatWeight(pr.weight)) x \(pr.reps)")
+                            .font(.caption)
+                            .foregroundStyle(Theme.textSecondary.opacity(0.8))
+                    }
+                }
+            }
+            .padding(.bottom, Theme.Spacing.sm)
+        }
+    }
+
+    /// Formats a weight value, removing trailing decimals if whole number.
+    private func formatWeight(_ weight: Double) -> String {
+        if weight.truncatingRemainder(dividingBy: 1) == 0 {
+            return "\(Int(weight)) lbs"
+        }
+        return String(format: "%.1f lbs", weight)
     }
 
     // MARK: - Empty State

@@ -684,9 +684,11 @@ final class WorkoutLoggerViewModel {
             }()
 
             let supersetSiblingIndex = nextSupersetMember(after: exerciseIndex, currentSetIndex: setIndex)
-            let inSupersetRound = supersetSiblingIndex != nil
+            // Only skip rest when we're mid-superset AND there's another member to rotate to.
+            // When supersetSiblingIndex is nil, the round is complete and rest should fire.
+            let midSupersetRotation = supersetSiblingIndex != nil
 
-            let shouldStartRest = !nextSetIsDropSet && !inSupersetRound
+            let shouldStartRest = !nextSetIsDropSet && !midSupersetRotation
             if shouldStartRest {
                 startRestTimer(for: exerciseIndex)
             }
@@ -734,7 +736,7 @@ final class WorkoutLoggerViewModel {
                 }
 
                 // Suppress the transition card in these cases:
-                //   1. Mid-superset round — focus already advanced to the next
+                //   1. Mid-superset rotation — focus already advanced to the next
                 //      member, so no card needed.
                 //   2. Timed-circuit workouts — they have their own loop UI
                 //      (`TimedCircuitView`), no per-exercise transition (#387).
@@ -744,7 +746,7 @@ final class WorkoutLoggerViewModel {
                 //      extra modal (#387). The existing "all complete" cue in
                 //      the persistent pill / footer is enough.
                 let isFinalExercise = nextExerciseIndex == nil
-                if !inSupersetRound && kind != .timedCircuit && !isFinalExercise {
+                if !midSupersetRotation && kind != .timedCircuit && !isFinalExercise {
                     showExerciseTransition = true
                 }
             }
