@@ -17,15 +17,12 @@ import Foundation
 final class SpotifyNowPlayingService {
     @ObservationIgnored static let shared = SpotifyNowPlayingService()
 
-    /// 30s cadence — matches `NowPlayingService` and stays well under Spotify's rate limit.
-    @ObservationIgnored private let pollInterval: TimeInterval = 30
+    /// 15s cadence — fast enough to catch most songs while staying well under Spotify's rate limit.
+    @ObservationIgnored private let pollInterval: TimeInterval = 15
 
     private var captured: [WorkoutTrack] = []
     @ObservationIgnored private var seenKeys: Set<String> = []
     @ObservationIgnored private var pollTask: Task<Void, Never>?
-    @ObservationIgnored private var pendingKey: String?
-    @ObservationIgnored private var pendingFirstSeen: Date?
-    @ObservationIgnored private let minimumListenDuration: TimeInterval = 25
 
     // MARK: - Observable surface (Spotify capture polish)
 
@@ -60,8 +57,6 @@ final class SpotifyNowPlayingService {
         print("[SpotifyNowPlayingService] startCapture called — resetting session state")
         captured.removeAll()
         seenKeys.removeAll()
-        pendingKey = nil
-        pendingFirstSeen = nil
         lastCapturedTrack = nil
         pollTask?.cancel()
 
@@ -153,36 +148,28 @@ final class SpotifyNowPlayingService {
             let key = dedupeKey(uri: item.uri, id: item.id, title: title)
             guard !seenKeys.contains(key) else { return }
 
-            if pendingKey == key, let firstSeen = pendingFirstSeen,
-               Date().timeIntervalSince(firstSeen) >= minimumListenDuration {
-                seenKeys.insert(key)
-                pendingKey = nil
-                pendingFirstSeen = nil
+            // Capture immediately — if it's playing, log it. No delay needed.
+            seenKeys.insert(key)
 
-                let artist = item.artists?.compactMap { $0.name }.joined(separator: ", ")
-                let trackURL: String? = {
-                    if let id = item.id, !id.isEmpty {
-                        return "https://open.spotify.com/track/\(id)"
-                    }
-                    if let uri = item.uri, !uri.isEmpty { return uri }
-                    return nil
-                }()
-                let track = WorkoutTrack(
-                    title: title,
-                    artist: (artist?.isEmpty == false) ? artist : nil,
-                    album: item.album?.name,
-                    capturedAt: Date(),
-                    sourceApp: "Spotify",
-                    url: trackURL
-                )
-                captured.append(track)
-                lastCapturedTrack = track
-                print("[SpotifyNowPlayingService] captured '\(title)' by \(artist ?? "unknown") — total: \(captured.count)")
-            } else if pendingKey != key {
-                pendingKey = key
-                pendingFirstSeen = Date()
-                print("[SpotifyNowPlayingService] pending '\(title)' — will capture after \(Int(minimumListenDuration))s")
-            }
+            let artist = item.artists?.compactMap { $0.name }.joined(separator: ", ")
+            let trackURL: String? = {
+                if let id = item.id, !id.isEmpty {
+                    return "https://open.spotify.com/track/\(id)"
+                }
+                if let uri = item.uri, !uri.isEmpty { return uri }
+                return nil
+            }()
+            let track = WorkoutTrack(
+                title: title,
+                artist: (artist?.isEmpty == false) ? artist : nil,
+                album: item.album?.name,
+                capturedAt: Date(),
+                sourceApp: "Spotify",
+                url: trackURL
+            )
+            captured.append(track)
+            lastCapturedTrack = track
+            print("[SpotifyNowPlayingService] captured '\(title)' by \(artist ?? "unknown") — total: \(captured.count)")
         } catch {
             // Network blips happen — log and continue. Polling will retry on the next tick.
             print("[SpotifyNowPlayingService] poll error: \(error)")
