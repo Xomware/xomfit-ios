@@ -46,6 +46,10 @@ struct Workout: Codable, Identifiable {
     /// expanded view; the rest stay private. Defaults to `true` (share all) so
     /// existing posts keep their behavior. (#410)
     var shareFullSoundtrack: Bool = true
+    /// Detailed ratings captured at finish time. Optional categories for fatigue,
+    /// difficulty, gym crowdedness, music/vibe, energy before, and mood after.
+    /// Nil when no detailed ratings were provided (backward compatible).
+    var detailedRatings: WorkoutRatings? = nil
 
     var startDate: Date { startTime }
 
@@ -56,7 +60,7 @@ struct Workout: Codable, Identifiable {
     enum CodingKeys: String, CodingKey {
         case id, userId, name, exercises, startTime, endTime, notes, location, rating, tracks
         case kind, durationGoalMinutes, roundsGoal
-        case featuredTrackId, shareFullSoundtrack
+        case featuredTrackId, shareFullSoundtrack, detailedRatings
     }
 
     init(
@@ -74,7 +78,8 @@ struct Workout: Codable, Identifiable {
         durationGoalMinutes: Int? = nil,
         roundsGoal: Int? = nil,
         featuredTrackId: String? = nil,
-        shareFullSoundtrack: Bool = true
+        shareFullSoundtrack: Bool = true,
+        detailedRatings: WorkoutRatings? = nil
     ) {
         self.id = id
         self.userId = userId
@@ -91,6 +96,7 @@ struct Workout: Codable, Identifiable {
         self.roundsGoal = roundsGoal
         self.featuredTrackId = featuredTrackId
         self.shareFullSoundtrack = shareFullSoundtrack
+        self.detailedRatings = detailedRatings
     }
 
     init(from decoder: Decoder) throws {
@@ -110,6 +116,7 @@ struct Workout: Codable, Identifiable {
         roundsGoal = try container.decodeIfPresent(Int.self, forKey: .roundsGoal)
         featuredTrackId = try container.decodeIfPresent(String.self, forKey: .featuredTrackId)
         shareFullSoundtrack = try container.decodeIfPresent(Bool.self, forKey: .shareFullSoundtrack) ?? true
+        detailedRatings = try container.decodeIfPresent(WorkoutRatings.self, forKey: .detailedRatings)
     }
 
     /// Convenience lookup for the featured `WorkoutTrack`. Returns `nil` if no

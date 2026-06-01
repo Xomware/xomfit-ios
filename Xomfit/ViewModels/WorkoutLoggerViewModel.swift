@@ -19,6 +19,8 @@ final class WorkoutLoggerViewModel {
     var errorMessage: String?
     var location: String = ""
     var rating: Int = 0
+    /// Detailed ratings captured at finish time. All categories optional.
+    var detailedRatings: WorkoutRatings = .empty
 
     // MARK: - Soundtrack curation (#387)
     //
@@ -241,6 +243,7 @@ final class WorkoutLoggerViewModel {
         persistedCapturedTracks = []
         featuredTrackId = nil
         shareFullSoundtrack = true
+        detailedRatings = .empty
         skipRestTimer()
         startLiveActivity()
 
@@ -294,6 +297,7 @@ final class WorkoutLoggerViewModel {
         totalPausedDuration = 0
         location = ""
         rating = 0
+        detailedRatings = .empty
         manualTracks = []
         removedTrackIDs = []
         persistedCapturedTracks = []
@@ -1423,12 +1427,14 @@ final class WorkoutLoggerViewModel {
         var removedTrackIDs: [UUID]
         var featuredTrackId: UUID?
         var shareFullSoundtrack: Bool
+        var detailedRatings: WorkoutRatings
 
         enum CodingKeys: String, CodingKey {
             case schemaVersion, workoutId, workoutName, exercises, startTime, savedAt
             case totalPausedDuration, defaultRestDuration, focusExerciseIndex, focusSetIndex
             case kind, durationGoalMinutes, roundsGoal, location, rating, activeUserId
             case capturedTracks, manualTracks, removedTrackIDs, featuredTrackId, shareFullSoundtrack
+            case detailedRatings
         }
 
         init(
@@ -1452,7 +1458,8 @@ final class WorkoutLoggerViewModel {
             manualTracks: [WorkoutTrack] = [],
             removedTrackIDs: [UUID] = [],
             featuredTrackId: UUID? = nil,
-            shareFullSoundtrack: Bool = true
+            shareFullSoundtrack: Bool = true,
+            detailedRatings: WorkoutRatings = .empty
         ) {
             self.schemaVersion = schemaVersion
             self.workoutId = workoutId
@@ -1475,6 +1482,7 @@ final class WorkoutLoggerViewModel {
             self.removedTrackIDs = removedTrackIDs
             self.featuredTrackId = featuredTrackId
             self.shareFullSoundtrack = shareFullSoundtrack
+            self.detailedRatings = detailedRatings
         }
 
         init(from decoder: Decoder) throws {
@@ -1500,6 +1508,7 @@ final class WorkoutLoggerViewModel {
             removedTrackIDs = try c.decodeIfPresent([UUID].self, forKey: .removedTrackIDs) ?? []
             featuredTrackId = try c.decodeIfPresent(UUID.self, forKey: .featuredTrackId)
             shareFullSoundtrack = try c.decodeIfPresent(Bool.self, forKey: .shareFullSoundtrack) ?? true
+            detailedRatings = try c.decodeIfPresent(WorkoutRatings.self, forKey: .detailedRatings) ?? .empty
         }
     }
 
@@ -1548,7 +1557,8 @@ final class WorkoutLoggerViewModel {
             manualTracks: manualTracks,
             removedTrackIDs: Array(removedTrackIDs),
             featuredTrackId: featuredTrackId,
-            shareFullSoundtrack: shareFullSoundtrack
+            shareFullSoundtrack: shareFullSoundtrack,
+            detailedRatings: detailedRatings
         )
 
         do {
@@ -1646,6 +1656,7 @@ final class WorkoutLoggerViewModel {
         removedTrackIDs = Set(snapshot.removedTrackIDs)
         featuredTrackId = snapshot.featuredTrackId
         shareFullSoundtrack = snapshot.shareFullSoundtrack
+        detailedRatings = snapshot.detailedRatings
 
         isActive = true
         isPresented = true
@@ -1805,7 +1816,8 @@ final class WorkoutLoggerViewModel {
             durationGoalMinutes: durationGoalMinutes,
             roundsGoal: roundsGoal,
             featuredTrackId: validFeaturedId,
-            shareFullSoundtrack: shareFullSoundtrack
+            shareFullSoundtrack: shareFullSoundtrack,
+            detailedRatings: detailedRatings.hasAnyRating ? detailedRatings : nil
         )
 
         do {

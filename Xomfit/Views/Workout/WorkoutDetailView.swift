@@ -80,6 +80,7 @@ struct WorkoutDetailView: View {
                 } else {
                     VStack(spacing: Theme.Spacing.md) {
                         summaryCard
+                        detailedRatingsCard
                         exerciseList
                         soundtrackSection
                         startThisWorkoutButton
@@ -301,6 +302,33 @@ struct WorkoutDetailView: View {
         .padding(Theme.Spacing.md)
         .background(Theme.surface)
         .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+    }
+
+    // MARK: - Detailed Ratings Card
+
+    @ViewBuilder
+    private var detailedRatingsCard: some View {
+        if let ratings = workout.detailedRatings, ratings.hasAnyRating {
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                Text("Detailed Ratings")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Theme.textPrimary)
+
+                LazyVGrid(columns: [
+                    GridItem(.flexible(), spacing: Theme.Spacing.sm),
+                    GridItem(.flexible(), spacing: Theme.Spacing.sm)
+                ], spacing: Theme.Spacing.sm) {
+                    ForEach(WorkoutRatings.Category.allCases) { category in
+                        if let value = ratings.value(for: category) {
+                            DetailedRatingDisplay(category: category, value: value)
+                        }
+                    }
+                }
+            }
+            .padding(Theme.Spacing.md)
+            .background(Theme.surface)
+            .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+        }
     }
 
     // MARK: - Exercise List
@@ -1376,5 +1404,32 @@ private struct WorkoutEditSetRow: View {
             .accessibilityLabel("Delete set \(setNumber)")
         }
         .frame(minHeight: 44)
+    }
+}
+
+// MARK: - Detailed Rating Display
+
+/// Read-only display of a single detailed rating category value.
+private struct DetailedRatingDisplay: View {
+    let category: WorkoutRatings.Category
+    let value: Int
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
+            Text(category.label)
+                .font(Theme.fontCaption)
+                .foregroundStyle(Theme.textSecondary)
+
+            HStack(spacing: 2) {
+                ForEach(1...5, id: \.self) { star in
+                    Image(systemName: star <= value ? "star.fill" : "star")
+                        .font(Theme.fontCaption2)
+                        .foregroundStyle(star <= value ? Theme.accent : Theme.textSecondary.opacity(0.3))
+                }
+                Spacer()
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(category.label): \(value) out of 5")
     }
 }
