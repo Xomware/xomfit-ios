@@ -529,10 +529,17 @@ struct FeedDetailView: View {
             }
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(track.title)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Theme.textPrimary)
-                    .lineLimit(1)
+                HStack(spacing: 6) {
+                    Text(track.title)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Theme.textPrimary)
+                        .lineLimit(1)
+                    if track.playCount > 1 {
+                        Text("x\(track.playCount)")
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(Theme.accent)
+                    }
+                }
                 HStack(spacing: 6) {
                     if let artist = track.artist, !artist.isEmpty {
                         Text(artist)

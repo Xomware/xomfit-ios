@@ -559,10 +559,17 @@ struct WorkoutDetailView: View {
             DetailSoundtrackPlayButton(track: track)
 
             VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
-                Text(track.title)
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(Theme.textPrimary)
-                    .lineLimit(1)
+                HStack(spacing: 6) {
+                    Text(track.title)
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(Theme.textPrimary)
+                        .lineLimit(1)
+                    if track.playCount > 1 {
+                        Text("x\(track.playCount)")
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(Theme.accent)
+                    }
+                }
                 HStack(spacing: 6) {
                     if let artist = track.artist, !artist.isEmpty {
                         Text(artist)
