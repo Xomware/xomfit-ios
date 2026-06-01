@@ -278,6 +278,7 @@ struct ActiveWorkoutView: View {
                 description: $workoutDescription,
                 location: $viewModel.location,
                 rating: $viewModel.rating,
+                detailedRatings: $viewModel.detailedRatings,
                 saveAsTemplate: $saveAsTemplate,
                 selectedPhotos: $selectedPhotos,
                 photoImages: $photoImages,
@@ -1570,6 +1571,7 @@ private struct FinishWorkoutSheet: View {
     @Binding var description: String
     @Binding var location: String
     @Binding var rating: Int
+    @Binding var detailedRatings: WorkoutRatings
     @Binding var saveAsTemplate: Bool
     @Binding var selectedPhotos: [PhotosPickerItem]
     @Binding var photoImages: [UIImage]
@@ -1578,6 +1580,8 @@ private struct FinishWorkoutSheet: View {
 
     /// Drives the manual-track entry sub-sheet (#387).
     @State private var showManualTrackSheet = false
+    /// Controls the expanded state of the detailed ratings section.
+    @State private var showDetailedRatings = false
 
     var body: some View {
         NavigationStack {
@@ -1625,6 +1629,9 @@ private struct FinishWorkoutSheet: View {
                                 Spacer()
                             }
                         }
+
+                        // Detailed Ratings (collapsible)
+                        detailedRatingsSection
 
                         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                             Text("Location")
@@ -1820,6 +1827,76 @@ private struct FinishWorkoutSheet: View {
             }
             .presentationDetents([.medium])
         }
+    }
+
+    // MARK: - Detailed Ratings Section
+
+    @ViewBuilder
+    private var detailedRatingsSection: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            Button {
+                withAnimation(.xomChill) {
+                    showDetailedRatings.toggle()
+                }
+            } label: {
+                HStack(spacing: Theme.Spacing.sm) {
+                    Image(systemName: showDetailedRatings ? "chevron.down" : "chevron.right")
+                        .font(Theme.fontCaption.weight(.semibold))
+                        .foregroundStyle(Theme.textSecondary)
+                        .frame(width: 12)
+                    Text("More Ratings")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(Theme.textSecondary)
+                    if detailedRatings.hasAnyRating {
+                        let count = countFilledRatings()
+                        Text("\(count)/6")
+                            .font(.caption.weight(.bold).monospacedDigit())
+                            .foregroundStyle(Theme.accent)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 1)
+                            .background(Theme.accent.opacity(0.15), in: Capsule())
+                    }
+                    Spacer()
+                }
+                .frame(minHeight: 44)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("More ratings")
+            .accessibilityHint(showDetailedRatings ? "Tap to collapse" : "Tap to expand additional rating categories")
+
+            if showDetailedRatings {
+                VStack(spacing: Theme.Spacing.xs) {
+                    ForEach(WorkoutRatings.Category.allCases) { category in
+                        DetailedRatingRow(
+                            category: category,
+                            value: detailedRatings.value(for: category),
+                            onValueChanged: { newValue in
+                                detailedRatings.setValue(newValue, for: category)
+                            }
+                        )
+                    }
+                }
+                .padding(Theme.Spacing.sm)
+                .background(Theme.surface)
+                .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
+                .overlay(
+                    RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall)
+                        .stroke(Theme.textSecondary.opacity(0.2), lineWidth: 1)
+                )
+                .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+        }
+    }
+
+    private func countFilledRatings() -> Int {
+        var count = 0
+        for category in WorkoutRatings.Category.allCases {
+            if detailedRatings.value(for: category) != nil {
+                count += 1
+            }
+        }
+        return count
     }
 
     // MARK: - Soundtrack section (#387.2)
@@ -2117,5 +2194,62 @@ private struct ManualTrackSheet: View {
         let trimmedArtist = artist.trimmingCharacters(in: .whitespacesAndNewlines)
         onAdd(trimmedTitle, trimmedArtist.isEmpty ? nil : trimmedArtist)
         dismiss()
+    }
+}
+
+// MARK: - Detailed Rating Row
+
+/// A single row for a detailed rating category showing the label and 5 small tappable stars.
+private struct DetailedRatingRow: View {
+    let category: WorkoutRatings.Category
+    let value: Int?
+    let onValueChanged: (Int?) -> Void
+
+    var body: some View {
+        HStack(spacing: Theme.Spacing.sm) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(category.label)
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(Theme.textPrimary)
+                HStack(spacing: 4) {
+                    Text(category.lowLabel)
+                        .font(Theme.fontCaption2)
+                        .foregroundStyle(Theme.textTertiary)
+                    Text("-")
+                        .font(Theme.fontCaption2)
+                        .foregroundStyle(Theme.textTertiary)
+                    Text(category.highLabel)
+                        .font(Theme.fontCaption2)
+                        .foregroundStyle(Theme.textTertiary)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            HStack(spacing: 4) {
+                ForEach(1...5, id: \.self) { star in
+                    Button {
+                        withAnimation(.xomChill) {
+                            // Tap same star to clear
+                            if value == star {
+                                onValueChanged(nil)
+                            } else {
+                                onValueChanged(star)
+                            }
+                        }
+                        Haptics.selection()
+                    } label: {
+                        Image(systemName: star <= (value ?? 0) ? "star.fill" : "star")
+                            .font(Theme.fontCaption)
+                            .foregroundStyle(star <= (value ?? 0) ? Theme.accent : Theme.textSecondary.opacity(0.4))
+                            .frame(width: 28, height: 28)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("\(star) star\(star > 1 ? "s" : "") for \(category.label)")
+                    .accessibilityAddTraits(star <= (value ?? 0) ? .isSelected : [])
+                }
+            }
+        }
+        .padding(.vertical, Theme.Spacing.xs)
     }
 }
