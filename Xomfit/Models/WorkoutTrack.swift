@@ -25,9 +25,13 @@ struct WorkoutTrack: Codable, Hashable, Identifiable {
     /// - Apple Music: `https://music.apple.com/...`
     /// - SoundCloud: track permalink URL
     var url: String? = nil
+    /// Number of times this track was played during the workout session. Incremented when
+    /// a previously captured track reappears after playing a different song (i.e., the user
+    /// repeated the song). Defaults to 1 for backward compatibility with older payloads.
+    var playCount: Int = 1
 
     enum CodingKeys: String, CodingKey {
-        case id, title, artist, album, capturedAt, sourceApp, url
+        case id, title, artist, album, capturedAt, sourceApp, url, playCount
     }
 
     init(
@@ -37,7 +41,8 @@ struct WorkoutTrack: Codable, Hashable, Identifiable {
         album: String? = nil,
         capturedAt: Date,
         sourceApp: String,
-        url: String? = nil
+        url: String? = nil,
+        playCount: Int = 1
     ) {
         self.id = id
         self.title = title
@@ -46,6 +51,7 @@ struct WorkoutTrack: Codable, Hashable, Identifiable {
         self.capturedAt = capturedAt
         self.sourceApp = sourceApp
         self.url = url
+        self.playCount = playCount
     }
 
     init(from decoder: Decoder) throws {
@@ -57,5 +63,7 @@ struct WorkoutTrack: Codable, Hashable, Identifiable {
         capturedAt = try container.decode(Date.self, forKey: .capturedAt)
         sourceApp = try container.decode(String.self, forKey: .sourceApp)
         url = try container.decodeIfPresent(String.self, forKey: .url)
+        // Backward compat: older payloads won't have playCount, default to 1
+        playCount = try container.decodeIfPresent(Int.self, forKey: .playCount) ?? 1
     }
 }

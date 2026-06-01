@@ -26,6 +26,10 @@ final class NowPlayingService {
     /// Accumulated tracks for the current capture session, deduped by `dedupeKey`.
     private var captured: [WorkoutTrack] = []
     @ObservationIgnored private var seenKeys: Set<String> = []
+    /// Maps dedupe keys to indices in `captured` for O(1) lookup when incrementing playCount.
+    @ObservationIgnored private var keyToIndex: [String: Int] = [:]
+    /// Tracks the last confirmed (committed) track key to detect repeats vs continuous play.
+    @ObservationIgnored private var lastCapturedKey: String?
     @ObservationIgnored private var pollTask: Task<Void, Never>?
     @ObservationIgnored private var isAuthorized: Bool = false
     @ObservationIgnored private var pendingKey: String?
@@ -114,6 +118,8 @@ final class NowPlayingService {
         // Reset session state up-front so a back-to-back start clears prior captures
         captured.removeAll()
         seenKeys.removeAll()
+        keyToIndex.removeAll()
+        lastCapturedKey = nil
         pendingKey = nil
         pendingFirstSeen = nil
         lastCapturedTrack = nil
@@ -165,6 +171,8 @@ final class NowPlayingService {
         let result = captured
         captured.removeAll()
         seenKeys.removeAll()
+        keyToIndex.removeAll()
+        lastCapturedKey = nil
         return result
     }
 
@@ -172,14 +180,23 @@ final class NowPlayingService {
 
     /// Reads `systemMusicPlayer.nowPlayingItem` once. No-op when:
     ///   - Apple Music auth is denied
-    ///   - Nothing is playing via Apple Music (Spotify/podcasts/etc. won't surface here)
-    ///   - The current track was already captured (deduped by title+artist+persistentID)
+    ///   - Nothing is actively playing via Apple Music (paused/stopped won't count)
+    ///   - The current track was already captured and is still the same as last poll
+    ///
+    /// If a previously captured track reappears after a different track was captured,
+    /// its `playCount` is incremented rather than adding a duplicate entry.
     private func captureCurrentTrack() {
         guard isAuthorized else {
             print("[NowPlayingService] captureCurrentTrack: skipped — not authorized")
             return
         }
-        guard let item = MPMusicPlayerController.systemMusicPlayer.nowPlayingItem else {
+        let player = MPMusicPlayerController.systemMusicPlayer
+        guard player.playbackState == .playing else {
+            // Not actively playing — skip capture. This prevents counting songs when
+            // Apple Music is paused or not open.
+            return
+        }
+        guard let item = player.nowPlayingItem else {
             print("[NowPlayingService] captureCurrentTrack: nowPlayingItem is nil (nothing playing via Apple Music)")
             return
         }
@@ -189,8 +206,23 @@ final class NowPlayingService {
         }
 
         let key = dedupeKey(title: title, artist: item.artist, persistentID: item.persistentID)
-        guard !seenKeys.contains(key) else { return }
 
+        // If we've seen this track before and it's returning after a different track,
+        // increment its playCount instead of deduping silently.
+        if seenKeys.contains(key) {
+            if let lastKey = lastCapturedKey, lastKey != key, let index = keyToIndex[key] {
+                // Track is repeating after we played something else — increment playCount
+                captured[index].playCount += 1
+                lastCapturedKey = key
+                lastCapturedTrack = captured[index]
+                print("[NowPlayingService] repeat detected for '\(title)' — playCount now \(captured[index].playCount)")
+            }
+            // Either way, update lastCapturedKey so we don't keep incrementing on consecutive polls
+            lastCapturedKey = key
+            return
+        }
+
+        // New track — apply minimum listen duration before committing
         if pendingKey == key, let firstSeen = pendingFirstSeen,
            Date().timeIntervalSince(firstSeen) >= minimumListenDuration {
             seenKeys.insert(key)
@@ -204,7 +236,9 @@ final class NowPlayingService {
                 capturedAt: Date(),
                 sourceApp: "Apple Music"
             )
+            keyToIndex[key] = captured.count
             captured.append(track)
+            lastCapturedKey = key
             lastCapturedTrack = track
             print("[NowPlayingService] captured '\(title)' by \(item.artist ?? "unknown") — total: \(captured.count)")
         } else if pendingKey != key {

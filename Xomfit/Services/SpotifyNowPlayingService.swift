@@ -22,6 +22,10 @@ final class SpotifyNowPlayingService {
 
     private var captured: [WorkoutTrack] = []
     @ObservationIgnored private var seenKeys: Set<String> = []
+    /// Maps dedupe keys to indices in `captured` for O(1) lookup when incrementing playCount.
+    @ObservationIgnored private var keyToIndex: [String: Int] = [:]
+    /// Tracks the last confirmed (committed) track key to detect repeats vs continuous play.
+    @ObservationIgnored private var lastCapturedKey: String?
     @ObservationIgnored private var pollTask: Task<Void, Never>?
 
     // MARK: - Observable surface (Spotify capture polish)
@@ -57,6 +61,8 @@ final class SpotifyNowPlayingService {
         print("[SpotifyNowPlayingService] startCapture called — resetting session state")
         captured.removeAll()
         seenKeys.removeAll()
+        keyToIndex.removeAll()
+        lastCapturedKey = nil
         lastCapturedTrack = nil
         pollTask?.cancel()
 
@@ -97,11 +103,20 @@ final class SpotifyNowPlayingService {
         let result = captured
         captured.removeAll()
         seenKeys.removeAll()
+        keyToIndex.removeAll()
+        lastCapturedKey = nil
         return result
     }
 
     // MARK: - Polling
 
+    /// Polls Spotify's currently-playing endpoint once. No-op when:
+    ///   - User is not authenticated with Spotify
+    ///   - Nothing is playing (204 response)
+    ///   - The current track was already captured and is still the same as last poll
+    ///
+    /// If a previously captured track reappears after a different track was captured,
+    /// its `playCount` is incremented rather than adding a duplicate entry.
     private func captureCurrentTrack() async {
         guard let token = await SpotifyAuthService.shared.currentTokenRefreshingIfNeeded() else {
             // Not signed in (or refresh failed). Silent no-op — see class doc.
@@ -146,12 +161,26 @@ final class SpotifyNowPlayingService {
             guard !title.isEmpty else { return }
 
             let key = dedupeKey(uri: item.uri, id: item.id, title: title)
-            guard !seenKeys.contains(key) else { return }
+            let artist = item.artists?.compactMap { $0.name }.joined(separator: ", ")
 
-            // Capture immediately — if it's playing, log it. No delay needed.
+            // If we've seen this track before and it's returning after a different track,
+            // increment its playCount instead of deduping silently.
+            if seenKeys.contains(key) {
+                if let lastKey = lastCapturedKey, lastKey != key, let index = keyToIndex[key] {
+                    // Track is repeating after we played something else — increment playCount
+                    captured[index].playCount += 1
+                    lastCapturedKey = key
+                    lastCapturedTrack = captured[index]
+                    print("[SpotifyNowPlayingService] repeat detected for '\(title)' — playCount now \(captured[index].playCount)")
+                }
+                // Either way, update lastCapturedKey so we don't keep incrementing on consecutive polls
+                lastCapturedKey = key
+                return
+            }
+
+            // New track — capture immediately
             seenKeys.insert(key)
 
-            let artist = item.artists?.compactMap { $0.name }.joined(separator: ", ")
             let trackURL: String? = {
                 if let id = item.id, !id.isEmpty {
                     return "https://open.spotify.com/track/\(id)"
@@ -167,7 +196,9 @@ final class SpotifyNowPlayingService {
                 sourceApp: "Spotify",
                 url: trackURL
             )
+            keyToIndex[key] = captured.count
             captured.append(track)
+            lastCapturedKey = key
             lastCapturedTrack = track
             print("[SpotifyNowPlayingService] captured '\(title)' by \(artist ?? "unknown") — total: \(captured.count)")
         } catch {
