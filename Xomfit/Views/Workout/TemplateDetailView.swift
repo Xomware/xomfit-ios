@@ -290,20 +290,22 @@ struct TemplateDetailView: View {
             if draft.exercises.isEmpty {
                 emptyState
             } else {
-                ForEach(Array(draft.exercises.enumerated()), id: \.element.id) { index, exercise in
-                    let exerciseId = exercise.id
-                    EditableExerciseRow(
-                        index: index + 1,
-                        exercise: exercise,
-                        targetWeight: bindingForWeight(exerciseId: exerciseId),
-                        canMoveUp: index > 0,
-                        canMoveDown: index < draft.exercises.count - 1,
-                        onUpdateSets: { newValue in updateSetsById(exerciseId, value: newValue) },
-                        onUpdateReps: { newValue in updateRepsById(exerciseId, value: newValue) },
-                        onMoveUp: { moveExerciseById(exerciseId, direction: -1) },
-                        onMoveDown: { moveExerciseById(exerciseId, direction: 1) },
-                        onDelete: { removeExerciseById(exerciseId) }
-                    )
+                LazyVStack(spacing: Theme.Spacing.sm) {
+                    ForEach(Array(draft.exercises.enumerated()), id: \.element.id) { index, exercise in
+                        let exerciseId = exercise.id
+                        EditableExerciseRow(
+                            index: index + 1,
+                            exercise: exercise,
+                            targetWeight: bindingForWeight(exerciseId: exerciseId),
+                            canMoveUp: index > 0,
+                            canMoveDown: index < draft.exercises.count - 1,
+                            onUpdateSets: { newValue in updateSetsById(exerciseId, value: newValue) },
+                            onUpdateReps: { newValue in updateRepsById(exerciseId, value: newValue) },
+                            onMoveUp: { moveExerciseById(exerciseId, direction: -1) },
+                            onMoveDown: { moveExerciseById(exerciseId, direction: 1) },
+                            onDelete: { removeExerciseById(exerciseId) }
+                        )
+                    }
                 }
             }
         }
@@ -867,6 +869,7 @@ private struct EditableExerciseRow: View {
         .padding(Theme.Spacing.md)
         .background(Theme.surface)
         .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+        .contentShape(Rectangle())
         .sheet(isPresented: $showDetails) {
             ExerciseDetailSheet(exercise: exercise.exercise)
         }
