@@ -142,8 +142,8 @@ enum DebugFixtures {
                 artist: "Kanye West",
                 album: "Graduation",
                 capturedAt: now.addingTimeInterval(-1800),
-                sourceApp: "SoundCloud",
-                url: "https://soundcloud.com/kanyewest/stronger"
+                sourceApp: "Apple Music",
+                url: nil
             )
         ]
 

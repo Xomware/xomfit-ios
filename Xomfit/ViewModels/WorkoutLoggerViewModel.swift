@@ -36,9 +36,9 @@ final class WorkoutLoggerViewModel {
     var removedTrackIDs: Set<UUID> = []
 
     /// Captured tracks restored from a force-quit + relaunch. Lives separately
-    /// from the per-service in-memory caches (Apple Music / Spotify /
-    /// SoundCloud) because those reset on `startCapture()` and we don't want
-    /// to lose the songs that played BEFORE the quit. Merged into
+    /// from the per-service in-memory caches (Apple Music / Spotify) because
+    /// those reset on `startCapture()` and we don't want to lose the songs
+    /// that played BEFORE the quit. Merged into
     /// `curatedTracksSnapshot` so the finish sheet and feed card both see
     /// the full pre-quit + post-quit soundtrack.
     var persistedCapturedTracks: [WorkoutTrack] = []
@@ -252,8 +252,6 @@ final class WorkoutLoggerViewModel {
         NowPlayingService.shared.startCapture()
         // Spotify capture runs in parallel — also a silent no-op when not signed in (#347).
         SpotifyNowPlayingService.shared.startCapture()
-        // SoundCloud capture runs in parallel — silent no-op when not signed in (#389).
-        SoundCloudNowPlayingService.shared.startCapture()
 
         // Persist the fresh session so a force-quit within the first second
         // (rare but possible) still surfaces the resume alert (#399).
@@ -314,7 +312,6 @@ final class WorkoutLoggerViewModel {
         // Drop any captured Now Playing tracks — discarding the workout discards the soundtrack.
         _ = NowPlayingService.shared.stopCapture()
         _ = SpotifyNowPlayingService.shared.stopCapture()
-        _ = SoundCloudNowPlayingService.shared.stopCapture()
     }
 
     func startFromTemplate(_ template: WorkoutTemplate, userId: String) {
@@ -1091,16 +1088,15 @@ final class WorkoutLoggerViewModel {
 
     // MARK: - Soundtrack curation (#387)
 
-    /// Merged snapshot of (Apple Music + Spotify + SoundCloud + manual +
-    /// pre-quit persisted) tracks, minus anything the user removed in the
-    /// finish sheet. Sorted by capture time so the order reflects play order
-    /// across sources. Deduped by track id so a song that was captured
-    /// pre-quit AND is still playing post-restore only appears once.
+    /// Merged snapshot of (Apple Music + Spotify + manual + pre-quit
+    /// persisted) tracks, minus anything the user removed in the finish sheet.
+    /// Sorted by capture time so the order reflects play order across sources.
+    /// Deduped by track id so a song that was captured pre-quit AND is still
+    /// playing post-restore only appears once.
     var curatedTracksSnapshot: [WorkoutTrack] {
         let apple = NowPlayingService.shared.capturedTracksSnapshot()
         let spotify = SpotifyNowPlayingService.shared.capturedTracksSnapshot()
-        let soundCloud = SoundCloudNowPlayingService.shared.capturedTracksSnapshot()
-        let raw = apple + spotify + soundCloud + manualTracks + persistedCapturedTracks
+        let raw = apple + spotify + manualTracks + persistedCapturedTracks
         var seen = Set<UUID>()
         let deduped = raw.filter { track in
             guard !removedTrackIDs.contains(track.id) else { return false }
@@ -1528,11 +1524,10 @@ final class WorkoutLoggerViewModel {
         // anything captured pre-quit would be lost without this snapshot.
         let appleSnapshot = NowPlayingService.shared.capturedTracksSnapshot()
         let spotifySnapshot = SpotifyNowPlayingService.shared.capturedTracksSnapshot()
-        let soundCloudSnapshot = SoundCloudNowPlayingService.shared.capturedTracksSnapshot()
         // Merge per-source snapshots with anything we restored from the prior
         // saved blob so back-to-back saves don't drop pre-quit captures. Dedupe
         // by id.
-        let allCaptured = appleSnapshot + spotifySnapshot + soundCloudSnapshot + persistedCapturedTracks
+        let allCaptured = appleSnapshot + spotifySnapshot + persistedCapturedTracks
         var seenCaptureIds = Set<UUID>()
         let mergedCaptured = allCaptured.filter { seenCaptureIds.insert($0.id).inserted }
 
@@ -1669,7 +1664,6 @@ final class WorkoutLoggerViewModel {
         // being recorded for the rest of the workout.
         NowPlayingService.shared.startCapture()
         SpotifyNowPlayingService.shared.startCapture()
-        SoundCloudNowPlayingService.shared.startCapture()
 
         return true
     }
@@ -1780,10 +1774,9 @@ final class WorkoutLoggerViewModel {
         // Empty list when the user denied Apple Music access or only used non-Apple Music sources.
         let appleMusicTracks = NowPlayingService.shared.stopCapture()
         let spotifyTracks = SpotifyNowPlayingService.shared.stopCapture()
-        let soundCloudTracks = SoundCloudNowPlayingService.shared.stopCapture()
         // Merge with `persistedCapturedTracks` so songs captured BEFORE a
         // force-quit + restore still attach to the saved workout (#411 follow-up).
-        let allCaptured = appleMusicTracks + spotifyTracks + soundCloudTracks + manualTracks + persistedCapturedTracks
+        let allCaptured = appleMusicTracks + spotifyTracks + manualTracks + persistedCapturedTracks
         var seenFinishIds = Set<UUID>()
         let capturedTracks = allCaptured
             .filter { track in
