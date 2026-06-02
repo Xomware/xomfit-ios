@@ -1024,6 +1024,7 @@ private struct ExerciseCard: View {
 
     @State private var showDetails = false
     @State private var showSupersetToggleConfirm = false
+    @State private var showRemoveExerciseConfirm = false
     @State private var isCollapsed = false
 
     private var isInSuperset: Bool {
@@ -1083,6 +1084,22 @@ private struct ExerciseCard: View {
                                 .background(Theme.accent.opacity(0.15))
                                 .clipShape(.rect(cornerRadius: 4))
                         }
+                        // PR badge — show the user's personal record for this exercise
+                        if let pr = viewModel.personalRecordForExercise(exercise.exercise.id),
+                           pr.weight > 0, pr.reps > 0 {
+                            HStack(spacing: 3) {
+                                Image(systemName: "trophy.fill")
+                                    .font(.system(size: 9, weight: .bold))
+                                Text("PR: \(pr.weight.formattedWeight) x \(pr.reps)")
+                                    .font(.system(size: 10, weight: .bold))
+                            }
+                            .foregroundStyle(Theme.prGold)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, Theme.Spacing.tighter)
+                            .background(Theme.prGold.opacity(0.15))
+                            .clipShape(.rect(cornerRadius: 4))
+                            .accessibilityLabel("Personal record: \(pr.weight.formattedWeight) pounds for \(pr.reps) reps")
+                        }
                     }
                 }
 
@@ -1139,10 +1156,21 @@ private struct ExerciseCard: View {
                     ? "Removes this exercise from its superset"
                     : "Pairs this exercise with the next one for back-to-back sets")
 
-                // Exercise removal moved to swipe-to-delete on the card (#xom).
-                // The inline xmark button used to live here; it's now redundant
-                // because the parent `LazyVStack` wraps the card with a swipe-
-                // gesture row that reveals a destructive Delete pill.
+                // Visible delete button — swipe-to-delete can compete with scroll
+                // gestures, so this provides an always-accessible alternative.
+                Button {
+                    Haptics.warning()
+                    showRemoveExerciseConfirm = true
+                } label: {
+                    Image(systemName: "trash")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Theme.destructive.opacity(0.8))
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Remove \(exercise.exercise.name) from workout")
+                .accessibilityHint("Deletes this exercise and all its sets from the current workout")
             }
 
             if isCollapsed {
@@ -1312,6 +1340,19 @@ private struct ExerciseCard: View {
             Text(isInSuperset
                  ? "Removes \(exercise.exercise.name) from its superset."
                  : "Pairs \(exercise.exercise.name) with the next exercise for back-to-back sets.")
+        }
+        .confirmationDialog(
+            "Remove Exercise?",
+            isPresented: $showRemoveExerciseConfirm,
+            titleVisibility: .visible
+        ) {
+            Button("Remove \(exercise.exercise.name)", role: .destructive) {
+                Haptics.warning()
+                viewModel.removeExercise(at: exerciseIndex)
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This will delete \(exercise.exercise.name) and all its sets from this workout.")
         }
         .sheet(isPresented: $showDetails) {
             ExerciseDetailSheet(exercise: exercise.exercise)
