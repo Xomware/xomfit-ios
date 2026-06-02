@@ -715,6 +715,15 @@ final class WorkoutLoggerViewModel {
                 )
             }
 
+            // Auto-fill next set with progressive overload suggestion.
+            // Only prefill when the next set is incomplete and not a drop set.
+            prefillNextSetWithProgression(
+                exerciseIndex: exerciseIndex,
+                completedSetIndex: setIndex,
+                completedWeight: set.weight,
+                completedReps: set.reps
+            )
+
             // Check if all sets in this exercise are now complete
             let allDone = exercises[exerciseIndex].sets.allSatisfy { $0.completedAt != Date.distantPast }
             if allDone {
@@ -767,6 +776,75 @@ final class WorkoutLoggerViewModel {
               exercises[exerciseIndex].sets.indices.contains(setIndex) else { return }
         exercises[exerciseIndex].sets[setIndex].weightMode =
             exercises[exerciseIndex].sets[setIndex].weightMode == .total ? .perSide : .total
+    }
+
+    // MARK: - Progressive Overload Auto-fill
+
+    /// Auto-fill the next incomplete set with a progressive overload suggestion based on
+    /// what the user just completed. Uses a simple double-progression model:
+    /// - If user hit 12+ reps: suggest +5 lbs at 8 reps (move to next weight)
+    /// - If user hit 8-11 reps: suggest same weight, +1 rep (work toward 12)
+    /// - If user hit < 8 reps: suggest same weight, same reps (consolidate)
+    ///
+    /// Only prefills sets that are:
+    /// - Incomplete (completedAt == distantPast)
+    /// - Not drop sets (drop sets inherit from parent, not progression)
+    /// - Have weight/reps at 0 or matching the "last" prefill (avoid overwriting user edits)
+    private func prefillNextSetWithProgression(
+        exerciseIndex: Int,
+        completedSetIndex: Int,
+        completedWeight: Double,
+        completedReps: Int
+    ) {
+        guard exercises.indices.contains(exerciseIndex) else { return }
+        guard completedWeight > 0, completedReps > 0 else { return }
+
+        // Find the next incomplete, non-drop set in this exercise
+        let sets = exercises[exerciseIndex].sets
+        let nextSetIndex = sets.indices.first { idx in
+            idx > completedSetIndex
+            && sets[idx].completedAt == Date.distantPast
+            && !sets[idx].isDropSet
+        }
+
+        guard let nextIdx = nextSetIndex else { return }
+
+        let nextSet = sets[nextIdx]
+
+        // Only prefill if the set appears untouched (zeros or already matching suggestion).
+        // This avoids overwriting intentional user edits mid-workout.
+        let isUntouched = (nextSet.weight == 0 && nextSet.reps == 0)
+            || (nextSet.weight == completedWeight && nextSet.reps == completedReps)
+            || (nextSet.weight == completedWeight && nextSet.reps == completedReps + 1)
+            || (nextSet.weight == completedWeight + 5 && nextSet.reps == 8)
+
+        guard isUntouched || nextSet.weight == 0 else { return }
+
+        // Double-progression logic:
+        // - Rep target range is typically 8-12 for hypertrophy
+        // - Hit top of range (12+): add weight, reset to bottom of range
+        // - In range (8-11): same weight, add a rep
+        // - Below range (<8): same weight, same reps (need to build up)
+
+        let suggestedWeight: Double
+        let suggestedReps: Int
+
+        if completedReps >= 12 {
+            // User hit or exceeded top of range — progress to heavier weight
+            suggestedWeight = completedWeight + 5
+            suggestedReps = 8
+        } else if completedReps >= 8 {
+            // User is in the working range — suggest one more rep
+            suggestedWeight = completedWeight
+            suggestedReps = completedReps + 1
+        } else {
+            // User is below target range — consolidate at current weight/reps
+            suggestedWeight = completedWeight
+            suggestedReps = completedReps
+        }
+
+        exercises[exerciseIndex].sets[nextIdx].weight = suggestedWeight
+        exercises[exerciseIndex].sets[nextIdx].reps = suggestedReps
     }
 
     // MARK: - Supersets
