@@ -32,7 +32,6 @@ struct ActiveWorkoutView: View {
     /// `@Observable` changes — calls still go through `.shared`.
     @State private var spotifyCapture = SpotifyNowPlayingService.shared
     @State private var appleMusicCapture = NowPlayingService.shared
-    @State private var soundCloudCapture = SoundCloudNowPlayingService.shared
 
     // First-run polish (#310)
     /// Persisted flag — once dismissed, the active-workout tutorial overlay never re-shows.
@@ -777,7 +776,7 @@ struct ActiveWorkoutView: View {
     // MARK: - Soundtrack Capture Icon
 
     private var isAnyCaptureActive: Bool {
-        spotifyCapture.isCapturing || appleMusicCapture.isCapturing || soundCloudCapture.isCapturing
+        spotifyCapture.isCapturing || appleMusicCapture.isCapturing
     }
 
     /// Small corner icon showing soundtrack capture is active. Tappable to
@@ -830,7 +829,6 @@ struct ActiveWorkoutView: View {
     private var totalCapturedCount: Int {
         spotifyCapture.capturedCount
             + appleMusicCapture.capturedCount
-            + soundCloudCapture.capturedCount
             + viewModel.persistedCapturedTracks.count
     }
 
@@ -861,14 +859,6 @@ struct ActiveWorkoutView: View {
                     last: appleMusicCapture.lastCapturedTrack
                 )
             }
-            if soundCloudCapture.isCapturing {
-                soundtrackPopoverSource(
-                    name: "SoundCloud",
-                    count: soundCloudCapture.capturedCount,
-                    last: soundCloudCapture.lastCapturedTrack
-                )
-            }
-
             if totalCapturedCount == 0 {
                 Text("Nothing captured yet — start playing music and we'll log it.")
                     .font(Theme.fontCaption)

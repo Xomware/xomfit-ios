@@ -633,11 +633,10 @@ extension SettingsView {
         Section {
             appleMusicRow
             SpotifyConnectionView()
-            SoundCloudConnectionView()
         } header: {
             XomMetricLabel("Music Sources")
         } footer: {
-            Text("XomFit captures songs that played during your workout. Apple Music reads from system permission; Spotify and SoundCloud require sign-in.")
+            Text("XomFit captures songs that played during your workout. Apple Music reads from system permission; Spotify requires sign-in.")
                 .font(Theme.fontCaption)
                 .foregroundStyle(Theme.textTertiary)
         }
