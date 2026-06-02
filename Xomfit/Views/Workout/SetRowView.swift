@@ -9,6 +9,9 @@ struct SetRowView: View {
     let onDelete: () -> Void
     let onToggleWeightMode: () -> Void
     let onAddDropSet: (() -> Void)?
+    var onMarkDropSet: (() -> Void)? = nil
+    var onFillMax: (() -> Void)? = nil
+    var onFillMaxPlus5: (() -> Void)? = nil
     var lateralityLabel: String? = nil
     /// Most recent set the user has logged for this exercise from history.
     /// Drives the "Last: 135×8" hint below the row. nil = first time doing this exercise.
@@ -81,6 +84,9 @@ struct SetRowView: View {
         onDelete: @escaping () -> Void,
         onToggleWeightMode: @escaping () -> Void = {},
         onAddDropSet: (() -> Void)? = nil,
+        onMarkDropSet: (() -> Void)? = nil,
+        onFillMax: (() -> Void)? = nil,
+        onFillMaxPlus5: (() -> Void)? = nil,
         lateralityLabel: String? = nil,
         lastSet: WorkoutSet? = nil,
         personalRecord: WorkoutSet? = nil,
@@ -94,6 +100,9 @@ struct SetRowView: View {
         self.onDelete = onDelete
         self.onToggleWeightMode = onToggleWeightMode
         self.onAddDropSet = onAddDropSet
+        self.onMarkDropSet = onMarkDropSet
+        self.onFillMax = onFillMax
+        self.onFillMaxPlus5 = onFillMaxPlus5
         self.lateralityLabel = lateralityLabel
         self.lastSet = lastSet
         self.personalRecord = personalRecord
@@ -110,6 +119,9 @@ struct SetRowView: View {
             mainRow
             if hasHints || beatsPriorPR {
                 hintRow
+            }
+            if isCurrentSet && !isCompleted {
+                quickActionButtons
             }
             if isCompleted, !isDropSet, let onAddDropSet {
                 addDropSetButton(onAddDropSet)
@@ -347,6 +359,78 @@ struct SetRowView: View {
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(label) \(value)")
+    }
+
+    // MARK: - Quick action buttons
+
+    @ViewBuilder
+    private var quickActionButtons: some View {
+        HStack(spacing: Theme.Spacing.sm) {
+            Spacer().frame(width: Theme.Spacing.xs + Theme.Spacing.sm + Theme.Spacing.lg)
+
+            if let onMarkDropSet, !isDropSet {
+                Button {
+                    Haptics.light()
+                    onMarkDropSet()
+                } label: {
+                    HStack(spacing: 3) {
+                        Image(systemName: "arrow.down")
+                            .font(.caption2.weight(.bold))
+                        Text("Drop")
+                            .font(.caption2.weight(.semibold))
+                    }
+                    .foregroundStyle(Theme.accent)
+                    .padding(.horizontal, Theme.Spacing.sm)
+                    .padding(.vertical, 4)
+                    .background(Theme.accent.opacity(0.10))
+                    .clipShape(.capsule)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Mark as drop set")
+            }
+
+            if let onFillMax {
+                Button {
+                    Haptics.light()
+                    onFillMax()
+                } label: {
+                    HStack(spacing: 3) {
+                        Image(systemName: "trophy")
+                            .font(.caption2.weight(.bold))
+                        Text("Max")
+                            .font(.caption2.weight(.semibold))
+                    }
+                    .foregroundStyle(Theme.accent)
+                    .padding(.horizontal, Theme.Spacing.sm)
+                    .padding(.vertical, 4)
+                    .background(Theme.accent.opacity(0.10))
+                    .clipShape(.capsule)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Fill with PR weight")
+            }
+
+            if let onFillMaxPlus5 {
+                Button {
+                    Haptics.light()
+                    onFillMaxPlus5()
+                } label: {
+                    Text("+5")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(Theme.accent)
+                        .padding(.horizontal, Theme.Spacing.sm)
+                        .padding(.vertical, 4)
+                        .background(Theme.accent.opacity(0.10))
+                        .clipShape(.capsule)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Fill with PR weight plus 5 pounds")
+            }
+
+            Spacer()
+        }
+        .padding(.horizontal, Theme.Spacing.md)
+        .padding(.bottom, Theme.Spacing.tight)
     }
 
     // MARK: - Drop set button

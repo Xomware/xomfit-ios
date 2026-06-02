@@ -1270,6 +1270,19 @@ private struct ExerciseCard: View {
                         onAddDropSet: {
                             viewModel.addDropSet(exerciseIndex: exerciseIndex, parentSetIndex: setIdx)
                         },
+                        onMarkDropSet: {
+                            viewModel.markSetAsDropSet(exerciseIndex: exerciseIndex, setIndex: setIdx)
+                        },
+                        onFillMax: {
+                            if let pr = viewModel.personalRecordForExercise(exercise.exercise.id) {
+                                viewModel.updateSet(exerciseIndex: exerciseIndex, setIndex: setIdx, weight: pr.weight, reps: viewModel.exercises[exerciseIndex].sets[setIdx].reps)
+                            }
+                        },
+                        onFillMaxPlus5: {
+                            if let pr = viewModel.personalRecordForExercise(exercise.exercise.id) {
+                                viewModel.updateSet(exerciseIndex: exerciseIndex, setIndex: setIdx, weight: pr.weight + 5, reps: viewModel.exercises[exerciseIndex].sets[setIdx].reps)
+                            }
+                        },
                         lateralityLabel: exercise.selectedLaterality != .bilateral ? (exercise.exercise.muscleGroups.contains(where: { [.quads, .hamstrings, .glutes, .calves].contains($0) }) ? "/leg" : "/arm") : nil,
                         lastSet: viewModel.lastSetHint(exerciseIndex: exerciseIndex, setIndex: setIdx),
                         personalRecord: viewModel.personalRecordForExercise(exercise.exercise.id),

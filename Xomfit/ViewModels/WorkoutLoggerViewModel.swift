@@ -937,6 +937,18 @@ final class WorkoutLoggerViewModel {
 
     // MARK: - Drop Sets
 
+    /// Mark an existing set as a drop set. Optionally reduces weight by 20% if
+    /// the set already has a weight value.
+    func markSetAsDropSet(exerciseIndex: Int, setIndex: Int) {
+        guard exercises.indices.contains(exerciseIndex),
+              exercises[exerciseIndex].sets.indices.contains(setIndex) else { return }
+        exercises[exerciseIndex].sets[setIndex].isDropSet = true
+        let currentWeight = exercises[exerciseIndex].sets[setIndex].weight
+        if currentWeight > 0 {
+            exercises[exerciseIndex].sets[setIndex].weight = (currentWeight * 0.8).rounded(.toNearestOrEven)
+        }
+    }
+
     /// Insert a drop set immediately after `parentSetIndex`. The drop set inherits
     /// reps from the parent and uses 80% of the parent's weight as a reasonable starting point.
     func addDropSet(exerciseIndex: Int, parentSetIndex: Int) {
