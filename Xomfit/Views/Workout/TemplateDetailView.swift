@@ -57,6 +57,8 @@ struct TemplateDetailView: View {
                         .padding(.bottom, 80)
                     }
                     .scrollDismissesKeyboard(.interactively)
+                    .scrollBounceBehavior(.basedOnSize)
+                    .defaultScrollAnchor(.top)
 
                     startButton
                 }
@@ -698,6 +700,10 @@ private struct EditableExerciseRow: View {
     @State private var repsText: String = ""
     @State private var weightText: String = ""
     @State private var showDetails: Bool = false
+    @State private var isEditingReps: Bool = false
+    @State private var isEditingWeight: Bool = false
+    @FocusState private var repsFocused: Bool
+    @FocusState private var weightFocused: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
@@ -820,48 +826,88 @@ private struct EditableExerciseRow: View {
                 }
                 .frame(maxWidth: .infinity)
 
-                // Reps text field
+                // Reps - tap to edit
                 VStack(alignment: .center, spacing: 4) {
                     Text("Reps")
                         .font(.caption2)
                         .foregroundStyle(Theme.textSecondary)
-                    TextField("8-12", text: $repsText)
-                        .font(.body.weight(.semibold).monospaced())
-                        .foregroundStyle(Theme.textPrimary)
-                        .keyboardType(.numbersAndPunctuation)
-                        .multilineTextAlignment(.center)
-                        .frame(width: 56)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 6)
-                        .background(Theme.surfaceElevated)
-                        .clipShape(.rect(cornerRadius: 8))
-                        .onChange(of: repsText) { _, newValue in
-                            onUpdateReps(newValue)
-                        }
+                    if isEditingReps {
+                        TextField("8-12", text: $repsText)
+                            .font(.body.weight(.semibold).monospaced())
+                            .foregroundStyle(Theme.textPrimary)
+                            .keyboardType(.numbersAndPunctuation)
+                            .multilineTextAlignment(.center)
+                            .frame(width: 56)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 6)
+                            .background(Theme.surfaceElevated)
+                            .clipShape(.rect(cornerRadius: 8))
+                            .focused($repsFocused)
+                            .onSubmit { isEditingReps = false }
+                            .onChange(of: repsFocused) { _, focused in
+                                if !focused { isEditingReps = false }
+                            }
+                            .onChange(of: repsText) { _, newValue in
+                                onUpdateReps(newValue)
+                            }
+                    } else {
+                        Text(repsText.isEmpty ? "8-12" : repsText)
+                            .font(.body.weight(.semibold).monospaced())
+                            .foregroundStyle(repsText.isEmpty ? Theme.textSecondary : Theme.textPrimary)
+                            .frame(width: 56)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 6)
+                            .background(Theme.surfaceElevated)
+                            .clipShape(.rect(cornerRadius: 8))
+                            .onTapGesture {
+                                isEditingReps = true
+                                repsFocused = true
+                            }
+                    }
                 }
                 .frame(maxWidth: .infinity)
 
-                // Target weight text field
+                // Weight - tap to edit
                 VStack(alignment: .center, spacing: 4) {
                     Text("Weight")
                         .font(.caption2)
                         .foregroundStyle(Theme.textSecondary)
-                    TextField("—", text: $weightText)
-                        .font(.body.weight(.semibold).monospaced())
-                        .foregroundStyle(Theme.textPrimary)
-                        .keyboardType(.decimalPad)
-                        .multilineTextAlignment(.center)
-                        .frame(width: 56)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 6)
-                        .background(Theme.surfaceElevated)
-                        .clipShape(.rect(cornerRadius: 8))
-                        .onChange(of: weightText) { _, newValue in
-                            let parsed = Double(newValue) ?? 0
-                            if parsed != targetWeight {
-                                targetWeight = parsed
+                    if isEditingWeight {
+                        TextField("", text: $weightText)
+                            .font(.body.weight(.semibold).monospaced())
+                            .foregroundStyle(Theme.textPrimary)
+                            .keyboardType(.decimalPad)
+                            .multilineTextAlignment(.center)
+                            .frame(width: 56)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 6)
+                            .background(Theme.surfaceElevated)
+                            .clipShape(.rect(cornerRadius: 8))
+                            .focused($weightFocused)
+                            .onSubmit { isEditingWeight = false }
+                            .onChange(of: weightFocused) { _, focused in
+                                if !focused { isEditingWeight = false }
                             }
-                        }
+                            .onChange(of: weightText) { _, newValue in
+                                let parsed = Double(newValue) ?? 0
+                                if parsed != targetWeight {
+                                    targetWeight = parsed
+                                }
+                            }
+                    } else {
+                        Text(weightText.isEmpty ? "—" : weightText)
+                            .font(.body.weight(.semibold).monospaced())
+                            .foregroundStyle(weightText.isEmpty ? Theme.textSecondary : Theme.textPrimary)
+                            .frame(width: 56)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 6)
+                            .background(Theme.surfaceElevated)
+                            .clipShape(.rect(cornerRadius: 8))
+                            .onTapGesture {
+                                isEditingWeight = true
+                                weightFocused = true
+                            }
+                    }
                 }
                 .frame(maxWidth: .infinity)
             }
