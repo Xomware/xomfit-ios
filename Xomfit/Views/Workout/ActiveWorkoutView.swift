@@ -1406,26 +1406,8 @@ private struct ExerciseTransitionCard: View {
                 .accessibilityLabel("Dismiss")
             }
 
-            // Option 1: Do Another Set
-            Button {
-                withAnimation { viewModel.addAnotherSet() }
-            } label: {
-                HStack(spacing: Theme.Spacing.sm) {
-                    Image(systemName: "plus")
-                        .font(.subheadline.weight(.bold))
-                    Text("Do Another Set")
-                        .font(.subheadline.weight(.bold))
-                }
-                .foregroundStyle(Theme.accent)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 14)
-                .background(
-                    RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall)
-                        .stroke(Theme.accent, lineWidth: 1.5)
-                )
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Add another set to \(viewModel.completedExerciseName)")
+            // Option 1: Do Another Set - menu with PR, PR+5, Drop, Same options
+            transitionAddSetMenu
 
             // Option 2: Move to Next Exercise
             if let nextIdx = viewModel.nextExerciseIndex, let nextEx = viewModel.nextExercise {
@@ -1575,6 +1557,121 @@ private struct ExerciseTransitionCard: View {
         .background(Theme.surface)
         .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
         .shadow(color: .black.opacity(0.5), radius: 16, x: 0, y: -4)
+    }
+
+    // MARK: - Transition Add Set Menu
+
+    /// Menu for adding another set from the transition card with PR, PR+5, Drop, Same options.
+    /// Mirrors the +Set menu in WorkoutFocusView.
+    @ViewBuilder
+    private var transitionAddSetMenu: some View {
+        let exerciseIndex = viewModel.completedExerciseIndex
+        if viewModel.exercises.indices.contains(exerciseIndex) {
+            let exercise = viewModel.exercises[exerciseIndex]
+            let exerciseId = exercise.exercise.id
+            let prSet = viewModel.personalRecordForExercise(exerciseId)
+            let lastSet = exercise.sets.last
+
+            Menu {
+                // PR - use personal record weight and reps exactly as achieved
+                if let pr = prSet, pr.weight > 0 {
+                    Button {
+                        addTransitionSet(weight: pr.weight, reps: pr.reps)
+                    } label: {
+                        Label("PR (\(formatWeightCompact(pr.weight)) × \(pr.reps))", systemImage: "trophy")
+                    }
+
+                    // PR + 5 - heavier weight, adjust reps down from PR
+                    let pr5Weight = pr.weight + 5
+                    let pr5Reps = adjustedRepsForTransition(targetWeight: pr5Weight, baseWeight: pr.weight, baseReps: pr.reps)
+                    Button {
+                        addTransitionSet(weight: pr5Weight, reps: pr5Reps)
+                    } label: {
+                        Label("PR+5 (\(formatWeightCompact(pr5Weight)) × \(pr5Reps))", systemImage: "trophy.fill")
+                    }
+                }
+
+                // Drop Set
+                if let last = lastSet, last.weight > 0 {
+                    Button {
+                        withAnimation { viewModel.addDropSetFromTransition() }
+                    } label: {
+                        Label("Drop Set", systemImage: "arrow.down.right")
+                    }
+                }
+
+                // Same Set - copy last set values exactly
+                Button {
+                    addTransitionSet(weight: lastSet?.weight ?? 0, reps: lastSet?.reps ?? 0)
+                } label: {
+                    if let last = lastSet, last.weight > 0 {
+                        Label("Same (\(formatWeightCompact(last.weight)) × \(last.reps))", systemImage: "doc.on.doc")
+                    } else {
+                        Label("Empty Set", systemImage: "plus")
+                    }
+                }
+            } label: {
+                HStack(spacing: Theme.Spacing.sm) {
+                    Image(systemName: "plus")
+                        .font(.subheadline.weight(.bold))
+                    Text("Do Another Set")
+                        .font(.subheadline.weight(.bold))
+                }
+                .foregroundStyle(Theme.accent)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(
+                    RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall)
+                        .stroke(Theme.accent, lineWidth: 1.5)
+                )
+            }
+            .accessibilityLabel("Add another set to \(viewModel.completedExerciseName)")
+            .accessibilityHint("Opens menu to add a new set with PR, PR+5, Drop Set, or Same Set options")
+        }
+    }
+
+    /// Helper to add a set with specific values from transition card
+    private func addTransitionSet(weight: Double, reps: Int) {
+        let exerciseIndex = viewModel.completedExerciseIndex
+        guard viewModel.exercises.indices.contains(exerciseIndex) else { return }
+
+        let exercise = viewModel.exercises[exerciseIndex]
+        let newSet = WorkoutSet(
+            id: UUID().uuidString,
+            exerciseId: exercise.exercise.id,
+            weight: weight,
+            reps: reps,
+            rpe: nil,
+            isPersonalRecord: false,
+            completedAt: Date.distantPast
+        )
+        viewModel.exercises[exerciseIndex].sets.append(newSet)
+
+        // Focus on the new set
+        viewModel.focusExerciseIndex = exerciseIndex
+        viewModel.focusSetIndex = viewModel.exercises[exerciseIndex].sets.count - 1
+        withAnimation { viewModel.dismissTransition() }
+    }
+
+    /// Adjusts reps based on weight change for transition menu
+    private func adjustedRepsForTransition(targetWeight: Double, baseWeight: Double, baseReps: Int) -> Int {
+        guard baseWeight > 0, baseReps > 0 else { return baseReps > 0 ? baseReps : 8 }
+        let weightDiff = targetWeight - baseWeight
+        let repAdjustment: Int
+        if weightDiff > 0 {
+            repAdjustment = -Int(round(weightDiff / 5.0))
+        } else {
+            repAdjustment = Int(round(abs(weightDiff) / 5.0 * 1.5))
+        }
+        return max(1, min(20, baseReps + repAdjustment))
+    }
+
+    /// Compact weight format for menu labels
+    private func formatWeightCompact(_ weight: Double) -> String {
+        if weight.truncatingRemainder(dividingBy: 1) == 0 {
+            return "\(Int(weight))"
+        }
+        return String(format: "%.1f", weight)
     }
 
     @ViewBuilder
