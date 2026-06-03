@@ -383,6 +383,7 @@ struct WorkoutFocusView: View {
 
     /// Menu for adding a new set with different prefill options:
     /// PR (personal record weight), PR+5, Drop Set, Same Set (copy last set).
+    /// Reps are adjusted based on weight using progressive overload formula.
     @ViewBuilder
     private func addSetMenu(exercise: WorkoutExercise) -> some View {
         let exerciseId = exercise.exercise.id
@@ -390,19 +391,22 @@ struct WorkoutFocusView: View {
         let lastSet = exercise.sets.last
 
         Menu {
-            // PR - use personal record weight/reps
+            // PR - use personal record weight, adjust reps based on weight diff from last
             if let pr = prSet, pr.weight > 0 {
+                let prReps = adjustedReps(targetWeight: pr.weight, baseWeight: lastSet?.weight ?? pr.weight, baseReps: lastSet?.reps ?? pr.reps)
                 Button {
-                    addSetWithValues(weight: pr.weight, reps: pr.reps)
+                    addSetWithValues(weight: pr.weight, reps: prReps)
                 } label: {
-                    Label("PR (\(formatWeightCompact(pr.weight)) × \(pr.reps))", systemImage: "trophy")
+                    Label("PR (\(formatWeightCompact(pr.weight)) × \(prReps))", systemImage: "trophy")
                 }
 
-                // PR + 5
+                // PR + 5 - heavier weight = fewer reps
+                let pr5Weight = pr.weight + 5
+                let pr5Reps = adjustedReps(targetWeight: pr5Weight, baseWeight: lastSet?.weight ?? pr.weight, baseReps: lastSet?.reps ?? pr.reps)
                 Button {
-                    addSetWithValues(weight: pr.weight + 5, reps: pr.reps)
+                    addSetWithValues(weight: pr5Weight, reps: pr5Reps)
                 } label: {
-                    Label("PR+5 (\(formatWeightCompact(pr.weight + 5)) × \(pr.reps))", systemImage: "trophy.fill")
+                    Label("PR+5 (\(formatWeightCompact(pr5Weight)) × \(pr5Reps))", systemImage: "trophy.fill")
                 }
             }
 
@@ -423,7 +427,7 @@ struct WorkoutFocusView: View {
                 }
             }
 
-            // Same Set - copy last set values
+            // Same Set - copy last set values exactly
             Button {
                 addSetWithValues(weight: lastSet?.weight ?? 0, reps: lastSet?.reps ?? 0)
             } label: {
@@ -449,6 +453,26 @@ struct WorkoutFocusView: View {
         }
         .accessibilityLabel("Add set")
         .accessibilityHint("Opens menu to add a new set with PR, PR+5, Drop Set, or Same Set options")
+    }
+
+    /// Adjusts reps based on weight change using progressive overload formula.
+    /// Rule: For every 5 lbs increase, subtract ~1 rep. For every 5 lbs decrease, add ~2 reps.
+    /// Clamped to 1-20 rep range.
+    private func adjustedReps(targetWeight: Double, baseWeight: Double, baseReps: Int) -> Int {
+        guard baseWeight > 0, baseReps > 0 else { return baseReps > 0 ? baseReps : 8 }
+
+        let weightDiff = targetWeight - baseWeight
+        // Roughly 1 rep per 5 lbs for increases, 2 reps per 5 lbs for decreases (drop sets benefit from higher reps)
+        let repAdjustment: Int
+        if weightDiff > 0 {
+            // Heavier = fewer reps (1 rep per 5 lbs)
+            repAdjustment = -Int(round(weightDiff / 5.0))
+        } else {
+            // Lighter = more reps (2 reps per 5 lbs for drop set style)
+            repAdjustment = Int(round(abs(weightDiff) / 5.0 * 1.5))
+        }
+
+        return max(1, min(20, baseReps + repAdjustment))
     }
 
     /// Helper to add a set with specific weight/reps values
