@@ -391,18 +391,17 @@ struct WorkoutFocusView: View {
         let lastSet = exercise.sets.last
 
         Menu {
-            // PR - use personal record weight, adjust reps based on weight diff from last
+            // PR - use personal record weight and reps exactly as achieved
             if let pr = prSet, pr.weight > 0 {
-                let prReps = adjustedReps(targetWeight: pr.weight, baseWeight: lastSet?.weight ?? pr.weight, baseReps: lastSet?.reps ?? pr.reps)
                 Button {
-                    addSetWithValues(weight: pr.weight, reps: prReps)
+                    addSetWithValues(weight: pr.weight, reps: pr.reps)
                 } label: {
-                    Label("PR (\(formatWeightCompact(pr.weight)) × \(prReps))", systemImage: "trophy")
+                    Label("PR (\(formatWeightCompact(pr.weight)) × \(pr.reps))", systemImage: "trophy")
                 }
 
-                // PR + 5 - heavier weight = fewer reps
+                // PR + 5 - heavier weight, adjust reps down from PR
                 let pr5Weight = pr.weight + 5
-                let pr5Reps = adjustedReps(targetWeight: pr5Weight, baseWeight: lastSet?.weight ?? pr.weight, baseReps: lastSet?.reps ?? pr.reps)
+                let pr5Reps = adjustedReps(targetWeight: pr5Weight, baseWeight: pr.weight, baseReps: pr.reps)
                 Button {
                     addSetWithValues(weight: pr5Weight, reps: pr5Reps)
                 } label: {
