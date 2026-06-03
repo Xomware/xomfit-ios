@@ -779,110 +779,109 @@ struct WorkoutFocusView: View {
     /// Uses inline layout (NOT `.safeAreaInset`) because the overlay is
     /// already a sibling inside the focus view's ZStack — adding additional
     /// safe-area insets there would push the button below the visible bounds.
+    ///
+    /// Fixed #448: Content was pushed below Dynamic Island and LIFT button
+    /// was pushed off screen. Now uses GeometryReader to respect safe areas
+    /// properly and reduces fixed padding to prevent overflow.
     private var fullScreenRestTimer: some View {
-        ZStack {
-            Color.black.opacity(0.92).ignoresSafeArea()
+        GeometryReader { geometry in
+            ZStack {
+                Color.black.opacity(0.92).ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                // TOP — minimize chevron on the left.
-                HStack {
+                VStack(spacing: 0) {
+                    // TOP — minimize chevron on the left. Positioned below Dynamic Island.
+                    HStack {
+                        Button {
+                            Haptics.light()
+                            withAnimation(.xomChill) { viewModel.isRestTimerMinimized = true }
+                        } label: {
+                            Image(systemName: "arrow.down.right.and.arrow.up.left")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(Theme.textPrimary)
+                                .frame(width: 44, height: 44)
+                                .background(Theme.surface.opacity(0.6))
+                                .clipShape(Circle())
+                                .contentShape(Rectangle())
+                        }
+                        .accessibilityLabel("Minimize rest timer")
+                        .accessibilityHint("Collapses the rest timer to a banner so you can see the next set")
+
+                        Spacer()
+                    }
+                    .padding(.horizontal, Theme.Spacing.lg)
+                    .padding(.top, geometry.safeAreaInsets.top + Theme.Spacing.xs)
+
+                    Spacer(minLength: Theme.Spacing.sm)
+
+                    // Large circular ring - scales down on smaller screens
+                    let ringSize: CGFloat = min(200, geometry.size.height * 0.28)
+                    ZStack {
+                        Circle()
+                            .stroke(Theme.textSecondary.opacity(0.2), lineWidth: 10)
+
+                        Circle()
+                            .trim(from: 0, to: restProgress)
+                            .stroke(restIsOvertime ? Theme.destructive : Theme.accent, style: StrokeStyle(lineWidth: 10, lineCap: .round))
+                            .rotationEffect(.degrees(-90))
+                            .animation(.linear(duration: 1), value: restProgress)
+
+                        VStack(spacing: Theme.Spacing.tight) {
+                            Text("REST")
+                                .font(.caption.weight(.bold))
+                                .foregroundStyle(Theme.textSecondary)
+                            Text(restTimeString)
+                                .font(.system(size: min(56, ringSize * 0.28), weight: .black, design: .monospaced))
+                                .monospacedDigit()
+                                .foregroundStyle(restIsOvertime ? Theme.destructive : .white)
+                        }
+                    }
+                    .frame(width: ringSize, height: ringSize)
+                    .padding(.vertical, Theme.Spacing.sm)
+
+                    // Next set context - always show what exercise/set is coming up
+                    restTimerNextUpSection
+
+                    // +30s button
                     Button {
                         Haptics.light()
-                        withAnimation(.xomChill) { viewModel.isRestTimerMinimized = true }
+                        viewModel.extendRestTimer()
                     } label: {
-                        Image(systemName: "arrow.down.right.and.arrow.up.left")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(Theme.textPrimary)
-                            .frame(width: 44, height: 44)
-                            .background(Theme.surface.opacity(0.6))
-                            .clipShape(Circle())
+                        Text("+30s")
+                            .font(.subheadline.weight(.bold))
+                            .foregroundStyle(Theme.accent)
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 8)
+                            .background(Theme.accent.opacity(0.15))
+                            .clipShape(.capsule)
+                            .frame(minHeight: 44)
+                    }
+                    .accessibilityLabel("Add 30 seconds to rest timer")
+
+                    Spacer(minLength: Theme.Spacing.sm)
+
+                    // LIFT — anchored to the bottom with safe area clearance
+                    Button {
+                        Haptics.success()
+                        viewModel.skipRestTimer()
+                    } label: {
+                        Text("LIFT")
+                            .font(.title.weight(.black))
+                            .foregroundStyle(.black)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 18)
+                            .background(Theme.accent)
+                            .clipShape(.rect(cornerRadius: Theme.cornerRadius))
                             .contentShape(Rectangle())
                     }
-                    .accessibilityLabel("Minimize rest timer")
-                    .accessibilityHint("Collapses the rest timer to a banner so you can see the next set")
+                    .padding(.horizontal, Theme.Spacing.lg)
+                    .accessibilityLabel("Skip rest timer and start the next set")
+                    .accessibilityHint("Ends the rest timer immediately and returns to the lift")
 
-                    Spacer()
+                    // Bottom clearance: respect safe area + small buffer
+                    Color.clear.frame(height: max(geometry.safeAreaInsets.bottom, 20) + Theme.Spacing.md)
                 }
-                .padding(.horizontal, Theme.Spacing.lg)
-                .padding(.top, Theme.Spacing.xs)
-
-                Spacer(minLength: Theme.Spacing.md)
-
-                // Large circular ring
-                ZStack {
-                    Circle()
-                        .stroke(Theme.textSecondary.opacity(0.2), lineWidth: 12)
-
-                    Circle()
-                        .trim(from: 0, to: restProgress)
-                        .stroke(restIsOvertime ? Theme.destructive : Theme.accent, style: StrokeStyle(lineWidth: 12, lineCap: .round))
-                        .rotationEffect(.degrees(-90))
-                        .animation(.linear(duration: 1), value: restProgress)
-
-                    VStack(spacing: Theme.Spacing.tight) {
-                        Text("REST")
-                            .font(.caption.weight(.bold))
-                            .foregroundStyle(Theme.textSecondary)
-                        Text(restTimeString)
-                            .font(.system(size: 56, weight: .black, design: .monospaced))
-                            .monospacedDigit()
-                            .foregroundStyle(restIsOvertime ? Theme.destructive : .white)
-                    }
-                }
-                .frame(width: 200, height: 200)
-                .padding(.vertical, Theme.Spacing.md)
-
-                // Next set context - always show what exercise/set is coming up
-                restTimerNextUpSection
-
-                // +30s button
-                Button {
-                    Haptics.light()
-                    viewModel.extendRestTimer()
-                } label: {
-                    Text("+30s")
-                        .font(.subheadline.weight(.bold))
-                        .foregroundStyle(Theme.accent)
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 10)
-                        .background(Theme.accent.opacity(0.15))
-                        .clipShape(.capsule)
-                        .frame(minHeight: 44)
-                }
-                .accessibilityLabel("Add 30 seconds to rest timer")
-
-                Spacer(minLength: Theme.Spacing.sm)
-
-                // LIFT — anchored to the bottom of the VStack with a 100pt
-                // bottom Spacer separating it from the screen edge. The
-                // parent ZStack `.ignoresSafeArea()` lets the black backdrop
-                // run to the screen edges, but the VStack's bottom isn't
-                // automatically pulled up to the safe-area boundary — we have
-                // to do that ourselves (#402).
-                Button {
-                    Haptics.success()
-                    viewModel.skipRestTimer()
-                } label: {
-                    Text("LIFT")
-                        .font(.title.weight(.black))
-                        .foregroundStyle(.black)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 22)
-                        .background(Theme.accent)
-                        .clipShape(.rect(cornerRadius: Theme.cornerRadius))
-                        .contentShape(Rectangle())
-                }
-                .padding(.horizontal, Theme.Spacing.lg)
-                .accessibilityLabel("Skip rest timer and start the next set")
-                .accessibilityHint("Ends the rest timer immediately and returns to the lift")
-
-                // Hard bottom clearance: home indicator (~34pt) + soundtrack
-                // pill slot reserved by ActiveWorkoutView's bottom safeArea
-                // inset (~50pt when active, ~4pt otherwise) + breathing room.
-                // Sized to clear the largest reasonable bottom inset.
-                Color.clear.frame(height: 80)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
 
