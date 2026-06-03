@@ -92,6 +92,9 @@ private struct WorkoutWithRelations: Codable {
     let startTime: String
     let endTime: String?
     let notes: String?
+    let location: String?
+    let rating: Int?
+    let detailedRatings: WorkoutRatings?
     let createdAt: String?
     let workoutExercises: [ExerciseWithSets]
     let workoutTracks: [WorkoutTrackRow]
@@ -103,6 +106,9 @@ private struct WorkoutWithRelations: Codable {
         case startTime = "start_time"
         case endTime = "end_time"
         case notes
+        case location
+        case rating
+        case detailedRatings = "detailed_ratings"
         case createdAt = "created_at"
         case workoutExercises = "workout_exercises"
         case workoutTracks = "workout_tracks"
@@ -136,6 +142,9 @@ private struct WorkoutInsertPayload: Encodable {
     let start_time: String
     let end_time: String?
     let notes: String?
+    let location: String?
+    let rating: Int?
+    let detailed_ratings: WorkoutRatings?
 }
 
 private struct WorkoutExerciseInsertPayload: Encodable {
@@ -485,7 +494,10 @@ final class WorkoutService {
             name: workout.name,
             start_time: iso8601.string(from: workout.startTime),
             end_time: workout.endTime.map { iso8601.string(from: $0) },
-            notes: workout.notes
+            notes: workout.notes,
+            location: workout.location,
+            rating: workout.rating,
+            detailed_ratings: workout.detailedRatings
         )
 
         try await supabase
@@ -615,7 +627,10 @@ final class WorkoutService {
             startTime: iso8601.date(from: row.startTime) ?? Date(),
             endTime: row.endTime.flatMap { iso8601.date(from: $0) },
             notes: row.notes,
-            tracks: tracks
+            location: row.location,
+            rating: row.rating,
+            tracks: tracks,
+            detailedRatings: row.detailedRatings
         )
     }
 
