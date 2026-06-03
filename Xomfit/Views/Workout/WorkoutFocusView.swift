@@ -123,14 +123,6 @@ struct WorkoutFocusView: View {
                     VStack(spacing: Theme.Spacing.md) {
                         weightDisplay(currentSet: currentSet)
                         repsDisplay(currentSet: currentSet)
-                        // Drop-set capsule sits on its own row directly under
-                        // the reps card so the horizontal pill ScrollView stays
-                        // tight (#384 A). Only renders when a non-drop set has
-                        // been completed in this exercise. Hidden in compact
-                        // keyboard mode.
-                        if !keyboardCompactMode {
-                            dropSetCapsuleRow(exercise: exercise)
-                        }
                         doneButton(currentSet: currentSet)
                     }
                     .frame(maxHeight: .infinity)
@@ -380,81 +372,112 @@ struct WorkoutFocusView: View {
                         : "Add another set before this one can be deleted")
                 }
 
-                // + Set button — adds a new set to the current exercise without leaving focus mode
-                Button {
-                    dismissKeyboard()
-                    Haptics.light()
-                    let exerciseIndex = viewModel.focusExerciseIndex
-                    viewModel.addSet(to: exerciseIndex)
-                    // Point focus at the newly added set, mirroring `addAnotherSet()` behavior
-                    if viewModel.exercises.indices.contains(exerciseIndex) {
-                        viewModel.focusSetIndex = max(viewModel.exercises[exerciseIndex].sets.count - 1, 0)
-                    }
-                } label: {
-                    HStack(spacing: Theme.Spacing.tight) {
-                        Image(systemName: "plus")
-                            .font(.subheadline.weight(.bold))
-                        Text("Set")
-                            .font(.subheadline.weight(.bold))
-                    }
-                    .foregroundStyle(Theme.accent)
-                    .padding(.horizontal, 12)
-                    .frame(minHeight: 44)
-                    .background(Theme.accent.opacity(0.15))
-                    .clipShape(.capsule)
-                    .contentShape(.capsule)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Add set")
-                .accessibilityHint("Adds a new set to the current exercise")
+                // + Set menu — offers PR, PR+5, Drop Set, Same Set options
+                addSetMenu(exercise: exercise)
             }
             .padding(.horizontal, Theme.Spacing.sm)
         }
     }
 
-    // MARK: - Drop-Set Capsule Row
+    // MARK: - Add Set Menu
 
-    /// Standalone row under the reps card that holds the "drop set" capsule
-    /// (#384 A). Pulled out of the horizontal set-pill ScrollView so the pill
-    /// row stops overflowing the screen on exercises with several sets.
-    ///
-    /// Visible only when a non-drop set in this exercise has been completed —
-    /// matches the gating already used by the previous in-row capsule.
+    /// Menu for adding a new set with different prefill options:
+    /// PR (personal record weight), PR+5, Drop Set, Same Set (copy last set).
     @ViewBuilder
-    private func dropSetCapsuleRow(exercise: WorkoutExercise) -> some View {
-        if let parentIdx = lastCompletedNonDropSetIndex {
-            HStack {
-                Spacer()
+    private func addSetMenu(exercise: WorkoutExercise) -> some View {
+        let exerciseId = exercise.exercise.id
+        let prSet = viewModel.personalRecordForExercise(exerciseId)
+        let lastSet = exercise.sets.last
+
+        Menu {
+            // PR - use personal record weight/reps
+            if let pr = prSet, pr.weight > 0 {
+                Button {
+                    addSetWithValues(weight: pr.weight, reps: pr.reps)
+                } label: {
+                    Label("PR (\(formatWeightCompact(pr.weight)) × \(pr.reps))", systemImage: "trophy")
+                }
+
+                // PR + 5
+                Button {
+                    addSetWithValues(weight: pr.weight + 5, reps: pr.reps)
+                } label: {
+                    Label("PR+5 (\(formatWeightCompact(pr.weight + 5)) × \(pr.reps))", systemImage: "trophy.fill")
+                }
+            }
+
+            // Drop Set - only if a non-drop set has been completed
+            if let parentIdx = lastCompletedNonDropSetIndex {
                 Button {
                     dismissKeyboard()
                     Haptics.light()
                     let exerciseIndex = viewModel.focusExerciseIndex
                     viewModel.addDropSet(exerciseIndex: exerciseIndex, parentSetIndex: parentIdx)
-                    // Drop set is inserted right after the parent — point focus
-                    // at it so the user lands on the new set immediately.
+                    // Point focus at newly inserted drop set
                     if viewModel.exercises.indices.contains(exerciseIndex),
                        viewModel.exercises[exerciseIndex].sets.indices.contains(parentIdx + 1) {
                         viewModel.focusSetIndex = parentIdx + 1
                     }
                 } label: {
-                    HStack(spacing: Theme.Spacing.tight) {
-                        Image(systemName: "arrow.down.right")
-                            .font(.caption.weight(.bold))
-                        Text("drop set")
-                            .font(.caption.weight(.bold))
-                    }
-                    .foregroundStyle(Theme.accent)
-                    .padding(.horizontal, 12)
-                    .frame(minHeight: 44)
-                    .background(Theme.accent.opacity(0.10))
-                    .clipShape(.capsule)
-                    .contentShape(.capsule)
+                    Label("Drop Set", systemImage: "arrow.down.right")
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Add drop set after set \(parentIdx + 1)")
-                .accessibilityHint("Inserts a drop set immediately after the most recently completed set with reduced weight")
             }
+
+            // Same Set - copy last set values
+            Button {
+                addSetWithValues(weight: lastSet?.weight ?? 0, reps: lastSet?.reps ?? 0)
+            } label: {
+                if let last = lastSet, last.weight > 0 {
+                    Label("Same (\(formatWeightCompact(last.weight)) × \(last.reps))", systemImage: "doc.on.doc")
+                } else {
+                    Label("Empty Set", systemImage: "plus")
+                }
+            }
+        } label: {
+            HStack(spacing: Theme.Spacing.tight) {
+                Image(systemName: "plus")
+                    .font(.subheadline.weight(.bold))
+                Text("Set")
+                    .font(.subheadline.weight(.bold))
+            }
+            .foregroundStyle(Theme.accent)
+            .padding(.horizontal, 12)
+            .frame(minHeight: 44)
+            .background(Theme.accent.opacity(0.15))
+            .clipShape(.capsule)
+            .contentShape(.capsule)
         }
+        .accessibilityLabel("Add set")
+        .accessibilityHint("Opens menu to add a new set with PR, PR+5, Drop Set, or Same Set options")
+    }
+
+    /// Helper to add a set with specific weight/reps values
+    private func addSetWithValues(weight: Double, reps: Int) {
+        dismissKeyboard()
+        Haptics.light()
+        let exerciseIndex = viewModel.focusExerciseIndex
+        guard viewModel.exercises.indices.contains(exerciseIndex) else { return }
+
+        let exercise = viewModel.exercises[exerciseIndex]
+        let newSet = WorkoutSet(
+            id: UUID().uuidString,
+            exerciseId: exercise.exercise.id,
+            weight: weight,
+            reps: reps,
+            rpe: nil,
+            isPersonalRecord: false,
+            completedAt: Date.distantPast
+        )
+        viewModel.exercises[exerciseIndex].sets.append(newSet)
+        viewModel.focusSetIndex = viewModel.exercises[exerciseIndex].sets.count - 1
+    }
+
+    /// Compact weight format for menu labels
+    private func formatWeightCompact(_ weight: Double) -> String {
+        if weight.truncatingRemainder(dividingBy: 1) == 0 {
+            return "\(Int(weight))"
+        }
+        return String(format: "%.1f", weight)
     }
 
     // MARK: - Weight Display
