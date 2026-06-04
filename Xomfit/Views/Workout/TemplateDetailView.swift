@@ -22,6 +22,9 @@ struct TemplateDetailView: View {
     @State private var newTemplateName: String = ""
     @State private var isSaving = false
     @State private var saveError: String?
+    @State private var showHistory = false
+    @State private var matchingWorkouts: [Workout] = []
+    @State private var selectedWorkout: Workout?
 
     init(template: WorkoutTemplate, onStart: @escaping () -> Void) {
         self.template = template
@@ -43,6 +46,7 @@ struct TemplateDetailView: View {
                         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                             exerciseListSection
                             addExerciseButton
+                            historySection
                             if let saveError {
                                 Text(saveError)
                                     .font(Theme.fontCaption)
@@ -253,6 +257,113 @@ struct TemplateDetailView: View {
             )
         }
         .accessibilityLabel("Add exercise to template")
+    }
+
+    // MARK: - History Section
+
+    private var historySection: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            Button {
+                withAnimation(.xomConfident) {
+                    showHistory.toggle()
+                }
+                if showHistory && matchingWorkouts.isEmpty {
+                    loadMatchingWorkouts()
+                }
+            } label: {
+                HStack {
+                    Text("History")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Theme.textPrimary)
+                    Spacer()
+                    if !matchingWorkouts.isEmpty {
+                        Text("\(matchingWorkouts.count)")
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(Theme.accent)
+                    }
+                    Image(systemName: showHistory ? "chevron.up" : "chevron.down")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(Theme.textSecondary)
+                }
+                .padding(.horizontal, Theme.Spacing.md)
+                .padding(.vertical, Theme.Spacing.sm)
+                .background(Theme.surface)
+                .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+            }
+            .buttonStyle(.plain)
+
+            if showHistory {
+                if matchingWorkouts.isEmpty {
+                    Text("No past workouts found")
+                        .font(Theme.fontCaption)
+                        .foregroundStyle(Theme.textSecondary)
+                        .padding(.horizontal, Theme.Spacing.md)
+                } else {
+                    LazyVStack(spacing: Theme.Spacing.xs) {
+                        ForEach(matchingWorkouts) { workout in
+                            Button {
+                                selectedWorkout = workout
+                            } label: {
+                                HStack {
+                                    Text(workout.startTime.formatted(date: .abbreviated, time: .omitted))
+                                        .font(.subheadline)
+                                        .foregroundStyle(Theme.textPrimary)
+                                    Spacer()
+                                    Text(formatDuration(workout.duration))
+                                        .font(.caption)
+                                        .foregroundStyle(Theme.textSecondary)
+                                    Image(systemName: "chevron.right")
+                                        .font(.caption)
+                                        .foregroundStyle(Theme.textTertiary)
+                                }
+                                .padding(.horizontal, Theme.Spacing.md)
+                                .padding(.vertical, Theme.Spacing.sm)
+                                .background(Theme.surfaceElevated)
+                                .clipShape(.rect(cornerRadius: Theme.Radius.sm))
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+            }
+        }
+        .padding(.top, Theme.Spacing.md)
+        .sheet(item: $selectedWorkout) { workout in
+            NavigationStack {
+                WorkoutDetailView(workout: workout)
+            }
+        }
+        .onAppear {
+            loadMatchingWorkouts()
+        }
+    }
+
+    private func loadMatchingWorkouts() {
+        Task {
+            let allWorkouts = await WorkoutService.shared.fetchWorkouts(userId: userId)
+            let templateExerciseIds = Set(draft.exercises.map { $0.exercise.id })
+
+            // Find workouts that have the same exercises (by name match since IDs may differ)
+            let templateExerciseNames = Set(draft.exercises.map { $0.exercise.name.lowercased() })
+
+            let matches = allWorkouts.filter { workout in
+                let workoutExerciseNames = Set(workout.exercises.map { $0.exercise.name.lowercased() })
+                // Match if workout has at least 80% of template exercises
+                let overlap = templateExerciseNames.intersection(workoutExerciseNames)
+                return overlap.count >= Int(Double(templateExerciseNames.count) * 0.8)
+            }
+            .sorted { $0.startTime > $1.startTime }
+            .prefix(10)
+
+            await MainActor.run {
+                matchingWorkouts = Array(matches)
+            }
+        }
+    }
+
+    private func formatDuration(_ seconds: TimeInterval) -> String {
+        let mins = Int(seconds) / 60
+        return "\(mins)m"
     }
 
     // MARK: - Start Button
