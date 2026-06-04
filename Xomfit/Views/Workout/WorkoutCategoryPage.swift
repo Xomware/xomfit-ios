@@ -173,8 +173,9 @@ struct WorkoutCategoryListView: View {
             filteredEmptyState
         } else {
             ForEach(items) { workout in
-                NavigationLink {
-                    WorkoutDetailView(workout: workout)
+                Button {
+                    Haptics.light()
+                    previewTemplate = makeTemplate(from: workout)
                 } label: {
                     RecentWorkoutCard(workout: workout, style: .row)
                 }
@@ -182,6 +183,39 @@ struct WorkoutCategoryListView: View {
                 .accessibilityLabel("\(workout.name), \(workout.startTime.timeAgo)")
             }
         }
+    }
+
+    /// Convert a past workout to a clean template for preview/start.
+    private func makeTemplate(from workout: Workout) -> WorkoutTemplate {
+        let templateExercises = workout.exercises.map { we in
+            WorkoutTemplate.TemplateExercise(
+                id: UUID().uuidString,
+                exercise: we.exercise,
+                targetSets: max(1, we.sets.count),
+                targetReps: modalReps(for: we.sets),
+                notes: we.notes,
+                restSeconds: we.restSeconds
+            )
+        }
+        return WorkoutTemplate(
+            id: UUID().uuidString,
+            name: workout.name,
+            description: "",
+            exercises: templateExercises,
+            estimatedDuration: Int(workout.duration / 60),
+            category: .custom,
+            isCustom: false
+        )
+    }
+
+    private func modalReps(for sets: [WorkoutSet]) -> String {
+        guard !sets.isEmpty else { return "8" }
+        let counts = Dictionary(sets.map { ($0.reps, 1) }, uniquingKeysWith: +)
+        let mode = counts.max { lhs, rhs in
+            if lhs.value != rhs.value { return lhs.value < rhs.value }
+            return lhs.key < rhs.key
+        }
+        return "\(mode?.key ?? sets[0].reps)"
     }
 
     @ViewBuilder
