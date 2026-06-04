@@ -509,6 +509,18 @@ struct TemplateDetailView: View {
     private func markDirty() {
         if !hasUnsavedChanges { hasUnsavedChanges = true }
         saveError = nil
+
+        // Auto-save custom templates so reordering persists immediately
+        if draft.isCustom {
+            autoSave()
+        }
+    }
+
+    /// Quietly saves changes to custom templates without UI feedback.
+    private func autoSave() {
+        var updated = draft
+        updated.estimatedDuration = estimatedDuration
+        TemplateService.shared.saveCustomTemplate(updated)
     }
 
     // MARK: - Actions: Save Paths
