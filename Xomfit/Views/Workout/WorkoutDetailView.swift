@@ -672,6 +672,16 @@ struct WorkoutDetailView: View {
 
     // MARK: - Start This Workout (#337)
 
+    /// Exercises to seed a repeat session from. While editing, use the draft's
+    /// (possibly reordered) exercises so "Start this Workout" respects edits;
+    /// otherwise fall back to the recorded `workout.exercises`.
+    private var exercisesToStart: [WorkoutExercise] {
+        if isEditing, let editVM {
+            return editVM.draft.exercises
+        }
+        return workout.exercises
+    }
+
     /// Repeats this workout as a fresh active session — builds a `WorkoutTemplate`
     /// from the recorded exercises/sets, then runs through the standard warmup gate.
     @ViewBuilder
@@ -684,7 +694,7 @@ struct WorkoutDetailView: View {
                     for: workout,
                     target: TimeInterval(warmupMinutes * 60)
                 ),
-                exercises: workout.exercises.map(\.exercise)
+                exercises: exercisesToStart.map(\.exercise)
             ) {
                 workoutSession.startFromTemplate(template, userId: userId)
                 workoutSession.isPresented = true
@@ -705,7 +715,7 @@ struct WorkoutDetailView: View {
     /// not stored on the template — `WorkoutLoggerViewModel.startFromTemplate`
     /// will prefill it from the user's last set for that exercise.
     private func makeTemplateFromWorkout() -> WorkoutTemplate {
-        let templateExercises: [WorkoutTemplate.TemplateExercise] = workout.exercises.map { we in
+        let templateExercises: [WorkoutTemplate.TemplateExercise] = exercisesToStart.map { we in
             WorkoutTemplate.TemplateExercise(
                 id: UUID().uuidString,
                 exercise: we.exercise,
