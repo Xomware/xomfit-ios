@@ -12,9 +12,6 @@ struct TemplateDetailView: View {
 
     /// Mutable copy of the template used as the source of truth for the editable UI.
     @State private var draft: WorkoutTemplate
-    /// Per-exercise target weight entered by the user. Not persisted on `WorkoutTemplate`
-    /// (model has no weight field) — only used for "Save as workout" and "Start Lift" prefill.
-    @State private var targetWeights: [String: Double] = [:]
 
     @State private var hasUnsavedChanges = false
     @State private var showExercisePicker = false
@@ -298,7 +295,6 @@ struct TemplateDetailView: View {
                         EditableExerciseRow(
                             index: index + 1,
                             exercise: exercise,
-                            targetWeight: bindingForWeight(exerciseId: exerciseId),
                             canMoveUp: index > 0,
                             canMoveDown: index < draft.exercises.count - 1,
                             onUpdateSets: { newValue in updateSetsById(exerciseId, value: newValue) },
@@ -426,18 +422,6 @@ struct TemplateDetailView: View {
 
     // MARK: - Mutation Helpers
 
-    private func bindingForWeight(exerciseId: String) -> Binding<Double> {
-        Binding(
-            get: { targetWeights[exerciseId] ?? 0 },
-            set: { newValue in
-                if (targetWeights[exerciseId] ?? 0) != newValue {
-                    targetWeights[exerciseId] = newValue
-                    markDirty()
-                }
-            }
-        )
-    }
-
     private func updateSets(at index: Int, value: Int) {
         guard draft.exercises.indices.contains(index) else { return }
         let clamped = max(1, value)
@@ -467,8 +451,7 @@ struct TemplateDetailView: View {
 
     private func removeExercise(at index: Int) {
         guard draft.exercises.indices.contains(index) else { return }
-        let removed = draft.exercises.remove(at: index)
-        targetWeights.removeValue(forKey: removed.id)
+        draft.exercises.remove(at: index)
         markDirty()
     }
 
@@ -476,8 +459,7 @@ struct TemplateDetailView: View {
     private func removeExerciseById(_ id: String) {
         guard let index = draft.exercises.firstIndex(where: { $0.id == id }) else { return }
         withAnimation(.xomConfident) {
-            let removed = draft.exercises.remove(at: index)
-            targetWeights.removeValue(forKey: removed.id)
+            draft.exercises.remove(at: index)
         }
         markDirty()
     }
@@ -578,13 +560,12 @@ struct TemplateDetailView: View {
 
         let now = Date()
         let exercises: [WorkoutExercise] = draft.exercises.map { tex in
-            let weight = targetWeights[tex.id] ?? 0
             let reps = parseFirstReps(tex.targetReps)
             let sets: [WorkoutSet] = (0..<tex.targetSets).map { _ in
                 WorkoutSet(
                     id: UUID().uuidString,
                     exerciseId: tex.exercise.id,
-                    weight: weight,
+                    weight: 0,
                     reps: reps,
                     rpe: nil,
                     isPersonalRecord: false,
@@ -633,22 +614,13 @@ struct TemplateDetailView: View {
     /// Reuses `WorkoutLoggerViewModel.startFromTemplate(_:userId:)` — the same entry point WorkoutView uses.
     private func startLift() {
         if hasUnsavedChanges {
-            // Prefill weights into the per-exercise notes? No — we feed them via Workout when saving,
-            // and the logger uses last-set lookup for prefill. We pass the edited template directly.
+            // Pass the edited template directly — weight prefill is handled by
+            // WorkoutLoggerViewModel using last-set lookup for each exercise.
             let edited = draft
             dismiss()
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 workoutSession.startFromTemplate(edited, userId: userId)
                 workoutSession.isPresented = true
-                // Apply per-exercise target weight overrides where the user entered one.
-                for (idx, tex) in edited.exercises.enumerated() {
-                    if let w = targetWeights[tex.id], w > 0,
-                       workoutSession.exercises.indices.contains(idx) {
-                        for setIdx in workoutSession.exercises[idx].sets.indices {
-                            workoutSession.exercises[idx].sets[setIdx].weight = w
-                        }
-                    }
-                }
             }
         } else {
             // Unedited — defer to the parent's onStart callback (preserves existing flow).
@@ -688,7 +660,6 @@ struct TemplateDetailView: View {
 private struct EditableExerciseRow: View {
     let index: Int
     let exercise: WorkoutTemplate.TemplateExercise
-    @Binding var targetWeight: Double
     let canMoveUp: Bool
     let canMoveDown: Bool
     let onUpdateSets: (Int) -> Void
@@ -698,12 +669,9 @@ private struct EditableExerciseRow: View {
     let onDelete: () -> Void
 
     @State private var repsText: String = ""
-    @State private var weightText: String = ""
     @State private var showDetails: Bool = false
     @State private var isEditingReps: Bool = false
-    @State private var isEditingWeight: Bool = false
     @FocusState private var repsFocused: Bool
-    @FocusState private var weightFocused: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
@@ -868,52 +836,6 @@ private struct EditableExerciseRow: View {
                     }
                 }
                 .frame(maxWidth: .infinity)
-
-                // Weight - tap to edit (using Button to not block scroll)
-                VStack(alignment: .center, spacing: 4) {
-                    Text("Weight")
-                        .font(.caption2)
-                        .foregroundStyle(Theme.textSecondary)
-                    if isEditingWeight {
-                        TextField("", text: $weightText)
-                            .font(.body.weight(.semibold).monospaced())
-                            .foregroundStyle(Theme.textPrimary)
-                            .keyboardType(.decimalPad)
-                            .multilineTextAlignment(.center)
-                            .frame(width: 56)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 6)
-                            .background(Theme.surfaceElevated)
-                            .clipShape(.rect(cornerRadius: 8))
-                            .focused($weightFocused)
-                            .onSubmit { isEditingWeight = false }
-                            .onChange(of: weightFocused) { _, focused in
-                                if !focused { isEditingWeight = false }
-                            }
-                            .onChange(of: weightText) { _, newValue in
-                                let parsed = Double(newValue) ?? 0
-                                if parsed != targetWeight {
-                                    targetWeight = parsed
-                                }
-                            }
-                    } else {
-                        Button {
-                            isEditingWeight = true
-                            weightFocused = true
-                        } label: {
-                            Text(weightText.isEmpty ? "—" : weightText)
-                                .font(.body.weight(.semibold).monospaced())
-                                .foregroundStyle(weightText.isEmpty ? Theme.textSecondary : Theme.textPrimary)
-                                .frame(width: 56)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 6)
-                                .background(Theme.surfaceElevated)
-                                .clipShape(.rect(cornerRadius: 8))
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-                .frame(maxWidth: .infinity)
             }
         }
         .padding(Theme.Spacing.md)
@@ -925,19 +847,9 @@ private struct EditableExerciseRow: View {
         }
         .onAppear {
             repsText = exercise.targetReps
-            if targetWeight > 0 {
-                weightText = formatWeight(targetWeight)
-            }
         }
         .onChange(of: exercise.targetReps) { _, newValue in
             if repsText != newValue { repsText = newValue }
         }
-    }
-
-    private func formatWeight(_ w: Double) -> String {
-        if w.truncatingRemainder(dividingBy: 1) == 0 {
-            return String(Int(w))
-        }
-        return String(format: "%.1f", w)
     }
 }
