@@ -123,14 +123,6 @@ struct WorkoutFocusView: View {
                     VStack(spacing: Theme.Spacing.md) {
                         weightDisplay(currentSet: currentSet)
                         repsDisplay(currentSet: currentSet)
-                        // Drop-set capsule sits on its own row directly under
-                        // the reps card so the horizontal pill ScrollView stays
-                        // tight (#384 A). Only renders when a non-drop set has
-                        // been completed in this exercise. Hidden in compact
-                        // keyboard mode.
-                        if !keyboardCompactMode {
-                            dropSetCapsuleRow(exercise: exercise)
-                        }
                         doneButton(currentSet: currentSet)
                     }
                     .frame(maxHeight: .infinity)
@@ -380,81 +372,135 @@ struct WorkoutFocusView: View {
                         : "Add another set before this one can be deleted")
                 }
 
-                // + Set button — adds a new set to the current exercise without leaving focus mode
-                Button {
-                    dismissKeyboard()
-                    Haptics.light()
-                    let exerciseIndex = viewModel.focusExerciseIndex
-                    viewModel.addSet(to: exerciseIndex)
-                    // Point focus at the newly added set, mirroring `addAnotherSet()` behavior
-                    if viewModel.exercises.indices.contains(exerciseIndex) {
-                        viewModel.focusSetIndex = max(viewModel.exercises[exerciseIndex].sets.count - 1, 0)
-                    }
-                } label: {
-                    HStack(spacing: Theme.Spacing.tight) {
-                        Image(systemName: "plus")
-                            .font(.subheadline.weight(.bold))
-                        Text("Set")
-                            .font(.subheadline.weight(.bold))
-                    }
-                    .foregroundStyle(Theme.accent)
-                    .padding(.horizontal, 12)
-                    .frame(minHeight: 44)
-                    .background(Theme.accent.opacity(0.15))
-                    .clipShape(.capsule)
-                    .contentShape(.capsule)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Add set")
-                .accessibilityHint("Adds a new set to the current exercise")
+                // + Set menu — offers PR, PR+5, Drop Set, Same Set options
+                addSetMenu(exercise: exercise)
             }
             .padding(.horizontal, Theme.Spacing.sm)
         }
     }
 
-    // MARK: - Drop-Set Capsule Row
+    // MARK: - Add Set Menu
 
-    /// Standalone row under the reps card that holds the "drop set" capsule
-    /// (#384 A). Pulled out of the horizontal set-pill ScrollView so the pill
-    /// row stops overflowing the screen on exercises with several sets.
-    ///
-    /// Visible only when a non-drop set in this exercise has been completed —
-    /// matches the gating already used by the previous in-row capsule.
+    /// Menu for adding a new set with different prefill options:
+    /// PR (personal record weight), PR+5, Drop Set, Same Set (copy last set).
+    /// Reps are adjusted based on weight using progressive overload formula.
     @ViewBuilder
-    private func dropSetCapsuleRow(exercise: WorkoutExercise) -> some View {
-        if let parentIdx = lastCompletedNonDropSetIndex {
-            HStack {
-                Spacer()
+    private func addSetMenu(exercise: WorkoutExercise) -> some View {
+        let exerciseId = exercise.exercise.id
+        let prSet = viewModel.personalRecordForExercise(exerciseId)
+        let lastSet = exercise.sets.last
+
+        Menu {
+            // PR - use personal record weight and reps exactly as achieved
+            if let pr = prSet, pr.weight > 0 {
+                Button {
+                    addSetWithValues(weight: pr.weight, reps: pr.reps)
+                } label: {
+                    Label("PR (\(formatWeightCompact(pr.weight)) × \(pr.reps))", systemImage: "trophy")
+                }
+
+                // PR + 5 - heavier weight, adjust reps down from PR
+                let pr5Weight = pr.weight + 5
+                let pr5Reps = adjustedReps(targetWeight: pr5Weight, baseWeight: pr.weight, baseReps: pr.reps)
+                Button {
+                    addSetWithValues(weight: pr5Weight, reps: pr5Reps)
+                } label: {
+                    Label("PR+5 (\(formatWeightCompact(pr5Weight)) × \(pr5Reps))", systemImage: "trophy.fill")
+                }
+            }
+
+            // Drop Set - only if a non-drop set has been completed
+            if let parentIdx = lastCompletedNonDropSetIndex {
                 Button {
                     dismissKeyboard()
                     Haptics.light()
                     let exerciseIndex = viewModel.focusExerciseIndex
                     viewModel.addDropSet(exerciseIndex: exerciseIndex, parentSetIndex: parentIdx)
-                    // Drop set is inserted right after the parent — point focus
-                    // at it so the user lands on the new set immediately.
+                    // Point focus at newly inserted drop set
                     if viewModel.exercises.indices.contains(exerciseIndex),
                        viewModel.exercises[exerciseIndex].sets.indices.contains(parentIdx + 1) {
                         viewModel.focusSetIndex = parentIdx + 1
                     }
                 } label: {
-                    HStack(spacing: Theme.Spacing.tight) {
-                        Image(systemName: "arrow.down.right")
-                            .font(.caption.weight(.bold))
-                        Text("drop set")
-                            .font(.caption.weight(.bold))
-                    }
-                    .foregroundStyle(Theme.accent)
-                    .padding(.horizontal, 12)
-                    .frame(minHeight: 44)
-                    .background(Theme.accent.opacity(0.10))
-                    .clipShape(.capsule)
-                    .contentShape(.capsule)
+                    Label("Drop Set", systemImage: "arrow.down.right")
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Add drop set after set \(parentIdx + 1)")
-                .accessibilityHint("Inserts a drop set immediately after the most recently completed set with reduced weight")
             }
+
+            // Same Set - copy last set values exactly
+            Button {
+                addSetWithValues(weight: lastSet?.weight ?? 0, reps: lastSet?.reps ?? 0)
+            } label: {
+                if let last = lastSet, last.weight > 0 {
+                    Label("Same (\(formatWeightCompact(last.weight)) × \(last.reps))", systemImage: "doc.on.doc")
+                } else {
+                    Label("Empty Set", systemImage: "plus")
+                }
+            }
+        } label: {
+            HStack(spacing: Theme.Spacing.tight) {
+                Image(systemName: "plus")
+                    .font(.subheadline.weight(.bold))
+                Text("Set")
+                    .font(.subheadline.weight(.bold))
+            }
+            .foregroundStyle(Theme.accent)
+            .padding(.horizontal, 12)
+            .frame(minHeight: 44)
+            .background(Theme.accent.opacity(0.15))
+            .clipShape(.capsule)
+            .contentShape(.capsule)
         }
+        .accessibilityLabel("Add set")
+        .accessibilityHint("Opens menu to add a new set with PR, PR+5, Drop Set, or Same Set options")
+    }
+
+    /// Adjusts reps based on weight change using progressive overload formula.
+    /// Rule: For every 5 lbs increase, subtract ~1 rep. For every 5 lbs decrease, add ~2 reps.
+    /// Clamped to 1-20 rep range.
+    private func adjustedReps(targetWeight: Double, baseWeight: Double, baseReps: Int) -> Int {
+        guard baseWeight > 0, baseReps > 0 else { return baseReps > 0 ? baseReps : 8 }
+
+        let weightDiff = targetWeight - baseWeight
+        // Roughly 1 rep per 5 lbs for increases, 2 reps per 5 lbs for decreases (drop sets benefit from higher reps)
+        let repAdjustment: Int
+        if weightDiff > 0 {
+            // Heavier = fewer reps (1 rep per 5 lbs)
+            repAdjustment = -Int(round(weightDiff / 5.0))
+        } else {
+            // Lighter = more reps (2 reps per 5 lbs for drop set style)
+            repAdjustment = Int(round(abs(weightDiff) / 5.0 * 1.5))
+        }
+
+        return max(1, min(20, baseReps + repAdjustment))
+    }
+
+    /// Helper to add a set with specific weight/reps values
+    private func addSetWithValues(weight: Double, reps: Int) {
+        dismissKeyboard()
+        Haptics.light()
+        let exerciseIndex = viewModel.focusExerciseIndex
+        guard viewModel.exercises.indices.contains(exerciseIndex) else { return }
+
+        let exercise = viewModel.exercises[exerciseIndex]
+        let newSet = WorkoutSet(
+            id: UUID().uuidString,
+            exerciseId: exercise.exercise.id,
+            weight: weight,
+            reps: reps,
+            rpe: nil,
+            isPersonalRecord: false,
+            completedAt: Date.distantPast
+        )
+        viewModel.exercises[exerciseIndex].sets.append(newSet)
+        viewModel.focusSetIndex = viewModel.exercises[exerciseIndex].sets.count - 1
+    }
+
+    /// Compact weight format for menu labels
+    private func formatWeightCompact(_ weight: Double) -> String {
+        if weight.truncatingRemainder(dividingBy: 1) == 0 {
+            return "\(Int(weight))"
+        }
+        return String(format: "%.1f", weight)
     }
 
     // MARK: - Weight Display
@@ -779,110 +825,109 @@ struct WorkoutFocusView: View {
     /// Uses inline layout (NOT `.safeAreaInset`) because the overlay is
     /// already a sibling inside the focus view's ZStack — adding additional
     /// safe-area insets there would push the button below the visible bounds.
+    ///
+    /// Fixed #448: Content was pushed below Dynamic Island and LIFT button
+    /// was pushed off screen. Now uses GeometryReader to respect safe areas
+    /// properly and reduces fixed padding to prevent overflow.
     private var fullScreenRestTimer: some View {
-        ZStack {
-            Color.black.opacity(0.92).ignoresSafeArea()
+        GeometryReader { geometry in
+            ZStack {
+                Color.black.opacity(0.92).ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                // TOP — minimize chevron on the left.
-                HStack {
+                VStack(spacing: 0) {
+                    // TOP — minimize chevron on the left. Positioned below Dynamic Island.
+                    HStack {
+                        Button {
+                            Haptics.light()
+                            withAnimation(.xomChill) { viewModel.isRestTimerMinimized = true }
+                        } label: {
+                            Image(systemName: "arrow.down.right.and.arrow.up.left")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(Theme.textPrimary)
+                                .frame(width: 44, height: 44)
+                                .background(Theme.surface.opacity(0.6))
+                                .clipShape(Circle())
+                                .contentShape(Rectangle())
+                        }
+                        .accessibilityLabel("Minimize rest timer")
+                        .accessibilityHint("Collapses the rest timer to a banner so you can see the next set")
+
+                        Spacer()
+                    }
+                    .padding(.horizontal, Theme.Spacing.lg)
+                    .padding(.top, geometry.safeAreaInsets.top + Theme.Spacing.xs)
+
+                    Spacer(minLength: Theme.Spacing.sm)
+
+                    // Large circular ring - scales down on smaller screens
+                    let ringSize: CGFloat = min(200, geometry.size.height * 0.28)
+                    ZStack {
+                        Circle()
+                            .stroke(Theme.textSecondary.opacity(0.2), lineWidth: 10)
+
+                        Circle()
+                            .trim(from: 0, to: restProgress)
+                            .stroke(restIsOvertime ? Theme.destructive : Theme.accent, style: StrokeStyle(lineWidth: 10, lineCap: .round))
+                            .rotationEffect(.degrees(-90))
+                            .animation(.linear(duration: 1), value: restProgress)
+
+                        VStack(spacing: Theme.Spacing.tight) {
+                            Text("REST")
+                                .font(.caption.weight(.bold))
+                                .foregroundStyle(Theme.textSecondary)
+                            Text(restTimeString)
+                                .font(.system(size: min(56, ringSize * 0.28), weight: .black, design: .monospaced))
+                                .monospacedDigit()
+                                .foregroundStyle(restIsOvertime ? Theme.destructive : .white)
+                        }
+                    }
+                    .frame(width: ringSize, height: ringSize)
+                    .padding(.vertical, Theme.Spacing.sm)
+
+                    // Next set context - always show what exercise/set is coming up
+                    restTimerNextUpSection
+
+                    // +30s button
                     Button {
                         Haptics.light()
-                        withAnimation(.xomChill) { viewModel.isRestTimerMinimized = true }
+                        viewModel.extendRestTimer()
                     } label: {
-                        Image(systemName: "arrow.down.right.and.arrow.up.left")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(Theme.textPrimary)
-                            .frame(width: 44, height: 44)
-                            .background(Theme.surface.opacity(0.6))
-                            .clipShape(Circle())
+                        Text("+30s")
+                            .font(.subheadline.weight(.bold))
+                            .foregroundStyle(Theme.accent)
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 8)
+                            .background(Theme.accent.opacity(0.15))
+                            .clipShape(.capsule)
+                            .frame(minHeight: 44)
+                    }
+                    .accessibilityLabel("Add 30 seconds to rest timer")
+
+                    Spacer(minLength: Theme.Spacing.sm)
+
+                    // LIFT — anchored to the bottom with safe area clearance
+                    Button {
+                        Haptics.success()
+                        viewModel.skipRestTimer()
+                    } label: {
+                        Text("LIFT")
+                            .font(.title.weight(.black))
+                            .foregroundStyle(.black)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 18)
+                            .background(Theme.accent)
+                            .clipShape(.rect(cornerRadius: Theme.cornerRadius))
                             .contentShape(Rectangle())
                     }
-                    .accessibilityLabel("Minimize rest timer")
-                    .accessibilityHint("Collapses the rest timer to a banner so you can see the next set")
+                    .padding(.horizontal, Theme.Spacing.lg)
+                    .accessibilityLabel("Skip rest timer and start the next set")
+                    .accessibilityHint("Ends the rest timer immediately and returns to the lift")
 
-                    Spacer()
+                    // Bottom clearance: respect safe area + small buffer
+                    Color.clear.frame(height: max(geometry.safeAreaInsets.bottom, 20) + Theme.Spacing.md)
                 }
-                .padding(.horizontal, Theme.Spacing.lg)
-                .padding(.top, Theme.Spacing.xs)
-
-                Spacer(minLength: Theme.Spacing.md)
-
-                // Large circular ring
-                ZStack {
-                    Circle()
-                        .stroke(Theme.textSecondary.opacity(0.2), lineWidth: 12)
-
-                    Circle()
-                        .trim(from: 0, to: restProgress)
-                        .stroke(restIsOvertime ? Theme.destructive : Theme.accent, style: StrokeStyle(lineWidth: 12, lineCap: .round))
-                        .rotationEffect(.degrees(-90))
-                        .animation(.linear(duration: 1), value: restProgress)
-
-                    VStack(spacing: Theme.Spacing.tight) {
-                        Text("REST")
-                            .font(.caption.weight(.bold))
-                            .foregroundStyle(Theme.textSecondary)
-                        Text(restTimeString)
-                            .font(.system(size: 56, weight: .black, design: .monospaced))
-                            .monospacedDigit()
-                            .foregroundStyle(restIsOvertime ? Theme.destructive : .white)
-                    }
-                }
-                .frame(width: 200, height: 200)
-                .padding(.vertical, Theme.Spacing.md)
-
-                // Next set context - always show what exercise/set is coming up
-                restTimerNextUpSection
-
-                // +30s button
-                Button {
-                    Haptics.light()
-                    viewModel.extendRestTimer()
-                } label: {
-                    Text("+30s")
-                        .font(.subheadline.weight(.bold))
-                        .foregroundStyle(Theme.accent)
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 10)
-                        .background(Theme.accent.opacity(0.15))
-                        .clipShape(.capsule)
-                        .frame(minHeight: 44)
-                }
-                .accessibilityLabel("Add 30 seconds to rest timer")
-
-                Spacer(minLength: Theme.Spacing.sm)
-
-                // LIFT — anchored to the bottom of the VStack with a 100pt
-                // bottom Spacer separating it from the screen edge. The
-                // parent ZStack `.ignoresSafeArea()` lets the black backdrop
-                // run to the screen edges, but the VStack's bottom isn't
-                // automatically pulled up to the safe-area boundary — we have
-                // to do that ourselves (#402).
-                Button {
-                    Haptics.success()
-                    viewModel.skipRestTimer()
-                } label: {
-                    Text("LIFT")
-                        .font(.title.weight(.black))
-                        .foregroundStyle(.black)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 22)
-                        .background(Theme.accent)
-                        .clipShape(.rect(cornerRadius: Theme.cornerRadius))
-                        .contentShape(Rectangle())
-                }
-                .padding(.horizontal, Theme.Spacing.lg)
-                .accessibilityLabel("Skip rest timer and start the next set")
-                .accessibilityHint("Ends the rest timer immediately and returns to the lift")
-
-                // Hard bottom clearance: home indicator (~34pt) + soundtrack
-                // pill slot reserved by ActiveWorkoutView's bottom safeArea
-                // inset (~50pt when active, ~4pt otherwise) + breathing room.
-                // Sized to clear the largest reasonable bottom inset.
-                Color.clear.frame(height: 80)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
 

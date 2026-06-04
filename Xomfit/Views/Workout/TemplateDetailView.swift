@@ -826,7 +826,7 @@ private struct EditableExerciseRow: View {
                 }
                 .frame(maxWidth: .infinity)
 
-                // Reps - tap to edit
+                // Reps - tap to edit (using Button to not block scroll)
                 VStack(alignment: .center, spacing: 4) {
                     Text("Reps")
                         .font(.caption2)
@@ -851,23 +851,25 @@ private struct EditableExerciseRow: View {
                                 onUpdateReps(newValue)
                             }
                     } else {
-                        Text(repsText.isEmpty ? "8-12" : repsText)
-                            .font(.body.weight(.semibold).monospaced())
-                            .foregroundStyle(repsText.isEmpty ? Theme.textSecondary : Theme.textPrimary)
-                            .frame(width: 56)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 6)
-                            .background(Theme.surfaceElevated)
-                            .clipShape(.rect(cornerRadius: 8))
-                            .onTapGesture {
-                                isEditingReps = true
-                                repsFocused = true
-                            }
+                        Button {
+                            isEditingReps = true
+                            repsFocused = true
+                        } label: {
+                            Text(repsText.isEmpty ? "8-12" : repsText)
+                                .font(.body.weight(.semibold).monospaced())
+                                .foregroundStyle(repsText.isEmpty ? Theme.textSecondary : Theme.textPrimary)
+                                .frame(width: 56)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 6)
+                                .background(Theme.surfaceElevated)
+                                .clipShape(.rect(cornerRadius: 8))
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
                 .frame(maxWidth: .infinity)
 
-                // Weight - tap to edit
+                // Weight - tap to edit (using Button to not block scroll)
                 VStack(alignment: .center, spacing: 4) {
                     Text("Weight")
                         .font(.caption2)
@@ -895,18 +897,20 @@ private struct EditableExerciseRow: View {
                                 }
                             }
                     } else {
-                        Text(weightText.isEmpty ? "—" : weightText)
-                            .font(.body.weight(.semibold).monospaced())
-                            .foregroundStyle(weightText.isEmpty ? Theme.textSecondary : Theme.textPrimary)
-                            .frame(width: 56)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 6)
-                            .background(Theme.surfaceElevated)
-                            .clipShape(.rect(cornerRadius: 8))
-                            .onTapGesture {
-                                isEditingWeight = true
-                                weightFocused = true
-                            }
+                        Button {
+                            isEditingWeight = true
+                            weightFocused = true
+                        } label: {
+                            Text(weightText.isEmpty ? "—" : weightText)
+                                .font(.body.weight(.semibold).monospaced())
+                                .foregroundStyle(weightText.isEmpty ? Theme.textSecondary : Theme.textPrimary)
+                                .frame(width: 56)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 6)
+                                .background(Theme.surfaceElevated)
+                                .clipShape(.rect(cornerRadius: 8))
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
                 .frame(maxWidth: .infinity)
