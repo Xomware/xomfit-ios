@@ -40,8 +40,7 @@ struct TemplateDetailView: View {
 
                 VStack(spacing: 0) {
                     ScrollView {
-                        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
-                            headerSection
+                        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                             exerciseListSection
                             addExerciseButton
                             if let saveError {
@@ -183,77 +182,6 @@ struct TemplateDetailView: View {
         }
     }
 
-    // MARK: - Header
-
-    private var headerSection: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            HStack(spacing: 10) {
-                Image(systemName: draft.category.icon)
-                    .font(Theme.fontTitle3)
-                    .foregroundStyle(Theme.accent)
-                    .frame(width: 40, height: 40)
-                    .background(Theme.accent.opacity(0.15))
-                    .clipShape(.rect(cornerRadius: Theme.Radius.xs))
-
-                VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
-                    Text(draft.category.displayName)
-                        .font(Theme.fontCaption)
-                        .foregroundStyle(Theme.accent)
-                    Text(draft.description)
-                        .font(Theme.fontBody)
-                        .foregroundStyle(Theme.textSecondary)
-                }
-            }
-
-            if !targetMuscleGroups.isEmpty {
-                targetsRow
-            }
-
-            HStack(spacing: Theme.Spacing.lg) {
-                statPill(icon: "dumbbell.fill", label: "Exercises", value: "\(draft.exercises.count)")
-                statPill(icon: "clock.fill", label: "Duration", value: "~\(estimatedDuration)m")
-                statPill(icon: "arrow.up.arrow.down", label: "Total Sets", value: "\(totalSets)")
-            }
-            .padding(.top, Theme.Spacing.sm)
-        }
-        .padding(Theme.Spacing.md)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.surface)
-        .clipShape(.rect(cornerRadius: Theme.cornerRadius))
-    }
-
-    /// Union of muscle groups hit by every exercise in the template, in source order
-    /// (de-duplicated). Used by the "Targets" chip row.
-    private var targetMuscleGroups: [MuscleGroup] {
-        var seen = Set<MuscleGroup>()
-        var ordered: [MuscleGroup] = []
-        for tex in draft.exercises {
-            for mg in tex.exercise.muscleGroups where !seen.contains(mg) {
-                seen.insert(mg)
-                ordered.append(mg)
-            }
-        }
-        return ordered
-    }
-
-    private var targetsRow: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("Targets")
-                .font(Theme.fontSmall)
-                .foregroundStyle(Theme.textSecondary)
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 6) {
-                    ForEach(targetMuscleGroups, id: \.self) { mg in
-                        XomBadge(mg.displayName, icon: mg.icon, color: Theme.accent, variant: .display)
-                    }
-                }
-            }
-        }
-        .padding(.top, Theme.Spacing.xs)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Targets: \(targetMuscleGroups.map(\.displayName).joined(separator: ", "))")
-    }
-
     private var totalSets: Int {
         draft.exercises.reduce(0) { $0 + $1.targetSets }
     }
@@ -263,42 +191,21 @@ struct TemplateDetailView: View {
         max(draft.estimatedDuration, totalSets * 2)
     }
 
-    private func statPill(icon: String, label: String, value: String) -> some View {
-        VStack(spacing: Theme.Spacing.tight) {
-            Image(systemName: icon)
-                .font(Theme.fontSubheadline)
-                .foregroundStyle(Theme.accent)
-            Text(value)
-                .font(.subheadline.weight(.bold))
-                .foregroundStyle(Theme.textPrimary)
-            Text(label)
-                .font(Theme.fontSmall)
-                .foregroundStyle(Theme.textSecondary)
-        }
-        .frame(maxWidth: .infinity)
-    }
-
     // MARK: - Exercise List
 
     private var exerciseListSection: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            Text("Exercises")
-                .font(.body.weight(.bold))
-                .foregroundStyle(Theme.textPrimary)
-
+        Group {
             if draft.exercises.isEmpty {
                 emptyState
             } else {
-                LazyVStack(spacing: Theme.Spacing.sm) {
+                LazyVStack(spacing: Theme.Spacing.xs) {
                     ForEach(Array(draft.exercises.enumerated()), id: \.element.id) { index, exercise in
                         let exerciseId = exercise.id
-                        EditableExerciseRow(
+                        TemplateExerciseRow(
                             index: index + 1,
                             exercise: exercise,
                             canMoveUp: index > 0,
                             canMoveDown: index < draft.exercises.count - 1,
-                            onUpdateSets: { newValue in updateSetsById(exerciseId, value: newValue) },
-                            onUpdateReps: { newValue in updateRepsById(exerciseId, value: newValue) },
                             onMoveUp: { moveExerciseById(exerciseId, direction: -1) },
                             onMoveDown: { moveExerciseById(exerciseId, direction: 1) },
                             onDelete: { removeExerciseById(exerciseId) }
@@ -422,21 +329,6 @@ struct TemplateDetailView: View {
 
     // MARK: - Mutation Helpers
 
-    private func updateSets(at index: Int, value: Int) {
-        guard draft.exercises.indices.contains(index) else { return }
-        let clamped = max(1, value)
-        guard draft.exercises[index].targetSets != clamped else { return }
-        draft.exercises[index].targetSets = clamped
-        markDirty()
-    }
-
-    private func updateReps(at index: Int, value: String) {
-        guard draft.exercises.indices.contains(index) else { return }
-        guard draft.exercises[index].targetReps != value else { return }
-        draft.exercises[index].targetReps = value
-        markDirty()
-    }
-
     private func addExercise(_ exercise: Exercise) {
         let newRow = WorkoutTemplate.TemplateExercise(
             id: UUID().uuidString,
@@ -486,23 +378,6 @@ struct TemplateDetailView: View {
         withAnimation(.xomConfident) {
             draft.exercises.swapAt(index, target)
         }
-        markDirty()
-    }
-
-    /// ID-based sets update — looks up current index at call time.
-    private func updateSetsById(_ id: String, value: Int) {
-        guard let index = draft.exercises.firstIndex(where: { $0.id == id }) else { return }
-        let clamped = max(1, value)
-        guard draft.exercises[index].targetSets != clamped else { return }
-        draft.exercises[index].targetSets = clamped
-        markDirty()
-    }
-
-    /// ID-based reps update — looks up current index at call time.
-    private func updateRepsById(_ id: String, value: String) {
-        guard let index = draft.exercises.firstIndex(where: { $0.id == id }) else { return }
-        guard draft.exercises[index].targetReps != value else { return }
-        draft.exercises[index].targetReps = value
         markDirty()
     }
 
@@ -669,199 +544,82 @@ struct TemplateDetailView: View {
 
 // MARK: - Editable Row
 
-private struct EditableExerciseRow: View {
+private struct TemplateExerciseRow: View {
     let index: Int
     let exercise: WorkoutTemplate.TemplateExercise
     let canMoveUp: Bool
     let canMoveDown: Bool
-    let onUpdateSets: (Int) -> Void
-    let onUpdateReps: (String) -> Void
     let onMoveUp: () -> Void
     let onMoveDown: () -> Void
     let onDelete: () -> Void
 
-    @State private var repsText: String = ""
-    @State private var showDetails: Bool = false
-    @State private var isEditingReps: Bool = false
-    @FocusState private var repsFocused: Bool
-
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            // Header row: index + name on left, action buttons on right
-            HStack(alignment: .top, spacing: 10) {
-                // Index badge
-                Text("\(index)")
-                    .font(.caption.weight(.bold).monospaced())
-                    .foregroundStyle(Theme.accent)
-                    .frame(width: 24, height: 24)
-                    .background(Theme.accent.opacity(0.15))
-                    .clipShape(.rect(cornerRadius: 6))
+        HStack(spacing: 10) {
+            // Index badge
+            Text("\(index)")
+                .font(.caption.weight(.bold).monospaced())
+                .foregroundStyle(Theme.accent)
+                .frame(width: 24, height: 24)
+                .background(Theme.accent.opacity(0.15))
+                .clipShape(.rect(cornerRadius: 6))
 
-                // Exercise info - takes remaining space
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(exercise.exercise.name)
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(Theme.textPrimary)
-                        .lineLimit(2)
-                        .fixedSize(horizontal: false, vertical: true)
-
-                    HStack(spacing: 4) {
-                        ForEach(exercise.exercise.muscleGroups.prefix(2), id: \.self) { mg in
-                            Text(mg.displayName)
-                                .font(.caption2)
-                                .foregroundStyle(Theme.textSecondary)
-                        }
-                    }
-                }
+            // Exercise name
+            Text(exercise.exercise.name)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Theme.textPrimary)
+                .lineLimit(1)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-                // Compact action buttons - fixed width group
-                HStack(spacing: 2) {
-                    if canMoveUp {
-                        Button {
-                            onMoveUp()
-                        } label: {
-                            Image(systemName: "chevron.up")
-                                .font(.caption.weight(.bold))
-                                .foregroundStyle(Theme.textSecondary)
-                                .frame(width: 32, height: 32)
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("Move up")
-                    }
+            // Sets x Reps display
+            Text("\(exercise.targetSets) × \(exercise.targetReps.isEmpty ? "8-12" : exercise.targetReps)")
+                .font(.subheadline.monospaced())
+                .foregroundStyle(Theme.textSecondary)
 
-                    if canMoveDown {
-                        Button {
-                            onMoveDown()
-                        } label: {
-                            Image(systemName: "chevron.down")
-                                .font(.caption.weight(.bold))
-                                .foregroundStyle(Theme.textSecondary)
-                                .frame(width: 32, height: 32)
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("Move down")
-                    }
-
+            // Action buttons
+            HStack(spacing: 0) {
+                if canMoveUp {
                     Button {
-                        Haptics.selection()
-                        showDetails = true
+                        onMoveUp()
                     } label: {
-                        Image(systemName: "info.circle")
-                            .font(.caption.weight(.semibold))
+                        Image(systemName: "chevron.up")
+                            .font(.caption.weight(.bold))
                             .foregroundStyle(Theme.textSecondary)
-                            .frame(width: 32, height: 32)
+                            .frame(width: 28, height: 28)
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel("Details")
+                    .accessibilityLabel("Move up")
+                }
 
+                if canMoveDown {
                     Button {
-                        Haptics.light()
-                        onDelete()
+                        onMoveDown()
                     } label: {
-                        Image(systemName: "trash")
-                            .font(.caption)
-                            .foregroundStyle(Theme.destructive.opacity(0.85))
-                            .frame(width: 32, height: 32)
+                        Image(systemName: "chevron.down")
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(Theme.textSecondary)
+                            .frame(width: 28, height: 28)
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel("Delete")
+                    .accessibilityLabel("Move down")
                 }
-            }
 
-            // Editable controls: sets stepper, reps, weight — evenly distributed
-            HStack(spacing: 12) {
-                // Sets stepper
-                VStack(alignment: .center, spacing: 4) {
-                    Text("Sets")
-                        .font(.caption2)
+                Button {
+                    Haptics.light()
+                    onDelete()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.caption.weight(.bold))
                         .foregroundStyle(Theme.textSecondary)
-                    HStack(spacing: 4) {
-                        Button {
-                            Haptics.selection()
-                            onUpdateSets(exercise.targetSets - 1)
-                        } label: {
-                            Image(systemName: "minus.circle.fill")
-                                .font(.title3)
-                                .foregroundStyle(exercise.targetSets > 1 ? Theme.accent : Theme.textSecondary.opacity(0.3))
-                        }
-                        .buttonStyle(.plain)
-                        .disabled(exercise.targetSets <= 1)
-
-                        Text("\(exercise.targetSets)")
-                            .font(.body.weight(.bold).monospaced())
-                            .foregroundStyle(Theme.textPrimary)
-                            .frame(minWidth: 20)
-
-                        Button {
-                            Haptics.selection()
-                            onUpdateSets(exercise.targetSets + 1)
-                        } label: {
-                            Image(systemName: "plus.circle.fill")
-                                .font(.title3)
-                                .foregroundStyle(Theme.accent)
-                        }
-                        .buttonStyle(.plain)
-                    }
+                        .frame(width: 28, height: 28)
                 }
-                .frame(maxWidth: .infinity)
-
-                // Reps - tap to edit (using Button to not block scroll)
-                VStack(alignment: .center, spacing: 4) {
-                    Text("Reps")
-                        .font(.caption2)
-                        .foregroundStyle(Theme.textSecondary)
-                    if isEditingReps {
-                        TextField("8-12", text: $repsText)
-                            .font(.body.weight(.semibold).monospaced())
-                            .foregroundStyle(Theme.textPrimary)
-                            .keyboardType(.numbersAndPunctuation)
-                            .multilineTextAlignment(.center)
-                            .frame(width: 56)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 6)
-                            .background(Theme.surfaceElevated)
-                            .clipShape(.rect(cornerRadius: 8))
-                            .focused($repsFocused)
-                            .onSubmit { isEditingReps = false }
-                            .onChange(of: repsFocused) { _, focused in
-                                if !focused { isEditingReps = false }
-                            }
-                            .onChange(of: repsText) { _, newValue in
-                                onUpdateReps(newValue)
-                            }
-                    } else {
-                        Button {
-                            isEditingReps = true
-                            repsFocused = true
-                        } label: {
-                            Text(repsText.isEmpty ? "8-12" : repsText)
-                                .font(.body.weight(.semibold).monospaced())
-                                .foregroundStyle(repsText.isEmpty ? Theme.textSecondary : Theme.textPrimary)
-                                .frame(width: 56)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 6)
-                                .background(Theme.surfaceElevated)
-                                .clipShape(.rect(cornerRadius: 8))
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-                .frame(maxWidth: .infinity)
+                .buttonStyle(.plain)
+                .accessibilityLabel("Delete")
             }
         }
-        .padding(Theme.Spacing.md)
+        .padding(.horizontal, Theme.Spacing.md)
+        .padding(.vertical, Theme.Spacing.sm)
         .background(Theme.surface)
         .clipShape(.rect(cornerRadius: Theme.cornerRadius))
         .contentShape(Rectangle())
-        .sheet(isPresented: $showDetails) {
-            ExerciseDetailSheet(exercise: exercise.exercise)
-        }
-        .onAppear {
-            repsText = exercise.targetReps
-        }
-        .onChange(of: exercise.targetReps) { _, newValue in
-            if repsText != newValue { repsText = newValue }
-        }
     }
 }
