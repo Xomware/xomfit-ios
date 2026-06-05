@@ -1,26 +1,10 @@
 import SwiftUI
 
-enum FeedDateRange: String, CaseIterable, Identifiable {
-    case all = "All Time"
-    case today = "Today"
-    case thisWeek = "This Week"
-    case thisMonth = "This Month"
-
-    var id: String { rawValue }
-
-    /// Returns the start date for this range, or nil for "all time".
-    var startDate: Date? {
-        let cal = Calendar.current
-        let now = Date()
-        switch self {
-        case .all: return nil
-        case .today: return cal.startOfDay(for: now)
-        case .thisWeek: return cal.dateInterval(of: .weekOfYear, for: now)?.start
-        case .thisMonth: return cal.dateInterval(of: .month, for: now)?.start
-        }
-    }
-}
-
+/// Horizontal scrolling filter pills used by the profile feed / workout-history
+/// views. The main social feed migrated to a filter modal (`FeedFilterSheet`,
+/// #feed-filter-modal); these profile lists still use the inline pill bar.
+///
+/// The shared filter types (`FeedDateRange`, etc.) live in `FeedFilterSheet.swift`.
 struct FeedFilterBar: View {
     @Binding var selectedDateRange: FeedDateRange
     @Binding var selectedMuscleGroups: Set<MuscleGroup>
