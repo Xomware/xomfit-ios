@@ -104,9 +104,26 @@ struct FeedDetailView: View {
                 XomDivider()
 
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(activity.workoutName)
-                        .font(.title3.weight(.bold))
-                        .foregroundStyle(Theme.textPrimary)
+                    HStack(spacing: Theme.Spacing.sm) {
+                        Text(activity.workoutName)
+                            .font(.title3.weight(.bold))
+                            .foregroundStyle(Theme.textPrimary)
+
+                        // Star rating — mirrors the feed card (#FeedItemCard) so
+                        // the overall workout rating is visible in the expanded
+                        // detail view, not just on the card.
+                        if let rating = activity.rating, rating > 0 {
+                            HStack(spacing: Theme.Spacing.tighter) {
+                                ForEach(1...5, id: \.self) { star in
+                                    Image(systemName: star <= rating ? "star.fill" : "star")
+                                        .font(.system(size: 12))
+                                        .foregroundStyle(star <= rating ? Theme.accent : Theme.textSecondary.opacity(0.3))
+                                }
+                            }
+                            .accessibilityElement(children: .ignore)
+                            .accessibilityLabel("Rated \(rating) of 5 stars")
+                        }
+                    }
 
                     HStack(spacing: Theme.Spacing.sm) {
                         Image(systemName: "calendar")
