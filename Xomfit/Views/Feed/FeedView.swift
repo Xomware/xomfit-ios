@@ -5,6 +5,7 @@ struct FeedView: View {
     @State private var viewModel = FeedViewModel()
     @State private var showUserSearch = false
     @State private var showNotifications = false
+    @State private var showFilters = false
     @State private var selectedFeedItem: SocialFeedItem? = nil
 
     /// #319: locally-hidden feed item ids. Backed by AppStorage so hides persist
@@ -58,10 +59,7 @@ struct FeedView: View {
                 emptyState
             } else {
                 VStack(spacing: 0) {
-                    FeedFilterBar(
-                        selectedDateRange: $viewModel.dateRange,
-                        selectedMuscleGroups: $viewModel.selectedMuscleGroups
-                    )
+                    filterBar
 
                     if viewModel.isFiltered && visibleFeedItems.isEmpty {
                         Spacer()
@@ -95,6 +93,15 @@ struct FeedView: View {
                     Task { await viewModel.applyFilterChange() }
                 }
                 .onChange(of: viewModel.selectedMuscleGroups) { _, _ in
+                    Task { await viewModel.applyFilterChange() }
+                }
+                .onChange(of: viewModel.sortOption) { _, _ in
+                    Task { await viewModel.applyFilterChange() }
+                }
+                .onChange(of: viewModel.minRating) { _, _ in
+                    Task { await viewModel.applyFilterChange() }
+                }
+                .onChange(of: viewModel.selectedUserIds) { _, _ in
                     Task { await viewModel.applyFilterChange() }
                 }
             }
@@ -151,6 +158,22 @@ struct FeedView: View {
         .sheet(isPresented: $showNotifications) {
             NotificationInboxView()
         }
+        .sheet(isPresented: $showFilters) {
+            FeedFilterSheet(
+                sortOption: viewModel.sortOption,
+                dateRange: viewModel.dateRange,
+                minRating: viewModel.minRating,
+                selectedMuscleGroups: viewModel.selectedMuscleGroups,
+                selectedUserIds: viewModel.selectedUserIds,
+                availableUsers: viewModel.availableUsers
+            ) { sort, dateRange, minRating, muscleGroups, userIds in
+                viewModel.sortOption = sort
+                viewModel.dateRange = dateRange
+                viewModel.minRating = minRating
+                viewModel.selectedMuscleGroups = muscleGroups
+                viewModel.selectedUserIds = userIds
+            }
+        }
         .onAppear {
             guard !userId.isEmpty else { return }
             Task { await viewModel.loadFeed(userId: userId) }
@@ -158,6 +181,76 @@ struct FeedView: View {
         // #385: patch cached feed item avatars when the local user updates their photo.
         .task {
             await viewModel.subscribeToProfileUpdates()
+        }
+    }
+
+    // MARK: - Filter Bar
+
+    /// Number of active filters, surfaced as a badge on the filter button so
+    /// the user can tell at a glance the feed is narrowed. Sort is excluded —
+    /// it reorders but doesn't reduce the set.
+    private var activeFilterCount: Int {
+        var count = 0
+        if viewModel.dateRange != .all { count += 1 }
+        if viewModel.minRating > 0 { count += 1 }
+        count += viewModel.selectedMuscleGroups.count
+        count += viewModel.selectedUserIds.count
+        return count
+    }
+
+    /// Slim top bar with a single Filter button (#feed-filter-modal). Replaces
+    /// the old horizontal pill list — tapping opens `FeedFilterSheet`.
+    private var filterBar: some View {
+        VStack(spacing: 0) {
+            HStack {
+                Button {
+                    Haptics.light()
+                    showFilters = true
+                } label: {
+                    HStack(spacing: Theme.Spacing.sm) {
+                        Image(systemName: "line.3.horizontal.decrease")
+                            .font(.subheadline.weight(.semibold))
+                        Text("Filter")
+                            .font(.subheadline.weight(.semibold))
+                        if activeFilterCount > 0 {
+                            Text("\(activeFilterCount)")
+                                .font(.caption2.weight(.bold))
+                                .foregroundStyle(.black)
+                                .frame(minWidth: 18, minHeight: 18)
+                                .background(Circle().fill(Theme.accent))
+                        }
+                    }
+                    .foregroundStyle(activeFilterCount > 0 ? Theme.accent : Theme.textPrimary)
+                    .padding(.horizontal, Theme.Spacing.md)
+                    .padding(.vertical, Theme.Spacing.sm)
+                    .frame(minHeight: 44)
+                    .background(
+                        Capsule()
+                            .fill(activeFilterCount > 0 ? Theme.accent.opacity(0.15) : Theme.surface)
+                            .overlay(
+                                Capsule().strokeBorder(
+                                    activeFilterCount > 0 ? Color.clear : Theme.hairline,
+                                    lineWidth: 0.5
+                                )
+                            )
+                    )
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(activeFilterCount > 0
+                    ? "Filters, \(activeFilterCount) active"
+                    : "Filters")
+                .accessibilityHint("Opens filter options")
+
+                Spacer()
+
+                if viewModel.sortOption != .recent {
+                    XomBadge(viewModel.sortOption.rawValue, icon: viewModel.sortOption.icon, variant: .secondary)
+                }
+            }
+            .padding(.horizontal, Theme.Spacing.md)
+            .padding(.vertical, Theme.Spacing.sm)
+
+            XomDivider()
         }
     }
 

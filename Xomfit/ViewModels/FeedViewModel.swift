@@ -33,12 +33,29 @@ final class FeedViewModel {
     // Filters
     var dateRange: FeedDateRange = .all
     var selectedMuscleGroups: Set<MuscleGroup> = []
+    /// Minimum overall workout rating to show (0 = no filter). Only applies to
+    /// workout posts — non-workout activity is filtered out when set.
+    var minRating: Int = 0
+    /// User ids to restrict the feed to (empty = all users).
+    var selectedUserIds: Set<String> = []
+    /// Sort order applied after filtering.
+    var sortOption: FeedSortOption = .recent
 
     var filteredFeedItems: [SocialFeedItem] {
-        feedItems.filter { item in
+        let filtered = feedItems.filter { item in
             // Date filter
             if let start = dateRange.startDate, item.createdAt < start {
                 return false
+            }
+            // User filter
+            if !selectedUserIds.isEmpty, !selectedUserIds.contains(item.userId) {
+                return false
+            }
+            // Minimum rating filter (only applies to workout posts)
+            if minRating > 0 {
+                guard let rating = item.workoutActivity?.rating, rating >= minRating else {
+                    return false
+                }
             }
             // Muscle group filter (only applies to workout posts)
             if !selectedMuscleGroups.isEmpty {
@@ -50,9 +67,43 @@ final class FeedViewModel {
             }
             return true
         }
+        return sortItems(filtered)
     }
 
-    var isFiltered: Bool { dateRange != .all || !selectedMuscleGroups.isEmpty }
+    /// Applies `sortOption`. Posts without a rating sort as 0 so they sink to
+    /// the bottom for "highest rated" and rise to the top for "lowest rated".
+    private func sortItems(_ items: [SocialFeedItem]) -> [SocialFeedItem] {
+        switch sortOption {
+        case .recent:
+            return items.sorted { $0.createdAt > $1.createdAt }
+        case .highestRated:
+            return items.sorted { ($0.workoutActivity?.rating ?? 0) > ($1.workoutActivity?.rating ?? 0) }
+        case .lowestRated:
+            return items.sorted { ($0.workoutActivity?.rating ?? 0) < ($1.workoutActivity?.rating ?? 0) }
+        }
+    }
+
+    /// Distinct users present in the loaded feed, for the user filter chips.
+    /// Keyed on `item.userId` so the chip identity matches the filter key.
+    var availableUsers: [FeedUserOption] {
+        var seen = Set<String>()
+        var result: [FeedUserOption] = []
+        for item in feedItems where !seen.contains(item.userId) {
+            seen.insert(item.userId)
+            let name = item.user.displayName.isEmpty ? item.user.username : item.user.displayName
+            result.append(FeedUserOption(id: item.userId, name: name, avatarURL: item.user.avatarURL))
+        }
+        return result.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+    }
+
+    /// `sortOption` is intentionally excluded — sorting reorders but never
+    /// reduces the result set, so it shouldn't trigger the "no matches" state.
+    var isFiltered: Bool {
+        dateRange != .all
+            || !selectedMuscleGroups.isEmpty
+            || !selectedUserIds.isEmpty
+            || minRating > 0
+    }
 
     // Pagination state
     private let pageSize = 20

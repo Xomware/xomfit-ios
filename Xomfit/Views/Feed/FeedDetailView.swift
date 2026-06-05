@@ -104,9 +104,26 @@ struct FeedDetailView: View {
                 XomDivider()
 
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(activity.workoutName)
-                        .font(.title3.weight(.bold))
-                        .foregroundStyle(Theme.textPrimary)
+                    HStack(spacing: Theme.Spacing.sm) {
+                        Text(activity.workoutName)
+                            .font(.title3.weight(.bold))
+                            .foregroundStyle(Theme.textPrimary)
+
+                        // Star rating — mirrors the feed card (#FeedItemCard) so
+                        // the overall workout rating is visible in the expanded
+                        // detail view, not just on the card.
+                        if let rating = activity.rating, rating > 0 {
+                            HStack(spacing: Theme.Spacing.tighter) {
+                                ForEach(1...5, id: \.self) { star in
+                                    Image(systemName: star <= rating ? "star.fill" : "star")
+                                        .font(.system(size: 12))
+                                        .foregroundStyle(star <= rating ? Theme.accent : Theme.textSecondary.opacity(0.3))
+                                }
+                            }
+                            .accessibilityElement(children: .ignore)
+                            .accessibilityLabel("Rated \(rating) of 5 stars")
+                        }
+                    }
 
                     HStack(spacing: Theme.Spacing.sm) {
                         Image(systemName: "calendar")
@@ -129,6 +146,12 @@ struct FeedDetailView: View {
                         workoutStat(value: "\(activity.prCount)", label: "PRs", icon: "trophy.fill", color: Theme.prGold)
                     }
                 }
+
+                // Detailed ratings — fatigue/difficulty/gym crowd/music/energy/
+                // mood captured at finish time. Lives on the full `Workout`
+                // (not the feed snapshot), so it renders once `fetchedWorkout`
+                // loads. The feed card only shows the single overall star.
+                detailedRatingsSection
 
                 // Personal Records (#415) — dedicated gold section listing each
                 // exercise that set a PR with the PR set details (weight × reps).
@@ -201,6 +224,56 @@ struct FeedDetailView: View {
                 .clipShape(.rect(cornerRadius: Theme.Radius.sm))
             }
         }
+    }
+
+    // MARK: - Detailed Ratings Section
+
+    /// Read-only grid of every detailed rating category the poster filled in
+    /// when finishing the workout. Sourced from `fetchedWorkout.detailedRatings`
+    /// so it only renders once the full workout loads and at least one category
+    /// has a value. Mirrors `WorkoutDetailView.detailedRatingsCard`.
+    @ViewBuilder
+    private var detailedRatingsSection: some View {
+        if let ratings = fetchedWorkout?.detailedRatings, ratings.hasAnyRating {
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                Text("Detailed Ratings")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Theme.textSecondary)
+
+                LazyVGrid(columns: [
+                    GridItem(.flexible(), spacing: Theme.Spacing.sm),
+                    GridItem(.flexible(), spacing: Theme.Spacing.sm)
+                ], spacing: Theme.Spacing.sm) {
+                    ForEach(WorkoutRatings.Category.allCases) { category in
+                        if let value = ratings.value(for: category) {
+                            detailedRatingRow(category: category, value: value)
+                        }
+                    }
+                }
+            }
+            .padding(Theme.Spacing.sm)
+            .background(Theme.background)
+            .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
+        }
+    }
+
+    private func detailedRatingRow(category: WorkoutRatings.Category, value: Int) -> some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
+            Text(category.label)
+                .font(Theme.fontCaption)
+                .foregroundStyle(Theme.textSecondary)
+
+            HStack(spacing: 2) {
+                ForEach(1...5, id: \.self) { star in
+                    Image(systemName: star <= value ? "star.fill" : "star")
+                        .font(Theme.fontCaption2)
+                        .foregroundStyle(star <= value ? Theme.accent : Theme.textSecondary.opacity(0.3))
+                }
+                Spacer()
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(category.label): \(value) out of 5")
     }
 
     // MARK: - Exercise Section

@@ -290,7 +290,10 @@ extension AppUser {
         id: "00000000-0000-0000-0000-00000000DEB6",
         username: "debug_user",
         displayName: "Debug User",
-        avatarURL: nil,
+        // Seeded avatar so the bypass verification flow exercises the
+        // profile-picture path (XomAvatar image branch) instead of always
+        // falling back to initials.
+        avatarURL: "https://i.pravatar.cc/300?img=68",
         bio: "Debug bypass — used by agent UI verification (#353)",
         stats: UserStats(
             totalWorkouts: 4,
@@ -314,7 +317,7 @@ extension AppUser {
         id: "00000000-0000-0000-0000-00000000FA17",
         username: "lift_buddy",
         displayName: "Lift Buddy",
-        avatarURL: nil,
+        avatarURL: "https://i.pravatar.cc/300?img=12",
         bio: "Debug bypass friend (#403)",
         stats: UserStats(
             totalWorkouts: 51,
