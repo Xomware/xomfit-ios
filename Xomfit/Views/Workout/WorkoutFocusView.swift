@@ -70,14 +70,22 @@ struct WorkoutFocusView: View {
                 .onTapGesture { dismissKeyboard() }
 
             if let exercise, let currentSet {
+                // Scrollable content with the classic GeometryReader minHeight
+                // pattern: the inner VStack is pinned to AT LEAST the visible
+                // height (so the flexible middle still absorbs slack and the
+                // bottom nav sits at the bottom), but can grow and scroll when
+                // the keyboard or extra rows push it past the screen. This
+                // replaces the old fixed ZStack + dual `.safeAreaInset` hacks
+                // that fought the Dynamic Island and clipped DONE (#411).
+                GeometryReader { proxy in
+                ScrollView {
                 // Pinned top + flexible middle + pinned bottom (#344-A).
                 // The top header (exerciseHeader + config + set indicator)
                 // collapses when a text field is focused so the keyboard
                 // never overlaps the active input (#411 bug 6). The middle
                 // (weight/reps/done) absorbs slack via `.frame(maxHeight:
                 // .infinity)`. The bottom slot is exerciseNavigation; the
-                // minimized rest banner now lives in a sibling `.safeAreaInset`
-                // (#411 bug 3) so it never steals vertical space from DONE.
+                // minimized rest banner is an in-flow bottom row below it.
                 VStack(spacing: Theme.Spacing.md) {
                     // TOP — exercise header + config + set indicator.
                     // Hidden while a numeric field is focused so the keyboard
@@ -128,13 +136,22 @@ struct WorkoutFocusView: View {
                     .frame(maxHeight: .infinity)
 
                     // BOTTOM — exercise navigation (prev/next/add + rest config).
-                    // The minimized rest banner used to live here (#402) but is
-                    // now rendered via `.safeAreaInset(edge: .bottom)` below
-                    // (#411 bug 3) so DONE always has guaranteed bottom
-                    // clearance. Bottom nav is hidden in compact keyboard mode.
+                    // Hidden in compact keyboard mode.
                     if !keyboardCompactMode {
                         exerciseNavigation
                             .transition(.opacity)
+                    }
+
+                    // Minimized rest banner — now an in-flow bottom row instead
+                    // of a `.safeAreaInset` hack (#411 bug 3). Living inside the
+                    // scrollable VStack means it can never overlap DONE: when it
+                    // appears it simply extends the content (which scrolls if
+                    // needed) rather than floating over the layout.
+                    if viewModel.isRestTimerActive
+                        && viewModel.isRestTimerMinimized
+                        && !keyboardCompactMode {
+                        minimizedRestTimerBanner
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
                     }
                 }
                 .id(viewModel.focusExerciseIndex)
@@ -142,44 +159,23 @@ struct WorkoutFocusView: View {
                 .animation(.easeInOut(duration: 0.3), value: viewModel.focusExerciseIndex)
                 .padding(.top, Theme.Spacing.sm)
                 .padding(.horizontal, Theme.Spacing.lg)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding(.bottom, Theme.Spacing.xs)
+                .frame(maxWidth: .infinity, minHeight: proxy.size.height)
                 .animation(.xomChill, value: viewModel.isRestTimerMinimized)
                 .animation(.xomChill, value: viewModel.isRestTimerActive)
                 .animation(.xomChill, value: keyboardCompactMode)
+                }
+                .scrollBounceBehavior(.basedOnSize)
+                }
 
-                // Full-screen rest timer — only when the timer is active AND not minimized.
-                // The minimized banner is rendered via `.safeAreaInset(edge: .bottom)`
-                // below so it reserves its own row instead of shrinking the header.
+                // Full-screen rest timer — only when the timer is active AND not
+                // minimized. Sits as a ZStack sibling overlay above the scroll.
                 if viewModel.isRestTimerActive && !viewModel.isRestTimerMinimized {
                     fullScreenRestTimer
                         .transition(.opacity)
                 }
             } else {
                 emptyFocusState
-            }
-        }
-        // Push content below any active Dynamic Island (#289/#402). Bumps
-        // content down deterministically when an island is present.
-        .safeAreaInset(edge: .top, spacing: 0) {
-            Color.clear.frame(height: Theme.Spacing.sm)
-        }
-        // Minimized rest banner — rendered as a bottom safe-area inset so it
-        // reserves its own layout row OUTSIDE the main VStack (#411 bug 3).
-        // This guarantees DONE never gets visually overlapped by the banner.
-        // Adds Theme.Spacing.sm of bottom padding so the banner sits above
-        // the home indicator with breathing room.
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            if viewModel.isRestTimerActive
-                && viewModel.isRestTimerMinimized
-                && !keyboardCompactMode {
-                minimizedRestTimerBanner
-                    .padding(.horizontal, Theme.Spacing.lg)
-                    .padding(.top, Theme.Spacing.sm)
-                    .padding(.bottom, Theme.Spacing.xs)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-                    .animation(.xomChill, value: viewModel.isRestTimerMinimized)
-            } else {
-                Color.clear.frame(height: 0)
             }
         }
         .sheet(isPresented: $showExercisePicker) {

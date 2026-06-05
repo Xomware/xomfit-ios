@@ -685,11 +685,15 @@ final class WorkoutLoggerViewModel {
             }()
 
             let supersetSiblingIndex = nextSupersetMember(after: exerciseIndex, currentSetIndex: setIndex)
-            // Only skip rest when we're mid-superset AND there's another member to rotate to.
-            // When supersetSiblingIndex is nil, the round is complete and rest should fire.
+            // True when we're mid-superset AND there's another member to rotate
+            // to. Still used below to suppress the exercise-transition card.
             let midSupersetRotation = supersetSiblingIndex != nil
 
-            let shouldStartRest = !nextSetIsDropSet && !midSupersetRotation
+            // Start rest after every completed set except when the next set is a
+            // drop set (parent → drop chain stays back-to-back). The timer now
+            // fires between superset exercises too, so the lifter gets a rest
+            // beat while rotating to the sibling movement.
+            let shouldStartRest = !nextSetIsDropSet
             if shouldStartRest {
                 startRestTimer(for: exerciseIndex)
             }
