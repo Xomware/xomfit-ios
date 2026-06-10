@@ -321,30 +321,6 @@ SWIFT_CLASS("_TtC6Xomfit11AppDelegate")
 - (nonnull instancetype)init OBJC_DESIGNATED_INITIALIZER;
 @end
 
-/// SoundCloud OAuth 2.0 Authorization Code with PKCE (#389).
-/// <h2>Why PKCE (no client secret)</h2>
-/// Same rationale as the Spotify integration: the client id is treated as public, the PKCE
-/// verifier stays in-process and prevents code interception, and we never ship a secret.
-/// Crucially, SoundCloud’s developer program has been intermittently closed to new app
-/// registrations — a shared baked-in client id is the only realistic path. PKCE makes that
-/// distribution safe.
-/// <h2>Storage caveat</h2>
-/// Tokens persisted via <code>@AppStorage</code> (UserDefaults). Mirrors the Spotify service.
-/// Keychain migration tracked separately.
-/// <h2>Callback delivery</h2>
-/// Same pattern as Spotify — <code>ASWebAuthenticationSession</code> returns the redirect URL via its
-/// completion handler. <code>XomfitApp.onOpenURL</code> is a belt-and-suspenders fallback.
-SWIFT_CLASS("_TtC6Xomfit21SoundCloudAuthService")
-@interface SoundCloudAuthService : NSObject
-- (nonnull instancetype)init SWIFT_UNAVAILABLE;
-+ (nonnull instancetype)new SWIFT_UNAVAILABLE_MSG("-init is unavailable");
-@end
-
-@class ASWebAuthenticationSession;
-@interface SoundCloudAuthService (SWIFT_EXTENSION(Xomfit)) <ASWebAuthenticationPresentationContextProviding>
-- (ASPresentationAnchor _Nonnull)presentationAnchorForWebAuthenticationSession:(ASWebAuthenticationSession * _Nonnull)session SWIFT_WARN_UNUSED_RESULT;
-@end
-
 /// Spotify OAuth 2.0 Authorization Code with PKCE (#347).
 /// <h2>Why PKCE (no client secret)</h2>
 /// Spotify’s recommended flow for native apps. The client id is public; the PKCE verifier
@@ -363,6 +339,7 @@ SWIFT_CLASS("_TtC6Xomfit18SpotifyAuthService")
 + (nonnull instancetype)new SWIFT_UNAVAILABLE_MSG("-init is unavailable");
 @end
 
+@class ASWebAuthenticationSession;
 @interface SpotifyAuthService (SWIFT_EXTENSION(Xomfit)) <ASWebAuthenticationPresentationContextProviding>
 - (ASPresentationAnchor _Nonnull)presentationAnchorForWebAuthenticationSession:(ASWebAuthenticationSession * _Nonnull)session SWIFT_WARN_UNUSED_RESULT;
 @end

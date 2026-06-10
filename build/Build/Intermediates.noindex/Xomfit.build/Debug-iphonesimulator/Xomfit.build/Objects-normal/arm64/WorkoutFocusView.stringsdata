@@ -7,7 +7,7 @@
         "key": "Delete this set?",
         "location": {
           "startingColumn": 13,
-          "startingLine": 204
+          "startingLine": 211
         }
       },
       {
@@ -15,7 +15,7 @@
         "key": "Set completed",
         "location": {
           "startingColumn": 43,
-          "startingLine": 575
+          "startingLine": 636
         }
       },
       {
@@ -23,7 +23,7 @@
         "key": "Complete set",
         "location": {
           "startingColumn": 61,
-          "startingLine": 575
+          "startingLine": 636
         }
       },
       {
@@ -31,7 +31,7 @@
         "key": "Delete set",
         "location": {
           "startingColumn": 20,
-          "startingLine": 208
+          "startingLine": 215
         }
       },
       {
@@ -39,7 +39,7 @@
         "key": "Cancel",
         "location": {
           "startingColumn": 20,
-          "startingLine": 220
+          "startingLine": 227
         }
       },
       {
@@ -47,7 +47,7 @@
         "key": "Removes this set from the current exercise.",
         "location": {
           "startingColumn": 18,
-          "startingLine": 224
+          "startingLine": 231
         }
       },
       {
@@ -55,23 +55,7 @@
         "key": "Superset %@",
         "location": {
           "startingColumn": 45,
-          "startingLine": 265
-        }
-      },
-      {
-        "comment": "",
-        "key": "Add set",
-        "location": {
-          "startingColumn": 37,
-          "startingLine": 408
-        }
-      },
-      {
-        "comment": "",
-        "key": "Adds a new set to the current exercise",
-        "location": {
-          "startingColumn": 36,
-          "startingLine": 409
+          "startingLine": 272
         }
       },
       {
@@ -79,7 +63,7 @@
         "key": "Set %lld%@%@",
         "location": {
           "startingColumn": 41,
-          "startingLine": 377
+          "startingLine": 384
         }
       },
       {
@@ -87,7 +71,7 @@
         "key": "Long press or use the context menu to delete this set",
         "location": {
           "startingColumn": 27,
-          "startingLine": 379
+          "startingLine": 386
         }
       },
       {
@@ -95,7 +79,7 @@
         "key": "Add another set before this one can be deleted",
         "location": {
           "startingColumn": 27,
-          "startingLine": 380
+          "startingLine": 387
         }
       },
       {
@@ -103,7 +87,7 @@
         "key": "%lld",
         "location": {
           "startingColumn": 34,
-          "startingLine": 341
+          "startingLine": 348
         }
       },
       {
@@ -111,39 +95,71 @@
         "key": "Remove set",
         "location": {
           "startingColumn": 39,
-          "startingLine": 373
+          "startingLine": 380
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add set",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 468
+        }
+      },
+      {
+        "comment": "",
+        "key": "Opens menu to add a new set with PR, PR+5, Drop Set, or Same Set options",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 469
+        }
+      },
+      {
+        "comment": "",
+        "key": "PR (%@ × %lld)",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 414
+        }
+      },
+      {
+        "comment": "",
+        "key": "PR+5 (%@ × %lld)",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 423
+        }
+      },
+      {
+        "comment": "",
+        "key": "Drop Set",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 440
+        }
+      },
+      {
+        "comment": "",
+        "key": "Same (%@ × %lld)",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 449
+        }
+      },
+      {
+        "comment": "",
+        "key": "Empty Set",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 451
         }
       },
       {
         "comment": "",
         "key": "Set",
         "location": {
-          "startingColumn": 30,
-          "startingLine": 397
-        }
-      },
-      {
-        "comment": "",
-        "key": "Add drop set after set %lld",
-        "location": {
-          "startingColumn": 37,
-          "startingLine": 454
-        }
-      },
-      {
-        "comment": "",
-        "key": "Inserts a drop set immediately after the most recently completed set with reduced weight",
-        "location": {
-          "startingColumn": 36,
-          "startingLine": 455
-        }
-      },
-      {
-        "comment": "",
-        "key": "drop set",
-        "location": {
-          "startingColumn": 30,
-          "startingLine": 443
+          "startingColumn": 22,
+          "startingLine": 458
         }
       },
       {
@@ -151,7 +167,7 @@
         "key": "WEIGHT",
         "location": {
           "startingColumn": 18,
-          "startingLine": 464
+          "startingLine": 525
         }
       },
       {
@@ -159,7 +175,7 @@
         "key": "lbs x2 (per side)",
         "location": {
           "startingColumn": 22,
-          "startingLine": 495
+          "startingLine": 556
         }
       },
       {
@@ -167,7 +183,7 @@
         "key": "lbs",
         "location": {
           "startingColumn": 22,
-          "startingLine": 499
+          "startingLine": 560
         }
       },
       {
@@ -175,7 +191,7 @@
         "key": "0",
         "location": {
           "startingColumn": 27,
-          "startingLine": 469
+          "startingLine": 530
         }
       },
       {
@@ -183,7 +199,7 @@
         "key": "Weight: %@ pounds. Tap to edit.",
         "location": {
           "startingColumn": 37,
-          "startingLine": 490
+          "startingLine": 551
         }
       },
       {
@@ -191,7 +207,7 @@
         "key": "REPS",
         "location": {
           "startingColumn": 18,
-          "startingLine": 514
+          "startingLine": 575
         }
       },
       {
@@ -199,7 +215,7 @@
         "key": "0",
         "location": {
           "startingColumn": 27,
-          "startingLine": 519
+          "startingLine": 580
         }
       },
       {
@@ -207,7 +223,7 @@
         "key": "Reps: %lld. Tap to edit.",
         "location": {
           "startingColumn": 37,
-          "startingLine": 540
+          "startingLine": 601
         }
       },
       {
@@ -215,7 +231,7 @@
         "key": "per leg",
         "location": {
           "startingColumn": 30,
-          "startingLine": 545
+          "startingLine": 606
         }
       },
       {
@@ -223,7 +239,7 @@
         "key": "per arm",
         "location": {
           "startingColumn": 42,
-          "startingLine": 545
+          "startingLine": 606
         }
       },
       {
@@ -231,7 +247,7 @@
         "key": "%lld",
         "location": {
           "startingColumn": 26,
-          "startingLine": 536
+          "startingLine": 597
         }
       },
       {
@@ -239,7 +255,7 @@
         "key": "COMPLETED",
         "location": {
           "startingColumn": 32,
-          "startingLine": 566
+          "startingLine": 627
         }
       },
       {
@@ -247,7 +263,7 @@
         "key": "DONE",
         "location": {
           "startingColumn": 46,
-          "startingLine": 566
+          "startingLine": 627
         }
       },
       {
@@ -255,7 +271,7 @@
         "key": "%lld / %lld",
         "location": {
           "startingColumn": 22,
-          "startingLine": 597
+          "startingLine": 658
         }
       },
       {
@@ -263,7 +279,7 @@
         "key": "Previous exercise",
         "location": {
           "startingColumn": 37,
-          "startingLine": 595
+          "startingLine": 656
         }
       },
       {
@@ -271,7 +287,7 @@
         "key": "Next exercise",
         "location": {
           "startingColumn": 37,
-          "startingLine": 613
+          "startingLine": 674
         }
       },
       {
@@ -279,7 +295,7 @@
         "key": "Add exercise",
         "location": {
           "startingColumn": 37,
-          "startingLine": 626
+          "startingLine": 687
         }
       },
       {
@@ -287,7 +303,7 @@
         "key": "Rest:",
         "location": {
           "startingColumn": 22,
-          "startingLine": 634
+          "startingLine": 695
         }
       },
       {
@@ -295,7 +311,7 @@
         "key": "Off",
         "location": {
           "startingColumn": 28,
-          "startingLine": 638
+          "startingLine": 699
         }
       },
       {
@@ -303,7 +319,7 @@
         "key": "30s",
         "location": {
           "startingColumn": 28,
-          "startingLine": 639
+          "startingLine": 700
         }
       },
       {
@@ -311,7 +327,7 @@
         "key": "60s",
         "location": {
           "startingColumn": 28,
-          "startingLine": 640
+          "startingLine": 701
         }
       },
       {
@@ -319,7 +335,7 @@
         "key": "90s",
         "location": {
           "startingColumn": 28,
-          "startingLine": 641
+          "startingLine": 702
         }
       },
       {
@@ -327,7 +343,7 @@
         "key": "120s",
         "location": {
           "startingColumn": 28,
-          "startingLine": 642
+          "startingLine": 703
         }
       },
       {
@@ -335,7 +351,7 @@
         "key": "180s",
         "location": {
           "startingColumn": 28,
-          "startingLine": 643
+          "startingLine": 704
         }
       },
       {
@@ -343,7 +359,7 @@
         "key": "%llds",
         "location": {
           "startingColumn": 62,
-          "startingLine": 645
+          "startingLine": 706
         }
       },
       {
@@ -351,7 +367,7 @@
         "key": "Off",
         "location": {
           "startingColumn": 105,
-          "startingLine": 645
+          "startingLine": 706
         }
       },
       {
@@ -359,7 +375,7 @@
         "key": "REST",
         "location": {
           "startingColumn": 18,
-          "startingLine": 694
+          "startingLine": 755
         }
       },
       {
@@ -367,7 +383,7 @@
         "key": "Expand rest timer",
         "location": {
           "startingColumn": 33,
-          "startingLine": 682
+          "startingLine": 743
         }
       },
       {
@@ -375,7 +391,7 @@
         "key": "Rest time remaining %@",
         "location": {
           "startingColumn": 37,
-          "startingLine": 691
+          "startingLine": 752
         }
       },
       {
@@ -383,7 +399,7 @@
         "key": "Add 30 seconds to rest timer",
         "location": {
           "startingColumn": 33,
-          "startingLine": 716
+          "startingLine": 777
         }
       },
       {
@@ -391,7 +407,7 @@
         "key": "Lift — end rest and start next set",
         "location": {
           "startingColumn": 33,
-          "startingLine": 734
+          "startingLine": 795
         }
       },
       {
@@ -399,7 +415,7 @@
         "key": "Ends the rest timer immediately",
         "location": {
           "startingColumn": 32,
-          "startingLine": 735
+          "startingLine": 796
         }
       },
       {
@@ -407,7 +423,7 @@
         "key": "+30s",
         "location": {
           "startingColumn": 22,
-          "startingLine": 706
+          "startingLine": 767
         }
       },
       {
@@ -415,79 +431,119 @@
         "key": "Lift",
         "location": {
           "startingColumn": 22,
-          "startingLine": 724
+          "startingLine": 785
         }
       },
       {
         "comment": "",
         "key": "Add 30 seconds to rest timer",
         "location": {
-          "startingColumn": 37,
-          "startingLine": 862
+          "startingColumn": 41,
+          "startingLine": 919
         }
       },
       {
         "comment": "",
         "key": "Skip rest timer and start the next set",
         "location": {
-          "startingColumn": 37,
-          "startingLine": 886
+          "startingColumn": 41,
+          "startingLine": 938
         }
       },
       {
         "comment": "",
         "key": "Ends the rest timer immediately and returns to the lift",
         "location": {
-          "startingColumn": 36,
-          "startingLine": 887
+          "startingColumn": 40,
+          "startingLine": 939
         }
       },
       {
         "comment": "",
         "key": "Minimize rest timer",
         "location": {
-          "startingColumn": 41,
-          "startingLine": 801
+          "startingColumn": 45,
+          "startingLine": 867
         }
       },
       {
         "comment": "",
         "key": "Collapses the rest timer to a banner so you can see the next set",
         "location": {
-          "startingColumn": 40,
-          "startingLine": 802
+          "startingColumn": 44,
+          "startingLine": 868
         }
       },
       {
         "comment": "",
         "key": "REST",
         "location": {
-          "startingColumn": 30,
-          "startingLine": 823
-        }
-      },
-      {
-        "comment": "",
-        "key": "NEXT UP",
-        "location": {
-          "startingColumn": 30,
-          "startingLine": 838
+          "startingColumn": 34,
+          "startingLine": 890
         }
       },
       {
         "comment": "",
         "key": "+30s",
         "location": {
-          "startingColumn": 26,
-          "startingLine": 853
+          "startingColumn": 30,
+          "startingLine": 910
         }
       },
       {
         "comment": "",
         "key": "LIFT",
         "location": {
+          "startingColumn": 30,
+          "startingLine": 928
+        }
+      },
+      {
+        "comment": "",
+        "key": "NEXT UP",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 960
+        }
+      },
+      {
+        "comment": "",
+        "key": "Set %lld of %lld",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 983
+        }
+      },
+      {
+        "comment": "",
+        "key": "Last: %@ x %lld",
+        "location": {
           "startingColumn": 26,
-          "startingLine": 876
+          "startingLine": 989
+        }
+      },
+      {
+        "comment": "",
+        "key": "PR territory!",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 998
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ from PR",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 1004
+        }
+      },
+      {
+        "comment": "",
+        "key": "PR: %@ x %lld",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 1010
         }
       },
       {
@@ -495,7 +551,7 @@
         "key": "No exercises yet",
         "location": {
           "startingColumn": 18,
-          "startingLine": 906
+          "startingLine": 1035
         }
       },
       {
@@ -503,7 +559,7 @@
         "key": "Add an exercise to use Focus Mode",
         "location": {
           "startingColumn": 18,
-          "startingLine": 909
+          "startingLine": 1038
         }
       }
     ]

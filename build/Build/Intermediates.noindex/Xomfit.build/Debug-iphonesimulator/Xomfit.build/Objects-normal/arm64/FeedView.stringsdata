@@ -7,7 +7,7 @@
         "key": "Feed",
         "location": {
           "startingColumn": 26,
-          "startingLine": 102
+          "startingLine": 109
         }
       },
       {
@@ -15,7 +15,7 @@
         "key": "Notifications, %lld unread",
         "location": {
           "startingColumn": 27,
-          "startingLine": 122
+          "startingLine": 129
         }
       },
       {
@@ -23,7 +23,7 @@
         "key": "Notifications",
         "location": {
           "startingColumn": 27,
-          "startingLine": 123
+          "startingLine": 130
         }
       },
       {
@@ -31,7 +31,7 @@
         "key": "Search users",
         "location": {
           "startingColumn": 41,
-          "startingLine": 131
+          "startingLine": 138
         }
       },
       {
@@ -39,7 +39,47 @@
         "key": "Friends and requests",
         "location": {
           "startingColumn": 41,
-          "startingLine": 140
+          "startingLine": 147
+        }
+      },
+      {
+        "comment": "",
+        "key": "Filters, %lld active",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 240
+        }
+      },
+      {
+        "comment": "",
+        "key": "Filters",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 241
+        }
+      },
+      {
+        "comment": "",
+        "key": "Opens filter options",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 242
+        }
+      },
+      {
+        "comment": "",
+        "key": "Filter",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 213
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 216
         }
       },
       {
@@ -47,7 +87,7 @@
         "key": "You're all caught up!",
         "location": {
           "startingColumn": 22,
-          "startingLine": 241
+          "startingLine": 334
         }
       },
       {
@@ -55,7 +95,7 @@
         "key": "Hide",
         "location": {
           "startingColumn": 31,
-          "startingLine": 227
+          "startingLine": 320
         }
       },
       {
@@ -63,7 +103,7 @@
         "key": "Retry loading more posts",
         "location": {
           "startingColumn": 33,
-          "startingLine": 286
+          "startingLine": 379
         }
       },
       {
@@ -71,7 +111,7 @@
         "key": "Couldn't load more posts",
         "location": {
           "startingColumn": 22,
-          "startingLine": 264
+          "startingLine": 357
         }
       },
       {
@@ -79,7 +119,7 @@
         "key": "Retry",
         "location": {
           "startingColumn": 22,
-          "startingLine": 276
+          "startingLine": 369
         }
       }
     ]

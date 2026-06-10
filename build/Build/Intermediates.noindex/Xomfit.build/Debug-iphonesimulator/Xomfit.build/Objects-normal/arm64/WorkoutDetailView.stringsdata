@@ -7,7 +7,7 @@
         "key": "Discard changes?",
         "location": {
           "startingColumn": 16,
-          "startingLine": 162
+          "startingLine": 163
         }
       },
       {
@@ -15,7 +15,7 @@
         "key": "Warm up first?",
         "location": {
           "startingColumn": 13,
-          "startingLine": 179
+          "startingLine": 180
         }
       },
       {
@@ -23,7 +23,7 @@
         "key": "Builds a fresh workout using these exercises as a template",
         "location": {
           "startingColumn": 28,
-          "startingLine": 664
+          "startingLine": 709
         }
       },
       {
@@ -31,7 +31,7 @@
         "key": "Cancel",
         "location": {
           "startingColumn": 28,
-          "startingLine": 101
+          "startingLine": 102
         }
       },
       {
@@ -39,7 +39,7 @@
         "key": "Save",
         "location": {
           "startingColumn": 34,
-          "startingLine": 117
+          "startingLine": 118
         }
       },
       {
@@ -47,7 +47,7 @@
         "key": "Done",
         "location": {
           "startingColumn": 28,
-          "startingLine": 125
+          "startingLine": 126
         }
       },
       {
@@ -55,7 +55,7 @@
         "key": "Edit workout",
         "location": {
           "startingColumn": 45,
-          "startingLine": 143
+          "startingLine": 144
         }
       },
       {
@@ -63,7 +63,7 @@
         "key": "Share workout as image",
         "location": {
           "startingColumn": 45,
-          "startingLine": 152
+          "startingLine": 153
         }
       },
       {
@@ -71,7 +71,7 @@
         "key": "Discard",
         "location": {
           "startingColumn": 20,
-          "startingLine": 163
+          "startingLine": 164
         }
       },
       {
@@ -79,7 +79,7 @@
         "key": "Keep Editing",
         "location": {
           "startingColumn": 20,
-          "startingLine": 167
+          "startingLine": 168
         }
       },
       {
@@ -87,7 +87,7 @@
         "key": "Your edits to this workout will be lost.",
         "location": {
           "startingColumn": 18,
-          "startingLine": 169
+          "startingLine": 170
         }
       },
       {
@@ -95,7 +95,7 @@
         "key": "Yes, %lld min",
         "location": {
           "startingColumn": 20,
-          "startingLine": 183
+          "startingLine": 184
         }
       },
       {
@@ -103,7 +103,7 @@
         "key": "No, skip",
         "location": {
           "startingColumn": 20,
-          "startingLine": 187
+          "startingLine": 188
         }
       },
       {
@@ -111,7 +111,7 @@
         "key": "Just this once",
         "location": {
           "startingColumn": 20,
-          "startingLine": 191
+          "startingLine": 192
         }
       },
       {
@@ -119,7 +119,15 @@
         "key": "A 5-10 minute stretch routine helps loosen up before lifting.",
         "location": {
           "startingColumn": 18,
-          "startingLine": 195
+          "startingLine": 196
+        }
+      },
+      {
+        "comment": "",
+        "key": "Detailed Ratings",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 313
         }
       },
       {
@@ -127,7 +135,7 @@
         "key": "SET",
         "location": {
           "startingColumn": 30,
-          "startingLine": 322
+          "startingLine": 350
         }
       },
       {
@@ -135,7 +143,7 @@
         "key": "WEIGHT",
         "location": {
           "startingColumn": 30,
-          "startingLine": 324
+          "startingLine": 352
         }
       },
       {
@@ -143,7 +151,7 @@
         "key": "REPS",
         "location": {
           "startingColumn": 30,
-          "startingLine": 326
+          "startingLine": 354
         }
       },
       {
@@ -151,7 +159,7 @@
         "key": "VOL",
         "location": {
           "startingColumn": 30,
-          "startingLine": 328
+          "startingLine": 356
         }
       },
       {
@@ -159,7 +167,7 @@
         "key": "Set %lld: %@ lbs for %lld reps%@",
         "location": {
           "startingColumn": 29,
-          "startingLine": 443
+          "startingLine": 471
         }
       },
       {
@@ -167,7 +175,7 @@
         "key": "Note: %@",
         "location": {
           "startingColumn": 45,
-          "startingLine": 405
+          "startingLine": 433
         }
       },
       {
@@ -175,7 +183,7 @@
         "key": "%lld",
         "location": {
           "startingColumn": 30,
-          "startingLine": 343
+          "startingLine": 371
         }
       },
       {
@@ -183,7 +191,7 @@
         "key": "%lld sets",
         "location": {
           "startingColumn": 30,
-          "startingLine": 373
+          "startingLine": 401
         }
       },
       {
@@ -191,7 +199,7 @@
         "key": "Show details for %@",
         "location": {
           "startingColumn": 45,
-          "startingLine": 369
+          "startingLine": 397
         }
       },
       {
@@ -199,7 +207,7 @@
         "key": "PR",
         "location": {
           "startingColumn": 38,
-          "startingLine": 381
+          "startingLine": 409
         }
       },
       {
@@ -207,7 +215,7 @@
         "key": "%lld",
         "location": {
           "startingColumn": 18,
-          "startingLine": 418
+          "startingLine": 446
         }
       },
       {
@@ -215,7 +223,7 @@
         "key": "%lld",
         "location": {
           "startingColumn": 18,
-          "startingLine": 426
+          "startingLine": 454
         }
       },
       {
@@ -223,7 +231,7 @@
         "key": "No tracks captured. iOS only exposes Apple Music's Now Playing to third-party apps — connect Spotify in Settings to capture from there too.",
         "location": {
           "startingColumn": 22,
-          "startingLine": 479
+          "startingLine": 507
         }
       },
       {
@@ -231,7 +239,7 @@
         "key": "Soundtrack hidden",
         "location": {
           "startingColumn": 22,
-          "startingLine": 486
+          "startingLine": 514
         }
       },
       {
@@ -239,7 +247,7 @@
         "key": "Soundtrack hidden — only the featured track was shared.",
         "location": {
           "startingColumn": 26,
-          "startingLine": 525
+          "startingLine": 553
         }
       },
       {
@@ -247,7 +255,7 @@
         "key": "No tracks captured during this workout. Connect Spotify in Settings to capture from Spotify too.",
         "location": {
           "startingColumn": 41,
-          "startingLine": 483
+          "startingLine": 511
         }
       },
       {
@@ -255,7 +263,7 @@
         "key": "Toggle whether the full soundtrack is shared with friends or only the featured track.",
         "location": {
           "startingColumn": 40,
-          "startingLine": 519
+          "startingLine": 547
         }
       },
       {
@@ -263,7 +271,7 @@
         "key": "Soundtrack",
         "location": {
           "startingColumn": 22,
-          "startingLine": 467
+          "startingLine": 495
         }
       },
       {
@@ -271,7 +279,7 @@
         "key": "%lld",
         "location": {
           "startingColumn": 26,
-          "startingLine": 472
+          "startingLine": 500
         }
       },
       {
@@ -279,7 +287,7 @@
         "key": "Share full soundtrack",
         "location": {
           "startingColumn": 34,
-          "startingLine": 508
+          "startingLine": 536
         }
       },
       {
@@ -287,7 +295,7 @@
         "key": "Friends will see every track on this workout.",
         "location": {
           "startingColumn": 36,
-          "startingLine": 512
+          "startingLine": 540
         }
       },
       {
@@ -295,7 +303,7 @@
         "key": "Only the featured track will show on your feed.",
         "location": {
           "startingColumn": 36,
-          "startingLine": 513
+          "startingLine": 541
         }
       },
       {
@@ -303,7 +311,7 @@
         "key": "Unset %@ as featured track",
         "location": {
           "startingColumn": 23,
-          "startingLine": 599
+          "startingLine": 634
         }
       },
       {
@@ -311,7 +319,7 @@
         "key": "Set %@ as featured track",
         "location": {
           "startingColumn": 23,
-          "startingLine": 600
+          "startingLine": 635
         }
       },
       {
@@ -319,7 +327,7 @@
         "key": "Featured tracks show prominently on your feed card.",
         "location": {
           "startingColumn": 36,
-          "startingLine": 601
+          "startingLine": 636
         }
       },
       {
@@ -327,7 +335,15 @@
         "key": "Opens this track in %@.",
         "location": {
           "startingColumn": 36,
-          "startingLine": 623
+          "startingLine": 658
+        }
+      },
+      {
+        "comment": "",
+        "key": "x%lld",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 596
         }
       },
       {
@@ -335,7 +351,7 @@
         "key": "•",
         "location": {
           "startingColumn": 30,
-          "startingLine": 572
+          "startingLine": 607
         }
       },
       {
@@ -343,7 +359,7 @@
         "key": "Start this Workout",
         "location": {
           "startingColumn": 22,
-          "startingLine": 660
+          "startingLine": 705
         }
       },
       {
@@ -351,7 +367,7 @@
         "key": "Pause preview",
         "location": {
           "startingColumn": 41,
-          "startingLine": 870
+          "startingLine": 915
         }
       },
       {
@@ -359,7 +375,7 @@
         "key": "Play preview of %@",
         "location": {
           "startingColumn": 59,
-          "startingLine": 870
+          "startingLine": 915
         }
       },
       {
@@ -367,7 +383,7 @@
         "key": "Plays a 30 second preview inline.",
         "location": {
           "startingColumn": 28,
-          "startingLine": 871
+          "startingLine": 916
         }
       },
       {
@@ -375,7 +391,7 @@
         "key": "Add exercise to workout",
         "location": {
           "startingColumn": 29,
-          "startingLine": 916
+          "startingLine": 961
         }
       },
       {
@@ -383,7 +399,7 @@
         "key": "Add Exercise",
         "location": {
           "startingColumn": 22,
-          "startingLine": 903
+          "startingLine": 948
         }
       },
       {
@@ -391,7 +407,7 @@
         "key": "Workout",
         "location": {
           "startingColumn": 23,
-          "startingLine": 958
+          "startingLine": 1003
         }
       },
       {
@@ -399,7 +415,7 @@
         "key": "Workout name",
         "location": {
           "startingColumn": 37,
-          "startingLine": 968
+          "startingLine": 1013
         }
       },
       {
@@ -407,7 +423,7 @@
         "key": "Duration: %@",
         "location": {
           "startingColumn": 18,
-          "startingLine": 1000
+          "startingLine": 1045
         }
       },
       {
@@ -415,7 +431,7 @@
         "key": "",
         "location": {
           "startingColumn": 17,
-          "startingLine": 976
+          "startingLine": 1021
         }
       },
       {
@@ -423,7 +439,7 @@
         "key": "Workout start time",
         "location": {
           "startingColumn": 33,
-          "startingLine": 983
+          "startingLine": 1028
         }
       },
       {
@@ -431,7 +447,7 @@
         "key": "",
         "location": {
           "startingColumn": 17,
-          "startingLine": 987
+          "startingLine": 1032
         }
       },
       {
@@ -439,7 +455,7 @@
         "key": "Workout end time",
         "location": {
           "startingColumn": 33,
-          "startingLine": 998
+          "startingLine": 1043
         }
       },
       {
@@ -447,7 +463,7 @@
         "key": "Calculated duration: %@",
         "location": {
           "startingColumn": 37,
-          "startingLine": 1003
+          "startingLine": 1048
         }
       },
       {
@@ -455,7 +471,7 @@
         "key": "%lld star%@",
         "location": {
           "startingColumn": 41,
-          "startingLine": 1038
+          "startingLine": 1083
         }
       },
       {
@@ -463,7 +479,7 @@
         "key": "Workout notes",
         "location": {
           "startingColumn": 33,
-          "startingLine": 1064
+          "startingLine": 1109
         }
       },
       {
@@ -471,7 +487,7 @@
         "key": "No exercises",
         "location": {
           "startingColumn": 18,
-          "startingLine": 1105
+          "startingLine": 1150
         }
       },
       {
@@ -479,7 +495,7 @@
         "key": "Add at least one to save",
         "location": {
           "startingColumn": 18,
-          "startingLine": 1108
+          "startingLine": 1153
         }
       },
       {
@@ -487,7 +503,7 @@
         "key": "Add set to %@",
         "location": {
           "startingColumn": 29,
-          "startingLine": 1264
+          "startingLine": 1309
         }
       },
       {
@@ -495,7 +511,7 @@
         "key": "Remove %@",
         "location": {
           "startingColumn": 29,
-          "startingLine": 1208
+          "startingLine": 1253
         }
       },
       {
@@ -503,7 +519,7 @@
         "key": "Move %@ up",
         "location": {
           "startingColumn": 33,
-          "startingLine": 1178
+          "startingLine": 1223
         }
       },
       {
@@ -511,7 +527,7 @@
         "key": "Move %@ down",
         "location": {
           "startingColumn": 33,
-          "startingLine": 1192
+          "startingLine": 1237
         }
       },
       {
@@ -519,7 +535,7 @@
         "key": "SET",
         "location": {
           "startingColumn": 18,
-          "startingLine": 1213
+          "startingLine": 1258
         }
       },
       {
@@ -527,7 +543,7 @@
         "key": "WEIGHT (LBS)",
         "location": {
           "startingColumn": 18,
-          "startingLine": 1215
+          "startingLine": 1260
         }
       },
       {
@@ -535,7 +551,7 @@
         "key": "REPS",
         "location": {
           "startingColumn": 18,
-          "startingLine": 1217
+          "startingLine": 1262
         }
       },
       {
@@ -543,7 +559,7 @@
         "key": "Add Set",
         "location": {
           "startingColumn": 22,
-          "startingLine": 1255
+          "startingLine": 1300
         }
       },
       {
@@ -551,7 +567,7 @@
         "key": "%lld",
         "location": {
           "startingColumn": 18,
-          "startingLine": 1305
+          "startingLine": 1350
         }
       },
       {
@@ -559,7 +575,7 @@
         "key": "0",
         "location": {
           "startingColumn": 23,
-          "startingLine": 1310
+          "startingLine": 1355
         }
       },
       {
@@ -567,7 +583,7 @@
         "key": "Weight for set %lld",
         "location": {
           "startingColumn": 37,
-          "startingLine": 1332
+          "startingLine": 1377
         }
       },
       {
@@ -575,7 +591,7 @@
         "key": "0",
         "location": {
           "startingColumn": 23,
-          "startingLine": 1334
+          "startingLine": 1379
         }
       },
       {
@@ -583,7 +599,7 @@
         "key": "Reps for set %lld",
         "location": {
           "startingColumn": 37,
-          "startingLine": 1356
+          "startingLine": 1401
         }
       },
       {
@@ -591,7 +607,15 @@
         "key": "Delete set %lld",
         "location": {
           "startingColumn": 33,
-          "startingLine": 1369
+          "startingLine": 1414
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@: %lld out of 5",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 1443
         }
       }
     ]

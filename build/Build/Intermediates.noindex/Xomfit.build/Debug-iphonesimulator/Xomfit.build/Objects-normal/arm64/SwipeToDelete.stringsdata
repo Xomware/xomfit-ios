@@ -7,7 +7,7 @@
         "key": "Delete",
         "location": {
           "startingColumn": 42,
-          "startingLine": 94
+          "startingLine": 119
         }
       },
       {
@@ -15,7 +15,7 @@
         "key": "Swipe left to delete, or use the Delete rotor action",
         "location": {
           "startingColumn": 28,
-          "startingLine": 97
+          "startingLine": 122
         }
       },
       {
@@ -23,7 +23,7 @@
         "key": "Delete",
         "location": {
           "startingColumn": 26,
-          "startingLine": 48
+          "startingLine": 57
         }
       }
     ]

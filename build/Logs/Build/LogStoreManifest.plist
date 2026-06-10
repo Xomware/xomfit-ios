@@ -6,7 +6,7 @@
 	<integer>12</integer>
 	<key>logs</key>
 	<dict>
-		<key>51AF7B87-9D0D-4D82-AEFC-9F48ED4F35B9</key>
+		<key>7366DDCD-63FE-460E-A435-43778F1EA1B3</key>
 		<dict>
 			<key>className</key>
 			<string>IDECommandLineBuildLog</string>
@@ -15,21 +15,21 @@
 			<key>domainType</key>
 			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
 			<key>fileName</key>
-			<string>51AF7B87-9D0D-4D82-AEFC-9F48ED4F35B9.xcactivitylog</string>
+			<string>7366DDCD-63FE-460E-A435-43778F1EA1B3.xcactivitylog</string>
 			<key>hasPrimaryLog</key>
 			<true/>
 			<key>primaryObservable</key>
 			<dict>
 				<key>highLevelStatus</key>
-				<string>S</string>
+				<string>E</string>
 				<key>totalNumberOfAnalyzerIssues</key>
 				<integer>0</integer>
 				<key>totalNumberOfErrors</key>
-				<integer>0</integer>
+				<integer>1</integer>
 				<key>totalNumberOfTestFailures</key>
 				<integer>0</integer>
 				<key>totalNumberOfWarnings</key>
-				<integer>0</integer>
+				<integer>30</integer>
 			</dict>
 			<key>schemeIdentifier-containerName</key>
 			<string>Xomfit project</string>
@@ -40,13 +40,13 @@
 			<key>signature</key>
 			<string>Building project Xomfit with scheme Xomfit and configuration Debug</string>
 			<key>timeStartedRecording</key>
-			<real>800375810.68144298</real>
+			<real>802354599.59161198</real>
 			<key>timeStoppedRecording</key>
-			<real>800375813.26110303</real>
+			<real>802354619.78691196</real>
 			<key>title</key>
 			<string>Building project Xomfit with scheme Xomfit and configuration Debug</string>
 			<key>uniqueIdentifier</key>
-			<string>51AF7B87-9D0D-4D82-AEFC-9F48ED4F35B9</string>
+			<string>7366DDCD-63FE-460E-A435-43778F1EA1B3</string>
 		</dict>
 	</dict>
 </dict>

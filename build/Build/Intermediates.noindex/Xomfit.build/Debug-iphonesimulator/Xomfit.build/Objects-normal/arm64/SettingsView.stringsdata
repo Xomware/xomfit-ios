@@ -463,15 +463,15 @@
         "key": "Apple Music: %@",
         "location": {
           "startingColumn": 29,
-          "startingLine": 685
+          "startingLine": 684
         }
       },
       {
         "comment": "",
-        "key": "XomFit captures songs that played during your workout. Apple Music reads from system permission; Spotify and SoundCloud require sign-in.",
+        "key": "XomFit captures songs that played during your workout. Apple Music reads from system permission; Spotify requires sign-in.",
         "location": {
           "startingColumn": 18,
-          "startingLine": 640
+          "startingLine": 639
         }
       },
       {
@@ -479,7 +479,7 @@
         "key": "Open Settings",
         "location": {
           "startingColumn": 24,
-          "startingLine": 674
+          "startingLine": 673
         }
       },
       {
@@ -487,7 +487,7 @@
         "key": "Opens the iOS Settings app where you can grant Apple Music access",
         "location": {
           "startingColumn": 36,
-          "startingLine": 681
+          "startingLine": 680
         }
       },
       {
@@ -495,7 +495,7 @@
         "key": "Apple Music",
         "location": {
           "startingColumn": 22,
-          "startingLine": 666
+          "startingLine": 665
         }
       }
     ]

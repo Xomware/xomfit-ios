@@ -1,0 +1,72 @@
+{
+  "source": "/Users/dom/Code/xomfit-ios/Xomfit/Views/Feed/FeedFilterSheet.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Filters",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 125
+        }
+      },
+      {
+        "comment": "",
+        "key": "Close filters",
+        "location": {
+          "startingColumn": 41,
+          "startingLine": 137
+        }
+      },
+      {
+        "comment": "",
+        "key": "Sort By",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 149
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@%@",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 369
+        }
+      },
+      {
+        "comment": "",
+        "key": "Any rating",
+        "location": {
+          "startingColumn": 44,
+          "startingLine": 200
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld+ stars",
+        "location": {
+          "startingColumn": 59,
+          "startingLine": 200
+        }
+      },
+      {
+        "comment": "",
+        "key": "Minimum %lld star%@",
+        "location": {
+          "startingColumn": 45,
+          "startingLine": 194
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@%@",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 248
+        }
+      }
+    ]
+  },
+  "version": 1
+}

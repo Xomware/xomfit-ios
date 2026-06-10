@@ -78,6 +78,8 @@ struct WorkoutFocusView: View {
                 // .infinity)`. The bottom slot is exerciseNavigation; the
                 // minimized rest banner now lives in a sibling `.safeAreaInset`
                 // (#411 bug 3) so it never steals vertical space from DONE.
+                GeometryReader { proxy in
+                ScrollView {
                 VStack(spacing: Theme.Spacing.md) {
                     // TOP — exercise header + config + set indicator.
                     // Hidden while a numeric field is focused so the keyboard
@@ -142,7 +144,10 @@ struct WorkoutFocusView: View {
                 .animation(.easeInOut(duration: 0.3), value: viewModel.focusExerciseIndex)
                 .padding(.top, Theme.Spacing.sm)
                 .padding(.horizontal, Theme.Spacing.lg)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .frame(maxWidth: .infinity, minHeight: proxy.size.height)
+                }
+                .scrollBounceBehavior(.basedOnSize)
+                }
                 .animation(.xomChill, value: viewModel.isRestTimerMinimized)
                 .animation(.xomChill, value: viewModel.isRestTimerActive)
                 .animation(.xomChill, value: keyboardCompactMode)

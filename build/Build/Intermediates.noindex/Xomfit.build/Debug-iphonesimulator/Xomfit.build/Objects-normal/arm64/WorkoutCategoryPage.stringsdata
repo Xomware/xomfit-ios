@@ -47,7 +47,7 @@
         "key": "%@, %@",
         "location": {
           "startingColumn": 37,
-          "startingLine": 182
+          "startingLine": 183
         }
       },
       {
@@ -55,7 +55,7 @@
         "key": "Friend workout: %@",
         "location": {
           "startingColumn": 41,
-          "startingLine": 233
+          "startingLine": 267
         }
       },
       {
@@ -63,7 +63,7 @@
         "key": "No matches",
         "location": {
           "startingColumn": 18,
-          "startingLine": 290
+          "startingLine": 324
         }
       },
       {
@@ -71,7 +71,7 @@
         "key": "Try clearing a filter or search term.",
         "location": {
           "startingColumn": 18,
-          "startingLine": 293
+          "startingLine": 327
         }
       }
     ]

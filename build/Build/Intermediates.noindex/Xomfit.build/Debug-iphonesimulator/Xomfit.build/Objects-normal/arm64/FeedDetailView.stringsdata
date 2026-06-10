@@ -92,10 +92,18 @@
       },
       {
         "comment": "",
+        "key": "Rated %lld of 5 stars",
+        "location": {
+          "startingColumn": 49,
+          "startingLine": 124
+        }
+      },
+      {
+        "comment": "",
         "key": "·",
         "location": {
           "startingColumn": 30,
-          "startingLine": 115
+          "startingLine": 132
         }
       },
       {
@@ -103,7 +111,7 @@
         "key": "%@ %@",
         "location": {
           "startingColumn": 29,
-          "startingLine": 592
+          "startingLine": 672
         }
       },
       {
@@ -111,7 +119,7 @@
         "key": "Personal Records",
         "location": {
           "startingColumn": 30,
-          "startingLine": 178
+          "startingLine": 201
         }
       },
       {
@@ -119,7 +127,23 @@
         "key": "%@lb × %lld",
         "location": {
           "startingColumn": 38,
-          "startingLine": 192
+          "startingLine": 215
+        }
+      },
+      {
+        "comment": "",
+        "key": "Detailed Ratings",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 239
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@: %lld out of 5",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 276
         }
       },
       {
@@ -127,7 +151,7 @@
         "key": "Exercises",
         "location": {
           "startingColumn": 18,
-          "startingLine": 211
+          "startingLine": 284
         }
       },
       {
@@ -135,7 +159,7 @@
         "key": "%lld",
         "location": {
           "startingColumn": 34,
-          "startingLine": 254
+          "startingLine": 327
         }
       },
       {
@@ -143,7 +167,7 @@
         "key": "%lld × %@lb",
         "location": {
           "startingColumn": 34,
-          "startingLine": 259
+          "startingLine": 332
         }
       },
       {
@@ -151,7 +175,7 @@
         "key": "%lld",
         "location": {
           "startingColumn": 26,
-          "startingLine": 276
+          "startingLine": 349
         }
       },
       {
@@ -159,7 +183,7 @@
         "key": "%lld set%@ · %@",
         "location": {
           "startingColumn": 30,
-          "startingLine": 289
+          "startingLine": 362
         }
       },
       {
@@ -167,7 +191,7 @@
         "key": "PR",
         "location": {
           "startingColumn": 34,
-          "startingLine": 300
+          "startingLine": 373
         }
       },
       {
@@ -175,7 +199,7 @@
         "key": "Best: %@ lbs x %lld reps",
         "location": {
           "startingColumn": 22,
-          "startingLine": 328
+          "startingLine": 401
         }
       },
       {
@@ -183,7 +207,7 @@
         "key": "PR",
         "location": {
           "startingColumn": 26,
-          "startingLine": 339
+          "startingLine": 412
         }
       },
       {
@@ -191,7 +215,7 @@
         "key": "View profile of @%@",
         "location": {
           "startingColumn": 33,
-          "startingLine": 380
+          "startingLine": 453
         }
       },
       {
@@ -199,7 +223,7 @@
         "key": "Opens this user's profile",
         "location": {
           "startingColumn": 32,
-          "startingLine": 381
+          "startingLine": 454
         }
       },
       {
@@ -207,7 +231,7 @@
         "key": "%@ · %@",
         "location": {
           "startingColumn": 30,
-          "startingLine": 370
+          "startingLine": 443
         }
       },
       {
@@ -215,7 +239,7 @@
         "key": "%@, %lld likes",
         "location": {
           "startingColumn": 33,
-          "startingLine": 416
+          "startingLine": 489
         }
       },
       {
@@ -223,7 +247,7 @@
         "key": "%lld comments",
         "location": {
           "startingColumn": 33,
-          "startingLine": 434
+          "startingLine": 507
         }
       },
       {
@@ -231,7 +255,7 @@
         "key": "Opens the comment thread",
         "location": {
           "startingColumn": 32,
-          "startingLine": 435
+          "startingLine": 508
         }
       },
       {
@@ -239,7 +263,7 @@
         "key": "Share",
         "location": {
           "startingColumn": 33,
-          "startingLine": 446
+          "startingLine": 519
         }
       },
       {
@@ -247,7 +271,7 @@
         "key": "%lld",
         "location": {
           "startingColumn": 26,
-          "startingLine": 408
+          "startingLine": 481
         }
       },
       {
@@ -255,7 +279,7 @@
         "key": "%lld",
         "location": {
           "startingColumn": 26,
-          "startingLine": 426
+          "startingLine": 499
         }
       },
       {
@@ -263,7 +287,7 @@
         "key": "Only the featured track was shared.",
         "location": {
           "startingColumn": 26,
-          "startingLine": 490
+          "startingLine": 563
         }
       },
       {
@@ -271,7 +295,7 @@
         "key": "Soundtrack",
         "location": {
           "startingColumn": 26,
-          "startingLine": 467
+          "startingLine": 540
         }
       },
       {
@@ -279,7 +303,7 @@
         "key": "%lld",
         "location": {
           "startingColumn": 26,
-          "startingLine": 471
+          "startingLine": 544
         }
       },
       {
@@ -287,7 +311,15 @@
         "key": "Opens this track in %@.",
         "location": {
           "startingColumn": 36,
-          "startingLine": 568
+          "startingLine": 648
+        }
+      },
+      {
+        "comment": "",
+        "key": "x%lld",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 611
         }
       },
       {
@@ -295,7 +327,7 @@
         "key": "•",
         "location": {
           "startingColumn": 30,
-          "startingLine": 542
+          "startingLine": 622
         }
       }
     ]

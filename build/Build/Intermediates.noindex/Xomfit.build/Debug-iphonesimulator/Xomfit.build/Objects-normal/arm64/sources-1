@@ -41,6 +41,7 @@
 /Users/dom/Code/xomfit-ios/Xomfit/Models/Workout.swift
 /Users/dom/Code/xomfit-ios/Xomfit/Models/WorkoutFilter.swift
 /Users/dom/Code/xomfit-ios/Xomfit/Models/WorkoutProgram.swift
+/Users/dom/Code/xomfit-ios/Xomfit/Models/WorkoutRatings.swift
 /Users/dom/Code/xomfit-ios/Xomfit/Models/WorkoutSet.swift
 /Users/dom/Code/xomfit-ios/Xomfit/Models/WorkoutTemplate.swift
 /Users/dom/Code/xomfit-ios/Xomfit/Models/WorkoutTrack.swift
@@ -60,9 +61,6 @@
 /Users/dom/Code/xomfit-ios/Xomfit/Services/ProfileService.swift
 /Users/dom/Code/xomfit-ios/Xomfit/Services/PRService.swift
 /Users/dom/Code/xomfit-ios/Xomfit/Services/ReportsService.swift
-/Users/dom/Code/xomfit-ios/Xomfit/Services/SoundCloudAuthService.swift
-/Users/dom/Code/xomfit-ios/Xomfit/Services/SoundCloudConfig.swift
-/Users/dom/Code/xomfit-ios/Xomfit/Services/SoundCloudNowPlayingService.swift
 /Users/dom/Code/xomfit-ios/Xomfit/Services/SpotifyAuthService.swift
 /Users/dom/Code/xomfit-ios/Xomfit/Services/SpotifyConfig.swift
 /Users/dom/Code/xomfit-ios/Xomfit/Services/SpotifyNowPlayingService.swift
@@ -126,6 +124,7 @@
 /Users/dom/Code/xomfit-ios/Xomfit/Views/Feed/FeedCommentsView.swift
 /Users/dom/Code/xomfit-ios/Xomfit/Views/Feed/FeedDetailView.swift
 /Users/dom/Code/xomfit-ios/Xomfit/Views/Feed/FeedFilterBar.swift
+/Users/dom/Code/xomfit-ios/Xomfit/Views/Feed/FeedFilterSheet.swift
 /Users/dom/Code/xomfit-ios/Xomfit/Views/Feed/FeedItemCard.swift
 /Users/dom/Code/xomfit-ios/Xomfit/Views/Feed/FeedView.swift
 /Users/dom/Code/xomfit-ios/Xomfit/Views/Feed/PhotoZoomView.swift
@@ -159,7 +158,6 @@
 /Users/dom/Code/xomfit-ios/Xomfit/Views/Profile/ProfileView.swift
 /Users/dom/Code/xomfit-ios/Xomfit/Views/Profile/ProfileWorkoutListView.swift
 /Users/dom/Code/xomfit-ios/Xomfit/Views/Profile/SettingsView.swift
-/Users/dom/Code/xomfit-ios/Xomfit/Views/Profile/SoundCloudConnectionView.swift
 /Users/dom/Code/xomfit-ios/Xomfit/Views/Profile/SpotifyConnectionView.swift
 /Users/dom/Code/xomfit-ios/Xomfit/Views/Profile/StreakCard.swift
 /Users/dom/Code/xomfit-ios/Xomfit/Views/Profile/TopExerciseRow.swift

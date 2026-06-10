@@ -14,7 +14,7 @@
 		</data>
 		<key>Assets.car</key>
 		<data>
-		lEM5iUR+TQeyyOlwPFrMxzDbYq8=
+		wWaiRVq1sFZNDTQd1ey9At9RviM=
 		</data>
 		<key>Config.swift.template</key>
 		<data>
@@ -26,7 +26,7 @@
 		</data>
 		<key>Info.plist</key>
 		<data>
-		qOiMo2/Y3vs9v0dK01a9Eu5of6M=
+		TrR33/FT1DVmI887RLfnOkBr8Ok=
 		</data>
 		<key>PkgInfo</key>
 		<data>
@@ -34,7 +34,7 @@
 		</data>
 		<key>PlugIns/XomfitWidgetExtension.appex/Info.plist</key>
 		<data>
-		yOQ4CLR2eNEXPT2SvoJen9tV430=
+		Vz9lfEH8CRdZ03VuEt3TWC9G/Pw=
 		</data>
 		<key>PlugIns/XomfitWidgetExtension.appex/Metadata.appintents/extract.actionsdata</key>
 		<data>
@@ -42,11 +42,11 @@
 		</data>
 		<key>PlugIns/XomfitWidgetExtension.appex/Metadata.appintents/version.json</key>
 		<data>
-		j/NvTP97PufO1WNIuID6c9Dbvfs=
+		oHmZga5LJQVc//cQW3VvTBnzmq8=
 		</data>
 		<key>PlugIns/XomfitWidgetExtension.appex/XomfitWidgetExtension</key>
 		<data>
-		vYd/SvsDyP3jAFNDb9ruE8zq5WY=
+		B9Ick8KLVfFHIm0usixi188R868=
 		</data>
 		<key>PlugIns/XomfitWidgetExtension.appex/XomfitWidgetExtension.debug.dylib</key>
 		<data>
@@ -54,7 +54,7 @@
 		</data>
 		<key>PlugIns/XomfitWidgetExtension.appex/_CodeSignature/CodeResources</key>
 		<data>
-		53R+dJXUJwdpdeNAkEgQe0NLQXs=
+		UgU4duVcyahV9UkJiOq2DFh/t1A=
 		</data>
 		<key>PlugIns/XomfitWidgetExtension.appex/__preview.dylib</key>
 		<data>
@@ -62,7 +62,7 @@
 		</data>
 		<key>Xomfit.debug.dylib</key>
 		<data>
-		iMivxATLGuusHiYeH9lahIixxMI=
+		B1/yzOfkoCPN8qCQGm1O/Xo7DCY=
 		</data>
 		<key>__preview.dylib</key>
 		<data>
@@ -205,7 +205,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			jO+be9bbVWZt3Rm9mJJm/WldfODXcg9bI6k2gv/AgSI=
+			VjPZjf33VCCDzq7c743iSinVV+loTjxPj4V3wAL3FS8=
 			</data>
 		</dict>
 		<key>Config.swift.template</key>
@@ -226,7 +226,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			Hm85JpHgzMj779u+iHKpzPzJH15TYk3TXylIxWvQ/RM=
+			E0QIYLhaa4z4UMVDrx92gGpuKci2tSZB5nupZilAn6A=
 			</data>
 		</dict>
 		<key>PlugIns/XomfitWidgetExtension.appex/Metadata.appintents/extract.actionsdata</key>
@@ -240,14 +240,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			hwkcETkj0nqqyOVVnohLEVbIqBsf+qkA/LW6yBrVzTk=
+			6LJbIO58DeKo5IvjGCfQzvIeSnq584I/VYy6Gt7JkpM=
 			</data>
 		</dict>
 		<key>PlugIns/XomfitWidgetExtension.appex/XomfitWidgetExtension</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			Tb4qxPnmsPByVLwDGB6WEWfNT4PTB+1r6Xn7+MeqHFU=
+			iNQXn5iydGlhbXsCaWddvuzld6NkxSquJjrmyqW7Qm8=
 			</data>
 		</dict>
 		<key>PlugIns/XomfitWidgetExtension.appex/XomfitWidgetExtension.debug.dylib</key>
@@ -261,7 +261,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			h0ez30gJWaUN+1zuN4iVm/9bTlqLV7yazRNBwxv1Vco=
+			WsoqdcruiF4ex+PNXAvMEO6X8hxg+frKxWwi8l6Vmm8=
 			</data>
 		</dict>
 		<key>PlugIns/XomfitWidgetExtension.appex/__preview.dylib</key>
@@ -275,7 +275,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			+tQEj1JjfZrd+Y/N2ARVUIDkn+kik/ap9t79npcs8Go=
+			jB+aGxdSHNeA+vOpKNx01MgrOS1Pwxm2Qmn9qO9wBMc=
 			</data>
 		</dict>
 		<key>__preview.dylib</key>
