@@ -125,15 +125,27 @@ struct WorkoutFocusView: View {
                             .transition(.opacity)
                     }
 
-                    // MIDDLE — weight / reps / done. Absorbs slack so the top
-                    // header stays pinned under the Dynamic Island regardless of
-                    // whether the minimized rest banner is showing (#344-A).
+                    // Flexible top spacer — expands to vertically center the
+                    // weight/reps/done block when content fits, collapses to its
+                    // minLength so the VStack can grow past `proxy.size.height`
+                    // (and the ScrollView takes over) when the minimized rest
+                    // banner or keyboard pushes content past the screen. This
+                    // replaces the old `.frame(maxHeight: .infinity)` on the
+                    // middle block, which fought the scroll layout and crushed
+                    // the cards together when the banner appeared.
+                    Spacer(minLength: Theme.Spacing.md)
+
+                    // MIDDLE — weight / reps / done at natural content height.
                     VStack(spacing: Theme.Spacing.md) {
                         weightDisplay(currentSet: currentSet)
                         repsDisplay(currentSet: currentSet)
                         doneButton(currentSet: currentSet)
                     }
-                    .frame(maxHeight: .infinity)
+
+                    // Flexible bottom spacer — mirrors the top spacer so the
+                    // middle block stays centered between the pinned header and
+                    // the bottom navigation when there's slack.
+                    Spacer(minLength: Theme.Spacing.md)
 
                     // BOTTOM — exercise navigation (prev/next/add + rest config).
                     // Hidden in compact keyboard mode.
