@@ -1,6 +1,7 @@
 import XCTest
-@testable import XomFit
+@testable import Xomfit
 
+@MainActor
 class AnimationTests: XCTestCase {
     
     // MARK: - ExerciseAnimationLibrary Tests
@@ -167,6 +168,7 @@ class AnimationTests: XCTestCase {
 
 // MARK: - Performance Tests
 
+@MainActor
 class AnimationPerformanceTests: XCTestCase {
     
     func testAnimationLibraryLoadPerformance() {

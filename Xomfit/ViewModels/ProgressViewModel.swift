@@ -162,16 +162,10 @@ final class ProgressViewModel {
     }
 
     private func computeMuscleGroups(workouts: [Workout]) {
-        var groupSets: [MuscleGroup: Int] = [:]
-
-        for workout in workouts {
-            for workoutExercise in workout.exercises {
-                let setCount = workoutExercise.sets.count
-                for muscle in workoutExercise.exercise.muscleGroups {
-                    groupSets[muscle, default: 0] += setCount
-                }
-            }
-        }
+        // Set counting lives in the shared Seam-2 helper (single source of truth
+        // across Progress / generator / nudge). The sort + display mapping stays
+        // here so the Progress chart output is unchanged.
+        let groupSets = WorkoutInsights.setsPerMuscleGroup(workouts: workouts)
 
         muscleGroupSets = groupSets
             .sorted { $0.value > $1.value }

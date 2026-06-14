@@ -1,5 +1,5 @@
 import XCTest
-@testable import XomFit
+@testable import Xomfit
 
 final class ChallengeTests: XCTestCase {
 

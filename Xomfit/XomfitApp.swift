@@ -6,6 +6,11 @@ struct XomFitApp: App {
     @State private var authService = AuthService()
     @State private var workoutSession = WorkoutLoggerViewModel()
 
+    /// Shared in-process channel for the training nudge → generator hop (#P2).
+    /// The nudge toast sets `pending`; `WorkoutView` consumes it to open the
+    /// generator pre-seeded with that muscle.
+    @State private var generatorPreseed = GeneratorPreseed()
+
     /// Drives the fitness-profile questionnaire (#259). Bumped after dismissal so
     /// the cover doesn't re-present unless the user explicitly opens it again.
     @State private var showFitnessQuestionnaire = false
@@ -53,6 +58,7 @@ struct XomFitApp: App {
                     MainTabView()
                         .environment(authService)
                         .environment(workoutSession)
+                        .environment(generatorPreseed)
                         .task {
                             #if DEBUG
                             // Skip permission prompts under auth-bypass so agents can

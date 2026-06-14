@@ -63,6 +63,16 @@ struct SettingsView: View {
         return goal.title
     }
 
+    /// Short summary of the saved weekly plan for the row trailing label,
+    /// e.g. "4× · Legs, Pull" or "Not set". Mirrors `fitnessGoalsSummary`.
+    private var weeklyPlanSummary: String {
+        guard let plan = WeeklyPlanService.shared.currentPlan() else { return "Not set" }
+        let sessions = "\(plan.targetSessions)×"
+        guard !plan.focusRegions.isEmpty else { return sessions }
+        let regions = plan.focusRegions.map(\.displayName).joined(separator: ", ")
+        return "\(sessions) · \(regions)"
+    }
+
     var body: some View {
         ZStack {
             Theme.background.ignoresSafeArea()
@@ -273,6 +283,25 @@ struct SettingsView: View {
                         .foregroundStyle(Theme.textPrimary)
                     Spacer()
                     Text(fitnessGoalsSummary)
+                        .font(Theme.fontCaption)
+                        .foregroundStyle(Theme.textTertiary)
+                        .lineLimit(1)
+                }
+            }
+            .tint(Theme.textTertiary)
+
+            NavigationLink {
+                WeeklyPlanView()
+                    .hideTabBar()
+            } label: {
+                HStack(spacing: Theme.Spacing.md) {
+                    Image(systemName: "calendar.badge.clock")
+                        .frame(width: Theme.Spacing.lg)
+                        .foregroundStyle(Theme.accent)
+                    Text("Weekly Plan")
+                        .foregroundStyle(Theme.textPrimary)
+                    Spacer()
+                    Text(weeklyPlanSummary)
                         .font(Theme.fontCaption)
                         .foregroundStyle(Theme.textTertiary)
                         .lineLimit(1)

@@ -97,6 +97,38 @@ enum WorkoutInsights {
         return result
     }
 
+    // MARK: - Sets per muscle group (Seam 2)
+
+    /// Sets logged per `MuscleGroup` across the given workouts.
+    ///
+    /// For each `WorkoutExercise`, adds `sets.count` to every `MuscleGroup`
+    /// the exercise targets. Returns the raw, unsorted map — callers that
+    /// need display ordering apply their own sort. This is the single source
+    /// of truth for "sets per muscle" used by Progress (chart), the workout
+    /// generator (familiarity/coverage), and the training nudge (detection).
+    ///
+    /// Lifted verbatim out of `ProgressViewModel.computeMuscleGroups` so all
+    /// consumers agree on the count.
+    static func setsPerMuscleGroup(workouts: [Workout]) -> [MuscleGroup: Int] {
+        var groupSets: [MuscleGroup: Int] = [:]
+        for workout in workouts {
+            for workoutExercise in workout.exercises {
+                let setCount = workoutExercise.sets.count
+                for muscle in workoutExercise.exercise.muscleGroups {
+                    groupSets[muscle, default: 0] += setCount
+                }
+            }
+        }
+        return groupSets
+    }
+
+    /// Windowed variant of `setsPerMuscleGroup(workouts:)` — counts only
+    /// workouts whose `startTime` is on or after `since`. Used by trailing-window
+    /// baseline math (e.g. the adaptive nudge).
+    static func setsPerMuscleGroup(workouts: [Workout], since: Date) -> [MuscleGroup: Int] {
+        setsPerMuscleGroup(workouts: workouts.filter { $0.startTime >= since })
+    }
+
     // MARK: - Toast triggers
 
     /// True when the user just incremented their streak today vs. their
@@ -144,4 +176,78 @@ struct RecentPRTip: Equatable {
     let weight: Double
     let reps: Int
     let completedAt: Date
+}
+
+// MARK: - Training Region rollup (Seam 3)
+
+/// Coarse Push / Pull / Legs / Core grouping over the 13-case `MuscleGroup`
+/// enum. This is a *presentation/grouping* convenience: it powers the workout
+/// generator's split quick-pick chips (tapping "Push" multi-selects its
+/// constituent muscles) and any region-flavored copy. The forward map
+/// (`MuscleGroup.region`) and reverse map (`TrainingRegion.muscles`) are
+/// the single source of truth for the rollup — defined once here.
+enum TrainingRegion: String, Codable, CaseIterable, Identifiable {
+    case push, pull, legs, core
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .push: return "Push"
+        case .pull: return "Pull"
+        case .legs: return "Legs"
+        case .core: return "Core"
+        }
+    }
+
+    /// SF Symbol mirroring the matching `TemplateCategory` icon where one exists.
+    var icon: String {
+        switch self {
+        case .push: return "figure.strengthtraining.traditional"
+        case .pull: return "figure.indoor.rowing"
+        case .legs: return "figure.step.training"
+        case .core: return "figure.core.training"
+        }
+    }
+
+    /// Reverse map: the constituent `MuscleGroup`s for this region. Inverse of
+    /// `MuscleGroup.region`. Tapping a split chip multi-selects exactly these.
+    var muscles: [MuscleGroup] {
+        switch self {
+        case .push: return [.chest, .shoulders, .triceps]
+        case .pull: return [.back, .lats, .biceps, .traps, .forearms]
+        case .legs: return [.quads, .hamstrings, .glutes, .calves]
+        case .core: return [.abs]
+        }
+    }
+
+    /// Maps a region onto the existing `TemplateCategory` PPL vocabulary so the
+    /// generator can label its output template. There is no abs-only category,
+    /// so `core` falls back to `.custom`.
+    var templateCategory: WorkoutTemplate.TemplateCategory {
+        switch self {
+        case .push: return .push
+        case .pull: return .pull
+        case .legs: return .legs
+        case .core: return .custom
+        }
+    }
+}
+
+extension MuscleGroup {
+    /// Forward map: which coarse `TrainingRegion` this muscle rolls up into.
+    /// Exhaustive over all 13 cases (no `default`) — inverse of
+    /// `TrainingRegion.muscles`.
+    var region: TrainingRegion {
+        switch self {
+        case .chest, .shoulders, .triceps:
+            return .push
+        case .back, .lats, .biceps, .traps, .forearms:
+            return .pull
+        case .quads, .hamstrings, .glutes, .calves:
+            return .legs
+        case .abs:
+            return .core
+        }
+    }
 }
