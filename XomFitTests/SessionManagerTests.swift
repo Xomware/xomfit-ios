@@ -1,6 +1,6 @@
 import XCTest
 import Combine
-@testable import XomFit
+@testable import Xomfit
 
 /// Tests for SessionManager: session lifecycle, foreground validation, error propagation.
 final class SessionManagerTests: XCTestCase {

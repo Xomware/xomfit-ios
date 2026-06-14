@@ -1,6 +1,6 @@
 import XCTest
 import Combine
-@testable import XomFit
+@testable import Xomfit
 
 // MARK: - Mock Supabase Auth Provider
 /// Protocol-based mock for unit testing without a live Supabase connection.
@@ -238,7 +238,9 @@ final class AuthServiceTests: XCTestCase {
             try await mock.performTokenRefresh()
             XCTFail("Should throw")
         } catch {
-            // This is the path SessionManager takes:
+            // This is the path SessionManager takes: the refresh failed, and the
+            // local sign-out that follows succeeds and clears auth state.
+            mock.shouldSucceed = true
             do {
                 try await mock.performSignOut()
             } catch {}

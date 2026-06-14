@@ -1,5 +1,5 @@
 import XCTest
-@testable import XomFit
+@testable import Xomfit
 
 /// Tests for client-side auth input validation used in LoginView / SignUpView.
 final class AuthValidationTests: XCTestCase {

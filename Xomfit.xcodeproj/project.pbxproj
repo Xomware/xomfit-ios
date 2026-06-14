@@ -7,6 +7,16 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		06ACBBC7B67A972F6F39A214 /* WorkoutGeneratorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 138F935F3800CBB4B66CD6CC /* WorkoutGeneratorTests.swift */; };
+		0F2396BE1C58B7C7F99F5BC6 /* WorkoutInsightsSeamTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 730E45C30DECC5AA5563EAB4 /* WorkoutInsightsSeamTests.swift */; };
+		2652623F55494AE501D17728 /* AuthServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7B33E534C5D4F6F4A221677 /* AuthServiceTests.swift */; };
+		3AD31D27EAD82F60EE882599 /* AnimationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 325D34C169BA7253ADECB318 /* AnimationTests.swift */; };
+		8AC7AAF03202D8E47D7B253B /* TrainingNudgeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C84C61FE8D97D6A6F27FDF87 /* TrainingNudgeTests.swift */; };
+		9FA42ECEF9AB18EF0FD630C2 /* SessionManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C74D5365A1D42D343FCEB6A /* SessionManagerTests.swift */; };
+		A2D9DA19EA001353F94F1B0D /* ProgressiveOverloadEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F8269C3E626F9E0F867A286 /* ProgressiveOverloadEngineTests.swift */; };
+		A5CB31EA8149518294CBCF7A /* AuthValidationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50574B785553CFAF12535276 /* AuthValidationTests.swift */; };
+		B2F201D886D61139D367C906 /* GoalBaselineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2971609F94FDA4AAE995734 /* GoalBaselineTests.swift */; };
+		BBBE2A7245E89C33ED8D85D8 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 37E1F812E63DCA86C4966EEE /* Foundation.framework */; };
 		F29F21412F5F620700683551 /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = F29F21402F5F620700683551 /* Auth */; };
 		F29F21432F5F620700683551 /* Functions in Frameworks */ = {isa = PBXBuildFile; productRef = F29F21422F5F620700683551 /* Functions */; };
 		F29F21452F5F620700683551 /* PostgREST in Frameworks */ = {isa = PBXBuildFile; productRef = F29F21442F5F620700683551 /* PostgREST */; };
@@ -19,6 +29,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		99113C0D83D81981E918B3AD /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F29F21292F5F61DC00683551 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F29F21302F5F61DC00683551;
+			remoteInfo = Xomfit;
+		};
 		F2FA6B1D2F7C0636009E1AB8 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = F29F21292F5F61DC00683551 /* Project object */;
@@ -43,6 +60,17 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		138F935F3800CBB4B66CD6CC /* WorkoutGeneratorTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkoutGeneratorTests.swift; sourceTree = "<group>"; };
+		325D34C169BA7253ADECB318 /* AnimationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AnimationTests.swift; sourceTree = "<group>"; };
+		37E1F812E63DCA86C4966EEE /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		4F8269C3E626F9E0F867A286 /* ProgressiveOverloadEngineTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ProgressiveOverloadEngineTests.swift; sourceTree = "<group>"; };
+		50574B785553CFAF12535276 /* AuthValidationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AuthValidationTests.swift; sourceTree = "<group>"; };
+		5C74D5365A1D42D343FCEB6A /* SessionManagerTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SessionManagerTests.swift; sourceTree = "<group>"; };
+		730E45C30DECC5AA5563EAB4 /* WorkoutInsightsSeamTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkoutInsightsSeamTests.swift; sourceTree = "<group>"; };
+		B7B33E534C5D4F6F4A221677 /* AuthServiceTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AuthServiceTests.swift; sourceTree = "<group>"; };
+		C84C61FE8D97D6A6F27FDF87 /* TrainingNudgeTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TrainingNudgeTests.swift; sourceTree = "<group>"; };
+		E2971609F94FDA4AAE995734 /* GoalBaselineTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GoalBaselineTests.swift; sourceTree = "<group>"; };
+		ED9BBF5A1F88959BD0A49AAC /* XomfitTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = XomfitTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		F29F21312F5F61DC00683551 /* Xomfit.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Xomfit.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F29F22FD2F5F635F00683551 /* CHALLENGES_SCHEMA.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = CHALLENGES_SCHEMA.sql; sourceTree = "<group>"; };
 		F29F22FE2F5F635F00683551 /* CHANGELOG.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CHANGELOG.md; sourceTree = "<group>"; };
@@ -132,6 +160,8 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		F29F21332F5F61DC00683551 /* Xomfit */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = Xomfit;
 			sourceTree = "<group>";
 		};
@@ -146,6 +176,14 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		DAD1396B3AAC6C1AB6C947B6 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BBBE2A7245E89C33ED8D85D8 /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		F29F212E2F5F61DC00683551 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -171,6 +209,31 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		5C40DADDDCF3BF72C7406EDA /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				37E1F812E63DCA86C4966EEE /* Foundation.framework */,
+			);
+			name = iOS;
+			sourceTree = "<group>";
+		};
+		A5BC99BA923D1D310A539207 /* XomfitTests */ = {
+			isa = PBXGroup;
+			children = (
+				325D34C169BA7253ADECB318 /* AnimationTests.swift */,
+				B7B33E534C5D4F6F4A221677 /* AuthServiceTests.swift */,
+				50574B785553CFAF12535276 /* AuthValidationTests.swift */,
+				4F8269C3E626F9E0F867A286 /* ProgressiveOverloadEngineTests.swift */,
+				5C74D5365A1D42D343FCEB6A /* SessionManagerTests.swift */,
+				138F935F3800CBB4B66CD6CC /* WorkoutGeneratorTests.swift */,
+				730E45C30DECC5AA5563EAB4 /* WorkoutInsightsSeamTests.swift */,
+				C84C61FE8D97D6A6F27FDF87 /* TrainingNudgeTests.swift */,
+				E2971609F94FDA4AAE995734 /* GoalBaselineTests.swift */,
+			);
+			name = XomfitTests;
+			path = XomfitTests;
+			sourceTree = "<group>";
+		};
 		F29F21282F5F61DC00683551 = {
 			isa = PBXGroup;
 			children = (
@@ -187,6 +250,7 @@
 				F2FA6B0F2F7C0635009E1AB8 /* XomfitWidget */,
 				F2FA6B0A2F7C0635009E1AB8 /* Frameworks */,
 				F29F21322F5F61DC00683551 /* Products */,
+				A5BC99BA923D1D310A539207 /* XomfitTests */,
 			);
 			sourceTree = "<group>";
 		};
@@ -195,6 +259,7 @@
 			children = (
 				F29F21312F5F61DC00683551 /* Xomfit.app */,
 				F2FA6B092F7C0635009E1AB8 /* XomfitWidgetExtension.appex */,
+				ED9BBF5A1F88959BD0A49AAC /* XomfitTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -433,6 +498,7 @@
 			children = (
 				F2FA6B0B2F7C0635009E1AB8 /* WidgetKit.framework */,
 				F2FA6B0D2F7C0635009E1AB8 /* SwiftUI.framework */,
+				5C40DADDDCF3BF72C7406EDA /* iOS */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -440,6 +506,24 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		6A0AACE3A1B5AB551D2C7AD8 /* XomfitTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 995E5C833DBB4D4EAF528548 /* Build configuration list for PBXNativeTarget "XomfitTests" */;
+			buildPhases = (
+				83B75782F6F9DD1FAF47B8BC /* Sources */,
+				DAD1396B3AAC6C1AB6C947B6 /* Frameworks */,
+				2755BB22FEBF44E2230B6F27 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				27C138ED97298680415740F0 /* PBXTargetDependency */,
+			);
+			name = XomfitTests;
+			productName = XomfitTests;
+			productReference = ED9BBF5A1F88959BD0A49AAC /* XomfitTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		F29F21302F5F61DC00683551 /* Xomfit */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = F29F213C2F5F61DD00683551 /* Build configuration list for PBXNativeTarget "Xomfit" */;
@@ -486,8 +570,6 @@
 				F2FA6B0F2F7C0635009E1AB8 /* XomfitWidget */,
 			);
 			name = XomfitWidgetExtension;
-			packageProductDependencies = (
-			);
 			productName = XomfitWidgetExtension;
 			productReference = F2FA6B092F7C0635009E1AB8 /* XomfitWidgetExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
@@ -529,11 +611,19 @@
 			targets = (
 				F29F21302F5F61DC00683551 /* Xomfit */,
 				F2FA6B082F7C0635009E1AB8 /* XomfitWidgetExtension */,
+				6A0AACE3A1B5AB551D2C7AD8 /* XomfitTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		2755BB22FEBF44E2230B6F27 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		F29F212F2F5F61DC00683551 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -551,6 +641,22 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		83B75782F6F9DD1FAF47B8BC /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3AD31D27EAD82F60EE882599 /* AnimationTests.swift in Sources */,
+				2652623F55494AE501D17728 /* AuthServiceTests.swift in Sources */,
+				A5CB31EA8149518294CBCF7A /* AuthValidationTests.swift in Sources */,
+				A2D9DA19EA001353F94F1B0D /* ProgressiveOverloadEngineTests.swift in Sources */,
+				9FA42ECEF9AB18EF0FD630C2 /* SessionManagerTests.swift in Sources */,
+				06ACBBC7B67A972F6F39A214 /* WorkoutGeneratorTests.swift in Sources */,
+				0F2396BE1C58B7C7F99F5BC6 /* WorkoutInsightsSeamTests.swift in Sources */,
+				8AC7AAF03202D8E47D7B253B /* TrainingNudgeTests.swift in Sources */,
+				B2F201D886D61139D367C906 /* GoalBaselineTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		F29F212D2F5F61DC00683551 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -568,6 +674,12 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		27C138ED97298680415740F0 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = Xomfit;
+			target = F29F21302F5F61DC00683551 /* Xomfit */;
+			targetProxy = 99113C0D83D81981E918B3AD /* PBXContainerItemProxy */;
+		};
 		F2FA6B1E2F7C0636009E1AB8 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = F2FA6B082F7C0635009E1AB8 /* XomfitWidgetExtension */;
@@ -576,6 +688,43 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		076E78527AD3B1168E89122A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = A3HMLDS2AL;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Xomware.XomfitTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Xomfit.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Xomfit";
+			};
+			name = Debug;
+		};
+		987E5698F513E9D207E1F6AC /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = A3HMLDS2AL;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Xomware.XomfitTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Xomfit.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Xomfit";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 		F29F213A2F5F61DD00683551 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -840,6 +989,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		995E5C833DBB4D4EAF528548 /* Build configuration list for PBXNativeTarget "XomfitTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				987E5698F513E9D207E1F6AC /* Release */,
+				076E78527AD3B1168E89122A /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		F29F212C2F5F61DC00683551 /* Build configuration list for PBXProject "Xomfit" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
