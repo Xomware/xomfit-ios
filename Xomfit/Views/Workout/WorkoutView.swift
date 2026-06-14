@@ -3,12 +3,17 @@ import SwiftUI
 struct WorkoutView: View {
     @Environment(AuthService.self) private var authService
     @Environment(WorkoutLoggerViewModel.self) private var workoutSession
+    @Environment(GeneratorPreseed.self) private var generatorPreseed
 
     @State private var showNameEntry = false
     @State private var pendingWorkoutName = ""
     @State private var showBuilder = false
     @State private var showLogPastWorkout = false
+    @State private var showGenerator = false
     @State private var previewTemplate: WorkoutTemplate?
+
+    /// Owns generator config/preview state across the sheet lifetime.
+    @State private var generatorViewModel = WorkoutGeneratorViewModel()
 
     /// Shared data store for every category list (#338). Owned here so all four
     /// segments share the same loaded data without re-fetching on segment change.
@@ -100,6 +105,28 @@ struct WorkoutView: View {
         }) {
             LogPastWorkoutView()
         }
+        .sheet(isPresented: $showGenerator, onDismiss: {
+            Task { await viewModel.load(userId: userId) }
+        }) {
+            WorkoutGeneratorConfigView(
+                viewModel: generatorViewModel,
+                userId: userId,
+                onStart: { template in
+                    // Mirror the TemplateDetailView start path: route through the
+                    // warmup gate before starting the generated session.
+                    requestStart(
+                        stretches: StretchDatabase.suggestedStretches(for: template, target: TimeInterval(warmupMinutes * 60)),
+                        exercises: template.exercises.map(\.exercise)
+                    ) {
+                        workoutSession.startFromTemplate(template, userId: userId)
+                        workoutSession.isPresented = true
+                    }
+                },
+                onSaved: {
+                    Task { await viewModel.load(userId: userId) }
+                }
+            )
+        }
         .sheet(item: $previewTemplate) { template in
             TemplateDetailView(template: template) {
                 let captured = template
@@ -176,6 +203,43 @@ struct WorkoutView: View {
                         }
                         .padding(.horizontal, Theme.Spacing.md)
 
+                        // Generate (offline) — the instant, on-device twin of the
+                        // AI Coach. Framed distinctly: dice icon + "Instant · No AI
+                        // · Offline" so it never reads as a second chat coach.
+                        Button {
+                            Haptics.light()
+                            generatorViewModel.reset()
+                            showGenerator = true
+                        } label: {
+                            HStack(spacing: Theme.Spacing.md) {
+                                Image(systemName: "dice.fill")
+                                    .font(.title3)
+                                    .foregroundStyle(Theme.accent)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Generate")
+                                        .font(Theme.fontBodyEmphasized)
+                                        .foregroundStyle(Theme.textPrimary)
+                                    Text("Instant · No AI · Offline")
+                                        .font(Theme.fontCaption)
+                                        .foregroundStyle(Theme.textSecondary)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.caption)
+                                    .foregroundStyle(Theme.textSecondary)
+                            }
+                            .padding(Theme.Spacing.md)
+                            .background(Theme.surface)
+                            .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: Theme.cornerRadius)
+                                    .strokeBorder(Theme.accent.opacity(0.25), lineWidth: 0.5)
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.horizontal, Theme.Spacing.md)
+                        .accessibilityLabel("Generate a workout instantly, offline")
+
                         // First workout guide for new users (#310).
                         // Persist this card even after recents arrive — gate
                         // only on whether the user has built/saved their own
@@ -204,12 +268,29 @@ struct WorkoutView: View {
         .toolbarColorScheme(.dark, for: .navigationBar)
         .task {
             await viewModel.load(userId: userId)
+            // Consume any pending nudge pre-seed that arrived before this view
+            // mounted (e.g. the toast tap flipped destination → .workout).
+            consumePendingPreseed()
+        }
+        .onChange(of: generatorPreseed.pending) { _, _ in
+            consumePendingPreseed()
         }
         .onChange(of: workoutSession.isPresented) { _, isPresented in
             if !isPresented {
                 Task { await viewModel.load(userId: userId) }
             }
         }
+    }
+
+    /// Open the generator pre-seeded with the muscle the training nudge surfaced.
+    /// Checked both on mount (`.task`) and on change to cover the race where this
+    /// view mounts after the nudge tap flips the destination.
+    private func consumePendingPreseed() {
+        guard let muscle = generatorPreseed.pending else { return }
+        generatorViewModel.reset()
+        generatorViewModel.preseed(muscle: muscle)
+        showGenerator = true
+        generatorPreseed.pending = nil
     }
 
     // MARK: - First Workout Guide

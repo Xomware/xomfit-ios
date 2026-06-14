@@ -19,6 +19,7 @@ import SwiftUI
 struct MainTabView: View {
     @Environment(AuthService.self) private var authService
     @Environment(WorkoutLoggerViewModel.self) private var workoutSession
+    @Environment(GeneratorPreseed.self) private var generatorPreseed
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     // MARK: - Navigation State
@@ -42,6 +43,11 @@ struct MainTabView: View {
 
     /// App-open streak / new-PR celebration toast (#250). Cleared after auto-dismiss.
     @State private var launchBadgeToast: Toast?
+
+    /// The muscle surfaced by the once-per-day training nudge (#P2). Set when the
+    /// nudge toast is shown; consumed on toast tap to pre-seed the generator. nil
+    /// when the current toast is a badge (so tapping a badge does nothing extra).
+    @State private var nudgeMuscle: MuscleGroup?
 
     /// Sheets owned by the shell top bar (notifications bell).
     @State private var showNotifications = false
@@ -175,16 +181,35 @@ struct MainTabView: View {
         .sheet(isPresented: $showNotifications) {
             NotificationInboxView()
         }
-        .toast($launchBadgeToast)
+        .toast($launchBadgeToast) {
+            // Toast tap: only the training nudge has an action. Badge toasts
+            // leave `nudgeMuscle` nil, so tapping them just dismisses.
+            guard let muscle = nudgeMuscle else { return }
+            nudgeMuscle = nil
+            Haptics.light()
+            generatorPreseed.pending = muscle
+            select(destination: .workout)
+        }
         .task {
-            // App-open streak / PR badge (#250).
+            // App-open streak / PR badge (#250) — streak/PR always wins the launch.
             // Show at most one toast per launch; surface ~1s in so it doesn't
             // collide with the shell's mount animation.
             guard let userId = authService.currentUser?.id.uuidString.lowercased() else { return }
             let workouts = WorkoutService.shared.fetchWorkoutsFromCache(userId: userId)
             if let badge = BadgeToastService.badgeForLaunch(workouts: workouts) {
+                nudgeMuscle = nil
                 try? await Task.sleep(for: .seconds(1))
                 launchBadgeToast = Toast(style: .success, message: badge.message)
+                return
+            }
+            // No badge → evaluate the once-per-day training nudge (#P2).
+            if let nudge = TrainingNudgeService.nudgeForLaunch(workouts: workouts) {
+                nudgeMuscle = nudge.muscle
+                try? await Task.sleep(for: .seconds(1))
+                launchBadgeToast = Toast(
+                    style: .info,
+                    message: "\u{1F3CB}\u{FE0F} Light on \(nudge.muscle.displayName) this week — generate a quick session?"
+                )
             }
         }
         .task(id: authService.currentUser?.id) {

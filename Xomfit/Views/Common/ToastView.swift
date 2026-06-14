@@ -66,6 +66,10 @@ struct ToastView: View {
 
 struct ToastModifier: ViewModifier {
     @Binding var toast: Toast?
+    /// Optional action fired when the toast is tapped (e.g. the training nudge
+    /// opening the generator). Defaults to a no-op so existing badge toasts keep
+    /// their dismiss-only behavior. The toast still dismisses on tap regardless.
+    var onTap: () -> Void = {}
 
     func body(content: Content) -> some View {
         content
@@ -83,6 +87,7 @@ struct ToastModifier: ViewModifier {
                             }
                         }
                         .onTapGesture {
+                            onTap()
                             withAnimation(.xomConfident) {
                                 self.toast = nil
                             }
@@ -97,5 +102,11 @@ struct ToastModifier: ViewModifier {
 extension View {
     func toast(_ toast: Binding<Toast?>) -> some View {
         modifier(ToastModifier(toast: toast))
+    }
+
+    /// Toast variant with a tap action. The action runs before the toast
+    /// dismisses; used by the training nudge to open the pre-seeded generator.
+    func toast(_ toast: Binding<Toast?>, onTap: @escaping () -> Void) -> some View {
+        modifier(ToastModifier(toast: toast, onTap: onTap))
     }
 }
