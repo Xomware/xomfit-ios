@@ -72,6 +72,22 @@ enum TrainingNudgeService {
         return nudge
     }
 
+    /// Non-committing variant for the notification inbox. Applies the same
+    /// suppression gates (cold-start + already-trained-today) but does NOT touch
+    /// the once-per-day `lastNudgeDay` marker, so surfacing a suggestion in the
+    /// inbox never consumes the launch nudge. Returns nil when no muscle is
+    /// under-trained or the user has too little history.
+    static func suggestionForInbox(
+        workouts: [Workout],
+        now: Date = Date()
+    ) -> UnderTrainedMuscle? {
+        guard workouts.count >= minWorkoutsForNudge else { return nil }
+        let cal = WorkoutInsights.userCalendar()
+        let today = cal.startOfDay(for: now)
+        if workouts.contains(where: { cal.startOfDay(for: $0.startTime) == today }) { return nil }
+        return resolvedBaseline().underTrainedMuscle(workouts: workouts, now: now)
+    }
+
     /// Test seam — clear persisted state.
     static func resetForTesting() {
         UserDefaults.standard.removeObject(forKey: lastNudgeDayKey)

@@ -179,7 +179,14 @@ struct MainTabView: View {
                 .interactiveDismissDisabled(workoutSession.isActive)
         }
         .sheet(isPresented: $showNotifications) {
-            NotificationInboxView()
+            NotificationInboxView(
+                currentUserId: authService.currentUser?.id.uuidString.lowercased(),
+                onStartSuggestion: { muscle in
+                    Haptics.light()
+                    generatorPreseed.pending = muscle
+                    select(destination: .workout)
+                }
+            )
         }
         .toast($launchBadgeToast) {
             // Toast tap: only the training nudge has an action. Badge toasts
