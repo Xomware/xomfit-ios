@@ -71,8 +71,15 @@ struct SwipeToDeleteRow<Content: View>: View {
             content()
                 .background(Theme.background) // keep underlying delete hidden when closed
                 .offset(x: currentOffset)
-                .gesture(
-                    DragGesture(minimumDistance: 8)
+                // `.simultaneousGesture` (not `.gesture`) so the parent
+                // ScrollView's pan recognizer runs in parallel. A plain
+                // `.gesture` claims the touch exclusively and starves the
+                // ScrollView, making the whole list unscrollable. The
+                // axis-lock logic below still gates the swipe reveal: a
+                // vertical drag never flips `gestureAxis` to `.horizontal`,
+                // so `dragOffset` stays 0 and only the ScrollView reacts.
+                .simultaneousGesture(
+                    DragGesture(minimumDistance: 12)
                         .onChanged { value in
                             let dx = abs(value.translation.width)
                             let dy = abs(value.translation.height)
