@@ -1315,10 +1315,21 @@ private struct ExerciseCard: View {
                         personalRecord: viewModel.personalRecordForExercise(exercise.exercise.id),
                         isCurrentSet: setIdx == currentSetIdx
                     )
-                    .swipeToDelete(
-                        accessibilityActionName: "Delete set \(setIdx + 1)"
-                    ) {
-                        viewModel.removeSet(exerciseIndex: exerciseIndex, setIndex: setIdx)
+                    // Set deletion via system context menu (long-press) instead
+                    // of a custom swipe. The previous `.swipeToDelete` installed a
+                    // `DragGesture` on every visible row; that drag competed with
+                    // the ScrollView's vertical pan in gesture arbitration — and
+                    // it was the LAST remaining row-level drag after the card-level
+                    // swipe + long-press were already removed for the same reason.
+                    // It made the list feel unscrollable on device. `.contextMenu`
+                    // is a system interaction that yields to the scroll pan, so it
+                    // never starves scrolling.
+                    .contextMenu {
+                        Button(role: .destructive) {
+                            viewModel.removeSet(exerciseIndex: exerciseIndex, setIndex: setIdx)
+                        } label: {
+                            Label("Delete Set \(setIdx + 1)", systemImage: "trash")
+                        }
                     }
                 }
 
