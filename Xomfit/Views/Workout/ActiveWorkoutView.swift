@@ -108,17 +108,17 @@ struct ActiveWorkoutView: View {
                                 ScrollView {
                                     LazyVStack(spacing: Theme.Spacing.md) {
                                         ForEach(viewModel.exercises.indices, id: \.self) { exIdx in
-                                            let exerciseName = viewModel.exercises[exIdx].exercise.name
+                                            // No card-level `.swipeToDelete` here. A swipe
+                                            // recognizer on every full-height card fought the
+                                            // ScrollView's vertical pan and made the list feel
+                                            // stuck. Removal is fully covered by the always-
+                                            // visible trash button inside each card; set rows
+                                            // keep their (smaller) swipe affordance.
                                             ExerciseCard(
                                                 exerciseIndex: exIdx,
                                                 viewModel: viewModel
                                             )
                                             .id(exIdx)
-                                            .swipeToDelete(
-                                                accessibilityActionName: "Remove \(exerciseName) from workout"
-                                            ) {
-                                                viewModel.removeExercise(at: exIdx)
-                                            }
                                         }
                                     }
                                     .padding(Theme.Spacing.md)
@@ -1032,6 +1032,13 @@ private struct ExerciseCard: View {
             && viewModel.exercises[exerciseIndex].supersetGroupId != nil
     }
 
+    /// True when this card is the exercise the lifter is currently on. Drives the
+    /// highlight treatment (elevated surface, accent border, glow, "CURRENT"
+    /// badge) so the active card stands out from the rest of the list.
+    private var isCurrent: Bool {
+        viewModel.focusExerciseIndex == exerciseIndex
+    }
+
     private var supersetLetter: String? {
         viewModel.supersetLetter(forExercise: exerciseIndex)
     }
@@ -1049,8 +1056,20 @@ private struct ExerciseCard: View {
             let exercise = viewModel.exercises[exerciseIndex]
             VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
             // Exercise header
-            HStack {
+            HStack(alignment: .top, spacing: Theme.Spacing.sm) {
                 VStack(alignment: .leading, spacing: 3) {
+                    // "CURRENT" badge — only on the in-focus card so the lifter
+                    // can spot where they are at a glance in list mode.
+                    if isCurrent {
+                        HStack(spacing: 3) {
+                            Image(systemName: "scope")
+                                .font(.system(size: 9, weight: .black))
+                            Text("CURRENT")
+                                .font(.caption2.weight(.black))
+                        }
+                        .foregroundStyle(Theme.accent)
+                        .accessibilityLabel("Current exercise")
+                    }
                     // Superset pill — moved to its OWN row so the title gets
                     // the full card width. Previously sat to the left of the
                     // title and shrunk it to ~2 chars per line on supersetted
@@ -1066,8 +1085,10 @@ private struct ExerciseCard: View {
                             .accessibilityLabel("Superset \(letter)")
                     }
                     HStack(spacing: 6) {
+                        // Current exercise gets a larger, heavier title so the
+                        // in-focus card reads as bigger / more prominent than the rest.
                         Text(exercise.exercise.name)
-                            .font(.body.weight(.bold))
+                            .font(isCurrent ? .title3.weight(.heavy) : .body.weight(.bold))
                             .foregroundStyle(Theme.textPrimary)
                             .lineLimit(2)
                             .minimumScaleFactor(0.7)
@@ -1103,74 +1124,80 @@ private struct ExerciseCard: View {
                     }
                 }
 
-                Button {
-                    Haptics.selection()
-                    showDetails = true
-                } label: {
-                    Image(systemName: "info.circle")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(Theme.textSecondary)
-                        .frame(width: Theme.Spacing.xl, height: Theme.Spacing.xl)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Show details for \(exercise.exercise.name)")
+                Spacer(minLength: Theme.Spacing.xs)
 
-                Button {
-                    Haptics.light()
-                    withAnimation(.xomConfident) {
-                        isCollapsed.toggle()
+                // Action cluster — all card controls grouped on the trailing
+                // edge so the title + tags get the full leading width and never
+                // collide with the buttons (previously info/collapse sat between
+                // the title and the spacer, crowding long names + tag rows).
+                HStack(spacing: 0) {
+                    Button {
+                        Haptics.selection()
+                        showDetails = true
+                    } label: {
+                        Image(systemName: "info.circle")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(Theme.textSecondary)
+                            .frame(width: 36, height: 44)
+                            .contentShape(Rectangle())
                     }
-                } label: {
-                    Image(systemName: "chevron.down")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(Theme.textSecondary)
-                        .rotationEffect(.degrees(isCollapsed ? -90 : 0))
-                        .frame(width: Theme.Spacing.xl, height: Theme.Spacing.xl)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(isCollapsed ? "Expand \(exercise.exercise.name)" : "Collapse \(exercise.exercise.name)")
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Show details for \(exercise.exercise.name)")
 
-                Spacer()
+                    Button {
+                        Haptics.light()
+                        withAnimation(.xomConfident) {
+                            isCollapsed.toggle()
+                        }
+                    } label: {
+                        Image(systemName: "chevron.down")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(Theme.textSecondary)
+                            .rotationEffect(.degrees(isCollapsed ? -90 : 0))
+                            .frame(width: 36, height: 44)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(isCollapsed ? "Expand \(exercise.exercise.name)" : "Collapse \(exercise.exercise.name)")
 
-                // Superset toggle (#294) — visible affordance for grouping with the
-                // next exercise. Disabled (but still rendered) when neither action
-                // is meaningful, so the button row layout stays stable.
-                Button {
-                    Haptics.selection()
-                    showSupersetToggleConfirm = true
-                } label: {
-                    Image(systemName: isInSuperset ? "link.circle.fill" : "link")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(isInSuperset ? Theme.accent : Theme.textSecondary)
-                        .frame(width: 44, height: 44)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .disabled(!isInSuperset && !canGroupWithNext)
-                .accessibilityLabel(isInSuperset
-                    ? "Ungroup superset"
-                    : "Group with next exercise as superset")
-                .accessibilityHint(isInSuperset
-                    ? "Removes this exercise from its superset"
-                    : "Pairs this exercise with the next one for back-to-back sets")
+                    // Superset toggle (#294) — visible affordance for grouping with the
+                    // next exercise. Disabled (but still rendered) when neither action
+                    // is meaningful, so the button row layout stays stable.
+                    Button {
+                        Haptics.selection()
+                        showSupersetToggleConfirm = true
+                    } label: {
+                        Image(systemName: isInSuperset ? "link.circle.fill" : "link")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(isInSuperset ? Theme.accent : Theme.textSecondary)
+                            .frame(width: 40, height: 44)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(!isInSuperset && !canGroupWithNext)
+                    .accessibilityLabel(isInSuperset
+                        ? "Ungroup superset"
+                        : "Group with next exercise as superset")
+                    .accessibilityHint(isInSuperset
+                        ? "Removes this exercise from its superset"
+                        : "Pairs this exercise with the next one for back-to-back sets")
 
-                // Visible delete button — swipe-to-delete can compete with scroll
-                // gestures, so this provides an always-accessible alternative.
-                Button {
-                    Haptics.warning()
-                    showRemoveExerciseConfirm = true
-                } label: {
-                    Image(systemName: "trash")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(Theme.destructive.opacity(0.8))
-                        .frame(width: 44, height: 44)
-                        .contentShape(Rectangle())
+                    // Visible delete button — the card-level swipe was removed to
+                    // keep the list scrollable, so this is the primary removal path.
+                    Button {
+                        Haptics.warning()
+                        showRemoveExerciseConfirm = true
+                    } label: {
+                        Image(systemName: "trash")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(Theme.destructive.opacity(0.8))
+                            .frame(width: 40, height: 44)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Remove \(exercise.exercise.name) from workout")
+                    .accessibilityHint("Deletes this exercise and all its sets from the current workout")
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Remove \(exercise.exercise.name) from workout")
-                .accessibilityHint("Deletes this exercise and all its sets from the current workout")
             }
 
             if isCollapsed {
@@ -1313,7 +1340,7 @@ private struct ExerciseCard: View {
             }
         }
         .padding(Theme.Spacing.md)
-        .background(Theme.surface)
+        .background(isCurrent ? Theme.surfaceElevated : Theme.surface)
         .overlay(alignment: .leading) {
             // Vertical accent bar marking superset members
             if isInSuperset {
@@ -1324,6 +1351,20 @@ private struct ExerciseCard: View {
             }
         }
         .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+        // Highlight the in-focus card: accent border + glow so it visually
+        // "lifts" above the dimmed, non-current cards around it.
+        .overlay {
+            RoundedRectangle(cornerRadius: Theme.cornerRadius)
+                .strokeBorder(Theme.accent, lineWidth: isCurrent ? 2 : 0)
+        }
+        .shadow(color: isCurrent ? Theme.accent.opacity(0.25) : .clear,
+                radius: isCurrent ? 10 : 0)
+        .opacity(isCurrent ? 1 : 0.9)
+        // Slightly shrink the off-focus cards so the current card stands taller
+        // and bigger relative to its neighbors. scaleEffect doesn't reflow the
+        // LazyVStack, so the md spacing keeps the cards from overlapping.
+        .scaleEffect(isCurrent ? 1 : 0.96, anchor: .center)
+        .animation(.easeInOut(duration: 0.2), value: isCurrent)
         // NOTE: no card-wide `.onLongPressGesture` here. A 0.5s long-press
         // recognizer on every row inside the `ScrollView` + `LazyVStack` defers
         // touch-down and fought the vertical scroll pan, making the list feel
