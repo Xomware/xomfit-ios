@@ -241,6 +241,103 @@ final class NotificationService {
         saveNotifications()
     }
 
+    // MARK: - Backend Refresh (#inbox)
+
+    /// Whether a refresh is currently in flight — drives the inbox loading state.
+    var isRefreshing = false
+
+    /// Pull live notifications from the backend and merge them into the inbox.
+    /// Three sources, each independently best-effort (a failure in one never
+    /// blocks the others):
+    ///   * pending friend requests        -> `.friendRequest`
+    ///   * friends' recent workouts        -> `.friendWorkout`
+    ///   * an under-trained-muscle nudge   -> `.suggestedWorkout`
+    ///
+    /// Stable, source-derived ids let us merge without duplicating across
+    /// refreshes while preserving the user's read state (see `merge(server:)`).
+    func refresh(currentUserId: String) async {
+        guard !currentUserId.isEmpty else { return }
+        isRefreshing = true
+        defer { isRefreshing = false }
+
+        var built: [AppNotification] = []
+
+        // Friend requests sent TO this user.
+        if let requests = try? await FriendsService.shared.fetchPendingRequests(userId: currentUserId) {
+            for row in requests {
+                let name = try? await ProfileService.shared.fetchProfile(userId: row.requesterId).displayName
+                built.append(AppNotification(
+                    id: "friendreq-\(row.id)",
+                    type: .friendRequest,
+                    title: name.map { "\($0) sent you a friend request" } ?? "New friend request",
+                    body: "Tap to review and respond.",
+                    senderId: row.requesterId,
+                    targetId: nil,
+                    createdAt: ISO8601DateFormatter().date(from: row.createdAt) ?? Date()
+                ))
+            }
+        }
+
+        // Friends' recent workout activity from the social feed.
+        if let feed = try? await FeedService.shared.fetchFeed(userId: currentUserId, limit: 15) {
+            for item in feed where item.userId != currentUserId && item.activityType == .workout {
+                let workoutName = item.workoutActivity?.workoutName ?? "a workout"
+                built.append(AppNotification(
+                    id: "feed-\(item.id)",
+                    type: .friendWorkout,
+                    title: "\(item.user.displayName) finished \(workoutName)",
+                    body: Self.workoutSummaryLine(item),
+                    senderId: item.userId,
+                    targetId: item.id,
+                    createdAt: item.createdAt
+                ))
+            }
+        }
+
+        // Workout suggestion — surfaced when a muscle group is under-trained.
+        let workouts = WorkoutService.shared.fetchWorkoutsFromCache(userId: currentUserId)
+        if let suggestion = TrainingNudgeService.suggestionForInbox(workouts: workouts) {
+            built.append(AppNotification(
+                id: "suggest-\(suggestion.muscle.rawValue)",
+                type: .suggestedWorkout,
+                title: "Suggested: \(suggestion.muscle.displayName) session",
+                body: suggestion.reason,
+                senderId: nil,
+                targetId: suggestion.muscle.rawValue,
+                createdAt: Date()
+            ))
+        }
+
+        merge(server: built)
+    }
+
+    /// One-line teaser for a friend's workout feed item.
+    private static func workoutSummaryLine(_ item: SocialFeedItem) -> String {
+        guard let w = item.workoutActivity else { return item.caption ?? "" }
+        return "\(w.exerciseCount) exercises · \(w.totalSets) sets"
+    }
+
+    /// Merge backend-derived notifications into the local list. Existing ids keep
+    /// their read state (and updated content); new ones are inserted. Locally
+    /// stored push notifications (different id space) are preserved.
+    private func merge(server incoming: [AppNotification]) {
+        var byId: [String: AppNotification] = Dictionary(
+            notifications.map { ($0.id, $0) },
+            uniquingKeysWith: { first, _ in first }
+        )
+        for var note in incoming {
+            if let existing = byId[note.id] {
+                note.isRead = existing.isRead
+            }
+            byId[note.id] = note
+        }
+        notifications = byId.values.sorted { $0.createdAt > $1.createdAt }
+        if notifications.count > 100 {
+            notifications = Array(notifications.prefix(100))
+        }
+        saveNotifications()
+    }
+
     // MARK: - Handle Incoming Push
 
     func handlePushPayload(_ userInfo: [AnyHashable: Any]) {
@@ -313,6 +410,20 @@ struct AppNotification: Codable, Identifiable {
         self.createdAt = Date()
     }
 
+    /// Stable-id initializer for backend-derived notifications. The caller supplies
+    /// a deterministic id (e.g. `"feed-\(itemId)"`) so repeated refreshes merge
+    /// onto the same row instead of duplicating.
+    init(id: String, type: NotificationType, title: String, body: String, isRead: Bool = false, senderId: String? = nil, targetId: String? = nil, createdAt: Date) {
+        self.id = id
+        self.type = type
+        self.title = title
+        self.body = body
+        self.isRead = isRead
+        self.senderId = senderId
+        self.targetId = targetId
+        self.createdAt = createdAt
+    }
+
     enum NotificationType: String, Codable, CaseIterable {
         case friendRequest = "friend_request"
         case friendAccepted = "friend_accepted"
@@ -321,6 +432,7 @@ struct AppNotification: Codable, Identifiable {
         case newPR = "new_pr"
         case streakMilestone = "streak_milestone"
         case friendWorkout = "friend_workout"
+        case suggestedWorkout = "suggested_workout"
 
         var defaultTitle: String {
             switch self {
@@ -331,6 +443,7 @@ struct AppNotification: Codable, Identifiable {
             case .newPR: return "New Personal Record!"
             case .streakMilestone: return "Streak Milestone"
             case .friendWorkout: return "Friend Completed a Workout"
+            case .suggestedWorkout: return "Suggested Workout"
             }
         }
 
@@ -342,7 +455,33 @@ struct AppNotification: Codable, Identifiable {
             case .newPR: return "trophy.fill"
             case .streakMilestone: return "flame.fill"
             case .friendWorkout: return "figure.strengthtraining.traditional"
+            case .suggestedWorkout: return "sparkles"
             }
+        }
+
+        /// Inbox filter bucket this type belongs to.
+        var filter: NotificationFilter {
+            switch self {
+            case .friendRequest, .friendAccepted, .like, .comment: return .friends
+            case .friendWorkout, .newPR, .streakMilestone: return .workouts
+            case .suggestedWorkout: return .suggestions
+            }
+        }
+    }
+}
+
+/// Top-level filter buckets surfaced as chips in the notification inbox.
+/// Distinct from `NotificationCategory` (which models user preference toggles).
+enum NotificationFilter: String, CaseIterable, Identifiable {
+    case all, friends, workouts, suggestions
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .all: return "All"
+        case .friends: return "Friends"
+        case .workouts: return "Workouts"
+        case .suggestions: return "Suggestions"
         }
     }
 }

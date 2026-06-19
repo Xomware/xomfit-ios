@@ -2,6 +2,7 @@ import SwiftUI
 
 struct FeedView: View {
     @Environment(AuthService.self) private var authService
+    @Environment(GeneratorPreseed.self) private var generatorPreseed
     @State private var viewModel = FeedViewModel()
     @State private var showUserSearch = false
     @State private var showNotifications = false
@@ -156,7 +157,15 @@ struct FeedView: View {
             UserSearchView()
         }
         .sheet(isPresented: $showNotifications) {
-            NotificationInboxView()
+            NotificationInboxView(
+                currentUserId: authService.currentUser?.id.uuidString.lowercased(),
+                onStartSuggestion: { muscle in
+                    // FeedView can't switch tabs itself; seed the generator so the
+                    // Workout tab opens pre-filled when the user navigates there.
+                    Haptics.light()
+                    generatorPreseed.pending = muscle
+                }
+            )
         }
         .sheet(isPresented: $showFilters) {
             FeedFilterSheet(
