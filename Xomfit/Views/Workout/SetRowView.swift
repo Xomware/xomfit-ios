@@ -129,8 +129,12 @@ struct SetRowView: View {
         }
         .padding(.leading, isDropSet ? Theme.Spacing.lg : 0)
         .frame(minHeight: isDropSet ? 44 : 52)
-        .background(rowBackground)
-        .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
+        // Non-clipping rounded background. Previously `.background(rowBackground)`
+        // + `.clipShape(.rect(...))` cropped the row's content to its frame,
+        // cutting off the Drop/Max/+5 quick-action row on the active set. A
+        // RoundedRectangle fill rounds the corners without clipping, so the
+        // row grows (via `minHeight`) to contain its content.
+        .background(RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall).fill(rowBackground))
         .overlay(
             // Accent border around the active set so the lifter can see which
             // set they're on at a glance in list mode (#411 bug 4). Only
@@ -176,11 +180,12 @@ struct SetRowView: View {
             }
 
             HStack(spacing: Theme.Spacing.sm) {
-                // Set deletion moved to swipe-to-delete on the row. The leading
-                // red minus.circle.fill button is gone; the same `onDelete`
-                // closure is now wired via `.swipeToDelete` at the call site
-                // in `ActiveWorkoutView`. Keep a small leading inset so the
-                // remaining content stays visually anchored where it was.
+                // Set deletion lives in the row's context menu (long-press) wired
+                // at the call site in `ActiveWorkoutView`. The leading red
+                // minus.circle.fill button is gone, and the earlier swipe-to-delete
+                // was removed because its `DragGesture` fought the ScrollView pan.
+                // Keep a small leading inset so the remaining content stays
+                // visually anchored where it was.
                 Spacer().frame(width: Theme.Spacing.xs)
 
                 // PR trophy / DROP badge / set number
