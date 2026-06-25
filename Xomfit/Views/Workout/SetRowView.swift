@@ -110,7 +110,9 @@ struct SetRowView: View {
 
         let w = workoutSet.weight
         let r = workoutSet.reps
-        _weightText = State(initialValue: w > 0 ? w.formattedWeight : "")
+        // Initialize with display unit (read from UserDefaults since @AppStorage not safe in init)
+        let unit = WeightUnit(rawValue: UserDefaults.standard.string(forKey: "weightUnit") ?? "lbs") ?? .lbs
+        _weightText = State(initialValue: w > 0 ? w.formattedWeight(unit: unit) : "")
         _repsText   = State(initialValue: r > 0 ? "\(r)" : "")
     }
 
@@ -148,7 +150,14 @@ struct SetRowView: View {
         )
         .animation(nil, value: workoutSet.completedAt)
         .onChange(of: workoutSet.weight) { _, newWeight in
-            let formatted = newWeight > 0 ? newWeight.formattedWeight : ""
+            // Don't update while user is typing - only sync when focus leaves
+            guard !isWeightFocused else { return }
+            let formatted = newWeight > 0 ? newWeight.formattedWeight(unit: weightUnit) : ""
+            if weightText != formatted { weightText = formatted }
+        }
+        .onChange(of: weightUnitRaw) { _, _ in
+            // Re-render weight text in new unit when user toggles kg/lbs
+            let formatted = workoutSet.weight > 0 ? workoutSet.weight.formattedWeight(unit: weightUnit) : ""
             if weightText != formatted { weightText = formatted }
         }
         .onChange(of: workoutSet.reps) { _, newReps in
@@ -226,8 +235,10 @@ struct SetRowView: View {
                     .frame(maxWidth: .infinity)
                     .focused($isWeightFocused)
                     .onChange(of: weightText) { _, newValue in
-                        if let w = Double(newValue) {
-                            onWeightChange(w)
+                        if let displayValue = Double(newValue) {
+                            // Convert from display unit back to lbs for storage
+                            let lbsValue = displayValue / weightUnit.multiplierFromLbs
+                            onWeightChange(lbsValue)
                         }
                     }
                     // Long-press surfaces the plate calculator without breaking text input.
@@ -243,11 +254,30 @@ struct SetRowView: View {
                         showWeightActions = true
                     }
 
+                // Unit toggle (kg/lbs)
+                Button {
+                    Haptics.selection()
+                    weightUnitRaw = weightUnit == .lbs ? WeightUnit.kg.rawValue : WeightUnit.lbs.rawValue
+                } label: {
+                    Text(weightUnit.displayName)
+                        .font(Theme.fontCaption)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(Theme.accent)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Theme.accent.opacity(0.15))
+                        .clipShape(.capsule)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Weight unit: \(weightUnit.accessibilityName)")
+                .accessibilityHint("Tap to switch between pounds and kilograms")
+
+                // Per-side mode toggle
                 Button(action: onToggleWeightMode) {
-                    Text(workoutSet.weightMode == .perSide ? "\(weightUnit.displayName) ×2  ×" : "\(weightUnit.displayName)  ×")
+                    Text(workoutSet.weightMode == .perSide ? "×2" : "")
                         .font(Theme.fontCaption)
                         .foregroundStyle(workoutSet.weightMode == .perSide ? Theme.accent : Theme.textSecondary)
-                        .frame(minWidth: 44, minHeight: 44)
+                        .frame(minWidth: 28, minHeight: 44)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
