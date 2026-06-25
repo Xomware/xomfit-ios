@@ -1105,9 +1105,24 @@ private struct ExerciseCard: View {
                                 .background(Theme.accent.opacity(0.15))
                                 .clipShape(.rect(cornerRadius: 4))
                         }
-                        // PR badge — show the user's personal record for this exercise
-                        if let pr = viewModel.personalRecordForExercise(exercise.exercise.id),
+                        // PR badge — check if we just hit a NEW PR in this workout first
+                        if let newPR = exercise.sets.first(where: { $0.isPersonalRecord && $0.weight > 0 && $0.reps > 0 }) {
+                            // NEW PR achieved in this workout!
+                            HStack(spacing: 3) {
+                                Image(systemName: "trophy.fill")
+                                    .font(.system(size: 9, weight: .bold))
+                                Text("NEW PR: \(newPR.weight.formattedWeight) x \(newPR.reps)")
+                                    .font(.system(size: 10, weight: .bold))
+                            }
+                            .foregroundStyle(.black)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, Theme.Spacing.tighter)
+                            .background(Theme.prGold)
+                            .clipShape(.rect(cornerRadius: 4))
+                            .accessibilityLabel("New personal record: \(newPR.weight.formattedWeight) pounds for \(newPR.reps) reps")
+                        } else if let pr = viewModel.personalRecordForExercise(exercise.exercise.id),
                            pr.weight > 0, pr.reps > 0 {
+                            // Show historical PR
                             HStack(spacing: 3) {
                                 Image(systemName: "trophy.fill")
                                     .font(.system(size: 9, weight: .bold))
@@ -1753,6 +1768,14 @@ private struct ExerciseTransitionCard: View {
 
 // MARK: - Finish Workout Sheet
 
+/// Simple struct to hold PR info for display in the finish sheet.
+private struct AchievedPR {
+    let exerciseId: String
+    let exerciseName: String
+    let weight: Double
+    let reps: Int
+}
+
 private struct FinishWorkoutSheet: View {
     /// Passed in so the sheet can render the captured-soundtrack section and
     /// accept manual track additions / removals (#387). Plain `let` — we only
@@ -1775,6 +1798,21 @@ private struct FinishWorkoutSheet: View {
     @State private var showManualTrackSheet = false
     /// Controls the expanded state of the detailed ratings section.
     @State private var showDetailedRatings = false
+
+    /// PRs achieved during this workout session.
+    private var achievedPRs: [AchievedPR] {
+        viewModel.exercises.compactMap { exercise in
+            // Find the best PR set for this exercise
+            let prSets = exercise.sets.filter { $0.isPersonalRecord && $0.weight > 0 && $0.reps > 0 }
+            guard let best = prSets.max(by: { $0.weight < $1.weight }) else { return nil }
+            return AchievedPR(
+                exerciseId: exercise.exercise.id,
+                exerciseName: exercise.exercise.name,
+                weight: best.weight,
+                reps: best.reps
+            )
+        }
+    }
 
     var body: some View {
         NavigationStack {
@@ -1825,6 +1863,34 @@ private struct FinishWorkoutSheet: View {
 
                         // Detailed Ratings (collapsible)
                         detailedRatingsSection
+
+                        // PRs achieved during this workout
+                        if !achievedPRs.isEmpty {
+                            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                                HStack(spacing: Theme.Spacing.sm) {
+                                    Image(systemName: "trophy.fill")
+                                        .foregroundStyle(Theme.prGold)
+                                    Text("Personal Records")
+                                        .font(.subheadline.weight(.semibold))
+                                        .foregroundStyle(Theme.textPrimary)
+                                }
+
+                                ForEach(achievedPRs, id: \.exerciseId) { pr in
+                                    HStack(spacing: Theme.Spacing.sm) {
+                                        Text(pr.exerciseName)
+                                            .font(Theme.fontBody)
+                                            .foregroundStyle(Theme.textPrimary)
+                                        Spacer()
+                                        Text("\(pr.weight.formattedWeight) × \(pr.reps)")
+                                            .font(Theme.fontNumberMedium)
+                                            .foregroundStyle(Theme.prGold)
+                                    }
+                                    .padding(Theme.Spacing.sm)
+                                    .background(Theme.prGold.opacity(0.1))
+                                    .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
+                                }
+                            }
+                        }
 
                         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
                             Text("Location")
