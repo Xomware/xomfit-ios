@@ -47,6 +47,33 @@ struct WorkoutBuilderView: View {
                     .padding(.vertical, Theme.Spacing.sm)
                 }
             }
+            .confirmationDialog(
+                "What do you want to do with this workout?",
+                isPresented: $showSaveOptions,
+                titleVisibility: .visible
+            ) {
+                Button("Save as Template") {
+                    Haptics.success()
+                    viewModel.save()
+                    dismiss()
+                }
+                Button("Start Now") {
+                    Haptics.success()
+                    let template = viewModel.buildTemplate()
+                    startTemplateWithWarmupGate(template)
+                }
+                Button("Save AND Start") {
+                    Haptics.success()
+                    let saved = viewModel.save()
+                    startTemplateWithWarmupGate(saved)
+                }
+                Button("Discard", role: .destructive) {
+                    dismiss()
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("You can save it for later, jump in now, or both.")
+            }
             .navigationTitle("Build Workout")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarColorScheme(.dark, for: .navigationBar)
@@ -76,33 +103,6 @@ struct WorkoutBuilderView: View {
             ExercisePickerView { exercise in
                 viewModel.addExercise(exercise)
             }
-        }
-        .confirmationDialog(
-            "What do you want to do with this workout?",
-            isPresented: $showSaveOptions,
-            titleVisibility: .visible
-        ) {
-            Button("Save as Template") {
-                Haptics.success()
-                viewModel.save()
-                dismiss()
-            }
-            Button("Start Now") {
-                Haptics.success()
-                let template = viewModel.buildTemplate()
-                startTemplateWithWarmupGate(template)
-            }
-            Button("Save AND Start") {
-                Haptics.success()
-                let saved = viewModel.save()
-                startTemplateWithWarmupGate(saved)
-            }
-            Button("Discard", role: .destructive) {
-                dismiss()
-            }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("You can save it for later, jump in now, or both.")
         }
         .confirmationDialog(
             "Warm up first?",
