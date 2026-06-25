@@ -39,7 +39,7 @@ test_commands:
 ## Constraints
 - MVVM architecture — views should not call services directly
 - Supabase handles auth — no custom auth logic
-- iOS minimum target: iOS 17
+- iOS minimum target: iOS 26.2 (not 17 — CLAUDE.md was stale)
 
 ## Verification (Agent UI Screenshots)
 
@@ -84,5 +84,8 @@ xcrun simctl openurl booted "xomfit://report/<report-id>"
 ```
 
 The bypass is `#if DEBUG`-gated and compiles out of Release builds.
+
+## Current Focus
+v2.3.0 (workout-generator epic) and v2.3.1 (set-card overflow fix) shipped to TestFlight. Waiting on on-device verification of scroll + overflow. Next: triage 21 quarantined tests (#464), add to XomBoard (needs `gh auth refresh -s project`), and tune nudge thresholds after real-world data. A parallel scroll/spacing branch may be active — rebase on master before touching ActiveWorkoutView or SetRowView.
 
 ## Lessons
