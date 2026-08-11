@@ -37,3 +37,6 @@ build/
 
 # Claude Code agent worktrees (local scratch, not shared)
 .claude/worktrees/
+
+# Supabase CLI scratch
+supabase/.temp/
