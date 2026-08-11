@@ -1362,6 +1362,30 @@ final class WorkoutLoggerViewModel {
         newPR = headline
         showPRCelebration = true
         Haptics.prCelebration()
+
+        // Also drop it in the inbox. The celebration banner is transient and is
+        // easy to miss mid-set, and the backend push for this only reaches the
+        // device once notify_user is configured — the inbox entry is the one
+        // record of the PR the user can always go back and find.
+        NotificationService.shared.addNotification(
+            AppNotification(
+                type: .newPR,
+                title: "New Personal Record",
+                body: prNotificationBody(for: headline),
+                targetId: headline.id
+            )
+        )
+    }
+
+    /// "Bench Press · Rope — 225 x 5 (up from 215)". Falls back to a first-record
+    /// phrasing when there is nothing to compare against.
+    private func prNotificationBody(for record: PersonalRecord) -> String {
+        let lift = record.displayName
+        let effort = "\(record.weight.formattedWeight) × \(record.reps)"
+        guard let previous = record.previousBest else {
+            return "First record on \(lift) — \(effort)"
+        }
+        return "\(lift) — \(effort) (up from \(previous.formattedWeight))"
     }
 
     // MARK: - Live Activity
