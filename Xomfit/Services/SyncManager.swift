@@ -62,7 +62,16 @@ final class SyncManager {
                 return await WorkoutService.shared.saveWorkout(workout)
 
             case .postFeedItem:
-                // Feed posts are embedded in workout save — skip standalone retry
+                // Retry a failed workout-to-feed post. Payload is the encoded
+                // Workout; caption rides along in workout.notes. Photo URLs are
+                // not preserved across a queued retry. (#386)
+                guard let data = op.payload.data(using: .utf8),
+                      let workout = try? JSONDecoder().decode(Workout.self, from: data) else { return false }
+                try await FeedService.shared.postWorkoutToFeed(
+                    workout: workout,
+                    userId: op.userId,
+                    caption: workout.notes
+                )
                 return true
 
             case .likeFeedItem:

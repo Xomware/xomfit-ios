@@ -104,24 +104,31 @@ struct WorkoutBuilderView: View {
         } message: {
             Text("You can save it for later, jump in now, or both.")
         }
-        .confirmationDialog(
-            "Warm up first?",
-            isPresented: $showWarmupPrompt,
-            titleVisibility: .visible
-        ) {
-            Button("Yes, \(warmupMinutes) min") {
-                warmupOptIn = "yes"
-                showWarmup = true
-            }
-            Button("No, skip") {
-                warmupOptIn = "no"
-                runPendingStartImmediately()
-            }
-            Button("Just this once", role: .cancel) {
-                runPendingStartImmediately()
-            }
-        } message: {
-            Text("A 5-10 minute stretch routine helps loosen up before lifting.")
+        // Attached to a distinct background anchor so it doesn't collide with
+        // the save-options dialog above — SwiftUI only presents one
+        // confirmationDialog per view anchor, and the later modifier silently
+        // wins, which previously masked the Save flow entirely. (#465)
+        .background {
+            Color.clear
+                .confirmationDialog(
+                    "Warm up first?",
+                    isPresented: $showWarmupPrompt,
+                    titleVisibility: .visible
+                ) {
+                    Button("Yes, \(warmupMinutes) min") {
+                        warmupOptIn = "yes"
+                        showWarmup = true
+                    }
+                    Button("No, skip") {
+                        warmupOptIn = "no"
+                        runPendingStartImmediately()
+                    }
+                    Button("Just this once", role: .cancel) {
+                        runPendingStartImmediately()
+                    }
+                } message: {
+                    Text("A 5-10 minute stretch routine helps loosen up before lifting.")
+                }
         }
         .fullScreenCover(isPresented: $showWarmup) {
             WarmupView(

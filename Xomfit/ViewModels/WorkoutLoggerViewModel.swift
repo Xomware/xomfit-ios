@@ -1921,9 +1921,22 @@ final class WorkoutLoggerViewModel {
                 try await FeedService.shared.postWorkoutToFeed(workout: workout, userId: userId, caption: workout.notes, photoURLs: photoURLs)
                 print("[WorkoutLogger] finishWorkout — feed post succeeded")
             } catch {
-                print("[WorkoutLogger] finishWorkout — feed post FAILED: \(error)")
-                // Non-fatal: workout is saved (or queued); the feed card will
-                // appear once the user pulls-to-refresh on the feed.
+                print("[WorkoutLogger] finishWorkout — feed post FAILED, queuing retry: \(error)")
+                // Non-fatal: workout is saved (or queued). Queue the feed post
+                // for retry so a transient/offline failure at finish time still
+                // lands the card — previously this was swallowed and the post
+                // was lost forever, so the workout never appeared. (#386)
+                if let payload = try? JSONEncoder().encode(workout),
+                   let payloadString = String(data: payload, encoding: .utf8) {
+                    SyncManager.shared.enqueue(
+                        SyncOperation(
+                            type: .postFeedItem,
+                            entityId: workout.id,
+                            userId: userId,
+                            payload: payloadString
+                        )
+                    )
+                }
             }
 
             // Update widget data

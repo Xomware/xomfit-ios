@@ -54,7 +54,10 @@ struct FeedView: View {
 
             if viewModel.isLoading {
                 feedSkeleton
-            } else if let error = viewModel.errorMessage {
+            } else if let error = viewModel.errorMessage, viewModel.feedItems.isEmpty {
+                // Only take over the whole screen when there's nothing to show.
+                // A transient pull-to-refresh error must not blow away an
+                // already-populated feed (previously flashed error then cleared). (#386)
                 errorView(message: error)
             } else if viewModel.feedItems.isEmpty {
                 emptyState

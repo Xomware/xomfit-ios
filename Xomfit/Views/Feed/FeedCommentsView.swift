@@ -95,6 +95,17 @@ struct FeedCommentsView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .task { await loadComments() }
+        .task {
+            // Patch cached comment avatars when the current user updates their
+            // photo — comments hold their own AppUser copy that never refetches. (#385)
+            for await note in NotificationCenter.default.notifications(named: .userProfileUpdated) {
+                guard let url = note.object as? String,
+                      let uid = note.userInfo?["userId"] as? String else { continue }
+                for i in comments.indices where comments[i].userId == uid {
+                    comments[i].user?.avatarURL = url
+                }
+            }
+        }
     }
 
     // MARK: - Thread Renderer
