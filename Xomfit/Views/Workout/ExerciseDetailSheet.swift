@@ -223,19 +223,74 @@ struct ExerciseDetailSheet: View {
     }
 
     private var howToSection: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            Text("How To")
-                .font(Theme.fontHeadline)
-                .foregroundStyle(Theme.textPrimary)
-            Text(exercise.description)
-                .font(Theme.fontBody)
-                .foregroundStyle(Theme.textPrimary.opacity(0.9))
-                .fixedSize(horizontal: false, vertical: true)
+        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                Text("How To")
+                    .font(Theme.fontHeadline)
+                    .foregroundStyle(Theme.textPrimary)
+                Text(exercise.description)
+                    .font(Theme.fontBody)
+                    .foregroundStyle(Theme.textPrimary.opacity(0.9))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            // Full step-by-step guidance where it has been written. Exercises
+            // without it fall back to the description above plus the existing
+            // tips section, rather than showing generated filler.
+            if let steps = ExerciseInstructionLibrary.instructions(for: exercise.id) {
+                if !steps.setup.isEmpty {
+                    instructionGroup("Setup", systemImage: "figure.stand", steps: steps.setup)
+                }
+                if !steps.execution.isEmpty {
+                    instructionGroup("The Rep", systemImage: "arrow.up.arrow.down", steps: steps.execution)
+                }
+                if !steps.mistakes.isEmpty {
+                    instructionGroup(
+                        "Common Mistakes",
+                        systemImage: "exclamationmark.triangle.fill",
+                        steps: steps.mistakes,
+                        tint: Theme.alert
+                    )
+                }
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(Theme.Spacing.md)
         .background(Theme.surface)
         .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+    }
+
+    /// One titled block of numbered steps.
+    ///
+    /// Mistakes get a bullet rather than a number, because they are a checklist
+    /// of things to watch for, not an ordered procedure.
+    private func instructionGroup(
+        _ title: String,
+        systemImage: String,
+        steps: [String],
+        tint: Color = Theme.accent
+    ) -> some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            Label(title, systemImage: systemImage)
+                .font(Theme.fontFootnote.weight(.bold))
+                .foregroundStyle(tint)
+
+            VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                ForEach(Array(steps.enumerated()), id: \.offset) { index, step in
+                    HStack(alignment: .top, spacing: Theme.Spacing.sm) {
+                        Text(tint == Theme.alert ? "•" : "\(index + 1)")
+                            .font(Theme.fontCaption.weight(.bold).monospacedDigit())
+                            .foregroundStyle(tint)
+                            .frame(width: 16, alignment: .trailing)
+                        Text(step)
+                            .font(Theme.fontCallout)
+                            .foregroundStyle(Theme.textPrimary.opacity(0.9))
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var tipsSection: some View {
