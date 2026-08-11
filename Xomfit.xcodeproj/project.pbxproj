@@ -11,6 +11,7 @@
 		0F2396BE1C58B7C7F99F5BC6 /* WorkoutInsightsSeamTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 730E45C30DECC5AA5563EAB4 /* WorkoutInsightsSeamTests.swift */; };
 		2652623F55494AE501D17728 /* AuthServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7B33E534C5D4F6F4A221677 /* AuthServiceTests.swift */; };
 		3AD31D27EAD82F60EE882599 /* AnimationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 325D34C169BA7253ADECB318 /* AnimationTests.swift */; };
+		4B29E29052245B3988552687 /* HealthKitTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F23492F5F635F00683551 /* HealthKitTests.swift */; };
 		59CED2BB74729F6E6D6C8417 /* StrengthStandardsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D34B74E81225372EA6F7B954 /* StrengthStandardsTests.swift */; };
 		732744FB02C5390D4B24130A /* ExerciseVariantTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C26FE97F0134F021E9D0622B /* ExerciseVariantTests.swift */; };
 		8AC7AAF03202D8E47D7B253B /* TrainingNudgeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C84C61FE8D97D6A6F27FDF87 /* TrainingNudgeTests.swift */; };
@@ -662,6 +663,7 @@
 				B2F201D886D61139D367C906 /* GoalBaselineTests.swift in Sources */,
 				732744FB02C5390D4B24130A /* ExerciseVariantTests.swift in Sources */,
 				59CED2BB74729F6E6D6C8417 /* StrengthStandardsTests.swift in Sources */,
+				4B29E29052245B3988552687 /* HealthKitTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -868,6 +870,8 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSAppleMusicUsageDescription = "XomFit captures the songs that played during your workout so you can see your soundtrack later.";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "XomFit reads your workouts, heart rate and calories from Health so runs, rides and rows recorded on your watch show up alongside your lifting.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "XomFit saves your completed workouts to Health so they count toward your activity rings.";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -905,6 +909,8 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSAppleMusicUsageDescription = "XomFit captures the songs that played during your workout so you can see your soundtrack later.";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "XomFit reads your workouts, heart rate and calories from Health so runs, rides and rows recorded on your watch show up alongside your lifting.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "XomFit saves your completed workouts to Health so they count toward your activity rings.";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
