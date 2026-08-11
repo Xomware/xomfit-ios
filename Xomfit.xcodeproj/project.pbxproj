@@ -11,6 +11,7 @@
 		0F2396BE1C58B7C7F99F5BC6 /* WorkoutInsightsSeamTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 730E45C30DECC5AA5563EAB4 /* WorkoutInsightsSeamTests.swift */; };
 		2652623F55494AE501D17728 /* AuthServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7B33E534C5D4F6F4A221677 /* AuthServiceTests.swift */; };
 		3AD31D27EAD82F60EE882599 /* AnimationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 325D34C169BA7253ADECB318 /* AnimationTests.swift */; };
+		732744FB02C5390D4B24130A /* ExerciseVariantTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C26FE97F0134F021E9D0622B /* ExerciseVariantTests.swift */; };
 		8AC7AAF03202D8E47D7B253B /* TrainingNudgeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C84C61FE8D97D6A6F27FDF87 /* TrainingNudgeTests.swift */; };
 		9FA42ECEF9AB18EF0FD630C2 /* SessionManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C74D5365A1D42D343FCEB6A /* SessionManagerTests.swift */; };
 		A2D9DA19EA001353F94F1B0D /* ProgressiveOverloadEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F8269C3E626F9E0F867A286 /* ProgressiveOverloadEngineTests.swift */; };
@@ -68,6 +69,7 @@
 		5C74D5365A1D42D343FCEB6A /* SessionManagerTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SessionManagerTests.swift; sourceTree = "<group>"; };
 		730E45C30DECC5AA5563EAB4 /* WorkoutInsightsSeamTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkoutInsightsSeamTests.swift; sourceTree = "<group>"; };
 		B7B33E534C5D4F6F4A221677 /* AuthServiceTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AuthServiceTests.swift; sourceTree = "<group>"; };
+		C26FE97F0134F021E9D0622B /* ExerciseVariantTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ExerciseVariantTests.swift; sourceTree = "<group>"; };
 		C84C61FE8D97D6A6F27FDF87 /* TrainingNudgeTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TrainingNudgeTests.swift; sourceTree = "<group>"; };
 		E2971609F94FDA4AAE995734 /* GoalBaselineTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GoalBaselineTests.swift; sourceTree = "<group>"; };
 		ED9BBF5A1F88959BD0A49AAC /* XomfitTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = XomfitTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -481,6 +483,7 @@
 				F29F23542F5F635F00683551 /* VideoAnalysisTests.swift */,
 				F29F23552F5F635F00683551 /* WorkoutCardViewModelTests.swift */,
 				F29F23562F5F635F00683551 /* WorkoutLoggerViewModelTests.swift */,
+				C26FE97F0134F021E9D0622B /* ExerciseVariantTests.swift */,
 			);
 			path = XomFitTests;
 			sourceTree = "<group>";
@@ -654,6 +657,7 @@
 				0F2396BE1C58B7C7F99F5BC6 /* WorkoutInsightsSeamTests.swift in Sources */,
 				8AC7AAF03202D8E47D7B253B /* TrainingNudgeTests.swift in Sources */,
 				B2F201D886D61139D367C906 /* GoalBaselineTests.swift in Sources */,
+				732744FB02C5390D4B24130A /* ExerciseVariantTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

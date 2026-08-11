@@ -709,11 +709,11 @@ final class WorkoutLoggerViewModel {
             }
             // Fire PR check asynchronously — non-blocking
             let set = exercises[exerciseIndex].sets[setIndex]
-            let exercise = exercises[exerciseIndex].exercise
+            let loggedExercise = exercises[exerciseIndex]
             Task {
                 await checkForPR(
                     set: set,
-                    exercise: exercise,
+                    loggedExercise: loggedExercise,
                     exerciseIndex: exerciseIndex,
                     setIndex: setIndex
                 )
@@ -1318,21 +1318,39 @@ final class WorkoutLoggerViewModel {
 
     private func checkForPR(
         set: WorkoutSet,
-        exercise: Exercise,
+        loggedExercise: WorkoutExercise,
         exerciseIndex: Int,
         setIndex: Int
     ) async {
         guard !activeUserId.isEmpty, set.reps > 0, set.weight > 0 else { return }
 
-        let pr = await PRService.shared.checkForPR(
-            exerciseId: exercise.id,
-            exerciseName: exercise.name,
-            weight: set.weight,
-            reps: set.reps,
-            userId: activeUserId
-        )
+        let result: PRResult
+        do {
+            // Variant details ride along so a rope pushdown record does not
+            // compete with a straight-bar one.
+            result = try await PRService.shared.checkForPR(
+                exerciseId: loggedExercise.exercise.id,
+                exerciseName: loggedExercise.exercise.name,
+                weight: set.weight,
+                reps: set.reps,
+                userId: activeUserId,
+                weightMode: set.weightMode,
+                grip: loggedExercise.selectedGrip,
+                attachment: loggedExercise.selectedAttachment,
+                position: loggedExercise.selectedPosition,
+                laterality: loggedExercise.selectedLaterality,
+                workoutId: workoutId
+            )
+        } catch {
+            // Never blocks finishing a workout, but no longer disappears either:
+            // the old implementation returned nil on any error, which is how a
+            // hard schema mismatch went unnoticed long enough to lose every PR
+            // the app has ever detected.
+            print("[PRService] PR check failed for \(loggedExercise.exercise.name): \(error)")
+            return
+        }
 
-        guard let pr else { return }
+        guard let headline = result.headline else { return }
 
         // Mark the set as a PR in the local state
         if exercises.indices.contains(exerciseIndex),
@@ -1341,7 +1359,7 @@ final class WorkoutLoggerViewModel {
         }
 
         // Trigger the celebration banner
-        newPR = pr
+        newPR = headline
         showPRCelebration = true
         Haptics.prCelebration()
     }
