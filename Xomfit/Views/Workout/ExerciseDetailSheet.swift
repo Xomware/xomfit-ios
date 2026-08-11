@@ -5,9 +5,17 @@ import SwiftUI
 /// active workout view so users can check form mid-set.
 struct ExerciseDetailSheet: View {
     let exercise: Exercise
+    /// The lifter's best estimated 1RM on this exercise, when known. Drives the
+    /// rank card; omitted callers simply get no rank section.
+    var estimated1RM: Double?
     @Environment(\.dismiss) private var dismiss
     /// Toggles the 1RM estimator sheet from the meta row link.
     @State private var showOneRM: Bool = false
+    @State private var showLifterDetails: Bool = false
+
+    // Computed rather than stored: a private stored property would drop the
+    // memberwise initializer to private and break every call site.
+    private var strength: StrengthLevelService { .shared }
 
     var body: some View {
         NavigationStack {
@@ -17,6 +25,7 @@ struct ExerciseDetailSheet: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
                         header
+                        rankSection
                         muscleAndEquipment
                         variationsSection
                         howToSection
@@ -42,6 +51,32 @@ struct ExerciseDetailSheet: View {
                     Button("Done") { dismiss() }
                         .foregroundStyle(Theme.accent)
                 }
+            }
+        }
+    }
+
+    /// Strength rank for this exercise.
+    ///
+    /// Hidden entirely rather than shown empty when the exercise is not
+    /// weight-ranked (holds, mobility) or bodyweight is unknown — a rank card
+    /// reading "Unranked" with no way to act on it is worse than no card.
+    @ViewBuilder
+    private var rankSection: some View {
+        // Falls back to the cached best from PRService so the five existing call
+        // sites get ranks without each having to look one up.
+        let best = estimated1RM ?? PRService.shared.bestE1RM(for: exercise.id)
+        if let rank = strength.rank(
+            exerciseId: exercise.id,
+            estimated1RM: best ?? 0
+        ), rank.tier != .unranked || best != nil {
+            StrengthRankCard(
+                exerciseName: exercise.name,
+                rank: rank,
+                isProvisional: strength.isProvisional,
+                onProvideDetails: { showLifterDetails = true }
+            )
+            .sheet(isPresented: $showLifterDetails) {
+                LifterDetailsSheet()
             }
         }
     }

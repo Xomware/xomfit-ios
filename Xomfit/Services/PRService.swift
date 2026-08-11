@@ -103,7 +103,29 @@ final class PRService {
         return f
     }()
 
+    /// Best known estimated 1RM per exercise, keyed by plain exercise id.
+    ///
+    /// Populated as a side effect of any PR fetch and updated when a record is
+    /// set, so a screen that only needs "how strong am I on this lift" — the
+    /// exercise detail sheet, say — can answer without its own network call or
+    /// having the value threaded down through every call site.
+    ///
+    /// Keyed by exercise rather than variant on purpose: a rank is about the
+    /// lift, and the strongest variant is the honest answer to that question.
+    private(set) var bestE1RMByExercise: [String: Double] = [:]
+
     private init() {}
+
+    /// Best estimated 1RM recorded for an exercise, across all its variants.
+    func bestE1RM(for exerciseId: String) -> Double? {
+        bestE1RMByExercise[exerciseId]
+    }
+
+    private func noteE1RM(_ value: Double, for exerciseId: String) {
+        if value > (bestE1RMByExercise[exerciseId] ?? 0) {
+            bestE1RMByExercise[exerciseId] = value
+        }
+    }
 
     // MARK: - Check
 
@@ -264,6 +286,8 @@ final class PRService {
             .upsert(payload)
             .execute()
 
+        noteE1RM(estimated1RM, for: exerciseId)
+
         return PersonalRecord(
             id: id,
             userId: userId,
@@ -333,6 +357,11 @@ final class PRService {
         let date = row.achievedAt.flatMap { raw in
             iso8601.date(from: raw) ?? iso8601NoFraction.date(from: raw)
         } ?? Date()
+
+        // Every read warms the strength-rank cache, so the detail sheet can show
+        // a rank as soon as any screen has loaded PRs.
+        let e1rm = row.estimated1RM ?? Exercise.estimateMax(weight: row.weight, reps: row.reps)
+        noteE1RM(e1rm, for: row.exerciseId)
 
         return PersonalRecord(
             id: row.id,
