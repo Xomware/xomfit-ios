@@ -9,17 +9,23 @@
 /* Begin PBXBuildFile section */
 		06ACBBC7B67A972F6F39A214 /* WorkoutGeneratorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 138F935F3800CBB4B66CD6CC /* WorkoutGeneratorTests.swift */; };
 		0F2396BE1C58B7C7F99F5BC6 /* WorkoutInsightsSeamTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 730E45C30DECC5AA5563EAB4 /* WorkoutInsightsSeamTests.swift */; };
+		175D9C785D217A06EBCC6054 /* XomfitWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F3CBFE99B6D75BC1136FCB9 /* XomfitWatchApp.swift */; };
 		2652623F55494AE501D17728 /* AuthServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7B33E534C5D4F6F4A221677 /* AuthServiceTests.swift */; };
 		3AD31D27EAD82F60EE882599 /* AnimationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 325D34C169BA7253ADECB318 /* AnimationTests.swift */; };
 		4B29E29052245B3988552687 /* HealthKitTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F23492F5F635F00683551 /* HealthKitTests.swift */; };
 		59CED2BB74729F6E6D6C8417 /* StrengthStandardsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D34B74E81225372EA6F7B954 /* StrengthStandardsTests.swift */; };
+		5C2AA90AE5A46AC33FE64E38 /* WatchSessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC49DBCE1EDC7F48166EC8AE /* WatchSessionStore.swift */; };
 		732744FB02C5390D4B24130A /* ExerciseVariantTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C26FE97F0134F021E9D0622B /* ExerciseVariantTests.swift */; };
+		87F65E7F1F17484A4BA8042B /* WatchWorkoutSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 473EB31945A7063B399BD147 /* WatchWorkoutSessionManager.swift */; };
 		8AC7AAF03202D8E47D7B253B /* TrainingNudgeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C84C61FE8D97D6A6F27FDF87 /* TrainingNudgeTests.swift */; };
+		98693D89E524AC44A696C524 /* WatchWorkoutState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21257445D3A360054D42C415 /* WatchWorkoutState.swift */; };
 		9FA42ECEF9AB18EF0FD630C2 /* SessionManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C74D5365A1D42D343FCEB6A /* SessionManagerTests.swift */; };
 		A2D9DA19EA001353F94F1B0D /* ProgressiveOverloadEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F8269C3E626F9E0F867A286 /* ProgressiveOverloadEngineTests.swift */; };
 		A5CB31EA8149518294CBCF7A /* AuthValidationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50574B785553CFAF12535276 /* AuthValidationTests.swift */; };
+		AC63B77329F22ECBEC449710 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1F5C89119347DF10938D0467 /* Foundation.framework */; };
 		B2F201D886D61139D367C906 /* GoalBaselineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2971609F94FDA4AAE995734 /* GoalBaselineTests.swift */; };
 		BBBE2A7245E89C33ED8D85D8 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 37E1F812E63DCA86C4966EEE /* Foundation.framework */; };
+		E276BDE8A780ED0925F68800 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8932635DA9D7B3E27AD4A2 /* ContentView.swift */; };
 		F29F21412F5F620700683551 /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = F29F21402F5F620700683551 /* Auth */; };
 		F29F21432F5F620700683551 /* Functions in Frameworks */ = {isa = PBXBuildFile; productRef = F29F21422F5F620700683551 /* Functions */; };
 		F29F21452F5F620700683551 /* PostgREST in Frameworks */ = {isa = PBXBuildFile; productRef = F29F21442F5F620700683551 /* PostgREST */; };
@@ -64,13 +70,20 @@
 
 /* Begin PBXFileReference section */
 		138F935F3800CBB4B66CD6CC /* WorkoutGeneratorTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkoutGeneratorTests.swift; sourceTree = "<group>"; };
+		1F3CBFE99B6D75BC1136FCB9 /* XomfitWatchApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = XomfitWatchApp.swift; sourceTree = "<group>"; };
+		1F5C89119347DF10938D0467 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/WatchOS.platform/Developer/SDKs/WatchOS11.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		21257445D3A360054D42C415 /* WatchWorkoutState.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchWorkoutState.swift; sourceTree = "<group>"; };
+		30C92F27893E848084361AD6 /* XomfitWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = XomfitWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		325D34C169BA7253ADECB318 /* AnimationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AnimationTests.swift; sourceTree = "<group>"; };
 		37E1F812E63DCA86C4966EEE /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		473EB31945A7063B399BD147 /* WatchWorkoutSessionManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchWorkoutSessionManager.swift; sourceTree = "<group>"; };
 		4F8269C3E626F9E0F867A286 /* ProgressiveOverloadEngineTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ProgressiveOverloadEngineTests.swift; sourceTree = "<group>"; };
 		50574B785553CFAF12535276 /* AuthValidationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AuthValidationTests.swift; sourceTree = "<group>"; };
 		5C74D5365A1D42D343FCEB6A /* SessionManagerTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SessionManagerTests.swift; sourceTree = "<group>"; };
 		730E45C30DECC5AA5563EAB4 /* WorkoutInsightsSeamTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkoutInsightsSeamTests.swift; sourceTree = "<group>"; };
+		8C8932635DA9D7B3E27AD4A2 /* ContentView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		B7B33E534C5D4F6F4A221677 /* AuthServiceTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AuthServiceTests.swift; sourceTree = "<group>"; };
+		BC49DBCE1EDC7F48166EC8AE /* WatchSessionStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchSessionStore.swift; sourceTree = "<group>"; };
 		C26FE97F0134F021E9D0622B /* ExerciseVariantTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ExerciseVariantTests.swift; sourceTree = "<group>"; };
 		C84C61FE8D97D6A6F27FDF87 /* TrainingNudgeTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TrainingNudgeTests.swift; sourceTree = "<group>"; };
 		D34B74E81225372EA6F7B954 /* StrengthStandardsTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = StrengthStandardsTests.swift; sourceTree = "<group>"; };
@@ -181,6 +194,14 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		9DF6E094618AA037934EFC20 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AC63B77329F22ECBEC449710 /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		DAD1396B3AAC6C1AB6C947B6 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -214,6 +235,19 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		46555F08D53ADCE32768C232 /* XomfitWatch */ = {
+			isa = PBXGroup;
+			children = (
+				8C8932635DA9D7B3E27AD4A2 /* ContentView.swift */,
+				BC49DBCE1EDC7F48166EC8AE /* WatchSessionStore.swift */,
+				21257445D3A360054D42C415 /* WatchWorkoutState.swift */,
+				1F3CBFE99B6D75BC1136FCB9 /* XomfitWatchApp.swift */,
+				473EB31945A7063B399BD147 /* WatchWorkoutSessionManager.swift */,
+			);
+			name = XomfitWatch;
+			path = XomfitWatch;
+			sourceTree = SOURCE_ROOT;
+		};
 		5C40DADDDCF3BF72C7406EDA /* iOS */ = {
 			isa = PBXGroup;
 			children = (
@@ -239,6 +273,14 @@
 			path = XomfitTests;
 			sourceTree = "<group>";
 		};
+		C3CBACC00E5834E196E39C72 /* watchOS */ = {
+			isa = PBXGroup;
+			children = (
+				1F5C89119347DF10938D0467 /* Foundation.framework */,
+			);
+			name = watchOS;
+			sourceTree = "<group>";
+		};
 		F29F21282F5F61DC00683551 = {
 			isa = PBXGroup;
 			children = (
@@ -256,6 +298,7 @@
 				F2FA6B0A2F7C0635009E1AB8 /* Frameworks */,
 				F29F21322F5F61DC00683551 /* Products */,
 				A5BC99BA923D1D310A539207 /* XomfitTests */,
+				46555F08D53ADCE32768C232 /* XomfitWatch */,
 			);
 			sourceTree = "<group>";
 		};
@@ -265,6 +308,7 @@
 				F29F21312F5F61DC00683551 /* Xomfit.app */,
 				F2FA6B092F7C0635009E1AB8 /* XomfitWidgetExtension.appex */,
 				ED9BBF5A1F88959BD0A49AAC /* XomfitTests.xctest */,
+				30C92F27893E848084361AD6 /* XomfitWatch.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -506,6 +550,7 @@
 				F2FA6B0B2F7C0635009E1AB8 /* WidgetKit.framework */,
 				F2FA6B0D2F7C0635009E1AB8 /* SwiftUI.framework */,
 				5C40DADDDCF3BF72C7406EDA /* iOS */,
+				C3CBACC00E5834E196E39C72 /* watchOS */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -530,6 +575,23 @@
 			productName = XomfitTests;
 			productReference = ED9BBF5A1F88959BD0A49AAC /* XomfitTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		D519D8F09D195B6FD3C93CAC /* XomfitWatch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 6412D45B97CB75E3C53F63C9 /* Build configuration list for PBXNativeTarget "XomfitWatch" */;
+			buildPhases = (
+				CE38BDB4D2949D4E6D61A2C9 /* Sources */,
+				9DF6E094618AA037934EFC20 /* Frameworks */,
+				66413EF87B526C790F37A383 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = XomfitWatch;
+			productName = XomfitWatch;
+			productReference = 30C92F27893E848084361AD6 /* XomfitWatch.app */;
+			productType = "com.apple.product-type.application";
 		};
 		F29F21302F5F61DC00683551 /* Xomfit */ = {
 			isa = PBXNativeTarget;
@@ -619,12 +681,20 @@
 				F29F21302F5F61DC00683551 /* Xomfit */,
 				F2FA6B082F7C0635009E1AB8 /* XomfitWidgetExtension */,
 				6A0AACE3A1B5AB551D2C7AD8 /* XomfitTests */,
+				D519D8F09D195B6FD3C93CAC /* XomfitWatch */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		2755BB22FEBF44E2230B6F27 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		66413EF87B526C790F37A383 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -664,6 +734,18 @@
 				732744FB02C5390D4B24130A /* ExerciseVariantTests.swift in Sources */,
 				59CED2BB74729F6E6D6C8417 /* StrengthStandardsTests.swift in Sources */,
 				4B29E29052245B3988552687 /* HealthKitTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CE38BDB4D2949D4E6D61A2C9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E276BDE8A780ED0925F68800 /* ContentView.swift in Sources */,
+				5C2AA90AE5A46AC33FE64E38 /* WatchSessionStore.swift in Sources */,
+				98693D89E524AC44A696C524 /* WatchWorkoutState.swift in Sources */,
+				175D9C785D217A06EBCC6054 /* XomfitWatchApp.swift in Sources */,
+				87F65E7F1F17484A4BA8042B /* WatchWorkoutSessionManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -715,6 +797,57 @@
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Xomfit.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Xomfit";
 			};
 			name = Debug;
+		};
+		3D2F9D7C7BCB5382C42B7A32 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = A3HMLDS2AL;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = XomFit;
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "XomFit reads your heart rate and calories during a workout so your session on the watch stays accurate.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "XomFit saves your workout to Health so it counts toward your activity rings.";
+				INFOPLIST_KEY_WKApplication = YES;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.Xomware.Xomfit;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Xomware.Xomfit.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 11.0;
+			};
+			name = Debug;
+		};
+		6C0D245381BF731A80971099 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = A3HMLDS2AL;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = XomFit;
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "XomFit reads your heart rate and calories during a workout so your session on the watch stays accurate.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "XomFit saves your workout to Health so it counts toward your activity rings.";
+				INFOPLIST_KEY_WKApplication = YES;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.Xomware.Xomfit;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Xomware.Xomfit.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 11.0;
+			};
+			name = Release;
 		};
 		987E5698F513E9D207E1F6AC /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -1003,6 +1136,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		6412D45B97CB75E3C53F63C9 /* Build configuration list for PBXNativeTarget "XomfitWatch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6C0D245381BF731A80971099 /* Release */,
+				3D2F9D7C7BCB5382C42B7A32 /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		995E5C833DBB4D4EAF528548 /* Build configuration list for PBXNativeTarget "XomfitTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
