@@ -31,3 +31,9 @@ Pods/
 # Personal Claude overrides (not shared)
 CLAUDE.local.md
 .claude/settings.local.json
+
+# Xcode build output (was tracked by mistake — 9k+ artifacts)
+build/
+
+# Claude Code agent worktrees (local scratch, not shared)
+.claude/worktrees/
