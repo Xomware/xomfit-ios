@@ -56,6 +56,44 @@ struct ActiveWorkoutView: View {
         }
     }
 
+    // MARK: - Focus transitions
+
+    /// Enters focus mode, optionally on a specific exercise.
+    ///
+    /// Both entry points funnel through here so the animation, haptic and
+    /// focus-index handling cannot drift apart — previously the header button
+    /// owned all of that inline, and there was no second entry point at all.
+    private func enterFocus(on index: Int?) {
+        withAnimation(.xomChill) {
+            if let index, viewModel.exercises.indices.contains(index) {
+                viewModel.focusExerciseIndex = index
+                // Land on the first set still to be done rather than always on
+                // set 1, so tapping into a half-finished exercise picks up where
+                // the lifter actually left off.
+                let sets = viewModel.exercises[index].sets
+                viewModel.focusSetIndex = sets.firstIndex { $0.completedAt == Date.distantPast } ?? 0
+            } else {
+                viewModel.syncFocusToCurrentExercise()
+            }
+            viewModel.focusMode = true
+        }
+
+        // Only worth asking where to start when the lifter has not begun and
+        // did not just tell us by tapping a specific card.
+        if index == nil, viewModel.completedSets == 0, viewModel.exercises.count > 1 {
+            showStartingExercisePicker = true
+        }
+    }
+
+    private func exitFocus() {
+        withAnimation(.xomChill) {
+            viewModel.focusMode = false
+        }
+        // Scroll the list back to where the lifter was so they don't lose their
+        // place coming out of focus (#430).
+        pendingScrollIndex = viewModel.focusExerciseIndex
+    }
+
     @ViewBuilder
     private var setsRepsBody: some View {
         @Bindable var viewModel = viewModel
@@ -81,8 +119,21 @@ struct ActiveWorkoutView: View {
                     }
 
                     if viewModel.focusMode {
-                        // Focus mode — large gym-floor view
+                        // Focus mode — large gym-floor view.
+                        //
+                        // The two modes are separate view trees, so switching
+                        // used to be a hard cut with nothing carrying the eye
+                        // from one to the other. Zooming both directions —
+                        // focus grows in, the list falls back — reads as moving
+                        // closer to and further from the same exercise rather
+                        // than as two unrelated screens.
                         WorkoutFocusView(viewModel: viewModel)
+                            .transition(.asymmetric(
+                                insertion: .scale(scale: 0.92, anchor: .top)
+                                    .combined(with: .opacity),
+                                removal: .scale(scale: 1.04, anchor: .top)
+                                    .combined(with: .opacity)
+                            ))
                     } else {
                         // Rest timer
                         if viewModel.isRestTimerActive {
@@ -116,13 +167,20 @@ struct ActiveWorkoutView: View {
                                             // keep their (smaller) swipe affordance.
                                             ExerciseCard(
                                                 exerciseIndex: exIdx,
-                                                viewModel: viewModel
+                                                viewModel: viewModel,
+                                                onEnterFocus: { enterFocus(on: exIdx) }
                                             )
                                             .id(exIdx)
                                         }
                                     }
                                     .padding(Theme.Spacing.md)
                                 }
+                                .transition(.asymmetric(
+                                    insertion: .scale(scale: 1.04, anchor: .top)
+                                        .combined(with: .opacity),
+                                    removal: .scale(scale: 0.92, anchor: .top)
+                                        .combined(with: .opacity)
+                                ))
                                 // Bottom inset that just clears the soundtrack
                                 // capture pill (when visible) — the Add Exercise
                                 // FAB is gone (#402); add-exercise lives in the
@@ -570,18 +628,13 @@ struct ActiveWorkoutView: View {
 
             // Focus mode toggle.
             Button {
-                withAnimation {
-                    viewModel.focusMode.toggle()
-                    if viewModel.focusMode {
-                        viewModel.syncFocusToCurrentExercise()
-                        if viewModel.completedSets == 0 && viewModel.exercises.count > 1 {
-                            showStartingExercisePicker = true
-                        }
-                    } else {
-                        // Exiting focus mode — scroll the list to the current exercise
-                        // so the user doesn't lose their place (#430).
-                        pendingScrollIndex = viewModel.focusExerciseIndex
-                    }
+                if viewModel.focusMode {
+                    exitFocus()
+                } else {
+                    // No index given, so fall back to whatever the view model
+                    // considers current — the historical behaviour of this
+                    // button. Tapping a card is the precise way in.
+                    enterFocus(on: nil)
                 }
             } label: {
                 Image(systemName: viewModel.focusMode ? "list.bullet" : "eye")
@@ -1021,6 +1074,14 @@ private struct PRCelebrationBanner: View {
 private struct ExerciseCard: View {
     let exerciseIndex: Int
     let viewModel: WorkoutLoggerViewModel
+    /// Invoked when the lifter taps the card's title area.
+    ///
+    /// Entering focus used to be possible only through an "eye" icon in the
+    /// header, which said nothing about *which* exercise it would focus — it
+    /// silently used whatever the view model considered current. Tapping the
+    /// exercise you want is the obvious gesture, and it makes the destination
+    /// unambiguous.
+    var onEnterFocus: (() -> Void)?
 
     @State private var showDetails = false
     @State private var showSupersetToggleConfirm = false
@@ -1094,6 +1155,12 @@ private struct ExerciseCard: View {
                             .minimumScaleFactor(0.7)
                             .multilineTextAlignment(.leading)
                             .fixedSize(horizontal: false, vertical: true)
+                        // Affordance for the tap-to-focus gesture below. Without
+                        // it the title looks like plain text and nobody
+                        // discovers that tapping it does anything.
+                        Image(systemName: "arrow.up.left.and.arrow.down.right")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundStyle(Theme.textSecondary.opacity(0.7))
                     }
                     HStack(spacing: Theme.Spacing.tight) {
                         ForEach(exercise.exercise.muscleGroups.prefix(2), id: \.self) { mg in
@@ -1123,6 +1190,19 @@ private struct ExerciseCard: View {
                         }
                     }
                 }
+                // Tap the exercise to zoom into it. Scoped to the title block
+                // rather than the whole card so it cannot swallow taps meant for
+                // the set rows, the action cluster, or the scroll gesture — the
+                // card-wide recognizers this file has tried before are exactly
+                // what made the list feel stuck.
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    guard let onEnterFocus else { return }
+                    Haptics.selection()
+                    onEnterFocus()
+                }
+                .accessibilityAddTraits(.isButton)
+                .accessibilityHint("Zooms into this exercise")
 
                 Spacer(minLength: Theme.Spacing.xs)
 
