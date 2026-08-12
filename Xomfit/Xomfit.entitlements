@@ -2,8 +2,21 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- Must be `production` for TestFlight and App Store builds; a sandbox
+	     token is rejected by the production APNs gateway with BadDeviceToken,
+	     which is why no TestFlight build has ever received a push. Local Xcode
+	     builds signed with a development profile still get sandbox tokens, and
+	     the send-push function falls back across both environments, so this
+	     value being production does not break development. -->
 	<key>aps-environment</key>
-	<string>development</string>
+	<string>production</string>
+	<!-- Reading workouts, heart rate, calories and bodyweight from Health.
+	     This is the single integration point for wearables: Garmin, Whoop and
+	     Polar all write here, so no per-vendor integration is needed. -->
+	<key>com.apple.developer.healthkit</key>
+	<true/>
+	<key>com.apple.developer.healthkit.access</key>
+	<array/>
 	<key>com.apple.security.application-groups</key>
 	<array>
 		<string>group.com.xomware.xomfit</string>

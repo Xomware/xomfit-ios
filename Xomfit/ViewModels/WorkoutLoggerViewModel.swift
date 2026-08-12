@@ -709,11 +709,11 @@ final class WorkoutLoggerViewModel {
             }
             // Fire PR check asynchronously — non-blocking
             let set = exercises[exerciseIndex].sets[setIndex]
-            let exercise = exercises[exerciseIndex].exercise
+            let loggedExercise = exercises[exerciseIndex]
             Task {
                 await checkForPR(
                     set: set,
-                    exercise: exercise,
+                    loggedExercise: loggedExercise,
                     exerciseIndex: exerciseIndex,
                     setIndex: setIndex
                 )
@@ -1318,21 +1318,39 @@ final class WorkoutLoggerViewModel {
 
     private func checkForPR(
         set: WorkoutSet,
-        exercise: Exercise,
+        loggedExercise: WorkoutExercise,
         exerciseIndex: Int,
         setIndex: Int
     ) async {
         guard !activeUserId.isEmpty, set.reps > 0, set.weight > 0 else { return }
 
-        let pr = await PRService.shared.checkForPR(
-            exerciseId: exercise.id,
-            exerciseName: exercise.name,
-            weight: set.weight,
-            reps: set.reps,
-            userId: activeUserId
-        )
+        let result: PRResult
+        do {
+            // Variant details ride along so a rope pushdown record does not
+            // compete with a straight-bar one.
+            result = try await PRService.shared.checkForPR(
+                exerciseId: loggedExercise.exercise.id,
+                exerciseName: loggedExercise.exercise.name,
+                weight: set.weight,
+                reps: set.reps,
+                userId: activeUserId,
+                weightMode: set.weightMode,
+                grip: loggedExercise.selectedGrip,
+                attachment: loggedExercise.selectedAttachment,
+                position: loggedExercise.selectedPosition,
+                laterality: loggedExercise.selectedLaterality,
+                workoutId: workoutId
+            )
+        } catch {
+            // Never blocks finishing a workout, but no longer disappears either:
+            // the old implementation returned nil on any error, which is how a
+            // hard schema mismatch went unnoticed long enough to lose every PR
+            // the app has ever detected.
+            print("[PRService] PR check failed for \(loggedExercise.exercise.name): \(error)")
+            return
+        }
 
-        guard let pr else { return }
+        guard let headline = result.headline else { return }
 
         // Mark the set as a PR in the local state
         if exercises.indices.contains(exerciseIndex),
@@ -1341,9 +1359,33 @@ final class WorkoutLoggerViewModel {
         }
 
         // Trigger the celebration banner
-        newPR = pr
+        newPR = headline
         showPRCelebration = true
         Haptics.prCelebration()
+
+        // Also drop it in the inbox. The celebration banner is transient and is
+        // easy to miss mid-set, and the backend push for this only reaches the
+        // device once notify_user is configured — the inbox entry is the one
+        // record of the PR the user can always go back and find.
+        NotificationService.shared.addNotification(
+            AppNotification(
+                type: .newPR,
+                title: "New Personal Record",
+                body: prNotificationBody(for: headline),
+                targetId: headline.id
+            )
+        )
+    }
+
+    /// "Bench Press · Rope — 225 x 5 (up from 215)". Falls back to a first-record
+    /// phrasing when there is nothing to compare against.
+    private func prNotificationBody(for record: PersonalRecord) -> String {
+        let lift = record.displayName
+        let effort = "\(record.weight.formattedWeight) × \(record.reps)"
+        guard let previous = record.previousBest else {
+            return "First record on \(lift) — \(effort)"
+        }
+        return "\(lift) — \(effort) (up from \(previous.formattedWeight))"
     }
 
     // MARK: - Live Activity
@@ -1921,9 +1963,22 @@ final class WorkoutLoggerViewModel {
                 try await FeedService.shared.postWorkoutToFeed(workout: workout, userId: userId, caption: workout.notes, photoURLs: photoURLs)
                 print("[WorkoutLogger] finishWorkout — feed post succeeded")
             } catch {
-                print("[WorkoutLogger] finishWorkout — feed post FAILED: \(error)")
-                // Non-fatal: workout is saved (or queued); the feed card will
-                // appear once the user pulls-to-refresh on the feed.
+                print("[WorkoutLogger] finishWorkout — feed post FAILED, queuing retry: \(error)")
+                // Non-fatal: workout is saved (or queued). Queue the feed post
+                // for retry so a transient/offline failure at finish time still
+                // lands the card — previously this was swallowed and the post
+                // was lost forever, so the workout never appeared. (#386)
+                if let payload = try? JSONEncoder().encode(workout),
+                   let payloadString = String(data: payload, encoding: .utf8) {
+                    SyncManager.shared.enqueue(
+                        SyncOperation(
+                            type: .postFeedItem,
+                            entityId: workout.id,
+                            userId: userId,
+                            payload: payloadString
+                        )
+                    )
+                }
             }
 
             // Update widget data

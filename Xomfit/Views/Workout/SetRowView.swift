@@ -33,8 +33,14 @@ struct SetRowView: View {
     @State private var showWeightActions: Bool = false
     /// Plate calculator sheet, opened from the weight field action sheet.
     @State private var showPlateCalculator: Bool = false
+    /// Set true right before a *programmatic* `weightText` change (external
+    /// weight update or unit switch) so the resulting `onChange(of: weightText)`
+    /// doesn't re-store the value — otherwise kg rounding would drift the stored
+    /// lbs on every reformat. Only genuine user typing stores. (#470)
+    @State private var suppressNextWeightStore: Bool = false
 
-    /// Display-only weight unit. Edits stay in lbs internally regardless.
+    /// Display weight unit (lbs/kg). Storage is always lbs — this only controls
+    /// what the user sees/enters. Persisted app-wide via AppStorage.
     @AppStorage("weightUnit") private var weightUnitRaw: String = WeightUnit.lbs.rawValue
     private var weightUnit: WeightUnit { WeightUnit(rawValue: weightUnitRaw) ?? .lbs }
 
@@ -110,7 +116,9 @@ struct SetRowView: View {
 
         let w = workoutSet.weight
         let r = workoutSet.reps
-        _weightText = State(initialValue: w > 0 ? w.formattedWeight : "")
+        // Show the stored lbs value converted into the user's preferred unit.
+        // `currentWeightUnit()` reads the same AppStorage key at init time.
+        _weightText = State(initialValue: w > 0 ? w.formattedWeight(unit: currentWeightUnit()) : "")
         _repsText   = State(initialValue: r > 0 ? "\(r)" : "")
     }
 
@@ -148,8 +156,20 @@ struct SetRowView: View {
         )
         .animation(nil, value: workoutSet.completedAt)
         .onChange(of: workoutSet.weight) { _, newWeight in
-            let formatted = newWeight > 0 ? newWeight.formattedWeight : ""
-            if weightText != formatted { weightText = formatted }
+            let formatted = newWeight > 0 ? newWeight.formattedWeight(unit: weightUnit) : ""
+            if weightText != formatted {
+                suppressNextWeightStore = true
+                weightText = formatted
+            }
+        }
+        .onChange(of: weightUnitRaw) { _, _ in
+            // Re-render the field in the newly selected unit from the canonical
+            // stored lbs value (not from the displayed text, to avoid drift).
+            let formatted = workoutSet.weight > 0 ? workoutSet.weight.formattedWeight(unit: weightUnit) : ""
+            if weightText != formatted {
+                suppressNextWeightStore = true
+                weightText = formatted
+            }
         }
         .onChange(of: workoutSet.reps) { _, newReps in
             let formatted = newReps > 0 ? "\(newReps)" : ""
@@ -162,7 +182,9 @@ struct SetRowView: View {
             Button("Cancel", role: .cancel) {}
         }
         .sheet(isPresented: $showPlateCalculator) {
-            PlateCalculatorView(initialTargetWeight: Double(weightText))
+            // weightText is in the display unit; the plate calculator works in
+            // lbs, so convert the entered value back before seeding it. (#470)
+            PlateCalculatorView(initialTargetWeight: Double(weightText).map { $0 / weightUnit.multiplierFromLbs })
                 .presentationDetents([.large])
         }
     }
@@ -209,6 +231,23 @@ struct SetRowView: View {
                         .frame(width: Theme.Spacing.lg, alignment: .center)
                 }
 
+                // Unit toggle (lbs/kg). Flips the app-wide display unit; storage
+                // stays in lbs. Placed left of the weight field so it reads as a
+                // property of the entry, separate from the mode (×2) button. (#470)
+                Button {
+                    Haptics.light()
+                    weightUnitRaw = (weightUnit == .lbs ? WeightUnit.kg : WeightUnit.lbs).rawValue
+                } label: {
+                    Text(weightUnit.displayName.uppercased())
+                        .font(Theme.fontCaption.weight(.bold))
+                        .foregroundStyle(Theme.accent)
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Weight unit: \(weightUnit.accessibilityName)")
+                .accessibilityHint("Switches the weight entry between pounds and kilograms")
+
                 // Weight field
                 TextField("0", text: $weightText)
                     .keyboardType(.decimalPad)
@@ -226,8 +265,16 @@ struct SetRowView: View {
                     .frame(maxWidth: .infinity)
                     .focused($isWeightFocused)
                     .onChange(of: weightText) { _, newValue in
-                        if let w = Double(newValue) {
-                            onWeightChange(w)
+                        // Ignore programmatic reformats (external update / unit
+                        // switch) — only persist genuine user edits. (#470)
+                        if suppressNextWeightStore {
+                            suppressNextWeightStore = false
+                            return
+                        }
+                        if let entered = Double(newValue) {
+                            // Convert the entered display-unit value back to lbs
+                            // for storage (÷ multiplier; no-op for lbs).
+                            onWeightChange(entered / weightUnit.multiplierFromLbs)
                         }
                     }
                     // Long-press surfaces the plate calculator without breaking text input.

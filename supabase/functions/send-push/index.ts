@@ -85,27 +85,34 @@ serve(async (req: Request) => {
 
     // Generate APNs JWT
     const apnsJWT = await generateAPNsJWT();
-    const host = use_sandbox ? APNS_DEV_HOST : APNS_HOST;
     const bundleId = Deno.env.get("APNS_BUNDLE_ID") || "com.Xomware.Xomfit";
 
-    // Send to each iOS token
-    const results = [];
-    for (const { token, platform } of tokens) {
-      if (platform !== "ios") continue;
+    // Which APNs environment a token belongs to is decided by the aps-environment
+    // entitlement of the build that produced it, so a single project routinely has
+    // both kinds alive at once: sandbox tokens from local Xcode builds and
+    // production tokens from TestFlight. Choosing one host up front — which is
+    // what the caller-supplied `use_sandbox` flag did, hardcoded to true by the
+    // DB trigger — silently dropped every notification to the other half, which is
+    // why TestFlight builds never received a push. Instead, try the environment
+    // the caller suggests first and fall back to the other on BadDeviceToken,
+    // which is the only error that actually means "right token, wrong host".
+    const preferredHost = use_sandbox ? APNS_DEV_HOST : APNS_HOST;
+    const fallbackHost = use_sandbox ? APNS_HOST : APNS_DEV_HOST;
 
-      const apnsPayload = {
-        aps: {
-          alert: { title, body },
-          sound: "default",
-          badge: 1,
-          "mutable-content": 1,
-        },
-        type,
-        sender_id: sender_id || "",
-        target_id: target_id || "",
-      };
+    const apnsPayload = {
+      aps: {
+        alert: { title, body },
+        sound: "default",
+        badge: 1,
+        "mutable-content": 1,
+      },
+      type,
+      sender_id: sender_id || "",
+      target_id: target_id || "",
+    };
 
-      const response = await fetch(`${host}/3/device/${token}`, {
+    const postTo = (host: string, token: string) =>
+      fetch(`${host}/3/device/${token}`, {
         method: "POST",
         headers: {
           Authorization: `bearer ${apnsJWT}`,
@@ -117,13 +124,34 @@ serve(async (req: Request) => {
         body: JSON.stringify(apnsPayload),
       });
 
+    // Send to each iOS token
+    const results = [];
+    for (const { token, platform } of tokens) {
+      if (platform !== "ios") continue;
+
+      let host = preferredHost;
+      let response = await postTo(host, token);
+      let reason = response.ok ? null : await readAPNsReason(response);
+
+      if (reason === "BadDeviceToken") {
+        host = fallbackHost;
+        response = await postTo(host, token);
+        reason = response.ok ? null : await readAPNsReason(response);
+      }
+
       results.push({
         token: token.substring(0, 8) + "...",
         status: response.status,
+        environment: host === APNS_DEV_HOST ? "sandbox" : "production",
         ok: response.ok,
+        // Surfaced so a misconfigured APNs key or bundle id is visible in the
+        // function logs instead of looking like a silent no-op.
+        reason,
       });
 
-      // Remove invalid tokens
+      // 410 Gone means the app was uninstalled — the token is dead in both
+      // environments, so it is safe to drop. A BadDeviceToken that survived the
+      // fallback is not necessarily dead, so it is left alone.
       if (response.status === 410) {
         await supabase
           .from("push_tokens")
@@ -162,6 +190,18 @@ async function generateAPNsJWT(): Promise<string> {
     .setIssuer(teamId)
     .setIssuedAt()
     .sign(privateKey);
+}
+
+/// APNs returns its failure cause as `{"reason": "BadDeviceToken"}`. The body is
+/// read defensively because a non-JSON error (a gateway failure, say) must not
+/// take down the send loop.
+async function readAPNsReason(response: Response): Promise<string | null> {
+  try {
+    const body = await response.json();
+    return body?.reason ?? null;
+  } catch {
+    return null;
+  }
 }
 
 function jsonResponse(data: unknown, status = 200) {

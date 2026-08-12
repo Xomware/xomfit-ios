@@ -23,22 +23,6 @@ private struct WorkoutRow: Codable {
     }
 }
 
-private struct WorkoutExerciseRow: Codable {
-    let id: String
-    let workoutId: String
-    let exerciseId: String
-    let exerciseName: String
-    let sortOrder: Int
-
-    enum CodingKeys: String, CodingKey {
-        case id
-        case workoutId = "workout_id"
-        case exerciseId = "exercise_id"
-        case exerciseName = "exercise_name"
-        case sortOrder = "sort_order"
-    }
-}
-
 private struct WorkoutSetRow: Codable {
     let id: String
     let workoutExerciseId: String
@@ -49,6 +33,12 @@ private struct WorkoutSetRow: Codable {
     let isCompleted: Bool
     let isPr: Bool
     let completedAt: String?
+    // See WorkoutExerciseRow — optional for pre-migration rows. `weightMode`
+    // absent means the row predates the column, and everything logged then was
+    // total, which is exactly what WeightMode's own default resolves to.
+    var weightMode: String?
+    var isDropSet: Bool?
+    var videoURL: String?
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -60,6 +50,9 @@ private struct WorkoutSetRow: Codable {
         case isCompleted = "is_completed"
         case isPr = "is_pr"
         case completedAt = "completed_at"
+        case weightMode = "weight_mode"
+        case isDropSet = "is_drop_set"
+        case videoURL = "video_url"
     }
 }
 
@@ -122,6 +115,15 @@ private struct ExerciseWithSets: Codable {
     let exerciseName: String
     let sortOrder: Int
     let workoutSets: [WorkoutSetRow]
+    // Variant/config fields. Optional so rows written before the 20260811
+    // migration — which had no such columns — still decode.
+    var selectedGrip: String?
+    var selectedAttachment: String?
+    var selectedPosition: String?
+    var selectedLaterality: String?
+    var supersetGroupId: String?
+    var restSeconds: Int?
+    var notes: String?
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -130,6 +132,13 @@ private struct ExerciseWithSets: Codable {
         case exerciseName = "exercise_name"
         case sortOrder = "sort_order"
         case workoutSets = "workout_sets"
+        case selectedGrip = "selected_grip"
+        case selectedAttachment = "selected_attachment"
+        case selectedPosition = "selected_position"
+        case selectedLaterality = "selected_laterality"
+        case supersetGroupId = "superset_group_id"
+        case restSeconds = "rest_seconds"
+        case notes
     }
 }
 
@@ -153,6 +162,13 @@ private struct WorkoutExerciseInsertPayload: Encodable {
     let exercise_id: String
     let exercise_name: String
     let sort_order: Int
+    let selected_grip: String?
+    let selected_attachment: String?
+    let selected_position: String?
+    let selected_laterality: String
+    let superset_group_id: String?
+    let rest_seconds: Int?
+    let notes: String?
 }
 
 private struct WorkoutSetInsertPayload: Encodable {
@@ -165,6 +181,9 @@ private struct WorkoutSetInsertPayload: Encodable {
     let is_completed: Bool
     let is_pr: Bool
     let completed_at: String?
+    let weight_mode: String
+    let is_drop_set: Bool
+    let video_url: String?
 }
 
 private struct WorkoutTrackInsertPayload: Encodable {
@@ -505,22 +524,41 @@ final class WorkoutService {
             .upsert(workoutPayload)
             .execute()
 
-        for (sortIndex, workoutExercise) in workout.exercises.enumerated() {
-            let exercisePayload = WorkoutExerciseInsertPayload(
+        // Exercises and sets are written as two batch upserts rather than one
+        // request per row. The previous per-row loop issued 1 + exercises +
+        // sets requests (31 for a 6-exercise, 24-set session) and had no
+        // atomicity: a failure partway through left the already-written rows
+        // committed while the caller queued the *whole* workout for retry, so
+        // the server held a half-saved session until — and unless — that retry
+        // ran. Batching collapses this to three requests and makes each table's
+        // write all-or-nothing.
+        let exercisePayloads = workout.exercises.enumerated().map { sortIndex, workoutExercise in
+            WorkoutExerciseInsertPayload(
                 id: workoutExercise.id,
                 workout_id: workout.id,
                 exercise_id: workoutExercise.exercise.id,
                 exercise_name: workoutExercise.exercise.name,
-                sort_order: sortIndex
+                sort_order: sortIndex,
+                selected_grip: workoutExercise.selectedGrip?.rawValue,
+                selected_attachment: workoutExercise.selectedAttachment?.rawValue,
+                selected_position: workoutExercise.selectedPosition?.rawValue,
+                selected_laterality: workoutExercise.selectedLaterality.rawValue,
+                superset_group_id: workoutExercise.supersetGroupId?.uuidString,
+                rest_seconds: workoutExercise.restSeconds,
+                notes: workoutExercise.notes
             )
+        }
 
+        if !exercisePayloads.isEmpty {
             try await supabase
                 .from("workout_exercises")
-                .upsert(exercisePayload)
+                .upsert(exercisePayloads)
                 .execute()
+        }
 
-            for (setIndex, workoutSet) in workoutExercise.sets.enumerated() {
-                let setPayload = WorkoutSetInsertPayload(
+        let setPayloads = workout.exercises.flatMap { workoutExercise in
+            workoutExercise.sets.enumerated().map { setIndex, workoutSet in
+                WorkoutSetInsertPayload(
                     id: workoutSet.id,
                     workout_exercise_id: workoutExercise.id,
                     set_number: setIndex,
@@ -529,14 +567,21 @@ final class WorkoutService {
                     rpe: workoutSet.rpe,
                     is_completed: true,
                     is_pr: workoutSet.isPersonalRecord,
-                    completed_at: iso8601.string(from: workoutSet.completedAt)
+                    completed_at: iso8601.string(from: workoutSet.completedAt),
+                    weight_mode: workoutSet.weightMode.rawValue,
+                    is_drop_set: workoutSet.isDropSet,
+                    // Prefer the uploaded URL; a local-only file URL is
+                    // meaningless on another device, so it is not persisted.
+                    video_url: workoutSet.videoRemoteURL?.absoluteString
                 )
-
-                try await supabase
-                    .from("workout_sets")
-                    .upsert(setPayload)
-                    .execute()
             }
+        }
+
+        if !setPayloads.isEmpty {
+            try await supabase
+                .from("workout_sets")
+                .upsert(setPayloads)
+                .execute()
         }
 
         // Insert captured Now Playing tracks (#345).
@@ -597,14 +642,26 @@ final class WorkoutService {
                             reps: setRow.reps,
                             rpe: setRow.rpe,
                             isPersonalRecord: setRow.isPr,
-                            completedAt: setRow.completedAt.flatMap { iso8601.date(from: $0) } ?? Date()
+                            completedAt: setRow.completedAt.flatMap { iso8601.date(from: $0) } ?? Date(),
+                            // Missing on rows written before the 20260811
+                            // migration; `.total` matches how they were logged.
+                            weightMode: setRow.weightMode.flatMap { WeightMode(rawValue: $0) } ?? .total,
+                            isDropSet: setRow.isDropSet ?? false,
+                            videoRemoteURL: setRow.videoURL.flatMap { URL(string: $0) }
                         )
                     }
 
                 return WorkoutExercise(
                     id: exRow.id,
                     exercise: exercise,
-                    sets: sets
+                    sets: sets,
+                    notes: exRow.notes,
+                    selectedGrip: exRow.selectedGrip.flatMap { GripType(rawValue: $0) },
+                    selectedAttachment: exRow.selectedAttachment.flatMap { CableAttachment(rawValue: $0) },
+                    selectedPosition: exRow.selectedPosition.flatMap { ExercisePosition(rawValue: $0) },
+                    selectedLaterality: exRow.selectedLaterality.flatMap { Laterality(rawValue: $0) } ?? .bilateral,
+                    supersetGroupId: exRow.supersetGroupId.flatMap { UUID(uuidString: $0) },
+                    restSeconds: exRow.restSeconds
                 )
             }
 
