@@ -65,6 +65,9 @@ struct ExerciseDetailSheet: View {
         // Falls back to the cached best from PRService so the five existing call
         // sites get ranks without each having to look one up.
         let best = estimated1RM ?? PRService.shared.bestE1RM(for: exercise.id)
+        let isRankable = StrengthStandards.profile(for: exercise.id)?.basis != LoadBasis.notRanked
+            && StrengthStandards.profile(for: exercise.id) != nil
+
         if let rank = strength.rank(
             exerciseId: exercise.id,
             estimated1RM: best ?? 0
@@ -75,6 +78,40 @@ struct ExerciseDetailSheet: View {
                 isProvisional: strength.isProvisional,
                 onProvideDetails: { showLifterDetails = true }
             )
+            .sheet(isPresented: $showLifterDetails) {
+                LifterDetailsSheet()
+            }
+        } else if isRankable && !strength.canRank {
+            // Without a bodyweight nothing can be ranked, so the card above
+            // renders nothing — and the only way to *set* a bodyweight was a
+            // button inside that card. That closed loop made strength ranks
+            // unreachable for every user who had never logged a weigh-in, which
+            // is to say the feature did not exist. This is the way in.
+            Button {
+                showLifterDetails = true
+            } label: {
+                HStack(spacing: Theme.Spacing.md) {
+                    Image(systemName: "medal.fill")
+                        .font(.title3)
+                        .foregroundStyle(Theme.prGold)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Unlock strength ranks")
+                            .font(Theme.fontBodyEmphasized)
+                            .foregroundStyle(Theme.textPrimary)
+                        Text("Add your bodyweight to rank this lift Bronze through God")
+                            .font(Theme.fontCaption)
+                            .foregroundStyle(Theme.textSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(Theme.textSecondary)
+                }
+                .padding(Theme.Spacing.md)
+                .background(Theme.surface, in: .rect(cornerRadius: Theme.Radius.md))
+            }
+            .buttonStyle(.plain)
             .sheet(isPresented: $showLifterDetails) {
                 LifterDetailsSheet()
             }

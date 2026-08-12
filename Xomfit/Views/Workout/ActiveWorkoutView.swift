@@ -1071,6 +1071,41 @@ private struct PRCelebrationBanner: View {
 
 // MARK: - Exercise Card
 
+/// Column header for the set table.
+///
+/// Widths mirror `SetRowView`'s layout exactly — a header that does not line up
+/// with its table is worse than no header. Extracted into its own view because
+/// inlining it pushed `ExerciseCard.body` past what the type checker will solve.
+private struct SetTableHeader: View {
+    @AppStorage("weightUnit") private var weightUnitRaw: String = WeightUnit.lbs.rawValue
+
+    private var unitLabel: String {
+        (WeightUnit(rawValue: weightUnitRaw) ?? .lbs).displayName.uppercased()
+    }
+
+    var body: some View {
+        HStack(spacing: Theme.Spacing.sm) {
+            Spacer().frame(width: Theme.Spacing.xs)
+            Text("SET")
+                .frame(width: Theme.Spacing.lg, alignment: .center)
+            Text("PREV")
+                .frame(width: 58, alignment: .center)
+            Text(unitLabel)
+                .frame(maxWidth: .infinity)
+            Spacer().frame(width: 44)
+            Text("REPS")
+                .frame(maxWidth: .infinity)
+            Spacer().frame(width: 36)
+        }
+        .font(Theme.fontMetricLabel)
+        .kerning(0.6)
+        .foregroundStyle(Theme.textTertiary)
+        .padding(.horizontal, Theme.Spacing.md)
+        .padding(.top, Theme.Spacing.tight)
+        .accessibilityHidden(true)
+    }
+}
+
 private struct ExerciseCard: View {
     let exerciseIndex: Int
     let viewModel: WorkoutLoggerViewModel
@@ -1118,165 +1153,64 @@ private struct ExerciseCard: View {
             VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
             // Exercise header
             HStack(alignment: .top, spacing: Theme.Spacing.sm) {
-                VStack(alignment: .leading, spacing: 3) {
-                    // "CURRENT" badge — only on the in-focus card so the lifter
-                    // can spot where they are at a glance in list mode.
-                    if isCurrent {
-                        HStack(spacing: 3) {
-                            Image(systemName: "scope")
-                                .font(.system(size: 9, weight: .black))
-                            Text("CURRENT")
-                                .font(.caption2.weight(.black))
-                        }
-                        .foregroundStyle(Theme.accent)
-                        .accessibilityLabel("Current exercise")
-                    }
-                    // Superset pill — moved to its OWN row so the title gets
-                    // the full card width. Previously sat to the left of the
-                    // title and shrunk it to ~2 chars per line on supersetted
-                    // exercises with long names (#402).
-                    if let letter = supersetLetter {
-                        Text("Superset \(letter)")
-                            .font(.caption2.weight(.black))
-                            .foregroundStyle(.black)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, Theme.Spacing.tighter)
-                            .background(Theme.accent)
-                            .clipShape(.capsule)
-                            .accessibilityLabel("Superset \(letter)")
-                    }
-                    HStack(spacing: 6) {
-                        // Current exercise gets a larger, heavier title so the
-                        // in-focus card reads as bigger / more prominent than the rest.
-                        Text(exercise.exercise.name)
-                            .font(isCurrent ? .title3.weight(.heavy) : .body.weight(.bold))
-                            .foregroundStyle(Theme.textPrimary)
-                            .lineLimit(2)
-                            .minimumScaleFactor(0.7)
-                            .multilineTextAlignment(.leading)
-                            .fixedSize(horizontal: false, vertical: true)
-                        // Affordance for the tap-to-focus gesture below. Without
-                        // it the title looks like plain text and nobody
-                        // discovers that tapping it does anything.
-                        Image(systemName: "arrow.up.left.and.arrow.down.right")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundStyle(Theme.textSecondary.opacity(0.7))
-                    }
-                    HStack(spacing: Theme.Spacing.tight) {
-                        ForEach(exercise.exercise.muscleGroups.prefix(2), id: \.self) { mg in
-                            Text(mg.displayName)
-                                .font(Theme.fontSmall)
-                                .foregroundStyle(Theme.accent)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, Theme.Spacing.tighter)
-                                .background(Theme.accent.opacity(0.15))
-                                .clipShape(.rect(cornerRadius: 4))
-                        }
-                        // PR badge — show the user's personal record for this exercise
-                        if let pr = viewModel.personalRecordForExercise(exercise.exercise.id),
-                           pr.weight > 0, pr.reps > 0 {
-                            HStack(spacing: 3) {
-                                Image(systemName: "trophy.fill")
-                                    .font(.system(size: 9, weight: .bold))
-                                Text("PR: \(pr.weight.formattedWeight) x \(pr.reps)")
-                                    .font(.system(size: 10, weight: .bold))
-                            }
-                            .foregroundStyle(Theme.prGold)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, Theme.Spacing.tighter)
-                            .background(Theme.prGold.opacity(0.15))
-                            .clipShape(.rect(cornerRadius: 4))
-                            .accessibilityLabel("Personal record: \(pr.weight.formattedWeight) pounds for \(pr.reps) reps")
-                        }
-                    }
-                }
-                // Tap the exercise to zoom into it. Scoped to the title block
-                // rather than the whole card so it cannot swallow taps meant for
-                // the set rows, the action cluster, or the scroll gesture — the
-                // card-wide recognizers this file has tried before are exactly
-                // what made the list feel stuck.
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    guard let onEnterFocus else { return }
-                    Haptics.selection()
-                    onEnterFocus()
-                }
-                .accessibilityAddTraits(.isButton)
-                .accessibilityHint("Zooms into this exercise")
+                exerciseTitleBlock(exercise)
 
                 Spacer(minLength: Theme.Spacing.xs)
 
-                // Action cluster — all card controls grouped on the trailing
-                // edge so the title + tags get the full leading width and never
-                // collide with the buttons (previously info/collapse sat between
-                // the title and the spacer, crowding long names + tag rows).
+                // Action cluster.
+                //
+                // Was four 36-40pt buttons in a row, spending ~150pt of every
+                // card header on controls and squeezing long exercise names to a
+                // couple of characters per line. Collapse stays inline because it
+                // is used constantly; the rest moved into an overflow menu, which
+                // is where every comparable tracker puts them.
                 HStack(spacing: 0) {
                     Button {
-                        Haptics.selection()
-                        showDetails = true
-                    } label: {
-                        Image(systemName: "info.circle")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(Theme.textSecondary)
-                            .frame(width: 36, height: 44)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Show details for \(exercise.exercise.name)")
-
-                    Button {
                         Haptics.light()
-                        withAnimation(.xomConfident) {
-                            isCollapsed.toggle()
-                        }
+                        withAnimation(.xomConfident) { isCollapsed.toggle() }
                     } label: {
                         Image(systemName: "chevron.down")
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(Theme.textSecondary)
                             .rotationEffect(.degrees(isCollapsed ? -90 : 0))
-                            .frame(width: 36, height: 44)
+                            .frame(width: 32, height: 44)
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel(isCollapsed ? "Expand \(exercise.exercise.name)" : "Collapse \(exercise.exercise.name)")
 
-                    // Superset toggle (#294) — visible affordance for grouping with the
-                    // next exercise. Disabled (but still rendered) when neither action
-                    // is meaningful, so the button row layout stays stable.
-                    Button {
-                        Haptics.selection()
-                        showSupersetToggleConfirm = true
-                    } label: {
-                        Image(systemName: isInSuperset ? "link.circle.fill" : "link")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(isInSuperset ? Theme.accent : Theme.textSecondary)
-                            .frame(width: 40, height: 44)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(!isInSuperset && !canGroupWithNext)
-                    .accessibilityLabel(isInSuperset
-                        ? "Ungroup superset"
-                        : "Group with next exercise as superset")
-                    .accessibilityHint(isInSuperset
-                        ? "Removes this exercise from its superset"
-                        : "Pairs this exercise with the next one for back-to-back sets")
+                    Menu {
+                        Button {
+                            showDetails = true
+                        } label: {
+                            Label("How to do this", systemImage: "info.circle")
+                        }
 
-                    // Visible delete button — the card-level swipe was removed to
-                    // keep the list scrollable, so this is the primary removal path.
-                    Button {
-                        Haptics.warning()
-                        showRemoveExerciseConfirm = true
+                        Button {
+                            showSupersetToggleConfirm = true
+                        } label: {
+                            Label(
+                                isInSuperset ? "Ungroup superset" : "Superset with next",
+                                systemImage: isInSuperset ? "link.circle.fill" : "link"
+                            )
+                        }
+                        .disabled(!isInSuperset && !canGroupWithNext)
+
+                        Divider()
+
+                        Button(role: .destructive) {
+                            showRemoveExerciseConfirm = true
+                        } label: {
+                            Label("Remove exercise", systemImage: "trash")
+                        }
                     } label: {
-                        Image(systemName: "trash")
+                        Image(systemName: "ellipsis")
                             .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(Theme.destructive.opacity(0.8))
-                            .frame(width: 40, height: 44)
+                            .foregroundStyle(Theme.textSecondary)
+                            .frame(width: 32, height: 44)
                             .contentShape(Rectangle())
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Remove \(exercise.exercise.name) from workout")
-                    .accessibilityHint("Deletes this exercise and all its sets from the current workout")
+                    .accessibilityLabel("More options for \(exercise.exercise.name)")
                 }
             }
 
@@ -1319,99 +1253,10 @@ private struct ExerciseCard: View {
                 }
 
                 if !exercise.sets.isEmpty {
-                    HStack(spacing: Theme.Spacing.sm) {
-                        Spacer().frame(width: 30)
-                        Text("SET")
-                            .frame(width: Theme.Spacing.lg)
-                        Spacer()
-                        Text("WEIGHT")
-                            .frame(maxWidth: .infinity)
-                        Text("")
-                            .frame(width: 40)
-                        Text("REPS")
-                            .frame(maxWidth: .infinity)
-                        Text("")
-                            .frame(width: 36)
-                    }
-                    .font(Theme.fontSmall)
-                    .foregroundStyle(Theme.textSecondary)
-                    .padding(.horizontal, Theme.Spacing.md)
+                    SetTableHeader()
                 }
 
-                let currentSetIdx: Int? = {
-                    if let firstIncomplete = exercise.sets.firstIndex(where: { $0.completedAt == Date.distantPast }) {
-                        return firstIncomplete
-                    }
-                    return exercise.sets.indices.last
-                }()
-
-                ForEach(Array(exercise.sets.enumerated()), id: \.element.id) { setIdx, workoutSet in
-                    SetRowView(
-                        setNumber: setIdx + 1,
-                        workoutSet: workoutSet,
-                        onWeightChange: { w in
-                            viewModel.updateSet(
-                                exerciseIndex: exerciseIndex,
-                                setIndex: setIdx,
-                                weight: w,
-                                reps: viewModel.exercises[exerciseIndex].sets[setIdx].reps
-                            )
-                        },
-                        onRepsChange: { r in
-                            viewModel.updateSet(
-                                exerciseIndex: exerciseIndex,
-                                setIndex: setIdx,
-                                weight: viewModel.exercises[exerciseIndex].sets[setIdx].weight,
-                                reps: r
-                            )
-                        },
-                        onComplete: {
-                            viewModel.completeSet(exerciseIndex: exerciseIndex, setIndex: setIdx)
-                        },
-                        onDelete: {
-                            viewModel.removeSet(exerciseIndex: exerciseIndex, setIndex: setIdx)
-                        },
-                        onToggleWeightMode: {
-                            viewModel.toggleWeightMode(exerciseIndex: exerciseIndex, setIndex: setIdx)
-                        },
-                        onAddDropSet: {
-                            viewModel.addDropSet(exerciseIndex: exerciseIndex, parentSetIndex: setIdx)
-                        },
-                        onMarkDropSet: {
-                            viewModel.markSetAsDropSet(exerciseIndex: exerciseIndex, setIndex: setIdx)
-                        },
-                        onFillMax: {
-                            if let pr = viewModel.personalRecordForExercise(exercise.exercise.id) {
-                                viewModel.updateSet(exerciseIndex: exerciseIndex, setIndex: setIdx, weight: pr.weight, reps: viewModel.exercises[exerciseIndex].sets[setIdx].reps)
-                            }
-                        },
-                        onFillMaxPlus5: {
-                            if let pr = viewModel.personalRecordForExercise(exercise.exercise.id) {
-                                viewModel.updateSet(exerciseIndex: exerciseIndex, setIndex: setIdx, weight: pr.weight + 5, reps: viewModel.exercises[exerciseIndex].sets[setIdx].reps)
-                            }
-                        },
-                        lateralityLabel: exercise.selectedLaterality != .bilateral ? (exercise.exercise.muscleGroups.contains(where: { [.quads, .hamstrings, .glutes, .calves].contains($0) }) ? "/leg" : "/arm") : nil,
-                        lastSet: viewModel.lastSetHint(exerciseIndex: exerciseIndex, setIndex: setIdx),
-                        personalRecord: viewModel.personalRecordForExercise(exercise.exercise.id),
-                        isCurrentSet: setIdx == currentSetIdx
-                    )
-                    // Set deletion via system context menu (long-press) instead
-                    // of a custom swipe. The previous `.swipeToDelete` installed a
-                    // `DragGesture` on every visible row; that drag competed with
-                    // the ScrollView's vertical pan in gesture arbitration — and
-                    // it was the LAST remaining row-level drag after the card-level
-                    // swipe + long-press were already removed for the same reason.
-                    // It made the list feel unscrollable on device. `.contextMenu`
-                    // is a system interaction that yields to the scroll pan, so it
-                    // never starves scrolling.
-                    .contextMenu {
-                        Button(role: .destructive) {
-                            viewModel.removeSet(exerciseIndex: exerciseIndex, setIndex: setIdx)
-                        } label: {
-                            Label("Delete Set \(setIdx + 1)", systemImage: "trash")
-                        }
-                    }
-                }
+                setRows(exercise)
 
                 Button {
                     viewModel.addSet(to: exerciseIndex)
@@ -1503,6 +1348,203 @@ private struct ExerciseCard: View {
             ExerciseDetailSheet(exercise: exercise.exercise)
         }
         }
+    }
+
+    /// Title, badges, muscle tags and the tap-to-zoom gesture.
+    ///
+    /// Extracted from `body` because inlining it pushed the card past what
+    /// the Swift type checker will solve — the failure mode is a bare
+    /// "failed to produce diagnostic for expression", which points at the
+    /// whole body rather than the offending line.
+    @ViewBuilder
+    private func exerciseTitleBlock(_ exercise: WorkoutExercise) -> some View {
+                    VStack(alignment: .leading, spacing: 3) {
+                        // "CURRENT" badge — only on the in-focus card so the lifter
+                        // can spot where they are at a glance in list mode.
+                        if isCurrent {
+                            HStack(spacing: 3) {
+                                Image(systemName: "scope")
+                                    .font(.system(size: 9, weight: .black))
+                                Text("CURRENT")
+                                    .font(.caption2.weight(.black))
+                            }
+                            .foregroundStyle(Theme.accent)
+                            .accessibilityLabel("Current exercise")
+                        }
+                        // Superset pill — moved to its OWN row so the title gets
+                        // the full card width. Previously sat to the left of the
+                        // title and shrunk it to ~2 chars per line on supersetted
+                        // exercises with long names (#402).
+                        if let letter = supersetLetter {
+                            Text("Superset \(letter)")
+                                .font(.caption2.weight(.black))
+                                .foregroundStyle(.black)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, Theme.Spacing.tighter)
+                                .background(Theme.accent)
+                                .clipShape(.capsule)
+                                .accessibilityLabel("Superset \(letter)")
+                        }
+                        HStack(spacing: 6) {
+                            // Current exercise gets a larger, heavier title so the
+                            // in-focus card reads as bigger / more prominent than the rest.
+                            Text(exercise.exercise.name)
+                                .font(isCurrent ? .title3.weight(.heavy) : .body.weight(.bold))
+                                .foregroundStyle(Theme.textPrimary)
+                                .lineLimit(2)
+                                .minimumScaleFactor(0.7)
+                                .multilineTextAlignment(.leading)
+                                .fixedSize(horizontal: false, vertical: true)
+                            // Affordance for the tap-to-focus gesture below. Without
+                            // it the title looks like plain text and nobody
+                            // discovers that tapping it does anything.
+                            Image(systemName: "arrow.up.left.and.arrow.down.right")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundStyle(Theme.textSecondary.opacity(0.7))
+                        }
+                        HStack(spacing: Theme.Spacing.tight) {
+                            ForEach(exercise.exercise.muscleGroups.prefix(2), id: \.self) { mg in
+                                Text(mg.displayName)
+                                    .font(Theme.fontSmall)
+                                    .foregroundStyle(Theme.accent)
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, Theme.Spacing.tighter)
+                                    .background(Theme.accent.opacity(0.15))
+                                    .clipShape(.rect(cornerRadius: 4))
+                            }
+                            // PR badge — show the user's personal record for this exercise
+                            if let pr = viewModel.personalRecordForExercise(exercise.exercise.id),
+                               pr.weight > 0, pr.reps > 0 {
+                                HStack(spacing: 3) {
+                                    Image(systemName: "trophy.fill")
+                                        .font(.system(size: 9, weight: .bold))
+                                    Text("PR: \(pr.weight.formattedWeight) x \(pr.reps)")
+                                        .font(.system(size: 10, weight: .bold))
+                                }
+                                .foregroundStyle(Theme.prGold)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, Theme.Spacing.tighter)
+                                .background(Theme.prGold.opacity(0.15))
+                                .clipShape(.rect(cornerRadius: 4))
+                                .accessibilityLabel("Personal record: \(pr.weight.formattedWeight) pounds for \(pr.reps) reps")
+                            }
+                        }
+                    }
+                    // Tap the exercise to zoom into it. Scoped to the title block
+                    // rather than the whole card so it cannot swallow taps meant for
+                    // the set rows, the action cluster, or the scroll gesture — the
+                    // card-wide recognizers this file has tried before are exactly
+                    // what made the list feel stuck.
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        guard let onEnterFocus else { return }
+                        Haptics.selection()
+                        onEnterFocus()
+                    }
+                    .accessibilityAddTraits(.isButton)
+                    .accessibilityHint("Zooms into this exercise")
+    }
+
+    /// The set table rows.
+    ///
+    /// Extracted for the same reason as `exerciseTitleBlock`: SetRowView now
+    /// takes sixteen arguments, and inlining that call inside the card body
+    /// exceeded what the type checker will solve in one expression.
+    @ViewBuilder
+    private func setRows(_ exercise: WorkoutExercise) -> some View {
+                    let currentSetIdx: Int? = {
+                        if let firstIncomplete = exercise.sets.firstIndex(where: { $0.completedAt == Date.distantPast }) {
+                            return firstIncomplete
+                        }
+                        return exercise.sets.indices.last
+                    }()
+
+                    ForEach(Array(exercise.sets.enumerated()), id: \.element.id) { setIdx, workoutSet in
+                        setRow(exercise, setIdx: setIdx, workoutSet: workoutSet, isCurrentSet: setIdx == currentSetIdx)
+                        // Set deletion via system context menu (long-press) instead
+                        // of a custom swipe. The previous `.swipeToDelete` installed a
+                        // `DragGesture` on every visible row; that drag competed with
+                        // the ScrollView's vertical pan in gesture arbitration — and
+                        // it was the LAST remaining row-level drag after the card-level
+                        // swipe + long-press were already removed for the same reason.
+                        // It made the list feel unscrollable on device. `.contextMenu`
+                        // is a system interaction that yields to the scroll pan, so it
+                        // never starves scrolling.
+                        .contextMenu {
+                            Button(role: .destructive) {
+                                viewModel.removeSet(exerciseIndex: exerciseIndex, setIndex: setIdx)
+                            } label: {
+                                Label("Delete Set \(setIdx + 1)", systemImage: "trash")
+                            }
+                        }
+                    }
+    }
+
+    /// Builds one set row.
+    ///
+    /// SetRowView takes sixteen arguments; constructing it inline inside the
+    /// ForEach kept the enclosing expression past the type checker's limit.
+    /// The failure surfaces as "failed to produce diagnostic for expression",
+    /// which names the whole function rather than this call, so it is worth
+    /// keeping the construction isolated here.
+    private func setRow(
+        _ exercise: WorkoutExercise,
+        setIdx: Int,
+        workoutSet: WorkoutSet,
+        isCurrentSet: Bool
+    ) -> some View {
+        SetRowView(
+            setNumber: setIdx + 1,
+            workoutSet: workoutSet,
+            onWeightChange: { w in
+                viewModel.updateSet(
+                    exerciseIndex: exerciseIndex,
+                    setIndex: setIdx,
+                    weight: w,
+                    reps: viewModel.exercises[exerciseIndex].sets[setIdx].reps
+                )
+            },
+            onRepsChange: { r in
+                viewModel.updateSet(
+                    exerciseIndex: exerciseIndex,
+                    setIndex: setIdx,
+                    weight: viewModel.exercises[exerciseIndex].sets[setIdx].weight,
+                    reps: r
+                )
+            },
+            onComplete: {
+                viewModel.completeSet(exerciseIndex: exerciseIndex, setIndex: setIdx)
+            },
+            onDelete: {
+                viewModel.removeSet(exerciseIndex: exerciseIndex, setIndex: setIdx)
+            },
+            onToggleWeightMode: {
+                viewModel.toggleWeightMode(exerciseIndex: exerciseIndex, setIndex: setIdx)
+            },
+            onAddDropSet: {
+                viewModel.addDropSet(exerciseIndex: exerciseIndex, parentSetIndex: setIdx)
+            },
+            onMarkDropSet: {
+                viewModel.markSetAsDropSet(exerciseIndex: exerciseIndex, setIndex: setIdx)
+            },
+            onFillMax: {
+                if let pr = viewModel.personalRecordForExercise(exercise.exercise.id) {
+                    viewModel.updateSet(exerciseIndex: exerciseIndex, setIndex: setIdx, weight: pr.weight, reps: viewModel.exercises[exerciseIndex].sets[setIdx].reps)
+                }
+            },
+            onFillMaxPlus5: {
+                if let pr = viewModel.personalRecordForExercise(exercise.exercise.id) {
+                    viewModel.updateSet(exerciseIndex: exerciseIndex, setIndex: setIdx, weight: pr.weight + 5, reps: viewModel.exercises[exerciseIndex].sets[setIdx].reps)
+                }
+            },
+            lateralityLabel: exercise.selectedLaterality != .bilateral ? (exercise.exercise.muscleGroups.contains(where: { [.quads, .hamstrings, .glutes, .calves].contains($0) }) ? "/leg" : "/arm") : nil,
+            lastSet: viewModel.lastSetHint(exerciseIndex: exerciseIndex, setIndex: setIdx),
+            previousSet: viewModel.previousSet(
+                forExercise: exercise.exercise.id, setIndex: setIdx
+            ),
+            personalRecord: viewModel.personalRecordForExercise(exercise.exercise.id),
+            isCurrentSet: isCurrentSet
+        )
     }
 }
 

@@ -566,6 +566,65 @@ final class WorkoutLoggerViewModel {
         }
     }
 
+    // MARK: - Previous performance
+
+    /// Cached per-exercise sets from the most recent prior workout containing
+    /// that exercise. Built once per session rather than per row — the set table
+    /// asks for this on every render, and walking the full cached history for
+    /// each of ~25 rows on every keystroke is not free.
+    private var previousSessionCache: [String: [WorkoutSet]] = [:]
+    private var previousSessionCacheBuilt = false
+
+    /// What the lifter did for this exercise last time, in set order.
+    ///
+    /// This is the reference column every serious tracker shows and this app has
+    /// never had: without it there is nothing on screen telling you whether
+    /// today's weight is progress, and the lifter is left to remember.
+    ///
+    /// Looks back to the most recent *previous* workout that actually contained
+    /// the exercise, not simply the last workout — skipping leg day should not
+    /// blank out the reference on your next squat session.
+    func previousSets(forExercise exerciseId: String) -> [WorkoutSet] {
+        if !previousSessionCacheBuilt { buildPreviousSessionCache() }
+        return previousSessionCache[exerciseId] ?? []
+    }
+
+    /// The matching set from last time, by position.
+    func previousSet(forExercise exerciseId: String, setIndex: Int) -> WorkoutSet? {
+        let sets = previousSets(forExercise: exerciseId)
+        guard sets.indices.contains(setIndex) else { return nil }
+        return sets[setIndex]
+    }
+
+    private func buildPreviousSessionCache() {
+        previousSessionCacheBuilt = true
+        guard !activeUserId.isEmpty else { return }
+
+        // Exclude the in-progress workout, otherwise the "previous" column would
+        // mirror what the lifter is typing right now.
+        let history = WorkoutService.shared
+            .fetchWorkoutsFromCache(userId: activeUserId)
+            .filter { $0.id != workoutId }
+            .sorted { $0.startTime > $1.startTime }
+
+        for workout in history {
+            for loggedExercise in workout.exercises {
+                let id = loggedExercise.exercise.id
+                // First write wins: history is newest-first, so the first time an
+                // exercise appears is its most recent session.
+                guard previousSessionCache[id] == nil else { continue }
+                let performed = loggedExercise.sets.filter { $0.weight > 0 || $0.reps > 0 }
+                if !performed.isEmpty { previousSessionCache[id] = performed }
+            }
+        }
+    }
+
+    /// Invalidates the cache — call when history changes underneath a live session.
+    func invalidatePreviousSessionCache() {
+        previousSessionCache.removeAll()
+        previousSessionCacheBuilt = false
+    }
+
     func removeExercise(at index: Int) {
         guard exercises.indices.contains(index) else { return }
         exercises.remove(at: index)

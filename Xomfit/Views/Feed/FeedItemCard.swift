@@ -39,24 +39,26 @@ struct FeedItemCard: View {
 
                 activityContent
 
-                // PR highlight (#415) — surface personal records prominently on
-                // the card front, above the caption, so they don't get buried in
-                // the workout activity content.
+                // PR highlight (#415).
+                //
+                // Was a full-width banner sitting directly under a "1 PR" badge
+                // and a row of trophy-marked exercise chips — the same fact
+                // stated three times, which is most of why this card felt
+                // cluttered. The badge is gone (see WorkoutActivityContent) and
+                // this is now a single compact line naming *which* lift, which
+                // is the part the banner never said.
                 if item.activityType == .workout,
                    let activity = item.workoutActivity,
                    activity.prCount > 0 {
-                    HStack(spacing: Theme.Spacing.sm) {
+                    HStack(spacing: Theme.Spacing.xs) {
                         Image(systemName: "trophy.fill")
-                            .font(.subheadline.weight(.bold))
-                            .foregroundStyle(Theme.prGold)
-                        Text("\(activity.prCount) Personal Record\(activity.prCount > 1 ? "s" : "")!")
-                            .font(.subheadline.weight(.bold))
-                            .foregroundStyle(Theme.prGold)
-                        Spacer()
+                            .font(.system(size: 10, weight: .bold))
+                        Text(prSummary(for: activity))
+                            .font(Theme.fontCaption.weight(.bold))
+                            .lineLimit(1)
+                        Spacer(minLength: 0)
                     }
-                    .padding(Theme.Spacing.sm)
-                    .background(Theme.prGold.opacity(0.12))
-                    .clipShape(.rect(cornerRadius: Theme.Radius.sm))
+                    .foregroundStyle(Theme.prGold)
                 }
 
                 if let caption = item.caption, !caption.isEmpty {
@@ -384,6 +386,20 @@ struct FeedItemCard: View {
             root.present(controller, animated: true)
         }
     }
+
+    /// "PR on Bench Press" / "2 PRs · Bench Press, Squat".
+    ///
+    /// Names the lifts rather than just counting them — a bare "1 Personal
+    /// Record!" tells the reader nothing they cannot already see from the
+    /// trophy on the chip below it.
+    private func prSummary(for activity: WorkoutActivity) -> String {
+        let prLifts = activity.exercises.filter(\.isPR).map(\.name)
+        guard !prLifts.isEmpty else {
+            return "\(activity.prCount) PR\(activity.prCount > 1 ? "s" : "")"
+        }
+        if prLifts.count == 1 { return "PR on \(prLifts[0])" }
+        return "\(prLifts.count) PRs · \(prLifts.prefix(2).joined(separator: ", "))"
+    }
 }
 
 // MARK: - Workout Activity Content
@@ -433,9 +449,9 @@ private struct WorkoutActivityContent: View {
             .accessibilityElement(children: .combine)
             .accessibilityLabel("Duration \(formatDuration(activity.duration)), Volume \(formatVolume(activity.totalVolume)), \(activity.totalSets) sets")
 
-            if activity.prCount > 0 {
-                XomBadge("\(activity.prCount) PR\(activity.prCount > 1 ? "s" : "")", icon: "trophy.fill", color: Theme.prGold, variant: .display)
-            }
+            // PR count badge removed: the card already states it in the PR line
+            // above the caption and marks the lifts themselves with trophies in
+            // the exercise chips below.
 
             // Photo gallery with tap-to-zoom
             if let photoURLs = activity.photoURLs, !photoURLs.isEmpty {
@@ -509,24 +525,42 @@ private struct PRActivityContent: View {
     private var weightUnit: WeightUnit { WeightUnit(rawValue: weightUnitRaw) ?? .lbs }
 
     var body: some View {
+        // The exercise name used to render twice — once as the stripe card's
+        // title and again as the first line of its body. Dropped the duplicate,
+        // pulled the hero number down from fontDisplay (34pt) to fontNumberLarge
+        // (22pt), and collapsed "previous best" plus the improvement badge onto
+        // one line. A feed row is a glance, not a trophy case.
         ActivityStripeCard(stripeColor: Theme.prGold, icon: "trophy.fill", title: activity.exerciseName) {
-            Text(activity.exerciseName)
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(Theme.textPrimary)
-
-            Text("\(activity.weight.formattedWeight(unit: weightUnit)) \(weightUnit.displayName) × \(activity.reps) reps")
-                .font(Theme.fontDisplay)
-                .foregroundStyle(Theme.prGold)
-                .accessibilityLabel("\(activity.weight.formattedWeight(unit: weightUnit)) \(weightUnit.accessibilityName), \(activity.reps) reps")
-
-            if let prev = activity.previousBest {
-                Text("Previous best: \(prev.formattedWeight(unit: weightUnit)) \(weightUnit.displayName)")
+            HStack(alignment: .firstTextBaseline, spacing: Theme.Spacing.xs) {
+                Text(activity.weight.formattedWeight(unit: weightUnit))
+                    .font(Theme.fontNumberLarge)
+                    .foregroundStyle(Theme.prGold)
+                Text(weightUnit.displayName)
+                    .font(Theme.fontCaption)
+                    .foregroundStyle(Theme.prGold.opacity(0.75))
+                Text("×")
                     .font(Theme.fontCaption)
                     .foregroundStyle(Theme.textTertiary)
+                Text("\(activity.reps)")
+                    .font(Theme.fontNumberLarge)
+                    .foregroundStyle(Theme.prGold)
             }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("\(activity.weight.formattedWeight(unit: weightUnit)) \(weightUnit.accessibilityName), \(activity.reps) reps")
 
-            if let imp = activity.improvement, imp > 0 {
-                XomBadge("+\(imp.formattedWeight(unit: weightUnit)) \(weightUnit.displayName)", color: Theme.accent, variant: .display)
+            if activity.previousBest != nil || (activity.improvement ?? 0) > 0 {
+                HStack(spacing: Theme.Spacing.sm) {
+                    if let prev = activity.previousBest {
+                        Text("was \(prev.formattedWeight(unit: weightUnit))")
+                            .font(Theme.fontCaption)
+                            .foregroundStyle(Theme.textTertiary)
+                    }
+                    if let imp = activity.improvement, imp > 0 {
+                        Text("+\(imp.formattedWeight(unit: weightUnit))")
+                            .font(Theme.fontCaption.weight(.bold))
+                            .foregroundStyle(Theme.accent)
+                    }
+                }
             }
         }
     }

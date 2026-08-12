@@ -203,6 +203,36 @@ struct WorkoutView: View {
                         }
                         .padding(.horizontal, Theme.Spacing.md)
 
+                        // Cardio lives alongside lifting rather than in its own
+                        // tab: it is the same "what did I train today" question,
+                        // and burying it a tab away is how it stops getting
+                        // logged at all.
+                        NavigationLink {
+                            CardioListView(userId: userId)
+                        } label: {
+                            HStack(spacing: Theme.Spacing.md) {
+                                Image(systemName: "figure.run")
+                                    .font(.title3)
+                                    .foregroundStyle(Theme.accent)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Cardio")
+                                        .font(Theme.fontBodyEmphasized)
+                                        .foregroundStyle(Theme.textPrimary)
+                                    Text("Run · Ride · Row · Import from Health")
+                                        .font(Theme.fontCaption)
+                                        .foregroundStyle(Theme.textSecondary)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.caption)
+                                    .foregroundStyle(Theme.textSecondary)
+                            }
+                            .padding(Theme.Spacing.md)
+                            .background(Theme.surface, in: .rect(cornerRadius: Theme.cornerRadius))
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.horizontal, Theme.Spacing.md)
+
                         // Generate (offline) — the instant, on-device twin of the
                         // AI Coach. Framed distinctly: dice icon + "Instant · No AI
                         // · Offline" so it never reads as a second chat coach.
