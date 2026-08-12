@@ -1157,77 +1157,60 @@ private struct ExerciseCard: View {
 
                 Spacer(minLength: Theme.Spacing.xs)
 
-                // Action cluster — all card controls grouped on the trailing
-                // edge so the title + tags get the full leading width and never
-                // collide with the buttons (previously info/collapse sat between
-                // the title and the spacer, crowding long names + tag rows).
+                // Action cluster.
+                //
+                // Was four 36-40pt buttons in a row, spending ~150pt of every
+                // card header on controls and squeezing long exercise names to a
+                // couple of characters per line. Collapse stays inline because it
+                // is used constantly; the rest moved into an overflow menu, which
+                // is where every comparable tracker puts them.
                 HStack(spacing: 0) {
                     Button {
-                        Haptics.selection()
-                        showDetails = true
-                    } label: {
-                        Image(systemName: "info.circle")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(Theme.textSecondary)
-                            .frame(width: 36, height: 44)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Show details for \(exercise.exercise.name)")
-
-                    Button {
                         Haptics.light()
-                        withAnimation(.xomConfident) {
-                            isCollapsed.toggle()
-                        }
+                        withAnimation(.xomConfident) { isCollapsed.toggle() }
                     } label: {
                         Image(systemName: "chevron.down")
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(Theme.textSecondary)
                             .rotationEffect(.degrees(isCollapsed ? -90 : 0))
-                            .frame(width: 36, height: 44)
+                            .frame(width: 32, height: 44)
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel(isCollapsed ? "Expand \(exercise.exercise.name)" : "Collapse \(exercise.exercise.name)")
 
-                    // Superset toggle (#294) — visible affordance for grouping with the
-                    // next exercise. Disabled (but still rendered) when neither action
-                    // is meaningful, so the button row layout stays stable.
-                    Button {
-                        Haptics.selection()
-                        showSupersetToggleConfirm = true
-                    } label: {
-                        Image(systemName: isInSuperset ? "link.circle.fill" : "link")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(isInSuperset ? Theme.accent : Theme.textSecondary)
-                            .frame(width: 40, height: 44)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(!isInSuperset && !canGroupWithNext)
-                    .accessibilityLabel(isInSuperset
-                        ? "Ungroup superset"
-                        : "Group with next exercise as superset")
-                    .accessibilityHint(isInSuperset
-                        ? "Removes this exercise from its superset"
-                        : "Pairs this exercise with the next one for back-to-back sets")
+                    Menu {
+                        Button {
+                            showDetails = true
+                        } label: {
+                            Label("How to do this", systemImage: "info.circle")
+                        }
 
-                    // Visible delete button — the card-level swipe was removed to
-                    // keep the list scrollable, so this is the primary removal path.
-                    Button {
-                        Haptics.warning()
-                        showRemoveExerciseConfirm = true
+                        Button {
+                            showSupersetToggleConfirm = true
+                        } label: {
+                            Label(
+                                isInSuperset ? "Ungroup superset" : "Superset with next",
+                                systemImage: isInSuperset ? "link.circle.fill" : "link"
+                            )
+                        }
+                        .disabled(!isInSuperset && !canGroupWithNext)
+
+                        Divider()
+
+                        Button(role: .destructive) {
+                            showRemoveExerciseConfirm = true
+                        } label: {
+                            Label("Remove exercise", systemImage: "trash")
+                        }
                     } label: {
-                        Image(systemName: "trash")
+                        Image(systemName: "ellipsis")
                             .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(Theme.destructive.opacity(0.8))
-                            .frame(width: 40, height: 44)
+                            .foregroundStyle(Theme.textSecondary)
+                            .frame(width: 32, height: 44)
                             .contentShape(Rectangle())
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Remove \(exercise.exercise.name) from workout")
-                    .accessibilityHint("Deletes this exercise and all its sets from the current workout")
+                    .accessibilityLabel("More options for \(exercise.exercise.name)")
                 }
             }
 
