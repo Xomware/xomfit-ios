@@ -16,6 +16,11 @@ struct SetRowView: View {
     /// Most recent set the user has logged for this exercise from history.
     /// Drives the "Last: 135×8" hint below the row. nil = first time doing this exercise.
     var lastSet: WorkoutSet? = nil
+    /// The set in this same position from the last session containing this
+    /// exercise. Rendered as the greyed reference column every serious tracker
+    /// shows — without it there is nothing telling the lifter whether today's
+    /// number is progress. Tapping it copies the values into the row.
+    var previousSet: WorkoutSet? = nil
     /// Heaviest set the user has ever logged for this exercise (history only).
     /// Drives the "PR: 145×6" hint and the inline "NEW PR" badge when beat.
     var personalRecord: WorkoutSet? = nil
@@ -95,6 +100,7 @@ struct SetRowView: View {
         onFillMaxPlus5: (() -> Void)? = nil,
         lateralityLabel: String? = nil,
         lastSet: WorkoutSet? = nil,
+        previousSet: WorkoutSet? = nil,
         personalRecord: WorkoutSet? = nil,
         isCurrentSet: Bool = false
     ) {
@@ -111,6 +117,7 @@ struct SetRowView: View {
         self.onFillMaxPlus5 = onFillMaxPlus5
         self.lateralityLabel = lateralityLabel
         self.lastSet = lastSet
+        self.previousSet = previousSet
         self.personalRecord = personalRecord
         self.isCurrentSet = isCurrentSet
 
@@ -179,6 +186,12 @@ struct SetRowView: View {
             Button("Plate Calculator") {
                 showPlateCalculator = true
             }
+            // Moved off the row itself — it was costing 44pt of horizontal space
+            // per set for a setting that changes once a year, if ever.
+            Button("Switch to \(weightUnit == .lbs ? "kg" : "lbs")") {
+                Haptics.light()
+                weightUnitRaw = (weightUnit == .lbs ? WeightUnit.kg : WeightUnit.lbs).rawValue
+            }
             Button("Cancel", role: .cancel) {}
         }
         .sheet(isPresented: $showPlateCalculator) {
@@ -231,22 +244,45 @@ struct SetRowView: View {
                         .frame(width: Theme.Spacing.lg, alignment: .center)
                 }
 
-                // Unit toggle (lbs/kg). Flips the app-wide display unit; storage
-                // stays in lbs. Placed left of the weight field so it reads as a
-                // property of the entry, separate from the mode (×2) button. (#470)
+                // Previous-session reference. This replaced the per-row lbs/kg
+                // toggle, which spent 44pt of a cramped row on a setting nobody
+                // changes mid-set — it now lives in the weight field's
+                // long-press menu. What belongs here is the number the lifter is
+                // actually trying to beat.
                 Button {
+                    guard let previousSet else { return }
                     Haptics.light()
-                    weightUnitRaw = (weightUnit == .lbs ? WeightUnit.kg : WeightUnit.lbs).rawValue
+                    suppressNextWeightStore = true
+                    weightText = previousSet.weight > 0
+                        ? previousSet.weight.formattedWeight(unit: weightUnit) : ""
+                    repsText = previousSet.reps > 0 ? "\(previousSet.reps)" : ""
+                    onWeightChange(previousSet.weight)
+                    onRepsChange(previousSet.reps)
                 } label: {
-                    Text(weightUnit.displayName.uppercased())
-                        .font(Theme.fontCaption.weight(.bold))
-                        .foregroundStyle(Theme.accent)
-                        .frame(minWidth: 44, minHeight: 44)
-                        .contentShape(Rectangle())
+                    Group {
+                        if let previousSet, previousSet.weight > 0 || previousSet.reps > 0 {
+                            Text("\(previousSet.weight.formattedWeight(unit: weightUnit))×\(previousSet.reps)")
+                                .font(Theme.fontTablePrevious)
+                                .foregroundStyle(Theme.textTertiary)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.75)
+                        } else {
+                            Text("—")
+                                .font(Theme.fontTablePrevious)
+                                .foregroundStyle(Theme.textTertiary.opacity(0.6))
+                        }
+                    }
+                    .frame(width: 58, alignment: .center)
+                    .frame(minHeight: 40)
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("Weight unit: \(weightUnit.accessibilityName)")
-                .accessibilityHint("Switches the weight entry between pounds and kilograms")
+                .disabled(previousSet == nil)
+                .accessibilityLabel(
+                    previousSet.map { "Last time: \($0.weight.formattedWeight) for \($0.reps) reps" }
+                        ?? "No previous set"
+                )
+                .accessibilityHint("Copies last session's numbers into this set")
 
                 // Weight field
                 TextField("0", text: $weightText)

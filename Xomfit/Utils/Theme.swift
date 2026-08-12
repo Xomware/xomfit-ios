@@ -36,8 +36,16 @@ enum Theme {
 
     // MARK: - Hairlines
 
-    static let hairline          = Color.white.opacity(0.08)
-    static let hairlineStrong    = Color.white.opacity(0.12)
+    // Strengthened: a dense set table relies on rules to separate rows, and at
+    // 0.08 they were invisible against the card. These now actually read.
+    static let hairline          = Color.white.opacity(0.11)
+    static let hairlineStrong    = Color.white.opacity(0.18)
+
+    /// Alternating row tint for set tables. Barely-there on purpose — it should
+    /// register as banding, not as stripes.
+    static let rowAlternate      = Color.white.opacity(0.025)
+    /// Fill for a completed set row.
+    static let rowCompleted      = Color(hex: "2FE562").opacity(0.09)
 
     // Glass morphism — kept for callsite compat; prefer hairline tokens going forward
     static let glassFill         = Color.white.opacity(0.04)
@@ -51,29 +59,38 @@ enum Theme {
     static let badgeMilestone    = milestone
     static let badgeStreak       = streak
 
-    // MARK: - Spacing (8pt grid + section rhythm)
+    // MARK: - Spacing (4pt grid, tightened for density)
+    //
+    // Tightened across the board so more of a workout fits on screen at once.
+    // A lifter mid-set is scanning for their next number, not reading a page —
+    // generous whitespace costs them a scroll per exercise. Token *names* are
+    // unchanged so every existing call site inherits the new density; the values
+    // are what carry the redesign.
 
     enum Spacing {
         static let hairline: CGFloat = 0.5
         static let tighter: CGFloat = 2
         static let tight:   CGFloat = 4
         static let xs:  CGFloat = 4
-        static let sm:  CGFloat = 8
-        static let md:  CGFloat = 16
-        static let lg:  CGFloat = 24
-        static let xl:  CGFloat = 32
-        static let xxl: CGFloat = 48
-        static let section: CGFloat = 40
+        static let sm:  CGFloat = 6
+        static let md:  CGFloat = 12
+        static let lg:  CGFloat = 18
+        static let xl:  CGFloat = 24
+        static let xxl: CGFloat = 36
+        static let section: CGFloat = 28
     }
 
     // MARK: - Corner Radius
+    //
+    // Tighter corners read as tool rather than toy. Large radii make dense rows
+    // look like unrelated bubbles instead of a continuous table.
 
     enum Radius {
-        static let xs: CGFloat = 6
-        static let sm: CGFloat = 10
-        static let md: CGFloat = 16
-        static let lg: CGFloat = 22
-        static let xl: CGFloat = 28
+        static let xs: CGFloat = 4
+        static let sm: CGFloat = 6
+        static let md: CGFloat = 10
+        static let lg: CGFloat = 14
+        static let xl: CGFloat = 18
     }
 
     /// DEPRECATED — use Radius.md
@@ -88,29 +105,40 @@ enum Theme {
 
     // MARK: - Typography
 
+    // Numbers are the content in a lifting app, so every numeric token is
+    // monospaced-digit: a column of weights that shifts horizontally as the
+    // digits change is the single most amateur-looking thing a tracker can do.
+    // Sizes are pulled down from the previous scale — the old 44pt display and
+    // 28pt secondary were magazine-sized for what is a data table.
+
     /// Hero display number — PRs, volume totals, hero metrics.
-    static let fontDisplay: Font = .system(size: 44, weight: .heavy, design: .rounded).monospacedDigit()
+    static let fontDisplay: Font = .system(size: 34, weight: .heavy, design: .rounded).monospacedDigit()
     /// Secondary hero number — stat columns, card titles with numbers.
-    static let fontNumberLarge: Font = .system(size: 28, weight: .bold, design: .rounded).monospacedDigit()
+    static let fontNumberLarge: Font = .system(size: 22, weight: .bold, design: .rounded).monospacedDigit()
     /// Inline numbers — set rows, feed stat pills.
-    static let fontNumberMedium: Font = .system(size: 17, weight: .semibold, design: .rounded).monospacedDigit()
+    static let fontNumberMedium: Font = .system(size: 15, weight: .semibold, design: .rounded).monospacedDigit()
+    /// Set-table cells. Not rounded — a table wants a neutral, tabular face.
+    static let fontTableNumber: Font = .system(size: 15, weight: .semibold).monospacedDigit()
+    /// The greyed "what you did last time" column.
+    static let fontTablePrevious: Font = .system(size: 13, weight: .regular).monospacedDigit()
 
-    static let fontLargeTitle: Font  = .largeTitle.weight(.bold)
-    static let fontTitle: Font       = .title.weight(.bold)
-    static let fontTitle2: Font      = .title2.weight(.semibold)
-    static let fontTitle3: Font      = .title3
-    static let fontHeadline: Font    = .title3.weight(.semibold)
-    static let fontBody: Font        = .body
-    static let fontBodyEmphasized: Font = .body.weight(.semibold)
-    static let fontCallout: Font     = .callout
-    static let fontFootnote: Font    = .footnote
-    static let fontSubheadline: Font = .subheadline
-    static let fontCaption: Font     = .caption
-    static let fontCaption2: Font    = .caption2
-    static let fontSmall: Font       = .caption2.weight(.medium)
+    static let fontLargeTitle: Font  = .system(size: 28, weight: .bold)
+    static let fontTitle: Font       = .system(size: 22, weight: .bold)
+    static let fontTitle2: Font      = .system(size: 19, weight: .semibold)
+    static let fontTitle3: Font      = .system(size: 17, weight: .semibold)
+    static let fontHeadline: Font    = .system(size: 15, weight: .bold)
+    static let fontBody: Font        = .system(size: 15)
+    static let fontBodyEmphasized: Font = .system(size: 15, weight: .semibold)
+    static let fontCallout: Font     = .system(size: 14)
+    static let fontFootnote: Font    = .system(size: 13)
+    static let fontSubheadline: Font = .system(size: 14, weight: .medium)
+    static let fontCaption: Font     = .system(size: 12)
+    static let fontCaption2: Font    = .system(size: 11)
+    static let fontSmall: Font       = .system(size: 11, weight: .medium)
 
-    /// Uppercase + 0.5 kerning metric label. Apply via XomMetricLabel or .metricLabel() modifier.
-    static let fontMetricLabel: Font = .caption.weight(.semibold)
+    /// Uppercase + kerned section label — the small-caps header that separates
+    /// blocks in a dense layout without spending a full heading's worth of space.
+    static let fontMetricLabel: Font = .system(size: 11, weight: .bold)
 }
 
 // MARK: - Animation Tokens
@@ -335,26 +363,19 @@ struct StaggeredAppearance: ViewModifier {
 
 // MARK: - Button Styles (legacy — prefer XomButton)
 
+// Both styles lost their gradient/glow and a chunk of vertical padding. The
+// sheen read as consumer-app polish; a training tool wants flat, high-contrast
+// controls that do not compete with the numbers around them.
+
 struct AccentButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.body.weight(.bold))
+            .font(Theme.fontBodyEmphasized.weight(.bold))
             .foregroundStyle(.black)
             .frame(maxWidth: .infinity)
             .padding(.vertical, Theme.Spacing.md)
-            .background(
-                RoundedRectangle(cornerRadius: Theme.cornerRadius)
-                    .fill(Theme.accent)
-                    .overlay(
-                        LinearGradient(
-                            colors: [Color.white.opacity(0.08), Color.clear],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                        .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
-                    )
-            )
-            .scaleEffect(configuration.isPressed ? 0.98 : 1)
+            .background(Theme.accent, in: .rect(cornerRadius: Theme.Radius.md))
+            .opacity(configuration.isPressed ? 0.85 : 1)
             .animation(.xomSnappy, value: configuration.isPressed)
     }
 }
@@ -362,18 +383,49 @@ struct AccentButtonStyle: ButtonStyle {
 struct GhostButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.body.weight(.bold))
-            .foregroundStyle(Theme.accent)
+            .font(Theme.fontBodyEmphasized.weight(.bold))
+            .foregroundStyle(Theme.textPrimary)
             .frame(maxWidth: .infinity)
             .padding(.vertical, Theme.Spacing.md)
-            .background(Theme.surfaceElevated)
-            .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
+            .background(Theme.surfaceElevated, in: .rect(cornerRadius: Theme.Radius.md))
             .overlay(
-                RoundedRectangle(cornerRadius: Theme.cornerRadius)
-                    .strokeBorder(Theme.accent.opacity(0.5), lineWidth: 1)
+                RoundedRectangle(cornerRadius: Theme.Radius.md)
+                    .strokeBorder(Theme.hairlineStrong, lineWidth: 1)
             )
-            .scaleEffect(configuration.isPressed ? 0.98 : 1)
+            .opacity(configuration.isPressed ? 0.85 : 1)
             .animation(.xomSnappy, value: configuration.isPressed)
+    }
+}
+
+// MARK: - Section label
+
+/// Small-caps section header. In a dense layout a full heading costs more
+/// vertical space than the content it introduces, so blocks are separated by a
+/// kerned uppercase label instead.
+struct SectionLabel: View {
+    let text: String
+    var trailing: String?
+
+    init(_ text: String, trailing: String? = nil) {
+        self.text = text
+        self.trailing = trailing
+    }
+
+    var body: some View {
+        HStack {
+            Text(text.uppercased())
+                .font(Theme.fontMetricLabel)
+                .kerning(0.8)
+                .foregroundStyle(Theme.textTertiary)
+            Spacer()
+            if let trailing {
+                Text(trailing.uppercased())
+                    .font(Theme.fontMetricLabel)
+                    .kerning(0.8)
+                    .foregroundStyle(Theme.textTertiary)
+            }
+        }
+        .accessibilityAddTraits(.isHeader)
     }
 }
 
