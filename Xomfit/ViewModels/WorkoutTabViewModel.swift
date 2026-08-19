@@ -62,6 +62,19 @@ final class WorkoutTabViewModel {
 
     // MARK: - Load
 
+    /// Under the DEBUG auth bypass there are no Supabase credentials, so the
+    /// `supabase` client traps on first access — an assertion, not a throw, so
+    /// `try?` can't save us. Network paths are skipped and the seeded local
+    /// cache is used instead. Mirrors `StatsViewModel.isAuthBypass`. Compiles
+    /// to `false` in Release.
+    private var isAuthBypass: Bool {
+        #if DEBUG
+        ProcessInfo.processInfo.environment["XOMFIT_AUTH_BYPASS"] == "1"
+        #else
+        false
+        #endif
+    }
+
     /// Loads everything needed to populate all four tabs in parallel.
     /// Friend workouts are deferred to `loadFriends` because they fan out across users.
     func load(userId: String) async {
@@ -69,7 +82,12 @@ final class WorkoutTabViewModel {
         isLoading = true
         defer { isLoading = false }
 
-        async let recentTask = WorkoutService.shared.fetchWorkouts(userId: userId)
+        // The bypass seeds `WorkoutService`'s cache with fixtures precisely so
+        // this screen can render without credentials; going to the network here
+        // crashed the whole tab on launch.
+        async let recentTask = isAuthBypass
+            ? WorkoutService.shared.fetchWorkoutsFromCache(userId: userId)
+            : await WorkoutService.shared.fetchWorkouts(userId: userId)
         let allCustom = TemplateService.shared.allTemplates().filter { $0.isCustom }
 
         recent = await recentTask
@@ -83,6 +101,7 @@ final class WorkoutTabViewModel {
 
     func loadFriends(currentUserId: String) async {
         guard !currentUserId.isEmpty else { return }
+        guard !isAuthBypass else { return }
         isLoadingFriends = true
         defer { isLoadingFriends = false }
         friendWorkouts = await WorkoutService.shared.fetchFriendsRecentWorkouts(currentUserId: currentUserId)

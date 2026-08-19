@@ -25,6 +25,7 @@
 		AC63B77329F22ECBEC449710 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1F5C89119347DF10938D0467 /* Foundation.framework */; };
 		B2F201D886D61139D367C906 /* GoalBaselineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2971609F94FDA4AAE995734 /* GoalBaselineTests.swift */; };
 		BBBE2A7245E89C33ED8D85D8 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 37E1F812E63DCA86C4966EEE /* Foundation.framework */; };
+		D7E81C3DC92EC92262FDBC0D /* WorkoutSkipCursorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F679CA7346950355AE957485 /* WorkoutSkipCursorTests.swift */; };
 		E276BDE8A780ED0925F68800 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8932635DA9D7B3E27AD4A2 /* ContentView.swift */; };
 		F29F21412F5F620700683551 /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = F29F21402F5F620700683551 /* Auth */; };
 		F29F21432F5F620700683551 /* Functions in Frameworks */ = {isa = PBXBuildFile; productRef = F29F21422F5F620700683551 /* Functions */; };
@@ -163,6 +164,7 @@
 		F2FA6B092F7C0635009E1AB8 /* XomfitWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = XomfitWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		F2FA6B0B2F7C0635009E1AB8 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		F2FA6B0D2F7C0635009E1AB8 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		F679CA7346950355AE957485 /* WorkoutSkipCursorTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkoutSkipCursorTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -268,6 +270,7 @@
 				730E45C30DECC5AA5563EAB4 /* WorkoutInsightsSeamTests.swift */,
 				C84C61FE8D97D6A6F27FDF87 /* TrainingNudgeTests.swift */,
 				E2971609F94FDA4AAE995734 /* GoalBaselineTests.swift */,
+				F679CA7346950355AE957485 /* WorkoutSkipCursorTests.swift */,
 			);
 			name = XomfitTests;
 			path = XomfitTests;
@@ -734,6 +737,7 @@
 				732744FB02C5390D4B24130A /* ExerciseVariantTests.swift in Sources */,
 				59CED2BB74729F6E6D6C8417 /* StrengthStandardsTests.swift in Sources */,
 				4B29E29052245B3988552687 /* HealthKitTests.swift in Sources */,
+				D7E81C3DC92EC92262FDBC0D /* WorkoutSkipCursorTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

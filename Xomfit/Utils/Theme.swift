@@ -74,6 +74,10 @@ enum Theme {
         static let xs:  CGFloat = 4
         static let sm:  CGFloat = 6
         static let md:  CGFloat = 12
+        /// Padding *inside* a card or panel. Deliberately larger than `md`:
+        /// cards should breathe while the list between them stays dense, and
+        /// reusing `md` for both made everything read uniformly cramped.
+        static let card: CGFloat = 16
         static let lg:  CGFloat = 18
         static let xl:  CGFloat = 24
         static let xxl: CGFloat = 36

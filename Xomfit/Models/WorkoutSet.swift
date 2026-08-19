@@ -15,6 +15,17 @@ struct WorkoutSet: Codable, Identifiable, Hashable {
     var completedAt: Date
     var weightMode: WeightMode = .total
 
+    // MARK: - Skip
+    /// Set when the lifter explicitly decides not to do this set.
+    ///
+    /// Distinct from "not done yet" (`completedAt == .distantPast`): a skipped
+    /// set is *resolved*, so it stops counting as work remaining and the flow
+    /// advances past it. Client-side only — skipped sets are dropped at save,
+    /// so this never reaches the backend (the wire DTOs in `WorkoutService`
+    /// are separate structs). Optional-with-default so previously persisted
+    /// session blobs still decode.
+    var skippedAt: Date?
+
     // MARK: - Drop Set
     /// True when this set is a drop set following a parent set without rest.
     /// Drop sets immediately follow their parent in the sets array.
@@ -23,6 +34,20 @@ struct WorkoutSet: Codable, Identifiable, Hashable {
     // MARK: - Form Check Video (optional attachment)
     var videoLocalURL: URL?       // locally saved clip after recording
     var videoRemoteURL: URL?      // uploaded to Supabase Storage
+
+    /// True when the lifter chose not to do this set.
+    var isSkipped: Bool { skippedAt != nil }
+
+    /// True when this set is neither done nor skipped — i.e. still owed.
+    ///
+    /// This is the predicate every "is there work left?" check should use.
+    /// Testing `completedAt == .distantPast` alone treats a skipped set as
+    /// outstanding forever, which blocks `allExercisesComplete` and strands
+    /// the auto-advance.
+    var isPending: Bool { completedAt == Date.distantPast && skippedAt == nil }
+
+    /// True when this set has been resolved one way or the other.
+    var isCompleted: Bool { completedAt != Date.distantPast }
 
     var volume: Double {
         let multiplier: Double = weightMode == .perSide ? 2 : 1

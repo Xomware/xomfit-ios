@@ -2,7 +2,7 @@ import SwiftUI
 
 // MARK: - ToolsView
 //
-// Tools destination surfaced via the hamburger drawer (#372). Lists the
+// Tools destination surfaced via the shell's "more" sheet. Lists the
 // existing utility tools — Plate Calculator and 1RM Estimator — extracted
 // from the Settings → Tools section so they're discoverable as their own
 // drawer entry. The tool screens themselves remain unchanged and continue

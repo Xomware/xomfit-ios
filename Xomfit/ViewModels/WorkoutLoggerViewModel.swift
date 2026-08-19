@@ -118,14 +118,14 @@ final class WorkoutLoggerViewModel {
         guard exercises.count > 1 else { return nil }
         // If current exercise still has incomplete sets, no "next" to show
         let currentEx = exercises.indices.contains(focusExerciseIndex) ? exercises[focusExerciseIndex] : nil
-        let allCurrentDone = currentEx?.sets.allSatisfy { $0.completedAt != Date.distantPast } ?? false
+        let allCurrentDone = currentEx?.sets.allSatisfy { !$0.isPending } ?? false
         guard allCurrentDone else { return nil }
         // Find next exercise with incomplete sets
         let afterCurrent = exercises.indices.first { idx in
-            idx > focusExerciseIndex && exercises[idx].sets.contains { $0.completedAt == Date.distantPast }
+            idx > focusExerciseIndex && exercises[idx].sets.contains { $0.isPending }
         }
         let beforeCurrent = exercises.indices.first { idx in
-            idx < focusExerciseIndex && exercises[idx].sets.contains { $0.completedAt == Date.distantPast }
+            idx < focusExerciseIndex && exercises[idx].sets.contains { $0.isPending }
         }
         if let idx = afterCurrent ?? beforeCurrent {
             return exercises[idx]
@@ -136,7 +136,7 @@ final class WorkoutLoggerViewModel {
     /// True when every set across all exercises is complete.
     var allExercisesComplete: Bool {
         !exercises.isEmpty && exercises.allSatisfy { ex in
-            ex.sets.allSatisfy { $0.completedAt != Date.distantPast }
+            ex.sets.allSatisfy { !$0.isPending }
         }
     }
 
@@ -757,14 +757,22 @@ final class WorkoutLoggerViewModel {
                 startRestTimer(for: exerciseIndex)
             }
 
-            // Auto-advance focus for supersets — jump to the sibling exercise's matching set
+            // Auto-advance the shared cursor. Supersets jump to the sibling
+            // exercise's matching set; everything else steps to the next set
+            // still owed.
+            //
+            // This used to be superset-only, which meant completing a set in
+            // list mode left the cursor — and therefore the list highlight and
+            // the focus-mode landing spot — pointing at the set just finished.
             if let siblingIdx = supersetSiblingIndex {
                 focusExerciseIndex = siblingIdx
-                if let nextIncomplete = exercises[siblingIdx].sets.firstIndex(where: { $0.completedAt == Date.distantPast }) {
+                if let nextIncomplete = exercises[siblingIdx].sets.firstIndex(where: { $0.isPending }) {
                     focusSetIndex = nextIncomplete
                 } else {
                     focusSetIndex = 0
                 }
+            } else if focusExerciseIndex == exerciseIndex && focusSetIndex == setIndex {
+                focusAdvance()
             }
             // Fire PR check asynchronously — non-blocking
             let set = exercises[exerciseIndex].sets[setIndex]
@@ -788,23 +796,23 @@ final class WorkoutLoggerViewModel {
             )
 
             // Check if all sets in this exercise are now complete
-            let allDone = exercises[exerciseIndex].sets.allSatisfy { $0.completedAt != Date.distantPast }
+            let allDone = exercises[exerciseIndex].sets.allSatisfy { !$0.isPending }
             if allDone {
                 completedExerciseIndex = exerciseIndex
 
                 // Find the next incomplete exercise (prefer one after current, then wrap around)
                 let afterCurrent = exercises.indices.first { idx in
-                    idx > exerciseIndex && exercises[idx].sets.contains { $0.completedAt == Date.distantPast }
+                    idx > exerciseIndex && exercises[idx].sets.contains { $0.isPending }
                 }
                 let beforeCurrent = exercises.indices.first { idx in
-                    idx < exerciseIndex && exercises[idx].sets.contains { $0.completedAt == Date.distantPast }
+                    idx < exerciseIndex && exercises[idx].sets.contains { $0.isPending }
                 }
                 nextExerciseIndex = afterCurrent ?? beforeCurrent
 
                 // Build remaining exercises list (all incomplete, excluding current)
                 remainingExercises = exercises.enumerated().compactMap { idx, ex in
                     guard idx != exerciseIndex,
-                          ex.sets.contains(where: { $0.completedAt == Date.distantPast }) else { return nil }
+                          ex.sets.contains(where: { $0.isPending }) else { return nil }
                     return RemainingExercise(index: idx, name: ex.exercise.name)
                 }
 
@@ -866,7 +874,7 @@ final class WorkoutLoggerViewModel {
         let sets = exercises[exerciseIndex].sets
         let nextSetIndex = sets.indices.first { idx in
             idx > completedSetIndex
-            && sets[idx].completedAt == Date.distantPast
+            && sets[idx].isPending
             && !sets[idx].isDropSet
         }
 
@@ -988,10 +996,10 @@ final class WorkoutLoggerViewModel {
             let sets = exercises[candidate].sets
             // Match the same round (same set index) when possible — fall back to any incomplete set.
             if sets.indices.contains(currentSetIndex),
-               sets[currentSetIndex].completedAt == Date.distantPast {
+               sets[currentSetIndex].isPending {
                 return candidate
             }
-            if sets.contains(where: { $0.completedAt == Date.distantPast }) {
+            if sets.contains(where: { $0.isPending }) {
                 return candidate
             }
         }
@@ -1057,13 +1065,28 @@ final class WorkoutLoggerViewModel {
         guard exercises.indices.contains(focusExerciseIndex) else { return }
         let ex = exercises[focusExerciseIndex]
 
-        // Try next set in the same exercise
+        // Next set still owed in this exercise. Stepping over resolved sets
+        // (completed OR skipped) matters now that skipping exists — a raw +1
+        // would park the cursor on a set the lifter just dismissed.
+        if let nextPending = ex.sets.indices.first(where: { $0 > focusSetIndex && ex.sets[$0].isPending }) {
+            focusSetIndex = nextPending
+            return
+        }
+
+        // Next exercise with work left, landing on its first owed set.
+        if let nextEx = exercises.indices.first(where: { $0 > focusExerciseIndex && exercises[$0].sets.contains { $0.isPending } }) {
+            focusExerciseIndex = nextEx
+            focusSetIndex = exercises[nextEx].sets.firstIndex { $0.isPending } ?? 0
+            return
+        }
+
+        // Nothing pending ahead — fall back to the original positional step so
+        // the cursor still moves when the lifter is reviewing a finished
+        // workout rather than logging one.
         if focusSetIndex + 1 < ex.sets.count {
             focusSetIndex += 1
             return
         }
-
-        // Move to next exercise, first set
         if focusExerciseIndex + 1 < exercises.count {
             focusExerciseIndex += 1
             focusSetIndex = 0
@@ -1116,18 +1139,68 @@ final class WorkoutLoggerViewModel {
         guard exercises.indices.contains(index) else { return }
         focusExerciseIndex = index
         // Land on the first incomplete set; fall back to set 0 when fully complete.
-        if let setIdx = exercises[index].sets.firstIndex(where: { $0.completedAt == Date.distantPast }) {
+        if let setIdx = exercises[index].sets.firstIndex(where: { $0.isPending }) {
             focusSetIndex = setIdx
         } else {
             focusSetIndex = 0
         }
     }
 
+    // MARK: - Cursor
+
+    /// Moves the workout cursor — the single "where am I" position shared by
+    /// list mode and focus mode.
+    ///
+    /// `focusExerciseIndex`/`focusSetIndex` used to be read only by focus mode,
+    /// while list mode derived its own highlight from the first incomplete set
+    /// per card. The two drifted, so zooming in from the list landed somewhere
+    /// the lifter hadn't been. Every list-mode interaction (tapping a row,
+    /// focusing a field, completing a set) now routes through here, which makes
+    /// entering focus a pure resume with nothing to ask about.
+    func setCursor(exercise: Int, set: Int) {
+        guard exercises.indices.contains(exercise),
+              exercises[exercise].sets.indices.contains(set) else { return }
+        guard focusExerciseIndex != exercise || focusSetIndex != set else { return }
+        focusExerciseIndex = exercise
+        focusSetIndex = set
+    }
+
+    // MARK: - Skip
+
+    /// Toggles "I'm not doing this set".
+    ///
+    /// A skipped set is resolved, not outstanding: `isPending` goes false, so
+    /// the exercise can complete and the flow advances past it. Skipped sets
+    /// are dropped at save (`finishWorkout` keeps only completed ones), so
+    /// nothing about this reaches the backend.
+    func toggleSkip(exerciseIndex: Int, setIndex: Int) {
+        guard exercises.indices.contains(exerciseIndex),
+              exercises[exerciseIndex].sets.indices.contains(setIndex) else { return }
+
+        let wasSkipped = exercises[exerciseIndex].sets[setIndex].isSkipped
+        if wasSkipped {
+            exercises[exerciseIndex].sets[setIndex].skippedAt = nil
+        } else {
+            exercises[exerciseIndex].sets[setIndex].skippedAt = Date()
+            // Skipping never leaves a set half-logged as complete.
+            exercises[exerciseIndex].sets[setIndex].completedAt = Date.distantPast
+            exercises[exerciseIndex].sets[setIndex].isPersonalRecord = false
+
+            // Don't strand the cursor on a set the lifter just dismissed.
+            if focusExerciseIndex == exerciseIndex && focusSetIndex == setIndex {
+                focusAdvance()
+            }
+        }
+
+        updateLiveActivity()
+        saveActiveSession(force: true)
+    }
+
     /// Sync focus indices to the first incomplete exercise/set. Called when entering focus mode from list mode.
     func syncFocusToCurrentExercise() {
         // Find first exercise with an incomplete set
         for (exIdx, ex) in exercises.enumerated() {
-            if let setIdx = ex.sets.firstIndex(where: { $0.completedAt == Date.distantPast }) {
+            if let setIdx = ex.sets.firstIndex(where: { $0.isPending }) {
                 focusExerciseIndex = exIdx
                 focusSetIndex = setIdx
                 return
@@ -1142,19 +1215,21 @@ final class WorkoutLoggerViewModel {
 
     /// Complete the focused set and auto-advance.
     ///
-    /// `completeSet` may have already redirected focus to a superset sibling
-    /// (the alternate exercise in an A/B group). When that happened we MUST NOT
-    /// also call `focusAdvance()` — that would push the set index forward on
-    /// the sibling, skipping the set the user is supposed to lift next (#402).
+    /// `completeSet` now owns cursor advancement for both presentations, so it
+    /// has usually already moved us — either to a superset sibling (the
+    /// alternate exercise in an A/B group) or to the next set still owed. The
+    /// guard stays because advancing twice would skip the set the lifter is
+    /// actually supposed to do next (#402); it only fires in the edge case
+    /// where `completeSet` left the cursor untouched (e.g. toggling a set back
+    /// off, or completing a set that isn't the cursor).
     func completeFocusedSet() {
         let priorEx = focusExerciseIndex
         let priorSet = focusSetIndex
         completeSet(exerciseIndex: focusExerciseIndex, setIndex: focusSetIndex)
 
-        // Did the superset auto-advance inside `completeSet` move us elsewhere?
-        let supersetAdvanced =
+        let cursorAlreadyMoved =
             focusExerciseIndex != priorEx || focusSetIndex != priorSet
-        if !supersetAdvanced {
+        if !cursorAlreadyMoved {
             focusAdvance()
         }
     }
@@ -1181,7 +1256,7 @@ final class WorkoutLoggerViewModel {
         let priorEx = focusExerciseIndex
         let priorSet = focusSetIndex
         completeSet(exerciseIndex: focusExerciseIndex, setIndex: focusSetIndex)
-        // Same superset-aware guard as `completeFocusedSet()` (#402).
+        // Same cursor guard as `completeFocusedSet()` (#402).
         let supersetAdvanced =
             focusExerciseIndex != priorEx || focusSetIndex != priorSet
         if !supersetAdvanced {
@@ -1228,10 +1303,15 @@ final class WorkoutLoggerViewModel {
     }
 
     func moveToExercise(index: Int) {
-        if focusMode {
-            focusExerciseIndex = index
-            focusSetIndex = 0
+        // The cursor is shared with list mode now, so it moves regardless of
+        // which presentation the lifter is in — previously this was guarded by
+        // `focusMode` and left the list highlight stranded on the old exercise.
+        guard exercises.indices.contains(index) else {
+            showExerciseTransition = false
+            return
         }
+        focusExerciseIndex = index
+        focusSetIndex = exercises[index].sets.firstIndex { $0.isPending } ?? 0
         showExerciseTransition = false
     }
 
@@ -1298,9 +1378,13 @@ final class WorkoutLoggerViewModel {
         restDuration = duration
         restTimeRemaining = duration
         isRestTimerActive = true
-        // Every fresh rest period starts expanded — the user just finished a
-        // set and benefits from the full-screen countdown.
-        isRestTimerMinimized = false
+        // Fresh rest periods start as the compact bar. They used to start
+        // expanded, which made sense when expanded meant a full-screen overlay
+        // in focus mode — but the timer is now a docked bottom inset shared by
+        // both views, and opening it full-height shoved the exercise list
+        // off-screen after every single set. The bar still shows the countdown,
+        // what's up next, and Skip; tapping it expands to the ring.
+        isRestTimerMinimized = true
         restTimerStartDate = Date()
         updateLiveActivity()
 
@@ -1491,7 +1575,7 @@ final class WorkoutLoggerViewModel {
         guard let activity = liveActivity else { return }
 
         let currentExName = exercises.first(where: { ex in
-            ex.sets.contains(where: { $0.completedAt == Date.distantPast })
+            ex.sets.contains(where: { $0.isPending })
         })?.exercise.name ?? "Finishing up"
 
         // While paused, suppress restEndDate so the widget renders a static "Paused" pill

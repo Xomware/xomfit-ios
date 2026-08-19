@@ -2,18 +2,64 @@ import SwiftUI
 
 /// Reusable filter bar for the workout tabs.
 ///
-/// Pattern mirrors `ExercisePickerView` — a search field plus two horizontal chip
-/// rails (muscle group + equipment). Emits state through a `WorkoutFilter` binding.
+/// One row by default: a search field with a filter toggle. The muscle-group
+/// and equipment chip rails expand underneath on demand.
+///
+/// They used to be permanently expanded, so this bar cost three rows above
+/// every workout list — search plus two chip rails — for controls most sessions
+/// never touch. The toggle carries a dot when a filter is active, so a narrowed
+/// list is never silently narrowed.
 struct WorkoutFilterBar: View {
     @Binding var filter: WorkoutFilter
 
+    @State private var isExpanded = false
+
+    /// True when the list is actually being narrowed by a chip selection.
+    private var hasActiveFilter: Bool {
+        filter.muscleGroup != nil || filter.equipment != nil
+    }
+
     var body: some View {
         VStack(spacing: Theme.Spacing.xs) {
-            searchField
-            muscleGroupChips
-            equipmentChips
+            searchRow
+            if isExpanded {
+                muscleGroupChips
+                equipmentChips
+            }
         }
         .padding(.bottom, Theme.Spacing.xs)
+        .animation(.xomConfident, value: isExpanded)
+    }
+
+    private var searchRow: some View {
+        HStack(spacing: Theme.Spacing.sm) {
+            searchField
+
+            Button {
+                Haptics.selection()
+                isExpanded.toggle()
+            } label: {
+                Image(systemName: "line.3.horizontal.decrease")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(isExpanded || hasActiveFilter ? .black : Theme.textSecondary)
+                    .frame(width: 44, height: 44)
+                    .background(
+                        Circle().fill(isExpanded || hasActiveFilter ? Theme.accent : Theme.surface)
+                    )
+                    .overlay(alignment: .topTrailing) {
+                        if hasActiveFilter && !isExpanded {
+                            Circle()
+                                .fill(Theme.accent)
+                                .frame(width: 8, height: 8)
+                        }
+                    }
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(isExpanded ? "Hide filters" : "Show filters")
+            .accessibilityValue(hasActiveFilter ? "Filters active" : "No filters")
+        }
+        .padding(.trailing, Theme.Spacing.md)
     }
 
     // MARK: - Search Field
@@ -39,14 +85,15 @@ struct WorkoutFilterBar: View {
                 .accessibilityLabel("Clear search")
             }
         }
-        .padding(Theme.Spacing.md)
+        .padding(.horizontal, Theme.Spacing.md)
+        .padding(.vertical, 10)
         .background(Theme.surface)
         .clipShape(.rect(cornerRadius: Theme.cornerRadius))
         .overlay(
             RoundedRectangle(cornerRadius: Theme.cornerRadius)
                 .strokeBorder(Theme.hairline, lineWidth: 0.5)
         )
-        .padding(.horizontal, Theme.Spacing.md)
+        .padding(.leading, Theme.Spacing.md)
         .padding(.top, Theme.Spacing.sm)
     }
 
