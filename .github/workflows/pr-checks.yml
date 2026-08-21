@@ -1,0 +1,152 @@
+name: PR Checks
+
+# Guards the gap that broke the v2.6.0 TestFlight build.
+#
+# A Debug simulator build honours `IPHONEOS_DEPLOYMENT_TARGET = 26.2` from the
+# project file, so iOS 26-only APIs compile clean locally. The release archive
+# pins a much lower floor (see `.github/deployment-target`), so those same APIs
+# fail there — and that only surfaced *after* merge, because the archive ran
+# only on push to master.
+#
+# This job compiles Release at the real shipping floor on every PR, so an
+# availability mistake is caught before it lands. Code signing is off: this is a
+# compile check, not a distributable build, so it needs no certs or secrets.
+
+on:
+  pull_request:
+    branches: [master, develop]
+  workflow_dispatch:
+
+concurrency:
+  group: pr-checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Release build (shipping deployment target)
+    runs-on: macos-26
+    timeout-minutes: 45
+
+    steps:
+      # Pinned to a SHA per .claude/rules/infra.md. v6 = d23441a
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app
+
+      - name: Read pinned deployment target
+        id: target
+        run: |
+          TARGET=$(tr -d '[:space:]' < .github/deployment-target)
+          if [ -z "$TARGET" ]; then
+            echo "::error::.github/deployment-target is empty"
+            exit 1
+          fi
+          echo "value=$TARGET" >> "$GITHUB_OUTPUT"
+          echo "Building against iOS $TARGET (the floor the archive ships with)"
+
+      # Placeholder config only. The real values are secrets used by the deploy
+      # workflow; this job never runs the app or talks to Supabase, and
+      # `Config.isConfigured` correctly reports false for these.
+      - name: Generate placeholder Config.swift
+        run: |
+          cat > Xomfit/Config.swift <<'EOF'
+          import Foundation
+
+          enum Config {
+              static let supabaseURL = "YOUR_SUPABASE_URL"
+              static let supabaseAnonKey = "YOUR_SUPABASE_ANON_KEY"
+
+              static let oauthScheme = "xomfit"
+              static let oauthCallbackURL = "xomfit://login-callback"
+
+              static let appName = "XomFit"
+              static let bundleIdentifier = "com.Xomware.Xomfit"
+
+              enum Validation {
+                  static let emailPattern = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+                  static let passwordMinLength = 8
+                  static let passwordRequiresNumber = true
+                  static let passwordRequiresSpecialChar = false
+              }
+
+              static var isConfigured: Bool {
+                  return !supabaseURL.contains("YOUR_") && !supabaseAnonKey.contains("YOUR_")
+              }
+          }
+          EOF
+
+      # The load-bearing step. Mirrors the deploy workflow's Archive invocation
+      # (Release, generic/platform=iOS, same deployment target) minus signing.
+      - name: Build Release at shipping deployment target
+        run: |
+          if ! xcodebuild build \
+            -project Xomfit.xcodeproj \
+            -scheme Xomfit \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData-release" \
+            IPHONEOS_DEPLOYMENT_TARGET=${{ steps.target.outputs.value }} \
+            CODE_SIGNING_ALLOWED=NO; then
+            echo "::error::Release build failed at iOS ${{ steps.target.outputs.value }}. If this is an availability error, gate the API behind 'if #available' with a fallback — see Xomfit/Utils/Theme+Glass.swift."
+            exit 1
+          fi
+
+  test:
+    name: Unit tests
+    runs-on: macos-26
+    timeout-minutes: 45
+
+    steps:
+      # Pinned to a SHA per .claude/rules/infra.md. v6 = d23441a
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app
+
+      - name: Generate placeholder Config.swift
+        run: |
+          cat > Xomfit/Config.swift <<'EOF'
+          import Foundation
+
+          enum Config {
+              static let supabaseURL = "YOUR_SUPABASE_URL"
+              static let supabaseAnonKey = "YOUR_SUPABASE_ANON_KEY"
+
+              static let oauthScheme = "xomfit"
+              static let oauthCallbackURL = "xomfit://login-callback"
+
+              static let appName = "XomFit"
+              static let bundleIdentifier = "com.Xomware.Xomfit"
+
+              enum Validation {
+                  static let emailPattern = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+                  static let passwordMinLength = 8
+                  static let passwordRequiresNumber = true
+                  static let passwordRequiresSpecialChar = false
+              }
+
+              static var isConfigured: Bool {
+                  return !supabaseURL.contains("YOUR_") && !supabaseAnonKey.contains("YOUR_")
+              }
+          }
+          EOF
+
+      # Resolved at runtime rather than hardcoding a device name — runner image
+      # updates rotate which simulators exist, and a stale name fails the job
+      # for a reason that has nothing to do with the change under review.
+      - name: Resolve an available iPhone simulator
+        id: sim
+        run: |
+          NAME=$(xcrun simctl list devices available -j \
+            | python3 -c "import json,sys;d=json.load(sys.stdin)['devices'];print(next(x['name'] for v in d.values() for x in v if x['name'].startswith('iPhone')))")
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+          echo "Testing on $NAME"
+
+      - name: Run tests
+        run: |
+          xcodebuild test \
+            -project Xomfit.xcodeproj \
+            -scheme Xomfit \
+            -destination "platform=iOS Simulator,name=${{ steps.sim.outputs.name }}" \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData-test"

@@ -72,6 +72,21 @@ jobs:
           fi
           chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${ASC_API_KEY_ID}.p8
 
+      # Single source of truth, shared with the PR check in `pr-checks.yml`.
+      # These two used to be independent — the PR side didn't exist and this
+      # value was inline — so nothing verified a release build until after
+      # merge. Both now read the same file and cannot drift.
+      - name: Read pinned deployment target
+        id: target
+        run: |
+          TARGET=$(tr -d '[:space:]' < .github/deployment-target)
+          if [ -z "$TARGET" ]; then
+            echo "::error::.github/deployment-target is empty"
+            exit 1
+          fi
+          echo "value=$TARGET" >> "$GITHUB_OUTPUT"
+          echo "Archiving against iOS $TARGET"
+
       - name: Compute version and build number
         id: version
         run: |
@@ -147,7 +162,7 @@ jobs:
             -authenticationKeyPath "$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_API_KEY_ID}.p8" \
             MARKETING_VERSION=${{ steps.version.outputs.marketing }} \
             CURRENT_PROJECT_VERSION=${{ steps.version.outputs.build }} \
-            IPHONEOS_DEPLOYMENT_TARGET=18.0
+            IPHONEOS_DEPLOYMENT_TARGET=${{ steps.target.outputs.value }}
 
       - name: Create ExportOptions.plist
         env:
