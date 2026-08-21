@@ -40,3 +40,4 @@ build/
 
 # Supabase CLI scratch
 supabase/.temp/
+build-rel/
