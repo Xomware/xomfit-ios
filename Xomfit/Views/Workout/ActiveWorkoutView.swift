@@ -1600,34 +1600,57 @@ private struct ExerciseTransitionCard: View {
                 .accessibilityLabel("Dismiss")
             }
 
-            // Option 1: Do Another Set - menu with PR, PR+5, Drop, Same options
-            transitionAddSetMenu
-
-            // Option 2: Move to Next Exercise
+            // Where you're already headed. The cursor auto-advances the moment
+            // the last set of an exercise completes, so by the time this card
+            // appears the move has happened — presenting it as a filled accent
+            // CTA asked the lifter to confirm something that was already true,
+            // and made the one real decision here ("another set, or move on?")
+            // read as the secondary option.
+            //
+            // Still tappable: it dismisses the card and guarantees the cursor
+            // lands there, which is worth keeping for the case where focus was
+            // moved by hand in between.
             if let nextIdx = viewModel.nextExerciseIndex, let nextEx = viewModel.nextExercise {
                 Button {
                     withAnimation { viewModel.moveToExercise(index: nextIdx) }
                 } label: {
                     VStack(spacing: Theme.Spacing.tight) {
                         HStack(spacing: Theme.Spacing.sm) {
+                            Text("NEXT")
+                                .font(Theme.fontMetricLabel)
+                                .kerning(0.6)
+                                .foregroundStyle(Theme.textTertiary)
+                            Text(nextEx.exercise.name)
+                                .font(.subheadline.weight(.bold))
+                                .foregroundStyle(Theme.textPrimary)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.8)
+                            Spacer(minLength: Theme.Spacing.xs)
                             Image(systemName: "arrow.right")
-                                .font(.subheadline.weight(.bold))
-                            Text("Move to \(nextEx.exercise.name)")
-                                .font(.subheadline.weight(.bold))
+                                .font(.caption.weight(.bold))
+                                .foregroundStyle(Theme.accent)
                         }
-                        .foregroundStyle(.black)
 
-                        // Show config hints (grips, attachments, positions)
+                        // Setup options for the machine you're walking to —
+                        // the genuinely useful part of this row.
                         configHints(for: nextEx.exercise)
+                            .frame(maxWidth: .infinity, alignment: .leading)
                     }
+                    .padding(.horizontal, Theme.Spacing.md)
+                    .padding(.vertical, Theme.Spacing.md)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-                    .background(Theme.accent)
+                    .background(Theme.surfaceElevated)
                     .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall))
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("Move to \(nextEx.exercise.name)")
+                .accessibilityLabel("Next exercise: \(nextEx.exercise.name)")
+                .accessibilityHint("Closes this card and continues with \(nextEx.exercise.name)")
             }
+
+            // The one actual decision on this card: stay on this exercise for
+            // another set, or let the auto-advance stand.
+            transitionAddSetMenu
 
             // All exercises complete — prompt to add or finish
             if viewModel.allExercisesComplete {
@@ -1872,9 +1895,12 @@ private struct ExerciseTransitionCard: View {
     private func configHints(for exercise: Exercise) -> some View {
         let hints = buildConfigHints(for: exercise)
         if !hints.isEmpty {
+            // Was `.black.opacity(0.6)`, which only worked against the accent
+            // fill this row used to have. On the elevated surface it would be
+            // near-invisible.
             Text(hints.joined(separator: " \u{2022} "))
                 .font(.caption.weight(.medium))
-                .foregroundStyle(.black.opacity(0.6))
+                .foregroundStyle(Theme.textSecondary)
         }
     }
 
