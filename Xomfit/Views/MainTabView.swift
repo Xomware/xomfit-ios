@@ -87,16 +87,7 @@ struct MainTabView: View {
     var body: some View {
         @Bindable var workoutSession = workoutSession
 
-        // The accessory slot is applied only while a workout is actually
-        // running. Returning an empty view from the builder still reserves the
-        // slot, which left a blank capsule floating above the tab bar.
-        Group {
-            if workoutSession.isActive && !workoutSession.isPresented {
-                tabs.tabViewBottomAccessory { resumeAccessory }
-            } else {
-                tabs
-            }
-        }
+        shell
         // Destinations that aren't frequent enough to earn a tab. Reached from
         // the avatar in the leading toolbar slot — a sheet rather than the old
         // slide-in drawer, which layered over a tab bar is the worst of both
@@ -204,6 +195,35 @@ struct MainTabView: View {
         .preferredColorScheme(resolvedColorScheme)
     }
 
+    /// The tab shell plus the workout resume bar, when one is running.
+    ///
+    /// The bar is only attached while a workout is actually active: returning
+    /// an empty view from the accessory builder still reserves the slot, which
+    /// left a blank capsule floating above the tab bar.
+    ///
+    /// `.tabViewBottomAccessory` is the platform's mini-player slot (iOS 26+).
+    /// Below that it doesn't exist, so the bar rides a `.safeAreaInset` instead
+    /// and supplies its own glass/material background — the accessory slot
+    /// provides that itself, so `resumeAccessory` stays bare inside it.
+    @ViewBuilder
+    private var shell: some View {
+        if workoutSession.isActive && !workoutSession.isPresented {
+            if #available(iOS 26.0, *) {
+                tabs.tabViewBottomAccessory { resumeAccessory }
+            } else {
+                tabs.safeAreaInset(edge: .bottom) {
+                    resumeAccessory
+                        .xomGlass(in: RoundedRectangle(cornerRadius: Theme.Radius.lg))
+                        .padding(.horizontal, Theme.Spacing.md)
+                        .padding(.bottom, Theme.Spacing.sm)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+            }
+        } else {
+            tabs
+        }
+    }
+
     /// The four tabbed destinations. Each owns its own `NavigationStack` so
     /// pushes stay scoped to their tab.
     private var tabs: some View {
@@ -222,8 +242,9 @@ struct MainTabView: View {
             }
         }
         // The tab bar gets out of the way while reading a feed or a long
-        // workout list, and comes back the moment you scroll up.
-        .tabBarMinimizeBehavior(.onScrollDown)
+        // workout list, and comes back the moment you scroll up. iOS 26+ only;
+        // a no-op below, where the tab bar simply stays put.
+        .xomTabBarMinimizeOnScroll()
         // Selection colour follows the brand, not the system default blue.
         .tint(Theme.accent)
     }

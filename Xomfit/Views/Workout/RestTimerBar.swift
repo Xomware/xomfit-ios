@@ -97,7 +97,7 @@ struct RestTimerBar: View {
             .padding(.horizontal, Theme.Spacing.md)
             .padding(.vertical, Theme.Spacing.sm)
             .frame(maxWidth: .infinity)
-            .glassEffect(.regular, in: .rect(cornerRadius: Theme.Radius.lg))
+            .xomGlass(in: .rect(cornerRadius: Theme.Radius.lg))
             .overlay(alignment: .bottom) {
                 // Hairline progress fill along the bottom edge — reads at a
                 // glance without asking the lifter to parse a number.
@@ -201,6 +201,6 @@ struct RestTimerBar: View {
         }
         .padding(Theme.Spacing.card)
         .frame(maxWidth: .infinity)
-        .glassEffect(.regular, in: .rect(cornerRadius: Theme.Radius.xl))
+        .xomGlass(in: .rect(cornerRadius: Theme.Radius.xl))
     }
 }

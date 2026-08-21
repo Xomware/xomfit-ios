@@ -667,7 +667,7 @@ struct ActiveWorkoutView: View {
             .padding(.vertical, Theme.Spacing.sm)
             .frame(minHeight: 44)
             .frame(maxWidth: .infinity)
-            .glassEffect(.regular, in: .capsule)
+            .xomGlass(in: .capsule)
             .overlay(
                 Capsule()
                     .stroke(Theme.accent.opacity(0.2), lineWidth: 1)
