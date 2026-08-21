@@ -17,8 +17,11 @@ struct ActiveWorkoutView: View {
     @State private var photoImages: [UIImage] = []
     @State private var timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     @State private var restTimerHapticFired = false
-    @State private var showStartingExercisePicker = false
     @State private var showExerciseJumper = false
+    /// Shared geometry namespace for the list → focus zoom push. Each exercise
+    /// card is a `matchedTransitionSource`; the pushed `WorkoutFocusView`
+    /// declares the matching `.navigationTransition(.zoom(...))`.
+    @Namespace private var zoomNamespace
     @State private var showReorderSheet = false
     /// Set after `jumpToExercise` runs; consumed by the list-mode `ScrollViewReader`
     /// to scroll to the picked card, then cleared.
@@ -60,35 +63,29 @@ struct ActiveWorkoutView: View {
 
     /// Enters focus mode, optionally on a specific exercise.
     ///
-    /// Both entry points funnel through here so the animation, haptic and
-    /// focus-index handling cannot drift apart — previously the header button
-    /// owned all of that inline, and there was no second entry point at all.
+    /// Entering focus is now a pure **resume**: the cursor
+    /// (`focusExerciseIndex`/`focusSetIndex`) is maintained by list mode too, so
+    /// there is nothing left to ask about. The old "Start With" sheet — which
+    /// fired on every entry before the first set was logged — is gone.
+    ///
+    /// Passing an index means the lifter tapped a specific card, which moves the
+    /// cursor there first.
     private func enterFocus(on index: Int?) {
-        withAnimation(.xomChill) {
-            if let index, viewModel.exercises.indices.contains(index) {
-                viewModel.focusExerciseIndex = index
-                // Land on the first set still to be done rather than always on
-                // set 1, so tapping into a half-finished exercise picks up where
-                // the lifter actually left off.
-                let sets = viewModel.exercises[index].sets
-                viewModel.focusSetIndex = sets.firstIndex { $0.completedAt == Date.distantPast } ?? 0
-            } else {
-                viewModel.syncFocusToCurrentExercise()
-            }
-            viewModel.focusMode = true
+        if let index, viewModel.exercises.indices.contains(index) {
+            // Land on the first set still owed rather than always on set 1, so
+            // tapping into a half-finished exercise picks up where the lifter
+            // actually left off.
+            let sets = viewModel.exercises[index].sets
+            viewModel.setCursor(
+                exercise: index,
+                set: sets.firstIndex { $0.isPending } ?? 0
+            )
         }
-
-        // Only worth asking where to start when the lifter has not begun and
-        // did not just tell us by tapping a specific card.
-        if index == nil, viewModel.completedSets == 0, viewModel.exercises.count > 1 {
-            showStartingExercisePicker = true
-        }
+        viewModel.focusMode = true
     }
 
     private func exitFocus() {
-        withAnimation(.xomChill) {
-            viewModel.focusMode = false
-        }
+        viewModel.focusMode = false
         // Scroll the list back to where the lifter was so they don't lose their
         // place coming out of focus (#430).
         pendingScrollIndex = viewModel.focusExerciseIndex
@@ -113,97 +110,62 @@ struct ActiveWorkoutView: View {
                         currentExercisePill
                     }
 
-                    // Rest timer config — hidden when rest timer is running (redundant with the active card)
-                    if !viewModel.isRestTimerActive && !viewModel.focusMode {
+                    // Rest timer config — hidden when rest timer is running (redundant with the active bar)
+                    if !viewModel.isRestTimerActive {
                         restTimerConfig
                     }
 
-                    if viewModel.focusMode {
-                        // Focus mode — large gym-floor view.
-                        //
-                        // The two modes are separate view trees, so switching
-                        // used to be a hard cut with nothing carrying the eye
-                        // from one to the other. Zooming both directions —
-                        // focus grows in, the list falls back — reads as moving
-                        // closer to and further from the same exercise rather
-                        // than as two unrelated screens.
-                        WorkoutFocusView(viewModel: viewModel)
-                            .transition(.asymmetric(
-                                insertion: .scale(scale: 0.92, anchor: .top)
-                                    .combined(with: .opacity),
-                                removal: .scale(scale: 1.04, anchor: .top)
-                                    .combined(with: .opacity)
-                            ))
+                    // Exercise list. Focus mode is no longer a sibling branch
+                    // here — it is a real navigation push with a zoom
+                    // transition (see `.navigationDestination` below), so the
+                    // tapped card physically grows into the focused screen and
+                    // shrinks back out. The old approach swapped two unrelated
+                    // view trees behind a scale+opacity cross-fade, which is
+                    // what made switching feel like a hard cut.
+                    if viewModel.exercises.isEmpty {
+                        emptyState
                     } else {
-                        // Rest timer
-                        if viewModel.isRestTimerActive {
-                            RestTimerView(
-                                restTimeRemaining: viewModel.restTimeRemaining,
-                                restDuration: viewModel.restDuration,
-                                onSkip: {
-                                    viewModel.skipRestTimer()
-                                    restTimerHapticFired = false
-                                },
-                                onExtend: { viewModel.extendRestTimer() }
-                            )
-                            .padding(.horizontal, Theme.Spacing.md)
-                            .padding(.vertical, Theme.Spacing.sm)
-                            .transition(.move(edge: .top).combined(with: .opacity))
-                        }
-
-                        // Exercise list
-                        if viewModel.exercises.isEmpty {
-                            emptyState
-                        } else {
-                            ScrollViewReader { proxy in
-                                ScrollView {
-                                    LazyVStack(spacing: Theme.Spacing.md) {
-                                        ForEach(viewModel.exercises.indices, id: \.self) { exIdx in
-                                            // No card-level `.swipeToDelete` here. A swipe
-                                            // recognizer on every full-height card fought the
-                                            // ScrollView's vertical pan and made the list feel
-                                            // stuck. Removal is fully covered by the always-
-                                            // visible trash button inside each card; set rows
-                                            // keep their (smaller) swipe affordance.
-                                            ExerciseCard(
-                                                exerciseIndex: exIdx,
-                                                viewModel: viewModel,
-                                                onEnterFocus: { enterFocus(on: exIdx) }
-                                            )
-                                            .id(exIdx)
-                                        }
+                        ScrollViewReader { proxy in
+                            ScrollView {
+                                LazyVStack(spacing: Theme.Spacing.md) {
+                                    ForEach(viewModel.exercises.indices, id: \.self) { exIdx in
+                                        // No card-level `.swipeToDelete` here. A swipe
+                                        // recognizer on every full-height card fought the
+                                        // ScrollView's vertical pan and made the list feel
+                                        // stuck. Removal lives in the card's overflow menu.
+                                        ExerciseCard(
+                                            exerciseIndex: exIdx,
+                                            viewModel: viewModel,
+                                            onEnterFocus: { enterFocus(on: exIdx) }
+                                        )
+                                        .id(exIdx)
+                                        // Source geometry for the zoom push.
+                                        .matchedTransitionSource(id: exIdx, in: zoomNamespace)
                                     }
-                                    .padding(Theme.Spacing.md)
                                 }
-                                .transition(.asymmetric(
-                                    insertion: .scale(scale: 1.04, anchor: .top)
-                                        .combined(with: .opacity),
-                                    removal: .scale(scale: 0.92, anchor: .top)
-                                        .combined(with: .opacity)
-                                ))
-                                // Bottom inset that just clears the soundtrack
-                                // capture pill (when visible) — the Add Exercise
-                                // FAB is gone (#402); add-exercise lives in the
-                                // top header now. Keeping a generous 24pt so the
-                                // last set rows don't kiss the home indicator.
-                                .contentMargins(.top, Theme.Spacing.xs, for: .scrollContent)
-                                .contentMargins(.bottom, Theme.Spacing.lg, for: .scrollContent)
-                                .scrollDismissesKeyboard(.interactively)
-                                .onChange(of: pendingScrollIndex) { _, newValue in
-                                    guard let idx = newValue else { return }
-                                    withAnimation(.xomChill) {
-                                        proxy.scrollTo(idx, anchor: .top)
-                                    }
-                                    // Clear after the scroll has been kicked off.
-                                    pendingScrollIndex = nil
+                                .padding(Theme.Spacing.md)
+                            }
+                            // Bottom inset that clears the soundtrack capture
+                            // pill and the rest bar — the Add Exercise FAB is
+                            // gone (#402); add-exercise lives in the top header
+                            // now. Keeping a generous inset so the last set rows
+                            // don't kiss the home indicator.
+                            .contentMargins(.top, Theme.Spacing.xs, for: .scrollContent)
+                            .contentMargins(.bottom, Theme.Spacing.lg, for: .scrollContent)
+                            .scrollDismissesKeyboard(.interactively)
+                            .onChange(of: pendingScrollIndex) { _, newValue in
+                                guard let idx = newValue else { return }
+                                withAnimation(.xomChill) {
+                                    proxy.scrollTo(idx, anchor: .top)
                                 }
+                                // Clear after the scroll has been kicked off.
+                                pendingScrollIndex = nil
                             }
                         }
                     }
                 }
                 .animation(.xomChill, value: viewModel.isRestTimerActive)
                 .animation(.xomChill, value: viewModel.showExerciseTransition)
-                .animation(.xomChill, value: viewModel.focusMode)
 
                 // Soundtrack capture icon — small circle in bottom-right corner,
                 // visible while at least one capture service is polling.
@@ -256,10 +218,27 @@ struct ActiveWorkoutView: View {
                 }
             }
             .overlay(alignment: .bottomTrailing) {
-                if !viewModel.focusMode && isAnyCaptureActive {
+                if isAnyCaptureActive {
                     soundtrackCaptureIcon
                         .padding(.trailing, Theme.Spacing.md)
                         .padding(.bottom, Theme.Spacing.sm)
+                }
+            }
+            // Rest timer — one presentation shared by list and focus mode.
+            // It used to render three different ways (inline card in list,
+            // full-screen overlay in focus, in-flow banner when minimized),
+            // which is a large part of why the two modes felt like different
+            // apps.
+            .safeAreaInset(edge: .bottom) {
+                if viewModel.isRestTimerActive {
+                    RestTimerBar(
+                        viewModel: viewModel,
+                        onSkip: {
+                            viewModel.skipRestTimer()
+                            restTimerHapticFired = false
+                        }
+                    )
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
             }
             .toolbar(.hidden, for: .navigationBar)
@@ -271,6 +250,15 @@ struct ActiveWorkoutView: View {
                     }
                     .foregroundStyle(Theme.accent)
                 }
+            }
+            // Focus mode as a real push. The zoom transition pairs with the
+            // `.matchedTransitionSource` on each card, so the card grows into
+            // this screen and shrinks back — and interactive back-swipe comes
+            // free, which the old inline branch could never offer.
+            .navigationDestination(isPresented: $viewModel.focusMode) {
+                WorkoutFocusView(viewModel: viewModel)
+                    .navigationTransition(.zoom(sourceID: viewModel.focusExerciseIndex, in: zoomNamespace))
+                    .environment(authService)
             }
         }
         #if DEBUG
@@ -366,49 +354,10 @@ struct ActiveWorkoutView: View {
                 }
             )
         }
-        .sheet(isPresented: $showStartingExercisePicker) {
-            NavigationStack {
-                List {
-                    let incomplete = Array(viewModel.exercises.enumerated()).filter { _, ex in
-                        ex.sets.contains { $0.completedAt == Date.distantPast }
-                    }
-                    if incomplete.isEmpty {
-                        Text("All exercises complete!")
-                            .foregroundStyle(Theme.textSecondary)
-                            .font(Theme.fontBody)
-                    } else {
-                        ForEach(incomplete, id: \.element.id) { idx, exercise in
-                            let remaining = exercise.sets.filter { $0.completedAt == Date.distantPast }.count
-                            Button {
-                                viewModel.focusExerciseIndex = idx
-                                viewModel.focusSetIndex = 0
-                                showStartingExercisePicker = false
-                            } label: {
-                                HStack {
-                                    Text(exercise.exercise.name)
-                                        .font(.body.weight(.medium))
-                                        .foregroundStyle(Theme.textPrimary)
-                                    Spacer()
-                                    Text("\(remaining) sets left")
-                                        .font(Theme.fontCaption)
-                                        .foregroundStyle(Theme.textSecondary)
-                                }
-                            }
-                        }
-                    }
-                }
-                .navigationTitle("Start With")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("First") {
-                            showStartingExercisePicker = false
-                        }
-                    }
-                }
-            }
-            .presentationDetents([.medium])
-        }
+        // The "Start With" sheet that used to fire here on every focus entry is
+        // gone. It asked the same question every single time before the first
+        // set was logged, and the answer is now simply the workout cursor —
+        // which list mode maintains, so focus always resumes correctly.
         .sheet(isPresented: $showReorderSheet) {
             ExerciseReorderSheet(viewModel: viewModel)
         }
@@ -465,16 +414,16 @@ struct ActiveWorkoutView: View {
     /// floated the toolbar ~128pt down on iPhone 17 Pro (TestFlight 2.1.0 +
     /// 2.1.1, #409 → #411).
     ///
-    /// We now apply ONLY a small breathing buffer:
-    ///   - List mode: `Theme.Spacing.xs` (4pt) — anchor tight to the island.
-    ///   - Focus mode: `Theme.Spacing.lg` (24pt) — wider buffer keeps the
-    ///     gym-floor layout from feeling cramped under the island.
+    /// We now apply ONLY a small breathing buffer (4pt) to anchor tight to the
+    /// island. The mode-dependent fork this used to carry is gone along with
+    /// the inline focus branch — focus mode is a pushed screen with its own
+    /// real navigation bar, which handles the island itself.
     ///
     /// The header background still extends past the safe area via
     /// `.ignoresSafeArea(edges: .top)` so the status bar / island sit on the
     /// surface color rather than the workout background.
     private var headerBar: some View {
-        let extraBuffer: CGFloat = viewModel.focusMode ? Theme.Spacing.lg : Theme.Spacing.xs
+        let extraBuffer: CGFloat = Theme.Spacing.xs
         return VStack(spacing: Theme.Spacing.xs) {
             headerTopRow
             headerSecondRow
@@ -583,6 +532,8 @@ struct ActiveWorkoutView: View {
                             .lineLimit(1)
                             .minimumScaleFactor(0.7)
                             .fixedSize(horizontal: true, vertical: false)
+                            .contentTransition(.numericText())
+                            .animation(.xomSnappy, value: viewModel.durationString)
                     }
                     .foregroundStyle(Theme.accent)
 
@@ -626,27 +577,25 @@ struct ActiveWorkoutView: View {
                 ? "Resumes the elapsed timer and rest countdown"
                 : "Freezes the elapsed timer and rest countdown")
 
-            // Focus mode toggle.
+            // Zoom into the current exercise. Only ever entry now — leaving
+            // focus is the navigation back button / back-swipe, which is what
+            // a push gets you for free. Tapping a card is the precise way in;
+            // this button resumes wherever the cursor already is.
             Button {
-                if viewModel.focusMode {
-                    exitFocus()
-                } else {
-                    // No index given, so fall back to whatever the view model
-                    // considers current — the historical behaviour of this
-                    // button. Tapping a card is the precise way in.
-                    enterFocus(on: nil)
-                }
+                Haptics.selection()
+                enterFocus(on: nil)
             } label: {
-                Image(systemName: viewModel.focusMode ? "list.bullet" : "eye")
+                Image(systemName: "arrow.up.left.and.arrow.down.right")
                     .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(viewModel.focusMode ? Theme.accent : Theme.textSecondary)
+                    .foregroundStyle(Theme.textSecondary)
                     .frame(width: Theme.Spacing.xl, height: Theme.Spacing.xl)
-                    .background(viewModel.focusMode ? Theme.accent.opacity(0.15) : Theme.textSecondary.opacity(0.15))
+                    .background(Theme.textSecondary.opacity(0.15))
                     .clipShape(Circle())
                     .frame(width: 44, height: 44)
                     .contentShape(Rectangle())
             }
-            .accessibilityLabel(viewModel.focusMode ? "Switch to list view" : "Switch to focus view")
+            .accessibilityLabel("Zoom into current exercise")
+            .accessibilityHint("Opens the full-screen view for the set you're on")
 
             // Add Exercise — promoted from a bottom FAB to a top-bar control
             // (#402). Lives in row 2 so it sits well below the Dynamic Island.
@@ -718,8 +667,7 @@ struct ActiveWorkoutView: View {
             .padding(.vertical, Theme.Spacing.sm)
             .frame(minHeight: 44)
             .frame(maxWidth: .infinity)
-            .background(Theme.surface)
-            .clipShape(.capsule)
+            .glassEffect(.regular, in: .capsule)
             .overlay(
                 Capsule()
                     .stroke(Theme.accent.opacity(0.2), lineWidth: 1)
@@ -777,6 +725,8 @@ struct ActiveWorkoutView: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
                 .fixedSize(horizontal: true, vertical: false)
+                .contentTransition(.numericText(countsDown: true))
+                .animation(.xomSnappy, value: viewModel.restTimeRemaining)
         }
         .foregroundStyle(isOvertime ? Theme.destructive : Theme.textPrimary)
         .padding(.horizontal, 7)
@@ -1084,18 +1034,20 @@ private struct SetTableHeader: View {
     }
 
     var body: some View {
-        HStack(spacing: Theme.Spacing.sm) {
-            Spacer().frame(width: Theme.Spacing.xs)
+        // Column widths come from `SetRowLayout` so this header cannot drift
+        // out of alignment with the rows it labels again.
+        HStack(spacing: SetRowLayout.columnSpacing) {
+            Spacer().frame(width: SetRowLayout.leadingInset)
             Text("SET")
-                .frame(width: Theme.Spacing.lg, alignment: .center)
+                .frame(width: SetRowLayout.numberWidth, alignment: .center)
             Text("PREV")
-                .frame(width: 58, alignment: .center)
+                .frame(width: SetRowLayout.previousWidth, alignment: .center)
             Text(unitLabel)
                 .frame(maxWidth: .infinity)
-            Spacer().frame(width: 44)
+            Spacer().frame(width: SetRowLayout.separatorWidth)
             Text("REPS")
                 .frame(maxWidth: .infinity)
-            Spacer().frame(width: 36)
+            Spacer().frame(width: SetRowLayout.completeWidth)
         }
         .font(Theme.fontMetricLabel)
         .kerning(0.6)
@@ -1122,6 +1074,9 @@ private struct ExerciseCard: View {
     @State private var showSupersetToggleConfirm = false
     @State private var showRemoveExerciseConfirm = false
     @State private var isCollapsed = false
+    /// Reveals the per-exercise config row (grip / attachment / position /
+    /// laterality / notes / rest override).
+    @State private var showConfig = false
 
     private var isInSuperset: Bool {
         viewModel.exercises.indices.contains(exerciseIndex)
@@ -1181,6 +1136,15 @@ private struct ExerciseCard: View {
 
                     Menu {
                         Button {
+                            withAnimation(.xomConfident) { showConfig.toggle() }
+                        } label: {
+                            Label(
+                                showConfig ? "Hide setup" : "Grip, attachment & setup",
+                                systemImage: "slider.horizontal.3"
+                            )
+                        }
+
+                        Button {
                             showDetails = true
                         } label: {
                             Label("How to do this", systemImage: "info.circle")
@@ -1227,32 +1191,28 @@ private struct ExerciseCard: View {
                     }
                 }
             } else {
-                ExerciseConfigRow(
-                    exercise: exercise,
-                    onGripChanged: { grip in viewModel.setGrip(exerciseIndex: exerciseIndex, grip: grip) },
-                    onAttachmentChanged: { att in viewModel.setAttachment(exerciseIndex: exerciseIndex, attachment: att) },
-                    onPositionChanged: { pos in viewModel.setPosition(exerciseIndex: exerciseIndex, position: pos) },
-                    onLateralityChanged: { lat in viewModel.setLaterality(exerciseIndex: exerciseIndex, laterality: lat) },
-                    onNotesChanged: { notes in viewModel.setNotes(exerciseIndex: exerciseIndex, notes: notes) },
-                    onRestSecondsChanged: { secs in viewModel.setRestSeconds(exerciseIndex: exerciseIndex, seconds: secs) },
-                    defaultRestSeconds: Int(viewModel.defaultRestDuration)
-                )
-
-                if exercise.exercise.supportsUnilateral && exercise.selectedLaterality != .bilateral {
-                    HStack(spacing: Theme.Spacing.tight) {
-                        Image(systemName: "arrow.left.and.right")
-                            .font(Theme.fontCaption2)
-                        Text(exercise.selectedLaterality.displayName)
-                            .font(.caption2.weight(.semibold))
-                    }
-                    .foregroundStyle(Theme.accent)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, Theme.Spacing.tighter)
-                    .background(Theme.accent.opacity(0.15))
-                    .clipShape(.capsule)
+                // Grip / attachment / position / laterality are chosen once per
+                // exercise, not per set — but the config row occupied permanent
+                // height on every card. It's behind a disclosure now, and its
+                // current selections already surface as chips in the header.
+                if showConfig {
+                    ExerciseConfigRow(
+                        exercise: exercise,
+                        onGripChanged: { grip in viewModel.setGrip(exerciseIndex: exerciseIndex, grip: grip) },
+                        onAttachmentChanged: { att in viewModel.setAttachment(exerciseIndex: exerciseIndex, attachment: att) },
+                        onPositionChanged: { pos in viewModel.setPosition(exerciseIndex: exerciseIndex, position: pos) },
+                        onLateralityChanged: { lat in viewModel.setLaterality(exerciseIndex: exerciseIndex, laterality: lat) },
+                        onNotesChanged: { notes in viewModel.setNotes(exerciseIndex: exerciseIndex, notes: notes) },
+                        onRestSecondsChanged: { secs in viewModel.setRestSeconds(exerciseIndex: exerciseIndex, seconds: secs) },
+                        defaultRestSeconds: Int(viewModel.defaultRestDuration)
+                    )
+                    .transition(.opacity.combined(with: .move(edge: .top)))
                 }
 
-                if !exercise.sets.isEmpty {
+                // Column header only where the numbers are actually being
+                // entered. Repeating it on every card was four labels of
+                // chrome for one table.
+                if !exercise.sets.isEmpty && isCurrent {
                     SetTableHeader()
                 }
 
@@ -1275,7 +1235,7 @@ private struct ExerciseCard: View {
                 .padding(.top, Theme.Spacing.tight)
             }
         }
-        .padding(Theme.Spacing.md)
+        .padding(Theme.Spacing.card)
         .background(isCurrent ? Theme.surfaceElevated : Theme.surface)
         .overlay(alignment: .leading) {
             // Vertical accent bar marking superset members
@@ -1358,33 +1318,14 @@ private struct ExerciseCard: View {
     /// whole body rather than the offending line.
     @ViewBuilder
     private func exerciseTitleBlock(_ exercise: WorkoutExercise) -> some View {
+                    // Title, then ONE metadata line.
+                    //
+                    // This block used to stack four separate rows above the
+                    // sets: a CURRENT badge, a superset pill, the title, and a
+                    // muscle/PR chip row — roughly 90pt of header on every card
+                    // before a single set appeared. Everything except the title
+                    // is now a single horizontally-scrolling chip line.
                     VStack(alignment: .leading, spacing: 3) {
-                        // "CURRENT" badge — only on the in-focus card so the lifter
-                        // can spot where they are at a glance in list mode.
-                        if isCurrent {
-                            HStack(spacing: 3) {
-                                Image(systemName: "scope")
-                                    .font(.system(size: 9, weight: .black))
-                                Text("CURRENT")
-                                    .font(.caption2.weight(.black))
-                            }
-                            .foregroundStyle(Theme.accent)
-                            .accessibilityLabel("Current exercise")
-                        }
-                        // Superset pill — moved to its OWN row so the title gets
-                        // the full card width. Previously sat to the left of the
-                        // title and shrunk it to ~2 chars per line on supersetted
-                        // exercises with long names (#402).
-                        if let letter = supersetLetter {
-                            Text("Superset \(letter)")
-                                .font(.caption2.weight(.black))
-                                .foregroundStyle(.black)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, Theme.Spacing.tighter)
-                                .background(Theme.accent)
-                                .clipShape(.capsule)
-                                .accessibilityLabel("Superset \(letter)")
-                        }
                         HStack(spacing: 6) {
                             // Current exercise gets a larger, heavier title so the
                             // in-focus card reads as bigger / more prominent than the rest.
@@ -1402,33 +1343,80 @@ private struct ExerciseCard: View {
                                 .font(.system(size: 10, weight: .bold))
                                 .foregroundStyle(Theme.textSecondary.opacity(0.7))
                         }
-                        HStack(spacing: Theme.Spacing.tight) {
-                            ForEach(exercise.exercise.muscleGroups.prefix(2), id: \.self) { mg in
-                                Text(mg.displayName)
-                                    .font(Theme.fontSmall)
+
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: Theme.Spacing.tight) {
+                                if isCurrent {
+                                    HStack(spacing: 3) {
+                                        Image(systemName: "scope")
+                                            .font(.system(size: 9, weight: .black))
+                                        Text("CURRENT")
+                                            .font(.caption2.weight(.black))
+                                    }
+                                    .foregroundStyle(Theme.accent)
+                                    .fixedSize()
+                                    .accessibilityLabel("Current exercise")
+                                }
+
+                                if let letter = supersetLetter {
+                                    Text("Superset \(letter)")
+                                        .font(.caption2.weight(.black))
+                                        .foregroundStyle(.black)
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, Theme.Spacing.tighter)
+                                        .background(Theme.accent)
+                                        .clipShape(.capsule)
+                                        .fixedSize()
+                                        .accessibilityLabel("Superset \(letter)")
+                                }
+
+                                ForEach(exercise.exercise.muscleGroups.prefix(2), id: \.self) { mg in
+                                    Text(mg.displayName)
+                                        .font(Theme.fontSmall)
+                                        .foregroundStyle(Theme.accent)
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, Theme.Spacing.tighter)
+                                        .background(Theme.accent.opacity(0.15))
+                                        .clipShape(.rect(cornerRadius: 4))
+                                        .fixedSize()
+                                }
+
+                                // Laterality moved up here from its own row.
+                                if exercise.exercise.supportsUnilateral && exercise.selectedLaterality != .bilateral {
+                                    HStack(spacing: 3) {
+                                        Image(systemName: "arrow.left.and.right")
+                                            .font(Theme.fontCaption2)
+                                        Text(exercise.selectedLaterality.displayName)
+                                            .font(.caption2.weight(.semibold))
+                                    }
                                     .foregroundStyle(Theme.accent)
                                     .padding(.horizontal, 6)
                                     .padding(.vertical, Theme.Spacing.tighter)
                                     .background(Theme.accent.opacity(0.15))
-                                    .clipShape(.rect(cornerRadius: 4))
-                            }
-                            // PR badge — show the user's personal record for this exercise
-                            if let pr = viewModel.personalRecordForExercise(exercise.exercise.id),
-                               pr.weight > 0, pr.reps > 0 {
-                                HStack(spacing: 3) {
-                                    Image(systemName: "trophy.fill")
-                                        .font(.system(size: 9, weight: .bold))
-                                    Text("PR: \(pr.weight.formattedWeight) x \(pr.reps)")
-                                        .font(.system(size: 10, weight: .bold))
+                                    .clipShape(.capsule)
+                                    .fixedSize()
                                 }
-                                .foregroundStyle(Theme.prGold)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, Theme.Spacing.tighter)
-                                .background(Theme.prGold.opacity(0.15))
-                                .clipShape(.rect(cornerRadius: 4))
-                                .accessibilityLabel("Personal record: \(pr.weight.formattedWeight) pounds for \(pr.reps) reps")
+
+                                // PR badge — show the user's personal record for this exercise
+                                if let pr = viewModel.personalRecordForExercise(exercise.exercise.id),
+                                   pr.weight > 0, pr.reps > 0 {
+                                    HStack(spacing: 3) {
+                                        Image(systemName: "trophy.fill")
+                                            .font(.system(size: 9, weight: .bold))
+                                        Text("PR: \(pr.weight.formattedWeight) x \(pr.reps)")
+                                            .font(.system(size: 10, weight: .bold))
+                                    }
+                                    .foregroundStyle(Theme.prGold)
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, Theme.Spacing.tighter)
+                                    .background(Theme.prGold.opacity(0.15))
+                                    .clipShape(.rect(cornerRadius: 4))
+                                    .fixedSize()
+                                    .accessibilityLabel("Personal record: \(pr.weight.formattedWeight) pounds for \(pr.reps) reps")
+                                }
                             }
                         }
+                        .scrollBounceBehavior(.basedOnSize)
                     }
                     // Tap the exercise to zoom into it. Scoped to the title block
                     // rather than the whole card so it cannot swallow taps meant for
@@ -1452,15 +1440,18 @@ private struct ExerciseCard: View {
     /// exceeded what the type checker will solve in one expression.
     @ViewBuilder
     private func setRows(_ exercise: WorkoutExercise) -> some View {
-                    let currentSetIdx: Int? = {
-                        if let firstIncomplete = exercise.sets.firstIndex(where: { $0.completedAt == Date.distantPast }) {
-                            return firstIncomplete
-                        }
-                        return exercise.sets.indices.last
-                    }()
-
+                    // The highlighted row is the shared workout cursor, not a
+                    // locally-derived "first incomplete". Deriving it here is
+                    // exactly what made list mode and focus mode disagree about
+                    // where the lifter was.
                     ForEach(Array(exercise.sets.enumerated()), id: \.element.id) { setIdx, workoutSet in
-                        setRow(exercise, setIdx: setIdx, workoutSet: workoutSet, isCurrentSet: setIdx == currentSetIdx)
+                        setRow(
+                            exercise,
+                            setIdx: setIdx,
+                            workoutSet: workoutSet,
+                            isCurrentSet: viewModel.focusExerciseIndex == exerciseIndex
+                                && viewModel.focusSetIndex == setIdx
+                        )
                         // Set deletion via system context menu (long-press) instead
                         // of a custom swipe. The previous `.swipeToDelete` installed a
                         // `DragGesture` on every visible row; that drag competed with
@@ -1471,6 +1462,30 @@ private struct ExerciseCard: View {
                         // is a system interaction that yields to the scroll pan, so it
                         // never starves scrolling.
                         .contextMenu {
+                            Button {
+                                Haptics.light()
+                                viewModel.toggleSkip(exerciseIndex: exerciseIndex, setIndex: setIdx)
+                            } label: {
+                                Label(
+                                    workoutSet.isSkipped ? "Unskip Set \(setIdx + 1)" : "Skip Set \(setIdx + 1)",
+                                    systemImage: workoutSet.isSkipped ? "arrow.uturn.backward" : "forward.end"
+                                )
+                            }
+
+                            // Chaining a drop set used to be a permanent 44pt
+                            // button under every completed set. It belongs with
+                            // the other per-set actions.
+                            if workoutSet.completedAt != Date.distantPast, !workoutSet.isDropSet {
+                                Button {
+                                    Haptics.light()
+                                    viewModel.addDropSet(exerciseIndex: exerciseIndex, parentSetIndex: setIdx)
+                                } label: {
+                                    Label("Add Drop Set", systemImage: "arrow.down.right")
+                                }
+                            }
+
+                            Divider()
+
                             Button(role: .destructive) {
                                 viewModel.removeSet(exerciseIndex: exerciseIndex, setIndex: setIdx)
                             } label: {
@@ -1521,9 +1536,6 @@ private struct ExerciseCard: View {
             onToggleWeightMode: {
                 viewModel.toggleWeightMode(exerciseIndex: exerciseIndex, setIndex: setIdx)
             },
-            onAddDropSet: {
-                viewModel.addDropSet(exerciseIndex: exerciseIndex, parentSetIndex: setIdx)
-            },
             onMarkDropSet: {
                 viewModel.markSetAsDropSet(exerciseIndex: exerciseIndex, setIndex: setIdx)
             },
@@ -1536,6 +1548,14 @@ private struct ExerciseCard: View {
                 if let pr = viewModel.personalRecordForExercise(exercise.exercise.id) {
                     viewModel.updateSet(exerciseIndex: exerciseIndex, setIndex: setIdx, weight: pr.weight + 5, reps: viewModel.exercises[exerciseIndex].sets[setIdx].reps)
                 }
+            },
+            onBecomeActive: {
+                // Touching a row IS the cursor. This is what makes zooming into
+                // focus mode resume where the lifter actually was.
+                viewModel.setCursor(exercise: exerciseIndex, set: setIdx)
+            },
+            onToggleSkip: {
+                viewModel.toggleSkip(exerciseIndex: exerciseIndex, setIndex: setIdx)
             },
             lateralityLabel: exercise.selectedLaterality != .bilateral ? (exercise.exercise.muscleGroups.contains(where: { [.quads, .hamstrings, .glutes, .calves].contains($0) }) ? "/leg" : "/arm") : nil,
             lastSet: viewModel.lastSetHint(exerciseIndex: exerciseIndex, setIndex: setIdx),

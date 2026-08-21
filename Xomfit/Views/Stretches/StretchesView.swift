@@ -2,7 +2,7 @@ import SwiftUI
 
 // MARK: - StretchesView
 //
-// Top-level Stretches destination reached from the hamburger drawer (#388).
+// Top-level Stretches destination reached from the shell's "more" sheet (#388).
 // Two sections, top-to-bottom:
 //   1. Templates carousel — curated stretching sequences.
 //   2. All Stretches — sectioned by `StretchCategory` (Full Body / Upper / Lower / Hips / Core).

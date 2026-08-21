@@ -23,6 +23,7 @@ struct XomProgressView: View {
             }
         }
         .navigationTitle("Progress")
+        .navigationBarTitleDisplayMode(.large)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {

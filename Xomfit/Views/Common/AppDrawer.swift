@@ -2,8 +2,8 @@ import SwiftUI
 
 // MARK: - AppDestination
 //
-// Top-level navigation surfaces reachable from the hamburger drawer (#372).
-// Replaces the previous 4-tab `FloatingTabBar`. Each case carries its title
+// Top-level navigation surfaces. Four of these are tabs on the shell's
+// `TabView`; the rest are reached from the "more" sheet. Each case carries its title
 // (shown in the shell top bar + drawer row) and SF Symbol icon.
 
 enum AppDestination: String, Identifiable, Hashable {
@@ -41,17 +41,19 @@ enum AppDestination: String, Identifiable, Hashable {
         }
     }
 
-    /// Grouped drawer sections for visual hierarchy.
+    /// Grouped sections for the "more" sheet.
+    ///
+    /// Only destinations without a tab of their own appear here. Feed, Workout,
+    /// Progress and Profile are one tap away on the tab bar, and listing them
+    /// again made the sheet read as a second, competing navigation system.
     enum Section: CaseIterable {
-        case main
-        case insights
+        case training
         case account
 
         var destinations: [AppDestination] {
             switch self {
-            case .main:     [.feed, .workout, .stretches]
-            case .insights: [.progress, .stats]
-            case .account:  [.profile, .settings]
+            case .training: [.stretches, .stats]
+            case .account:  [.settings]
             }
         }
     }

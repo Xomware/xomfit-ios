@@ -329,7 +329,23 @@ final class WorkoutService {
         }
     }
 
+    /// True under the DEBUG auth-bypass launch, which runs without Supabase
+    /// credentials. The `supabase` global validates config on first access and
+    /// **fatal-errors** rather than throwing, so `do/catch` cannot rescue it —
+    /// every caller that reached the network crashed the app on launch. Callers
+    /// get the bypass-seeded cache instead. Compiles to `false` in Release.
+    private var isAuthBypass: Bool {
+        #if DEBUG
+        ProcessInfo.processInfo.environment["XOMFIT_AUTH_BYPASS"] == "1"
+        #else
+        false
+        #endif
+    }
+
     func fetchWorkouts(userId: String) async -> [Workout] {
+        guard !isAuthBypass else {
+            return deduplicateWorkouts(fetchWorkoutsFromCache(userId: userId))
+        }
         do {
             let workouts = try await fetchFromSupabase(userId: userId)
             // Update local cache on success — replace entirely for this user

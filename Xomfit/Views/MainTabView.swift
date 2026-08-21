@@ -1,31 +1,34 @@
 import SwiftUI
 
-// MARK: - MainTabView (now: MainShell)
+// MARK: - MainTabView
 //
-// Replaces the previous 4-tab `FloatingTabBar` with a `NavigationStack`-rooted
-// shell that surfaces a left-edge hamburger drawer (#372). The drawer lists
-// every top-level destination (Feed, Workout, Progress, Profile, Reports,
-// Tools, Settings).
+// A real `TabView` shell. This replaced a left-edge hamburger drawer (#372) —
+// a pattern borrowed from Android that cost the app every affordance iOS users
+// read as native: no tab bar, no large titles collapsing on scroll, no
+// scroll-edge material, no interactive back-swipe. The drawer also sat under
+// `.toolbar(.hidden, for: .navigationBar)` with a hand-rolled HStack standing
+// in for a navigation bar.
 //
-// The type stays named `MainTabView` for binary-compat with `XomfitApp.swift`
-// (and to keep the existing project file pointer stable). All "tab" semantics
-// are gone — what remains is a single active destination + a custom top bar.
+// Four destinations earn tabs (Feed, Workout, Progress, Profile). The rest —
+// Stretches, Stats, Settings — are reached through the leading avatar, which
+// presents `AppDrawer` as a sheet.
 //
-// Existing screens drop their inner `NavigationStack` wrappers and live inside
-// this shell's stack so their `NavigationLink`s and `.navigationDestination`s
-// keep working. Pushed views still get the system navigation bar; the root
-// destination hides it and shows the shell's custom top bar instead.
+// Each tab root owns its own `NavigationStack` and `.navigationTitle`; the
+// shared avatar + notification bell come from `rootChrome`.
 
 struct MainTabView: View {
     @Environment(AuthService.self) private var authService
     @Environment(WorkoutLoggerViewModel.self) private var workoutSession
     @Environment(GeneratorPreseed.self) private var generatorPreseed
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     // MARK: - Navigation State
 
     @State private var destination: AppDestination = MainTabView.initialDestination()
+    /// Presents the "more destinations" sheet (formerly the slide-in drawer).
     @State private var isDrawerOpen = false
+    /// A destination without a tab of its own (Stretches / Stats / Settings),
+    /// presented over the shell.
+    @State private var secondaryDestination: AppDestination?
     @State private var tickId = UUID()
 
     /// Pulls an optional initial destination from `XOMFIT_INITIAL_DESTINATION`
@@ -77,91 +80,56 @@ struct MainTabView: View {
     @State private var spotifyCapture = SpotifyNowPlayingService.shared
     @State private var appleMusicCapture = NowPlayingService.shared
 
-    /// Default drawer width: ~78% of the screen, clamped so it doesn't grow
-    /// absurd on iPad widths. iOS resolves this via GeometryReader below.
-    private let drawerMaxWidth: CGFloat = 320
-
-    private var drawerAnimation: Animation {
-        reduceMotion ? .linear(duration: 0.0001) : .xomConfident
-    }
+    /// Destinations that get a tab. Everything else routes through the
+    /// secondary sheet/cover.
+    private static let tabbedDestinations: Set<AppDestination> = [.feed, .workout, .progress, .profile]
 
     var body: some View {
         @Bindable var workoutSession = workoutSession
 
-        NavigationStack {
-            ZStack(alignment: .topLeading) {
-                // Active destination content
-                Theme.background.ignoresSafeArea()
-
-                VStack(spacing: 0) {
-                    shellTopBar
-                    destinationContent
-                }
-
-                // Dim overlay behind the drawer
-                if isDrawerOpen {
-                    Color.black
-                        .opacity(0.4)
-                        .ignoresSafeArea()
-                        .transition(.opacity)
-                        .onTapGesture {
-                            closeDrawer()
-                        }
-                        .accessibilityHidden(true)
-                }
-
-                // Drawer surface
-                if isDrawerOpen {
-                    GeometryReader { proxy in
-                        let width = min(proxy.size.width * 0.78, drawerMaxWidth)
-                        AppDrawer(
-                            displayName: drawerProfile.displayName,
-                            username: drawerProfile.username,
-                            avatarURL: drawerProfile.avatarURL,
-                            activeDestination: destination,
-                            onSelect: { selected in
-                                select(destination: selected)
-                            },
-                            onSignOut: {
-                                closeDrawer()
-                                Task { await authService.signOut() }
-                            },
-                            onClose: { closeDrawer() }
-                        )
-                        .frame(width: width)
-                        .gesture(drawerCloseDragGesture)
-                    }
-                    .transition(.move(edge: .leading))
-                    .zIndex(1)
-                }
-            }
-            .toolbar(.hidden, for: .navigationBar)
-            .animation(drawerAnimation, value: isDrawerOpen)
-        }
-        // Workout resume bar — pinned above home indicator, visible only when a
-        // session exists and its full-screen cover is dismissed.
-        .safeAreaInset(edge: .bottom) {
+        // The accessory slot is applied only while a workout is actually
+        // running. Returning an empty view from the builder still reserves the
+        // slot, which left a blank capsule floating above the tab bar.
+        Group {
             if workoutSession.isActive && !workoutSession.isPresented {
-                WorkoutResumeBar(
-                    workoutName: workoutSession.workoutName,
-                    durationString: workoutSession.durationString,
-                    isPaused: workoutSession.isPaused,
-                    isWatchConnected: WatchSyncService.shared.isWatchAvailable,
-                    tickId: tickId,
-                    // Live-updating via `@Observable` on the singletons (Spotify capture
-                    // polish). When the workout is active and tracks have been captured,
-                    // the resume bar surfaces a subtle "💿 N tracks" label.
-                    capturedTrackCount: spotifyCapture.capturedCount + appleMusicCapture.capturedCount,
-                    onTap: {
-                        withAnimation(.spring(response: 0.35, dampingFraction: 0.82)) {
-                            workoutSession.isPresented = true
+                tabs.tabViewBottomAccessory { resumeAccessory }
+            } else {
+                tabs
+            }
+        }
+        // Destinations that aren't frequent enough to earn a tab. Reached from
+        // the avatar in the leading toolbar slot — a sheet rather than the old
+        // slide-in drawer, which layered over a tab bar is the worst of both
+        // patterns.
+        .sheet(isPresented: $isDrawerOpen) {
+            AppDrawer(
+                displayName: drawerProfile.displayName,
+                username: drawerProfile.username,
+                avatarURL: drawerProfile.avatarURL,
+                activeDestination: destination,
+                onSelect: { selected in
+                    select(destination: selected)
+                },
+                onSignOut: {
+                    closeDrawer()
+                    Task { await authService.signOut() }
+                },
+                onClose: { closeDrawer() }
+            )
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
+        }
+        // Secondary destinations render over the tab shell rather than as tabs.
+        .fullScreenCover(item: $secondaryDestination) { dest in
+            NavigationStack {
+                secondaryContent(dest)
+                    .navigationTitle(dest.title)
+                    .navigationBarTitleDisplayMode(.large)
+                    .toolbar {
+                        ToolbarItem(placement: .topBarLeading) {
+                            Button("Done") { secondaryDestination = nil }
                         }
                     }
-                )
-                .padding(.bottom, Theme.Spacing.sm)
-                .transition(.move(edge: .bottom).combined(with: .opacity))
-                .animation(.spring(response: 0.4, dampingFraction: 0.82), value: workoutSession.isActive)
-                .animation(.spring(response: 0.4, dampingFraction: 0.82), value: workoutSession.isPresented)
             }
         }
         .onReceive(resumeTimer) { _ in
@@ -236,115 +204,131 @@ struct MainTabView: View {
         .preferredColorScheme(resolvedColorScheme)
     }
 
-    // MARK: - Top Bar
+    /// The four tabbed destinations. Each owns its own `NavigationStack` so
+    /// pushes stay scoped to their tab.
+    private var tabs: some View {
+        TabView(selection: $destination) {
+            Tab("Feed", systemImage: "house.fill", value: AppDestination.feed) {
+                NavigationStack { FeedView().rootChrome(self) }
+            }
+            Tab("Workout", systemImage: "dumbbell.fill", value: AppDestination.workout) {
+                NavigationStack { WorkoutView().rootChrome(self) }
+            }
+            Tab("Progress", systemImage: "chart.line.uptrend.xyaxis", value: AppDestination.progress) {
+                NavigationStack { XomProgressView().rootChrome(self) }
+            }
+            Tab("Profile", systemImage: "person.fill", value: AppDestination.profile) {
+                NavigationStack { ProfileView().rootChrome(self) }
+            }
+        }
+        // The tab bar gets out of the way while reading a feed or a long
+        // workout list, and comes back the moment you scroll up.
+        .tabBarMinimizeBehavior(.onScrollDown)
+        // Selection colour follows the brand, not the system default blue.
+        .tint(Theme.accent)
+    }
 
-    private var shellTopBar: some View {
-        HStack(spacing: Theme.Spacing.md) {
+    /// Workout resume bar. This is the platform's mini-player slot — the same
+    /// one Music uses for now-playing — so it docks above the tab bar and
+    /// expands with it. It previously rode a `.safeAreaInset`, which would now
+    /// sit on top of the tab bar rather than above it.
+    private var resumeAccessory: some View {
+        WorkoutResumeBar(
+            workoutName: workoutSession.workoutName,
+            durationString: workoutSession.durationString,
+            isPaused: workoutSession.isPaused,
+            isWatchConnected: WatchSyncService.shared.isWatchAvailable,
+            tickId: tickId,
+            // Live-updating via `@Observable` on the singletons (Spotify capture
+            // polish). When the workout is active and tracks have been captured,
+            // the resume bar surfaces a subtle "💿 N tracks" label.
+            capturedTrackCount: spotifyCapture.capturedCount + appleMusicCapture.capturedCount,
+            onTap: {
+                workoutSession.isPresented = true
+            }
+        )
+    }
+
+    // MARK: - Root Toolbar
+    //
+    // The hand-rolled `shellTopBar` this replaces was a plain HStack sitting
+    // under `.toolbar(.hidden, for: .navigationBar)`. It could not do large
+    // titles, scroll-edge material, or title collapse — three things that read
+    // as "native iOS" before a user can articulate why.
+
+    /// Leading avatar → secondary destinations. Trailing bell → notifications.
+    /// Applied to every tab root so the chrome is identical across them.
+    @ToolbarContentBuilder
+    fileprivate var rootToolbar: some ToolbarContent {
+        ToolbarItem(placement: .topBarLeading) {
             Button {
                 Haptics.light()
                 openDrawer()
             } label: {
                 XomAvatar(
                     name: drawerProfile.displayName.isEmpty ? drawerProfile.username : drawerProfile.displayName,
-                    size: 36,
+                    size: 30,
                     imageURL: drawerProfile.avatarURL
                 )
-                .frame(width: 44, height: 44)
-                .contentShape(Rectangle())
             }
-            .accessibilityLabel("Open navigation drawer")
+            .accessibilityLabel("More destinations and account")
+        }
 
-            Text(destination.title)
-                .font(.title3.weight(.bold))
-                .foregroundStyle(Theme.textPrimary)
-                .lineLimit(1)
-
-            Spacer(minLength: 0)
-
+        ToolbarItem(placement: .topBarTrailing) {
             Button {
                 Haptics.light()
                 showNotifications = true
             } label: {
-                ZStack(alignment: .topTrailing) {
-                    Image(systemName: "bell")
-                        .font(.body.weight(.semibold))
-                        .foregroundStyle(Theme.textPrimary)
-                    if NotificationService.shared.unreadCount > 0 {
-                        Circle()
-                            .fill(Theme.destructive)
-                            .frame(width: Theme.Spacing.sm, height: Theme.Spacing.sm)
-                            .offset(x: 3, y: -3)
+                Image(systemName: "bell")
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(Theme.textPrimary)
+                    .overlay(alignment: .topTrailing) {
+                        if NotificationService.shared.unreadCount > 0 {
+                            Circle()
+                                .fill(Theme.destructive)
+                                .frame(width: Theme.Spacing.sm, height: Theme.Spacing.sm)
+                                .offset(x: 3, y: -3)
+                        }
                     }
-                }
-                .frame(width: 44, height: 44)
-                .contentShape(Rectangle())
             }
             .accessibilityLabel(NotificationService.shared.unreadCount > 0
                 ? "Notifications, \(NotificationService.shared.unreadCount) unread"
                 : "Notifications")
         }
-        .padding(.horizontal, Theme.Spacing.md)
-        .padding(.vertical, Theme.Spacing.sm)
-        .background(Theme.background)
-        .overlay(alignment: .bottom) {
-            Rectangle()
-                .fill(Theme.hairline)
-                .frame(height: 0.5)
-        }
     }
 
-    // MARK: - Destination Switch
-
+    /// Content for a destination that doesn't warrant a tab.
     @ViewBuilder
-    private var destinationContent: some View {
-        Group {
-            switch destination {
-            case .feed:      FeedView()
-            case .workout:   WorkoutView()
-            case .stretches: StretchesView()
-            case .progress:  XomProgressView()
-            case .stats:     StatsView()
-            case .profile:   ProfileView()
-            case .settings:  SettingsView()
-            }
+    fileprivate func secondaryContent(_ dest: AppDestination) -> some View {
+        switch dest {
+        case .stretches: StretchesView()
+        case .stats:     StatsView()
+        case .settings:  SettingsView()
+        default:         EmptyView()
         }
-        .transition(.opacity)
-        .id(destination)
     }
+
 
     // MARK: - Drawer Helpers
 
-    private func openDrawer() {
-        withAnimation(drawerAnimation) {
-            isDrawerOpen = true
-        }
+    fileprivate func openDrawer() {
+        isDrawerOpen = true
     }
 
     private func closeDrawer() {
-        withAnimation(drawerAnimation) {
-            isDrawerOpen = false
-        }
+        isDrawerOpen = false
     }
 
+    /// Routes a destination pick to either a tab switch or the secondary
+    /// presentation, depending on whether it earned a tab.
     private func select(destination newValue: AppDestination) {
         closeDrawer()
-        // Defer the switch a hair so the close animation reads as intentional.
-        if newValue != destination {
-            withAnimation(.xomChill) {
-                destination = newValue
-            }
+        if Self.tabbedDestinations.contains(newValue) {
+            secondaryDestination = nil
+            destination = newValue
+        } else {
+            secondaryDestination = newValue
         }
-    }
-
-    /// Swipe-left-to-close gesture wired to the drawer surface.
-    private var drawerCloseDragGesture: some Gesture {
-        DragGesture(minimumDistance: 20)
-            .onEnded { value in
-                // Negative horizontal translation = swipe toward the leading edge.
-                if value.translation.width < -40 {
-                    closeDrawer()
-                }
-            }
     }
 
     // MARK: - Drawer Profile Hydration
@@ -399,6 +383,19 @@ struct MainTabView: View {
     }
 }
 
+// MARK: - Root Chrome
+
+private extension View {
+    /// Applies the shell's shared toolbar to a tab root.
+    ///
+    /// Each root screen keeps its own `.navigationTitle`, so titles stay where
+    /// they belong; this only adds the avatar + bell that used to live in the
+    /// hand-rolled top bar.
+    func rootChrome(_ shell: MainTabView) -> some View {
+        toolbar { shell.rootToolbar }
+    }
+}
+
 // MARK: - Drawer Profile
 
 private struct DrawerProfile: Equatable {
@@ -412,8 +409,8 @@ private struct DrawerProfile: Equatable {
 // MARK: - Tab Bar Visibility Environment Key (legacy)
 //
 // Kept as a no-op so existing `.hideTabBar()` call sites compile without
-// modification. The hamburger drawer replaces the floating tab bar (#372),
-// so there's nothing to actually hide — the modifier is a graceful shim.
+// modification. The system tab bar handles its own hiding on push, so
+// there's nothing to do here — the modifier is a graceful shim.
 
 private struct TabBarVisibleKey: EnvironmentKey {
     static let defaultValue: Binding<Bool> = .constant(true)
@@ -487,6 +484,8 @@ private struct WorkoutResumeBar: View {
                                 .font(.caption.weight(.medium))
                                 .foregroundStyle(Theme.textSecondary)
                                 .monospacedDigit()
+                                .contentTransition(.numericText())
+                                .animation(.xomSnappy, value: durationString)
                                 .id(tickId)
                         }
                         if capturedTrackCount > 0 {
@@ -517,15 +516,6 @@ private struct WorkoutResumeBar: View {
             }
             .padding(.horizontal, Theme.Spacing.md)
             .padding(.vertical, 10)
-            .background(
-                RoundedRectangle(cornerRadius: Theme.Radius.lg)
-                    .fill(.ultraThinMaterial)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: Theme.Radius.lg)
-                            .stroke(Theme.hairline, lineWidth: 0.5)
-                    )
-            )
-            .padding(.horizontal, Theme.Spacing.md)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

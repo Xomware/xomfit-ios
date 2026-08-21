@@ -5,8 +5,8 @@ struct WorkoutView: View {
     @Environment(WorkoutLoggerViewModel.self) private var workoutSession
     @Environment(GeneratorPreseed.self) private var generatorPreseed
 
-    @State private var showNameEntry = false
-    @State private var pendingWorkoutName = ""
+    /// Work deferred to a sheet's `onDismiss` — see `runAfterDismiss()`.
+    @State private var afterDismiss: (() -> Void)?
     @State private var showBuilder = false
     @State private var showLogPastWorkout = false
     @State private var showGenerator = false
@@ -41,8 +41,6 @@ struct WorkoutView: View {
     /// Exercises captured at start-flow time so the warmup preview can render
     /// "why this stretch" captions (#349). Empty for "blank start" flows.
     @State private var pendingExercises: [Exercise] = []
-    /// Whether to ask the user about warming up right now.
-    @State private var showWarmupPrompt = false
     /// Whether to present the warmup sheet right now.
     @State private var showWarmup = false
 
@@ -54,38 +52,13 @@ struct WorkoutView: View {
         // Lives inside `MainTabView`'s NavigationStack (#372). Sheets and the
         // warmup full-screen cover stay attached at the root of the view so
         // they can re-present after the drawer closes.
+        // The "Name Your Workout" alert and the "Warm up first?" dialog that
+        // used to gate this screen are gone. Between them they put two modals
+        // and up to 550ms of scripted delay in front of the single most common
+        // action in the app. The workout now starts immediately with a default
+        // name (editable live in the workout header), and the warmup offer is a
+        // dismissible card inside the session rather than a blocking question.
         workoutRoot
-            .alert("Name Your Workout", isPresented: $showNameEntry) {
-            TextField("e.g. Push Day", text: $pendingWorkoutName)
-            Button("Start") {
-                let name = pendingWorkoutName.isEmpty ? "Workout" : pendingWorkoutName
-                requestStart(stretches: StretchDatabase.defaultRoutine(target: TimeInterval(warmupMinutes * 60))) {
-                    workoutSession.startWorkout(name: name, userId: userId)
-                    workoutSession.isPresented = true
-                }
-            }
-            Button("Cancel", role: .cancel) {}
-        }
-        .confirmationDialog(
-            "Warm up first?",
-            isPresented: $showWarmupPrompt,
-            titleVisibility: .visible
-        ) {
-            Button("Yes, \(warmupMinutes) min") {
-                warmupOptIn = "yes"
-                showWarmup = true
-            }
-            Button("No, skip") {
-                warmupOptIn = "no"
-                runPendingStartImmediately()
-            }
-            Button("Just this once", role: .cancel) {
-                // Don't persist a preference — start without warmup but ask again next time.
-                runPendingStartImmediately()
-            }
-        } message: {
-            Text("A 5-10 minute stretch routine helps loosen up before lifting.")
-        }
         .fullScreenCover(isPresented: $showWarmup) {
             WarmupView(
                 stretches: pendingStretches.isEmpty ? StretchDatabase.defaultRoutine() : pendingStretches,
@@ -105,41 +78,57 @@ struct WorkoutView: View {
         }) {
             LogPastWorkoutView()
         }
+        // Both template-start paths below hand their work to `afterDismiss`,
+        // which the sheet's `onDismiss` runs. Previously they fired straight
+        // into `requestStart` while the sheet was still animating away, and a
+        // hardcoded 0.35s delay was used to hope the dismissal had finished.
         .sheet(isPresented: $showGenerator, onDismiss: {
             Task { await viewModel.load(userId: userId) }
+            runAfterDismiss()
         }) {
             WorkoutGeneratorConfigView(
                 viewModel: generatorViewModel,
                 userId: userId,
                 onStart: { template in
-                    // Mirror the TemplateDetailView start path: route through the
-                    // warmup gate before starting the generated session.
-                    requestStart(
-                        stretches: StretchDatabase.suggestedStretches(for: template, target: TimeInterval(warmupMinutes * 60)),
-                        exercises: template.exercises.map(\.exercise)
-                    ) {
-                        workoutSession.startFromTemplate(template, userId: userId)
-                        workoutSession.isPresented = true
+                    afterDismiss = {
+                        requestStart(
+                            stretches: StretchDatabase.suggestedStretches(for: template, target: TimeInterval(warmupMinutes * 60)),
+                            exercises: template.exercises.map(\.exercise)
+                        ) {
+                            workoutSession.startFromTemplate(template, userId: userId)
+                            workoutSession.isPresented = true
+                        }
                     }
+                    showGenerator = false
                 },
                 onSaved: {
                     Task { await viewModel.load(userId: userId) }
                 }
             )
         }
-        .sheet(item: $previewTemplate) { template in
+        .sheet(item: $previewTemplate, onDismiss: { runAfterDismiss() }) { template in
             TemplateDetailView(template: template) {
                 let captured = template
-                previewTemplate = nil
-                requestStart(
-                    stretches: StretchDatabase.suggestedStretches(for: captured, target: TimeInterval(warmupMinutes * 60)),
-                    exercises: captured.exercises.map(\.exercise)
-                ) {
-                    workoutSession.startFromTemplate(captured, userId: userId)
-                    workoutSession.isPresented = true
+                afterDismiss = {
+                    requestStart(
+                        stretches: StretchDatabase.suggestedStretches(for: captured, target: TimeInterval(warmupMinutes * 60)),
+                        exercises: captured.exercises.map(\.exercise)
+                    ) {
+                        workoutSession.startFromTemplate(captured, userId: userId)
+                        workoutSession.isPresented = true
+                    }
                 }
+                previewTemplate = nil
             }
         }
+    }
+
+    /// Work deferred until the presenting sheet has actually finished
+    /// dismissing. Replaces the delay-and-hope sequencing.
+    private func runAfterDismiss() {
+        let work = afterDismiss
+        afterDismiss = nil
+        work?()
     }
 
     // MARK: - Root
@@ -151,11 +140,14 @@ struct WorkoutView: View {
             VStack(spacing: 0) {
                 ScrollView {
                     VStack(spacing: Theme.Spacing.sm) {
-                        // Start Workout CTA
+                        // One primary action, then a single row of secondary
+                        // ones. This screen used to stack five full-width CTAs
+                        // — Start, Build, Log Past, Cardio, Generate — before
+                        // any actual workout content appeared, so the list you
+                        // came here for started below the fold.
                         Button {
                             Haptics.light()
-                            pendingWorkoutName = ""
-                            showNameEntry = true
+                            startBlankWorkout()
                         } label: {
                             HStack(spacing: 10) {
                                 Image(systemName: "play.fill")
@@ -165,110 +157,20 @@ struct WorkoutView: View {
                         .buttonStyle(AccentButtonStyle())
                         .padding(.horizontal, Theme.Spacing.md)
                         .padding(.top, Theme.Spacing.md)
-                        .simultaneousGesture(
-                            LongPressGesture(minimumDuration: 0.6).onEnded { _ in
-                                // Long-press resets the warmup preference so the prompt shows again.
-                                Haptics.medium()
-                                warmupOptIn = ""
-                                pendingWorkoutName = ""
-                                showNameEntry = true
-                            }
-                        )
-                        .accessibilityHint("Long press to reset warmup preference")
 
-                        // Build Workout + Log Past Workout (side-by-side)
                         HStack(spacing: Theme.Spacing.sm) {
-                            Button {
-                                Haptics.light()
+                            secondaryAction(icon: "hammer.fill", label: "Build") {
                                 showBuilder = true
-                            } label: {
-                                HStack(spacing: Theme.Spacing.sm) {
-                                    Image(systemName: "hammer.fill")
-                                    Text("Build")
-                                }
                             }
-                            .buttonStyle(GhostButtonStyle())
-
-                            Button {
-                                Haptics.light()
+                            secondaryAction(icon: "dice.fill", label: "Generate") {
+                                generatorViewModel.reset()
+                                showGenerator = true
+                            }
+                            secondaryAction(icon: "calendar.badge.clock", label: "Log Past") {
                                 showLogPastWorkout = true
-                            } label: {
-                                HStack(spacing: Theme.Spacing.sm) {
-                                    Image(systemName: "calendar.badge.clock")
-                                    Text("Log Past")
-                                }
                             }
-                            .buttonStyle(GhostButtonStyle())
-                            .accessibilityLabel("Log a past workout")
                         }
                         .padding(.horizontal, Theme.Spacing.md)
-
-                        // Cardio lives alongside lifting rather than in its own
-                        // tab: it is the same "what did I train today" question,
-                        // and burying it a tab away is how it stops getting
-                        // logged at all.
-                        NavigationLink {
-                            CardioListView(userId: userId)
-                        } label: {
-                            HStack(spacing: Theme.Spacing.md) {
-                                Image(systemName: "figure.run")
-                                    .font(.title3)
-                                    .foregroundStyle(Theme.accent)
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text("Cardio")
-                                        .font(Theme.fontBodyEmphasized)
-                                        .foregroundStyle(Theme.textPrimary)
-                                    Text("Run · Ride · Row · Import from Health")
-                                        .font(Theme.fontCaption)
-                                        .foregroundStyle(Theme.textSecondary)
-                                }
-                                Spacer()
-                                Image(systemName: "chevron.right")
-                                    .font(.caption)
-                                    .foregroundStyle(Theme.textSecondary)
-                            }
-                            .padding(Theme.Spacing.md)
-                            .background(Theme.surface, in: .rect(cornerRadius: Theme.cornerRadius))
-                        }
-                        .buttonStyle(.plain)
-                        .padding(.horizontal, Theme.Spacing.md)
-
-                        // Generate (offline) — the instant, on-device twin of the
-                        // AI Coach. Framed distinctly: dice icon + "Instant · No AI
-                        // · Offline" so it never reads as a second chat coach.
-                        Button {
-                            Haptics.light()
-                            generatorViewModel.reset()
-                            showGenerator = true
-                        } label: {
-                            HStack(spacing: Theme.Spacing.md) {
-                                Image(systemName: "dice.fill")
-                                    .font(.title3)
-                                    .foregroundStyle(Theme.accent)
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text("Generate")
-                                        .font(Theme.fontBodyEmphasized)
-                                        .foregroundStyle(Theme.textPrimary)
-                                    Text("Instant · No AI · Offline")
-                                        .font(Theme.fontCaption)
-                                        .foregroundStyle(Theme.textSecondary)
-                                }
-                                Spacer()
-                                Image(systemName: "chevron.right")
-                                    .font(.caption)
-                                    .foregroundStyle(Theme.textSecondary)
-                            }
-                            .padding(Theme.Spacing.md)
-                            .background(Theme.surface)
-                            .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: Theme.cornerRadius)
-                                    .strokeBorder(Theme.accent.opacity(0.25), lineWidth: 0.5)
-                            )
-                        }
-                        .buttonStyle(.plain)
-                        .padding(.horizontal, Theme.Spacing.md)
-                        .accessibilityLabel("Generate a workout instantly, offline")
 
                         // First workout guide for new users (#310).
                         // Persist this card even after recents arrive — gate
@@ -321,6 +223,39 @@ struct WorkoutView: View {
         generatorViewModel.preseed(muscle: muscle)
         showGenerator = true
         generatorPreseed.pending = nil
+    }
+
+    /// Compact secondary CTA chip. Three of these in one row replace what were
+    /// three full-width rows.
+    private func secondaryAction(icon: String, label: String, action: @escaping () -> Void) -> some View {
+        Button {
+            Haptics.light()
+            action()
+        } label: {
+            VStack(spacing: Theme.Spacing.tight) {
+                Image(systemName: icon)
+                    .font(.subheadline.weight(.semibold))
+                Text(label)
+                    .font(.caption.weight(.semibold))
+            }
+            .foregroundStyle(Theme.accent)
+            .frame(maxWidth: .infinity)
+            .frame(minHeight: 56)
+            .background(Theme.surface, in: .rect(cornerRadius: Theme.cornerRadius))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(label)
+    }
+
+    /// Starts an unnamed session immediately. The name defaults to "Workout"
+    /// and stays editable in the active-workout header, which is a better place
+    /// to name it than a modal you have to clear before you can lift.
+    private func startBlankWorkout() {
+        requestStart(stretches: StretchDatabase.defaultRoutine(target: TimeInterval(warmupMinutes * 60))) {
+            workoutSession.startWorkout(name: "Workout", userId: userId)
+            workoutSession.isPresented = true
+        }
     }
 
     // MARK: - First Workout Guide
@@ -376,41 +311,34 @@ struct WorkoutView: View {
 
     // MARK: - Warmup gating (#261)
 
-    /// Entry point used by every "start workout" path. Either prompts the user about
-    /// warming up first, presents the warmup, or runs the start action directly,
-    /// depending on the user's saved preference.
+    /// Entry point used by every "start workout" path.
+    ///
+    /// Only the explicit "always warm up" preference still interrupts; every
+    /// other case starts lifting immediately. The old default was to *ask*,
+    /// which meant a confirmation dialog stood between the user and the primary
+    /// action of the app every single session until they picked a preference.
     private func requestStart(stretches: [Stretch], exercises: [Exercise] = [], action: @escaping () -> Void) {
         pendingStart = action
         pendingStretches = stretches
         pendingExercises = exercises
 
-        switch warmupOptIn {
-        case "yes":
-            // User opted into warmups — present the warmup sheet.
-            // Defer slightly so any presenting sheet has time to dismiss.
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                showWarmup = true
-            }
-        case "no":
-            // User opted out — start immediately.
+        if warmupOptIn == "yes" {
+            showWarmup = true
+        } else {
             runPendingStartImmediately()
-        default:
-            // First time (or user reset via long-press) — ask.
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                showWarmupPrompt = true
-            }
         }
     }
 
     /// Run the captured pending start action and clear it.
+    ///
+    /// This used to trail a fixed 0.2s `asyncAfter` to let a dismissing sheet
+    /// get out of the way — racing a hardcoded delay against an animation.
+    /// Callers now sequence off `onDismiss`, which is deterministic.
     private func runPendingStartImmediately() {
         let action = pendingStart
         pendingStart = nil
         pendingStretches = []
         pendingExercises = []
-        // Slight delay so any prompt/sheet dismissal lands cleanly before the workout cover.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            action?()
-        }
+        action?()
     }
 }

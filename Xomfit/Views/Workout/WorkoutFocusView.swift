@@ -154,17 +154,6 @@ struct WorkoutFocusView: View {
                             .transition(.opacity)
                     }
 
-                    // Minimized rest banner — now an in-flow bottom row instead
-                    // of a `.safeAreaInset` hack (#411 bug 3). Living inside the
-                    // scrollable VStack means it can never overlap DONE: when it
-                    // appears it simply extends the content (which scrolls if
-                    // needed) rather than floating over the layout.
-                    if viewModel.isRestTimerActive
-                        && viewModel.isRestTimerMinimized
-                        && !keyboardCompactMode {
-                        minimizedRestTimerBanner
-                            .transition(.move(edge: .bottom).combined(with: .opacity))
-                    }
                 }
                 .id(viewModel.focusExerciseIndex)
                 .transition(.push(from: .trailing))
@@ -179,15 +168,36 @@ struct WorkoutFocusView: View {
                 }
                 .scrollBounceBehavior(.basedOnSize)
                 }
-
-                // Full-screen rest timer — only when the timer is active AND not
-                // minimized. Sits as a ZStack sibling overlay above the scroll.
-                if viewModel.isRestTimerActive && !viewModel.isRestTimerMinimized {
-                    fullScreenRestTimer
-                        .transition(.opacity)
-                }
             } else {
                 emptyFocusState
+            }
+        }
+        // Real navigation bar. Focus mode is a pushed screen now, so it gets
+        // the system back button (and back-swipe) instead of a bespoke toggle,
+        // and the bar handles the Dynamic Island — which is what the parent's
+        // hand-rolled 130pt spacer and mode-dependent top padding existed to
+        // work around.
+        .navigationTitle(exercise?.exercise.name ?? "Workout")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                HStack(spacing: Theme.Spacing.sm) {
+                    Text(viewModel.durationString)
+                        .font(Theme.fontNumberMedium)
+                        .foregroundStyle(Theme.accent)
+                        .contentTransition(.numericText())
+                        .animation(.xomSnappy, value: viewModel.durationString)
+
+                    Button {
+                        Haptics.light()
+                        viewModel.togglePause()
+                    } label: {
+                        Image(systemName: viewModel.isPaused ? "play.circle.fill" : "pause.circle.fill")
+                            .font(.title3.weight(.semibold))
+                            .foregroundStyle(viewModel.isPaused ? Theme.accent : Theme.textPrimary)
+                    }
+                    .accessibilityLabel(viewModel.isPaused ? "Resume workout" : "Pause workout")
+                }
             }
         }
         .sheet(isPresented: $showExercisePicker) {
@@ -249,27 +259,22 @@ struct WorkoutFocusView: View {
 
     // MARK: - Exercise Header
 
+    /// Badges only — the exercise name lives in the navigation bar now that
+    /// focus mode is a pushed screen, and printing it twice was both redundant
+    /// and a waste of the vertical space the big weight/reps controls want.
     private func exerciseHeader(exercise: WorkoutExercise) -> some View {
         VStack(spacing: Theme.Spacing.tight) {
-            HStack(spacing: Theme.Spacing.sm) {
-                // Superset rotation badge (#344 E2) — e.g. "A1", "A2" so the
-                // lifter can see which slot of a paired group is in focus.
-                if let badge = supersetBadge {
-                    Text(badge)
-                        .font(.caption.weight(.black))
-                        .foregroundStyle(.black)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, Theme.Spacing.tighter)
-                        .background(Theme.accent)
-                        .clipShape(.capsule)
-                        .accessibilityLabel("Superset \(badge)")
-                }
-
-                Text(exercise.exercise.name)
-                    .font(.title2.weight(.bold))
-                    .foregroundStyle(Theme.textPrimary)
-                    .multilineTextAlignment(.center)
-                    .accessibilityAddTraits(.isHeader)
+            // Superset rotation badge (#344 E2) — e.g. "A1", "A2" so the
+            // lifter can see which slot of a paired group is in focus.
+            if let badge = supersetBadge {
+                Text("Superset \(badge)")
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(.black)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, Theme.Spacing.tighter)
+                    .background(Theme.accent)
+                    .clipShape(.capsule)
+                    .accessibilityLabel("Superset \(badge)")
             }
 
             HStack(spacing: Theme.Spacing.tight) {
@@ -540,6 +545,8 @@ struct WorkoutFocusView: View {
                     Text(currentSet.weight.formattedWeight)
                         .font(.system(size: 48, weight: .bold, design: .monospaced))
                         .foregroundStyle(Theme.textPrimary)
+                        .contentTransition(.numericText())
+                        .animation(.xomSnappy, value: currentSet.weight)
                 }
                 .accessibilityLabel("Weight: \(currentSet.weight.formattedWeight) pounds. Tap to edit.")
             }
@@ -590,6 +597,8 @@ struct WorkoutFocusView: View {
                     Text("\(currentSet.reps)")
                         .font(.system(size: 48, weight: .bold, design: .monospaced))
                         .foregroundStyle(Theme.textPrimary)
+                        .contentTransition(.numericText())
+                        .animation(.xomSnappy, value: currentSet.reps)
                 }
                 .accessibilityLabel("Reps: \(currentSet.reps). Tap to edit.")
             }
@@ -611,22 +620,52 @@ struct WorkoutFocusView: View {
 
     private func doneButton(currentSet: WorkoutSet) -> some View {
         let isCompleted = currentSet.completedAt != Date.distantPast
-        return Button {
-            dismissKeyboard()
-            if !isCompleted {
-                viewModel.completeFocusedSet()
+        let isSkipped = currentSet.isSkipped
+        return VStack(spacing: Theme.Spacing.sm) {
+            Button {
+                dismissKeyboard()
+                if !isCompleted && !isSkipped {
+                    viewModel.completeFocusedSet()
+                }
+            } label: {
+                Text(isSkipped ? "SKIPPED" : (isCompleted ? "COMPLETED" : "DONE"))
+                    .font(.title3.weight(.black))
+                    .foregroundStyle(isCompleted || isSkipped ? Theme.textSecondary : .black)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(isCompleted || isSkipped ? Theme.surface : Theme.accent)
+                    .clipShape(.rect(cornerRadius: Theme.cornerRadius))
             }
-        } label: {
-            Text(isCompleted ? "COMPLETED" : "DONE")
-                .font(.title3.weight(.black))
-                .foregroundStyle(isCompleted ? Theme.textSecondary : .black)
+            .disabled(isCompleted || isSkipped)
+            .accessibilityLabel(isSkipped ? "Set skipped" : (isCompleted ? "Set completed" : "Complete set"))
+
+            // Not every planned set gets done. Without this the only ways out
+            // of a set you're not doing were to fake-complete it or delete it,
+            // and an untouched set blocked the exercise from ever completing.
+            Button {
+                dismissKeyboard()
+                Haptics.light()
+                viewModel.toggleSkip(
+                    exerciseIndex: viewModel.focusExerciseIndex,
+                    setIndex: viewModel.focusSetIndex
+                )
+            } label: {
+                HStack(spacing: Theme.Spacing.tight) {
+                    Image(systemName: isSkipped ? "arrow.uturn.backward" : "forward.end")
+                        .font(.caption.weight(.bold))
+                    Text(isSkipped ? "Undo skip" : "Skip this set")
+                        .font(.subheadline.weight(.semibold))
+                }
+                .foregroundStyle(Theme.textSecondary)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 14)
-                .background(isCompleted ? Theme.surface : Theme.accent)
-                .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+                .frame(minHeight: 44)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint(isSkipped
+                ? "Puts this set back into the workout"
+                : "Marks this set as not done and moves on")
         }
-        .disabled(isCompleted)
-        .accessibilityLabel(isCompleted ? "Set completed" : "Complete set")
     }
 
     // MARK: - Exercise Navigation
@@ -708,315 +747,13 @@ struct WorkoutFocusView: View {
         }
     }
 
-    // MARK: - Minimized Rest Timer Banner (inline)
-
-    /// Compact rest-timer banner rendered via `.safeAreaInset(edge: .bottom)`
-    /// on the parent ZStack so it reserves its own layout row instead of
-    /// compressing the top header under the Dynamic Island (#344-A).
-    ///
-    /// Layout reimagined in #384 B — single ~64pt row, no truncation:
-    /// `[↗ expand]  [-1:41]  [REST]    ........    [+30s]  [Lift]`
-    /// Tapping anywhere on the background (not on a button) expands back to
-    /// the full-screen rest timer. Skip is intentionally absent — Lift is the
-    /// same action (skip rest + advance set).
-    private var minimizedRestTimerBanner: some View {
-        HStack(spacing: Theme.Spacing.sm) {
-            // Expand glyph — far left, 44pt hit target.
-            Button {
-                Haptics.light()
-                withAnimation(.xomChill) { viewModel.isRestTimerMinimized = false }
-            } label: {
-                Image(systemName: "arrow.up.left.and.arrow.down.right")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Theme.accent)
-                    .frame(width: 44, height: 44)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Expand rest timer")
-
-            // Countdown — focal point. Large monospaced digits, red on overtime.
-            Text(restTimeString)
-                .font(.system(size: 28, weight: .black, design: .monospaced))
-                .monospacedDigit()
-                .foregroundStyle(restIsOvertime ? Theme.destructive : Theme.textPrimary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-                .accessibilityLabel("Rest time remaining \(restTimeString)")
-
-            // REST caption next to countdown.
-            Text("REST")
-                .font(.caption2.weight(.bold))
-                .foregroundStyle(Theme.textSecondary)
-                .accessibilityHidden(true)
-
-            Spacer(minLength: Theme.Spacing.sm)
-
-            // +30s — secondary, accent-tinted capsule.
-            Button {
-                Haptics.light()
-                viewModel.extendRestTimer()
-            } label: {
-                Text("+30s")
-                    .font(.subheadline.weight(.bold))
-                    .foregroundStyle(Theme.accent)
-                    .padding(.horizontal, Theme.Spacing.md)
-                    .frame(minHeight: 44)
-                    .background(Theme.accent.opacity(0.15))
-                    .clipShape(.capsule)
-                    .contentShape(.capsule)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Add 30 seconds to rest timer")
-
-            // Lift — primary CTA. Same action as the old Skip (end rest +
-            // advance to next set), so Skip was dropped entirely (#384 B).
-            Button {
-                Haptics.success()
-                viewModel.skipRestTimer()
-            } label: {
-                Text("Lift")
-                    .font(.subheadline.weight(.black))
-                    .foregroundStyle(.black)
-                    .padding(.horizontal, Theme.Spacing.md)
-                    .frame(minHeight: 44)
-                    .background(Theme.accent)
-                    .clipShape(.capsule)
-                    .contentShape(.capsule)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Lift — end rest and start next set")
-            .accessibilityHint("Ends the rest timer immediately")
-        }
-        .padding(.horizontal, Theme.Spacing.sm)
-        .frame(maxWidth: .infinity, minHeight: 64)
-        .background(
-            // Tap-anywhere-on-background expands the banner. Restricted to a
-            // background layer so the buttons keep their own hit handling.
-            Theme.surface
-                .clipShape(.rect(cornerRadius: Theme.cornerRadius))
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    Haptics.light()
-                    withAnimation(.xomChill) { viewModel.isRestTimerMinimized = false }
-                }
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: Theme.cornerRadius)
-                .stroke(Theme.accent.opacity(0.25), lineWidth: 1)
-        )
-    }
-
-    private var restIsOvertime: Bool { viewModel.restTimeRemaining <= 0 }
-
-    private var restProgress: Double {
-        guard viewModel.restDuration > 0 else { return 0 }
-        if restIsOvertime { return 1.0 }
-        return 1 - (viewModel.restTimeRemaining / viewModel.restDuration)
-    }
-
-    private var restTimeString: String {
-        if restIsOvertime {
-            let total = Int(abs(viewModel.restTimeRemaining))
-            return String(format: "-%d:%02d", total / 60, total % 60)
-        }
-        let total = Int(viewModel.restTimeRemaining)
-        return String(format: "%d:%02d", total / 60, total % 60)
-    }
-
-    /// Fullscreen rest-timer overlay. Layout reimagined in #402: minimize
-    /// chevron pinned to the TOP-LEFT corner; LIFT button pinned to the
-    /// BOTTOM with explicit bottom padding that always clears the home
-    /// indicator. The middle (ring + NEXT UP + +30s) sits inside a
-    /// Spacer-padded VStack so it centers between the two anchored slots.
-    ///
-    /// Uses inline layout (NOT `.safeAreaInset`) because the overlay is
-    /// already a sibling inside the focus view's ZStack — adding additional
-    /// safe-area insets there would push the button below the visible bounds.
-    ///
-    /// Fixed #448: Content was pushed below Dynamic Island and LIFT button
-    /// was pushed off screen. Now uses GeometryReader to respect safe areas
-    /// properly and reduces fixed padding to prevent overflow.
-    private var fullScreenRestTimer: some View {
-        GeometryReader { geometry in
-            ZStack {
-                Color.black.opacity(0.92).ignoresSafeArea()
-
-                VStack(spacing: 0) {
-                    // TOP — minimize chevron on the left. Positioned below Dynamic Island.
-                    HStack {
-                        Button {
-                            Haptics.light()
-                            withAnimation(.xomChill) { viewModel.isRestTimerMinimized = true }
-                        } label: {
-                            Image(systemName: "arrow.down.right.and.arrow.up.left")
-                                .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(Theme.textPrimary)
-                                .frame(width: 44, height: 44)
-                                .background(Theme.surface.opacity(0.6))
-                                .clipShape(Circle())
-                                .contentShape(Rectangle())
-                        }
-                        .accessibilityLabel("Minimize rest timer")
-                        .accessibilityHint("Collapses the rest timer to a banner so you can see the next set")
-
-                        Spacer()
-                    }
-                    .padding(.horizontal, Theme.Spacing.lg)
-                    .padding(.top, geometry.safeAreaInsets.top + Theme.Spacing.xs)
-
-                    Spacer(minLength: Theme.Spacing.sm)
-
-                    // Large circular ring - scales down on smaller screens
-                    let ringSize: CGFloat = min(200, geometry.size.height * 0.28)
-                    ZStack {
-                        Circle()
-                            .stroke(Theme.textSecondary.opacity(0.2), lineWidth: 10)
-
-                        Circle()
-                            .trim(from: 0, to: restProgress)
-                            .stroke(restIsOvertime ? Theme.destructive : Theme.accent, style: StrokeStyle(lineWidth: 10, lineCap: .round))
-                            .rotationEffect(.degrees(-90))
-                            .animation(.linear(duration: 1), value: restProgress)
-
-                        VStack(spacing: Theme.Spacing.tight) {
-                            Text("REST")
-                                .font(.caption.weight(.bold))
-                                .foregroundStyle(Theme.textSecondary)
-                            Text(restTimeString)
-                                .font(.system(size: min(56, ringSize * 0.28), weight: .black, design: .monospaced))
-                                .monospacedDigit()
-                                .foregroundStyle(restIsOvertime ? Theme.destructive : .white)
-                        }
-                    }
-                    .frame(width: ringSize, height: ringSize)
-                    .padding(.vertical, Theme.Spacing.sm)
-
-                    // Next set context - always show what exercise/set is coming up
-                    restTimerNextUpSection
-
-                    // +30s button
-                    Button {
-                        Haptics.light()
-                        viewModel.extendRestTimer()
-                    } label: {
-                        Text("+30s")
-                            .font(.subheadline.weight(.bold))
-                            .foregroundStyle(Theme.accent)
-                            .padding(.horizontal, 20)
-                            .padding(.vertical, 8)
-                            .background(Theme.accent.opacity(0.15))
-                            .clipShape(.capsule)
-                            .frame(minHeight: 44)
-                    }
-                    .accessibilityLabel("Add 30 seconds to rest timer")
-
-                    Spacer(minLength: Theme.Spacing.sm)
-
-                    // LIFT — anchored to the bottom with safe area clearance
-                    Button {
-                        Haptics.success()
-                        viewModel.skipRestTimer()
-                    } label: {
-                        Text("LIFT")
-                            .font(.title.weight(.black))
-                            .foregroundStyle(.black)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 18)
-                            .background(Theme.accent)
-                            .clipShape(.rect(cornerRadius: Theme.cornerRadius))
-                            .contentShape(Rectangle())
-                    }
-                    .padding(.horizontal, Theme.Spacing.lg)
-                    .accessibilityLabel("Skip rest timer and start the next set")
-                    .accessibilityHint("Ends the rest timer immediately and returns to the lift")
-
-                    // Bottom clearance: respect safe area + small buffer
-                    Color.clear.frame(height: max(geometry.safeAreaInsets.bottom, 20) + Theme.Spacing.md)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            }
-        }
-    }
-
-    // MARK: - Rest Timer Next Up Section
-
-    /// Contextual info shown in the fullscreen rest timer: exercise name,
-    /// set number, typical weight, and PR proximity.
-    @ViewBuilder
-    private var restTimerNextUpSection: some View {
-        // When the current exercise is fully done, show the next exercise.
-        // Otherwise show the focused exercise (user is resting before their next set).
-        if let nextEx = viewModel.upcomingExercise {
-            // Current exercise done - show what's coming next
-            VStack(spacing: Theme.Spacing.tight) {
-                Text("NEXT UP")
-                    .font(.caption2.weight(.bold))
-                    .foregroundStyle(Theme.accent)
-                Text(nextEx.exercise.name)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Theme.textPrimary)
-            }
-            .padding(.bottom, Theme.Spacing.sm)
-        } else if let focusEx = viewModel.focusExercise {
-            // Still on current exercise - show upcoming set context
-            let exerciseId = focusEx.exercise.id
-            let totalSets = focusEx.sets.count
-            let nextSetNumber = viewModel.focusSetIndex + 1
-            let lastSet = viewModel.lastSetForExercise(exerciseId)
-            let prSet = viewModel.personalRecordForExercise(exerciseId)
-
-            VStack(spacing: Theme.Spacing.xs) {
-                // Exercise name
-                Text(focusEx.exercise.name)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Theme.textPrimary)
-
-                // Set number
-                Text("Set \(nextSetNumber) of \(totalSets)")
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(Theme.textSecondary)
-
-                // Typical weight (from last workout)
-                if let last = lastSet, last.weight > 0 {
-                    Text("Last: \(formatWeight(last.weight)) x \(last.reps)")
-                        .font(.caption)
-                        .foregroundStyle(Theme.textSecondary)
-                }
-
-                // PR proximity hint
-                if let pr = prSet, pr.weight > 0 {
-                    let currentWeight = viewModel.focusSet?.weight ?? 0
-                    if currentWeight > 0 && currentWeight >= pr.weight {
-                        Text("PR territory!")
-                            .font(.caption.weight(.bold))
-                            .foregroundStyle(Theme.accent)
-                    } else if currentWeight > 0 {
-                        let diff = pr.weight - currentWeight
-                        if diff <= 10 {
-                            Text("\(formatWeight(diff)) from PR")
-                                .font(.caption)
-                                .foregroundStyle(Theme.textSecondary.opacity(0.8))
-                        }
-                    } else {
-                        // No current weight entered yet, just show the PR
-                        Text("PR: \(formatWeight(pr.weight)) x \(pr.reps)")
-                            .font(.caption)
-                            .foregroundStyle(Theme.textSecondary.opacity(0.8))
-                    }
-                }
-            }
-            .padding(.bottom, Theme.Spacing.sm)
-        }
-    }
-
-    /// Formats a weight value, removing trailing decimals if whole number.
-    private func formatWeight(_ weight: Double) -> String {
-        if weight.truncatingRemainder(dividingBy: 1) == 0 {
-            return "\(Int(weight)) lbs"
-        }
-        return String(format: "%.1f lbs", weight)
-    }
+    // Rest-timer rendering lives in `RestTimerBar`, shared with list mode.
+    //
+    // This file used to carry two of its own: a full-screen overlay and a
+    // separate minimized banner. Together with the inline card in
+    // `ActiveWorkoutView` that was three renderings of one timer, which is
+    // why resting looked and behaved differently depending on which view
+    // the lifter happened to be in.
 
     // MARK: - Empty State
 

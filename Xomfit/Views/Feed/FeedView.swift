@@ -5,7 +5,6 @@ struct FeedView: View {
     @Environment(GeneratorPreseed.self) private var generatorPreseed
     @State private var viewModel = FeedViewModel()
     @State private var showUserSearch = false
-    @State private var showNotifications = false
     @State private var showFilters = false
     @State private var selectedFeedItem: SocialFeedItem? = nil
 
@@ -42,9 +41,8 @@ struct FeedView: View {
     }
 
     var body: some View {
-        // Lives inside `MainTabView`'s NavigationStack (#372). The hamburger
-        // shell provides the title + drawer affordance; `.navigationTitle`
-        // is kept for back-button labels and any pushed detail views.
+        // Lives inside the Feed tab's `NavigationStack`. The title and the
+        // shared avatar/bell toolbar come from this view plus `rootChrome`.
         feedRoot
     }
 
@@ -111,28 +109,14 @@ struct FeedView: View {
             }
         }
         .navigationTitle("Feed")
+        .navigationBarTitleDisplayMode(.large)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
+                // The notification bell used to be duplicated here; the shell's
+                // shared root toolbar owns it now, so this slot carries only
+                // the feed-specific actions.
                 HStack(spacing: Theme.Spacing.md) {
-                    Button {
-                        showNotifications = true
-                    } label: {
-                        ZStack(alignment: .topTrailing) {
-                            Image(systemName: "bell")
-                                .foregroundStyle(Theme.textPrimary)
-                            if NotificationService.shared.unreadCount > 0 {
-                                Circle()
-                                    .fill(Theme.destructive)
-                                    .frame(width: Theme.Spacing.sm, height: Theme.Spacing.sm)
-                                    .offset(x: 3, y: -3)
-                            }
-                        }
-                    }
-                    .accessibilityLabel(NotificationService.shared.unreadCount > 0
-                        ? "Notifications, \(NotificationService.shared.unreadCount) unread"
-                        : "Notifications")
-
                     Button {
                         showUserSearch = true
                     } label: {
@@ -158,17 +142,6 @@ struct FeedView: View {
         }
         .sheet(isPresented: $showUserSearch) {
             UserSearchView()
-        }
-        .sheet(isPresented: $showNotifications) {
-            NotificationInboxView(
-                currentUserId: authService.currentUser?.id.uuidString.lowercased(),
-                onStartSuggestion: { muscle in
-                    // FeedView can't switch tabs itself; seed the generator so the
-                    // Workout tab opens pre-filled when the user navigates there.
-                    Haptics.light()
-                    generatorPreseed.pending = muscle
-                }
-            )
         }
         .sheet(isPresented: $showFilters) {
             FeedFilterSheet(
