@@ -64,6 +64,57 @@ final class HealthKitService {
         hasEverSeenWorkout = true
     }
 
+    // MARK: - Background delivery
+
+    /// Held so the observer isn't deallocated the moment this returns.
+    @ObservationIgnored
+    private var cardioObserver: HKObserverQuery?
+
+    /// Wakes the app when Health gains a workout, so a run recorded on a Garmin
+    /// lands in XomFit without the app ever being opened.
+    ///
+    /// This is the half that makes auto-import feel automatic. Without it the
+    /// anchored import still runs — but only on foreground, so the data appears
+    /// the next time the lifter happens to open the app rather than when they
+    /// finished the run.
+    ///
+    /// Safe to call repeatedly: the query is only built once.
+    func startCardioObserver(onNewWorkouts: @escaping @Sendable () async -> Void) {
+        guard isAvailable, cardioObserver == nil else { return }
+
+        let query = HKObserverQuery(
+            sampleType: HKObjectType.workoutType(),
+            predicate: nil
+        ) { _, completionHandler, error in
+            if let error {
+                Task { @MainActor in self.lastImportError = error.localizedDescription }
+                // Still call the handler. Withholding it makes HealthKit retry
+                // with backoff and eventually stop delivering entirely.
+                completionHandler()
+                return
+            }
+            Task {
+                await onNewWorkouts()
+                // Must be called once the work is done, on every path — this is
+                // what tells HealthKit the wake was handled.
+                completionHandler()
+            }
+        }
+
+        cardioObserver = query
+        store.execute(query)
+
+        store.enableBackgroundDelivery(for: HKObjectType.workoutType(), frequency: .hourly) { success, error in
+            if let error {
+                // Non-fatal by design: the foreground import still works, so a
+                // missing entitlement degrades the feature rather than breaking it.
+                print("[HealthKit] background delivery unavailable: \(error.localizedDescription)")
+            } else if !success {
+                print("[HealthKit] background delivery was not enabled")
+            }
+        }
+    }
+
     /// Best explanation available for why cardio import is or isn't producing
     /// anything. Drives the hint in the Cardio tab.
     func diagnose() async -> ImportDiagnosis {
