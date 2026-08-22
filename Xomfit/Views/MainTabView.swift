@@ -20,6 +20,7 @@ struct MainTabView: View {
     @Environment(AuthService.self) private var authService
     @Environment(WorkoutLoggerViewModel.self) private var workoutSession
     @Environment(GeneratorPreseed.self) private var generatorPreseed
+    @Environment(\.scenePhase) private var scenePhase
 
     // MARK: - Navigation State
 
@@ -162,6 +163,10 @@ struct MainTabView: View {
             // collide with the shell's mount animation.
             guard let userId = authService.currentUser?.id.uuidString.lowercased() else { return }
             let workouts = WorkoutService.shared.fetchWorkoutsFromCache(userId: userId)
+            // Queue the come-back notification up front — the badge branch below
+            // returns early, and the nudge shouldn't depend on which toast won.
+            NotificationService.shared.refreshTrainingNudge(workouts: workouts)
+
             if let badge = BadgeToastService.badgeForLaunch(workouts: workouts) {
                 nudgeMuscle = nil
                 try? await Task.sleep(for: .seconds(1))
@@ -177,6 +182,16 @@ struct MainTabView: View {
                     message: "\u{1F3CB}\u{FE0F} Light on \(nudge.muscle.displayName) this week — generate a quick session?"
                 )
             }
+        }
+        // Come-back nudge. Scheduled on launch and re-evaluated every time the
+        // app backgrounds, because the decision depends on this week's logged
+        // sets — a pending nudge that was true an hour ago may not be now.
+        // Backgrounding is the moment that matters: it's the last chance to get
+        // an accurate notification queued before the user stops opening the app,
+        // which is exactly the case this nudge exists for.
+        .onChange(of: scenePhase) { _, phase in
+            guard phase == .background else { return }
+            refreshTrainingNudgeSchedule()
         }
         .task(id: authService.currentUser?.id) {
             await hydrateDrawerProfile()
@@ -353,6 +368,17 @@ struct MainTabView: View {
     }
 
     // MARK: - Drawer Profile Hydration
+
+
+    /// Re-evaluates and re-queues the "light on legs" come-back notification.
+    private func refreshTrainingNudgeSchedule() {
+        guard let userId = authService.currentUser?.id.uuidString.lowercased() else {
+            NotificationService.shared.cancelTrainingNudge()
+            return
+        }
+        let workouts = WorkoutService.shared.fetchWorkoutsFromCache(userId: userId)
+        NotificationService.shared.refreshTrainingNudge(workouts: workouts)
+    }
 
     private func hydrateDrawerProfile() async {
         guard let userId = authService.currentUser?.id.uuidString.lowercased() else { return }

@@ -53,10 +53,28 @@ final class NotificationService {
     var weeklyReportEnabled: Bool {
         didSet { UserDefaults.standard.set(weeklyReportEnabled, forKey: Self.weeklyReportKey) }
     }
+    /// Countdown ticks + end-of-rest alarm haptic. Gates the buzz only — the
+    /// visual timer and the "rest's up" notification are separate toggles, so
+    /// turning this off silences the wrist without losing the cue.
+    var restHapticsEnabled: Bool {
+        didSet { UserDefaults.standard.set(restHapticsEnabled, forKey: Self.restHapticsKey) }
+    }
+    /// "Light on legs" style come-back nudges, delivered while the app is closed.
+    var trainingNudgeEnabled: Bool {
+        didSet {
+            UserDefaults.standard.set(trainingNudgeEnabled, forKey: Self.trainingNudgeKey)
+            if !trainingNudgeEnabled { cancelTrainingNudge() }
+        }
+    }
 
     private static let restTimerKey = "xomfit_notif_rest_timer_enabled"
     private static let warmupKey = "xomfit_notif_warmup_enabled"
     private static let weeklyReportKey = "xomfit_notif_weekly_report_enabled"
+    private static let restHapticsKey = "xomfit_notif_rest_haptics_enabled"
+    private static let trainingNudgeKey = "xomfit_notif_training_nudge_enabled"
+    static let trainingNudgeNotifId = "training-nudge"
+    /// Hour of day (local) the come-back nudge is delivered.
+    static let trainingNudgeHour = 18
     private static let restNotifPrefix = "rest-"
     static let warmupNotifId = "warmup-completion"
 
@@ -69,9 +87,13 @@ final class NotificationService {
         if defaults.object(forKey: Self.restTimerKey) == nil { defaults.set(true, forKey: Self.restTimerKey) }
         if defaults.object(forKey: Self.warmupKey) == nil { defaults.set(true, forKey: Self.warmupKey) }
         if defaults.object(forKey: Self.weeklyReportKey) == nil { defaults.set(true, forKey: Self.weeklyReportKey) }
+        if defaults.object(forKey: Self.restHapticsKey) == nil { defaults.set(true, forKey: Self.restHapticsKey) }
+        if defaults.object(forKey: Self.trainingNudgeKey) == nil { defaults.set(true, forKey: Self.trainingNudgeKey) }
         self.restTimerLocalEnabled = defaults.bool(forKey: Self.restTimerKey)
         self.warmupLocalEnabled = defaults.bool(forKey: Self.warmupKey)
         self.weeklyReportEnabled = defaults.bool(forKey: Self.weeklyReportKey)
+        self.restHapticsEnabled = defaults.bool(forKey: Self.restHapticsKey)
+        self.trainingNudgeEnabled = defaults.bool(forKey: Self.trainingNudgeKey)
         loadNotifications()
         loadPreferences()
     }
@@ -188,6 +210,72 @@ final class NotificationService {
         UNUserNotificationCenter.current().removeDeliveredNotifications(
             withIdentifiers: [Self.warmupNotifId]
         )
+    }
+
+    // MARK: - Training nudge (come-back notification)
+
+    /// Re-evaluates the under-trained-muscle nudge and schedules (or clears) a
+    /// single local notification for the next `trainingNudgeHour`.
+    ///
+    /// This exists because `TrainingNudgeService.nudgeForLaunch` only ever
+    /// surfaced an in-app toast on launch — useless for the one case a come-back
+    /// nudge is for, which is the user *not* opening the app. Everything here is
+    /// computable on-device from cached workouts, so it's a local notification:
+    /// routing it through APNs would add a server cron and a device-token round
+    /// trip for no added capability.
+    ///
+    /// Call this on launch and every time the app backgrounds. It always cancels
+    /// first and reschedules from scratch — the decision depends on this week's
+    /// logged sets, so a stale pending nudge is worse than none. Only ONE nudge
+    /// is ever pending: scheduling a week out would mean firing "light on legs"
+    /// on a day the user had since trained legs.
+    func refreshTrainingNudge(workouts: [Workout], now: Date = Date()) {
+        cancelTrainingNudge()
+        guard trainingNudgeEnabled, isPermissionGranted else { return }
+
+        // `suggestionForInbox` applies the cold-start and trained-today gates but
+        // deliberately does NOT consume the once-per-day marker, so scheduling a
+        // notification never eats the in-app launch toast.
+        guard let nudge = TrainingNudgeService.suggestionForInbox(workouts: workouts, now: now),
+              let fireDate = nextNudgeDate(after: now) else { return }
+
+        let content = UNMutableNotificationContent()
+        content.title = "Light on \(nudge.muscle.displayName)"
+        // `reason` is written without terminal punctuation ("You usually hit quads
+        // by now this week"), so the period is added here rather than in the baseline.
+        content.body = "\(nudge.reason). Let's get a workout in 💪"
+        content.sound = .default
+        content.userInfo = ["type": "training_nudge", "muscle": nudge.muscle.rawValue]
+
+        let components = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: fireDate)
+        let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
+        let request = UNNotificationRequest(
+            identifier: Self.trainingNudgeNotifId,
+            content: content,
+            trigger: trigger
+        )
+
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error {
+                print("[NotificationService] Failed to schedule training nudge: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    func cancelTrainingNudge() {
+        UNUserNotificationCenter.current().removePendingNotificationRequests(
+            withIdentifiers: [Self.trainingNudgeNotifId]
+        )
+    }
+
+    /// Today at `trainingNudgeHour` when that's still ahead, otherwise tomorrow.
+    private func nextNudgeDate(after now: Date) -> Date? {
+        let cal = Calendar.current
+        guard let todayAtHour = cal.date(
+            bySettingHour: Self.trainingNudgeHour, minute: 0, second: 0, of: now
+        ) else { return nil }
+        if todayAtHour > now { return todayAtHour }
+        return cal.date(byAdding: .day, value: 1, to: todayAtHour)
     }
 
     // MARK: - Preferences

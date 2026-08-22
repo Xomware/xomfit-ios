@@ -724,6 +724,12 @@ final class WorkoutLoggerViewModel {
     func completeSet(exerciseIndex: Int, setIndex: Int) {
         guard exercises.indices.contains(exerciseIndex),
               exercises[exerciseIndex].sets.indices.contains(setIndex) else { return }
+        // Any pending transition card belongs to the *previous* completion. If
+        // the lifter is logging again, that card is stale — clear it before we
+        // possibly re-raise it below, so it can never resurface later over a
+        // set they've already moved past.
+        showExerciseTransition = false
+
         let isCurrentlyCompleted = exercises[exerciseIndex].sets[setIndex].completedAt != Date.distantPast
         if isCurrentlyCompleted {
             // Toggle off
@@ -1366,6 +1372,18 @@ final class WorkoutLoggerViewModel {
     /// Timestamp when the rest timer was started — used to survive background suspension.
     private var restTimerStartDate: Date?
 
+    /// Whole second the countdown haptic last fired for, or nil when nothing has
+    /// fired for the current rest period. `0` means the end-of-rest alarm has
+    /// already played.
+    ///
+    /// Tracking the *second* rather than a bare `didFire` flag matters because
+    /// the tick isn't the only thing that moves `restTimeRemaining`:
+    /// `recalculateRestTimer` snaps it to wall-clock on foreground, and
+    /// `extendRestTimer` pushes it back up. Keying off the second makes both
+    /// safe — a jump from 5 to 1 fires once for 1 rather than five times or not
+    /// at all, and +30s naturally re-arms the countdown.
+    private var lastRestHapticSecond: Int?
+
     /// Starts the rest timer using the per-exercise override when set, otherwise falls
     /// back to the global default. Reading the override at fire-time means edits to
     /// a pill mid-workout take effect on the very next set.
@@ -1386,6 +1404,7 @@ final class WorkoutLoggerViewModel {
         // what's up next, and Skip; tapping it expands to the ring.
         isRestTimerMinimized = true
         restTimerStartDate = Date()
+        lastRestHapticSecond = nil
         updateLiveActivity()
 
         // Schedule a local "rest done" notification keyed by workoutId (#369).
@@ -1404,16 +1423,47 @@ final class WorkoutLoggerViewModel {
         guard isRestTimerActive, !isPaused, let startDate = restTimerStartDate else { return }
         let elapsed = Date().timeIntervalSince(startDate)
         restTimeRemaining = restDuration - elapsed
+        fireRestCountdownHapticIfNeeded()
     }
 
     func tickRestTimer() {
         guard isRestTimerActive, !isPaused else { return }
         restTimeRemaining -= 1
+        fireRestCountdownHapticIfNeeded()
     }
+
+    /// Ticks the wrist/phone for each of the final `restHapticLeadInSeconds`, then
+    /// plays the three-second alarm once at zero.
+    ///
+    /// Called from both `tickRestTimer` and `recalculateRestTimer` so returning
+    /// from the background mid-countdown still gets the alarm rather than
+    /// silently skipping it.
+    private func fireRestCountdownHapticIfNeeded() {
+        guard isRestTimerActive, !isPaused else { return }
+        guard NotificationService.shared.restHapticsEnabled else { return }
+
+        if restTimeRemaining <= 0 {
+            guard lastRestHapticSecond != 0 else { return }
+            lastRestHapticSecond = 0
+            Haptics.restAlarm()
+            return
+        }
+
+        // `ceil` so 4.2s remaining is "5 seconds left", matching what the bar reads.
+        let second = Int(ceil(restTimeRemaining))
+        guard second <= Self.restHapticLeadInSeconds else { return }
+        guard lastRestHapticSecond != second else { return }
+        lastRestHapticSecond = second
+        Haptics.restCountdownTick()
+    }
+
+    /// How many seconds of countdown ticks precede the end-of-rest alarm.
+    static let restHapticLeadInSeconds = 5
 
     func skipRestTimer() {
         restTimeRemaining = 0
         isRestTimerActive = false
+        lastRestHapticSecond = nil
         // Reset minimize state so the next rest period always starts fullscreen.
         isRestTimerMinimized = false
         updateLiveActivity()
@@ -1426,6 +1476,8 @@ final class WorkoutLoggerViewModel {
     func extendRestTimer(_ seconds: Double = 30) {
         restTimeRemaining += seconds
         restDuration += seconds
+        // +30s from an already-elapsed timer must be able to alarm again.
+        lastRestHapticSecond = nil
         updateLiveActivity()
     }
 

@@ -16,7 +16,6 @@ struct ActiveWorkoutView: View {
     @State private var selectedPhotos: [PhotosPickerItem] = []
     @State private var photoImages: [UIImage] = []
     @State private var timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
-    @State private var restTimerHapticFired = false
     @State private var showExerciseJumper = false
     /// Shared geometry namespace for the list → focus zoom push. Each exercise
     /// card is a `matchedTransitionSource`; the pushed `WorkoutFocusView`
@@ -193,52 +192,12 @@ struct ActiveWorkoutView: View {
                         firstTutorialSeen = true
                     }
                 }
-
-                // Exercise Transition Overlay
-                if viewModel.showExerciseTransition {
-                    Color.black.opacity(0.4)
-                        .ignoresSafeArea()
-                        .onTapGesture { withAnimation { viewModel.dismissTransition() } }
-
-                    VStack {
-                        Spacer()
-                        ExerciseTransitionCard(
-                            viewModel: viewModel,
-                            onAddExercise: { showExercisePicker = true },
-                            onFinishWorkout: {
-                                Haptics.success()
-                                workoutDescription = ""
-                                showFinishSheet = true
-                            }
-                        )
-                            .padding(Theme.Spacing.md)
-                            .transition(.move(edge: .bottom).combined(with: .opacity))
-                    }
-                    .animation(.xomConfident, value: viewModel.showExerciseTransition)
-                }
             }
             .overlay(alignment: .bottomTrailing) {
                 if isAnyCaptureActive {
                     soundtrackCaptureIcon
                         .padding(.trailing, Theme.Spacing.md)
                         .padding(.bottom, Theme.Spacing.sm)
-                }
-            }
-            // Rest timer — one presentation shared by list and focus mode.
-            // It used to render three different ways (inline card in list,
-            // full-screen overlay in focus, in-flow banner when minimized),
-            // which is a large part of why the two modes felt like different
-            // apps.
-            .safeAreaInset(edge: .bottom) {
-                if viewModel.isRestTimerActive {
-                    RestTimerBar(
-                        viewModel: viewModel,
-                        onSkip: {
-                            viewModel.skipRestTimer()
-                            restTimerHapticFired = false
-                        }
-                    )
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
             }
             .toolbar(.hidden, for: .navigationBar)
@@ -261,6 +220,54 @@ struct ActiveWorkoutView: View {
                     .environment(authService)
             }
         }
+        // Rest timer — one presentation shared by list and focus mode.
+        //
+        // It hangs off the NavigationStack, NOT the list screen inside it.
+        // Focus mode is a real push now, so anything attached inside the stack
+        // is covered by the pushed screen: the timer kept running but the bar
+        // simply wasn't on screen in focus mode. Docking it here means the same
+        // bar stays put across the push, which is also why the collapsed/
+        // expanded choice survives navigating between the two.
+        .safeAreaInset(edge: .bottom) {
+            if viewModel.isRestTimerActive {
+                RestTimerBar(
+                    viewModel: viewModel,
+                    onSkip: { viewModel.skipRestTimer() }
+                )
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
+        // Exercise-transition card — same reasoning as the rest bar. Finishing
+        // an exercise in focus mode used to set `showExerciseTransition` with
+        // nothing on screen to render it, so the flow silently advanced and the
+        // card ambushed the lifter later, when they popped back to the list.
+        // Overlaying the whole stack means it appears the moment the exercise
+        // completes, in whichever mode they're in.
+        .overlay {
+            if viewModel.showExerciseTransition {
+                ZStack {
+                    Color.black.opacity(0.4)
+                        .ignoresSafeArea()
+                        .onTapGesture { withAnimation { viewModel.dismissTransition() } }
+
+                    VStack {
+                        Spacer()
+                        ExerciseTransitionCard(
+                            viewModel: viewModel,
+                            onAddExercise: { showExercisePicker = true },
+                            onFinishWorkout: {
+                                Haptics.success()
+                                workoutDescription = ""
+                                showFinishSheet = true
+                            }
+                        )
+                        .padding(Theme.Spacing.md)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                    }
+                }
+            }
+        }
+        .animation(.xomConfident, value: viewModel.showExerciseTransition)
         #if DEBUG
         .task {
             // Agent screenshot helper. Auto-open the mid-workout exercise
@@ -273,18 +280,14 @@ struct ActiveWorkoutView: View {
         }
         #endif
         .onReceive(timer) { _ in
+            // Rest haptics (5s of ticks, then the alarm at zero) are owned by
+            // `tickRestTimer` now. They used to live here as a single buzz at
+            // zero, which meant they were tied to this view being on screen.
             viewModel.tickRestTimer()
             viewModel.tickLiveActivity()
-            // Haptic fires once when rest timer crosses zero
-            if viewModel.isRestTimerActive && viewModel.restTimeRemaining <= 0 && !restTimerHapticFired {
-                restTimerHapticFired = true
-                let generator = UINotificationFeedbackGenerator()
-                generator.notificationOccurred(.success)
-            }
         }
         .onChange(of: viewModel.isRestTimerActive) { _, isActive in
             if isActive {
-                restTimerHapticFired = false
                 pendingScrollIndex = viewModel.focusExerciseIndex
                 if !firstRestTimerSeen {
                     firstRestTimerSeen = true
