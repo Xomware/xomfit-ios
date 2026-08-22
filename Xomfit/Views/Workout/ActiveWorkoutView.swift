@@ -46,6 +46,12 @@ struct ActiveWorkoutView: View {
     /// Single-shot rest timer onboarding toast.
     @State private var restTimerToast: Toast?
 
+    /// Height of an inline navigation bar, used to keep the celebration banner
+    /// clear of the back button.
+    private static let navigationBarHeight: CGFloat = 44
+    /// How long a celebration stays on screen before dismissing itself.
+    private static let celebrationDuration: TimeInterval = 5
+
     var body: some View {
         @Bindable var viewModel = viewModel
 
@@ -169,17 +175,6 @@ struct ActiveWorkoutView: View {
                 // Soundtrack capture icon — small circle in bottom-right corner,
                 // visible while at least one capture service is polling.
 
-                // PR Celebration Banner
-                if viewModel.showPRCelebration, let pr = viewModel.newPR {
-                    VStack {
-                        PRCelebrationBanner(pr: pr) {
-                            withAnimation { viewModel.showPRCelebration = false }
-                        }
-                        .transition(.move(edge: .top).combined(with: .opacity))
-                        Spacer()
-                    }
-                }
-
                 // First-run tutorial overlay (#310). Sits above the rest of
                 // the workout UI so it's the first thing the user sees on
                 // their first active workout. Persisted by AppStorage so it
@@ -237,6 +232,35 @@ struct ActiveWorkoutView: View {
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
+        // PR celebration — third and last thing that was trapped inside the
+        // list screen. A lifter hits a PR in focus mode more often than in the
+        // list, which is exactly where the banner never appeared.
+        //
+        // `.top` rather than a safeAreaInset: a celebration that shoves the
+        // whole screen down mid-set is worse than one that floats over the
+        // header for a few seconds.
+        .overlay(alignment: .top) {
+            if viewModel.showPRCelebration, let pr = viewModel.newPR {
+                PRCelebrationBanner(pr: pr) {
+                    withAnimation { viewModel.showPRCelebration = false }
+                }
+                // Clear the navigation bar. The overlay is measured against the
+                // whole stack, which the nav bar is drawn inside rather than
+                // below, so without this the banner covers the back button and
+                // the pause control on the focus screen.
+                .padding(.top, Self.navigationBarHeight)
+                .transition(.move(edge: .top).combined(with: .opacity))
+                // Auto-dismiss. The banner had no timer and no dismissal other
+                // than the close button, so a PR hit mid-set used to sit on
+                // screen for the rest of the workout.
+                .task(id: pr.id) {
+                    try? await Task.sleep(for: .seconds(Self.celebrationDuration))
+                    guard !Task.isCancelled else { return }
+                    withAnimation(.xomChill) { viewModel.showPRCelebration = false }
+                }
+            }
+        }
+        .animation(.xomChill, value: viewModel.showPRCelebration)
         // Exercise-transition card — same reasoning as the rest bar. Finishing
         // an exercise in focus mode used to set `showExerciseTransition` with
         // nothing on screen to render it, so the flow silently advanced and the

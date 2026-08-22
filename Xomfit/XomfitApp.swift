@@ -314,6 +314,9 @@ struct XomFitApp: App {
     ///                                     complete (90×7) without firing the rest
     ///                                     timer — used to screenshot the in-session
     ///                                     "Last 90×7" caption on set 2.
+    ///   XOMFIT_AUTO_PR_BANNER=1         → seed a fake PR celebration so the
+    ///                                     banner can be screenshotted without
+    ///                                     a live network PR check.
     ///   XOMFIT_AUTO_SHOW_JUMPER=1       → auto-open the Switch Exercise sheet on
     ///                                     first appearance — used to screenshot
     ///                                     the new Add Exercise (+) toolbar button.
@@ -398,6 +401,16 @@ struct XomFitApp: App {
 
         // Flip into focus mode so the gym-floor layout is the first thing the
         // user / agent sees (#402).
+        // Seed a celebration so the banner's placement and auto-dismiss can be
+        // screenshotted without a live PR (which needs the network).
+        if env["XOMFIT_AUTO_PR_BANNER"] == "1" {
+            workoutSession.newPR = PersonalRecord(
+                id: "debug-pr", userId: userId, exerciseId: "ex-bench-flat",
+                exerciseName: "Bench Press", weight: 245, reps: 5,
+                date: Date(), previousBest: 225
+            )
+            workoutSession.showPRCelebration = true
+        }
         if env["XOMFIT_AUTO_ENTER_FOCUS"] == "1" {
             workoutSession.focusMode = true
             workoutSession.syncFocusToCurrentExercise()
