@@ -184,6 +184,34 @@ final class HealthKitTests: XCTestCase {
         XCTAssertTrue(prefs.reminderDays.allSatisfy { (0...6).contains($0) })
     }
 
+
+    // MARK: - Import diagnosis
+
+    /// HealthKit never reveals read permission, so "denied" and "you have no
+    /// workouts" are indistinguishable from a query. The app used to report
+    /// both as "Nothing new to import", which asserts the harmless one.
+    func testDiagnosisIsUnavailableWithoutHealthKit() async {
+        guard !service.isAvailable else { return }
+        let result = await service.diagnose()
+        XCTAssertEqual(result, .unavailable, "No HealthKit must not be reported as a permission problem")
+    }
+
+    /// The "have we ever read a workout" flag is what separates a real access
+    /// problem from an empty library, so it must survive a relaunch.
+    func testSeenWorkoutFlagPersists() {
+        let key = "health.hasEverSeenWorkout"
+        let original = UserDefaults.standard.bool(forKey: key)
+        addTeardownBlock {
+            UserDefaults.standard.set(original, forKey: key)
+        }
+
+        UserDefaults.standard.set(true, forKey: key)
+        XCTAssertTrue(UserDefaults.standard.bool(forKey: key))
+
+        UserDefaults.standard.set(false, forKey: key)
+        XCTAssertFalse(UserDefaults.standard.bool(forKey: key))
+    }
+
 }
 
 // MARK: - Cardio modality mapping

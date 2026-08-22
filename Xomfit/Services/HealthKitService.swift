@@ -24,6 +24,60 @@ final class HealthKitService {
     private(set) var isAuthorized: Bool = false
     private(set) var lastImportError: String?
 
+    /// Why cardio import might be showing the user nothing.
+    ///
+    /// HealthKit deliberately never reveals *read* permission — that would leak
+    /// which data types a user has. So "you denied us" and "you own no workouts"
+    /// are indistinguishable from a query: both come back empty. The app has
+    /// been reporting "Nothing new to import" for both, which reads as "all
+    /// good, there's just nothing there" in the one case where something is
+    /// actually wrong.
+    ///
+    /// What *can* be distinguished is whether the permission sheet has been
+    /// shown at all (`getRequestStatusForAuthorization`), and whether a single
+    /// workout has ever come back. Seeing one proves read access; never seeing
+    /// one after asking means it is either denied or genuinely empty — and that
+    /// is worth naming rather than papering over.
+    enum ImportDiagnosis {
+        /// No HealthKit on this device (iPad, simulator).
+        case unavailable
+        /// The permission sheet has never been shown.
+        case notYetAsked
+        /// Asked, but no workout has ever come back. Denied, or nothing to read.
+        case noAccessOrNoData
+        /// Workouts have been read successfully at least once.
+        case working
+    }
+
+    private static let seenWorkoutKey = "health.hasEverSeenWorkout"
+
+    /// True once any workout sample has come back from HealthKit — including
+    /// ones we filter out. Our own workouts and non-cardio types still prove
+    /// read access, which is the only thing this flag is claiming.
+    private var hasEverSeenWorkout: Bool {
+        get { UserDefaults.standard.bool(forKey: Self.seenWorkoutKey) }
+        set { UserDefaults.standard.set(newValue, forKey: Self.seenWorkoutKey) }
+    }
+
+    private func noteWorkoutsSeen(_ workouts: [HKWorkout]) {
+        guard !workouts.isEmpty, !hasEverSeenWorkout else { return }
+        hasEverSeenWorkout = true
+    }
+
+    /// Best explanation available for why cardio import is or isn't producing
+    /// anything. Drives the hint in the Cardio tab.
+    func diagnose() async -> ImportDiagnosis {
+        guard isAvailable else { return .unavailable }
+        if hasEverSeenWorkout { return .working }
+
+        let status = try? await store.statusForAuthorizationRequest(
+            toShare: writeTypes, read: readTypes
+        )
+        // `.shouldRequest` means the sheet would still appear, so the user has
+        // not been asked (or new types were added since they were).
+        return status == .shouldRequest ? .notYetAsked : .noAccessOrNoData
+    }
+
     // MARK: - Today's summary
     //
     // Surfaced on the home and profile screens so the app can show what the
@@ -186,6 +240,8 @@ final class HealthKitService {
             store.execute(query)
         }
 
+        noteWorkoutsSeen(workouts)
+
         let ownBundleId = Bundle.main.bundleIdentifier
         return workouts.compactMap { workout in
             guard workout.sourceRevision.source.bundleIdentifier != ownBundleId else { return nil }
@@ -271,6 +327,8 @@ final class HealthKitService {
             }
             store.execute(query)
         }
+
+        noteWorkoutsSeen(result.0)
 
         let ownBundleId = Bundle.main.bundleIdentifier
         let sessions = result.0.compactMap { workout -> CardioSession? in

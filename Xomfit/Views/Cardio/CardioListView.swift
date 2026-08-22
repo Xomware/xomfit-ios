@@ -16,6 +16,10 @@ struct CardioListView: View {
     /// "why isn't my Garmin run here".
     @AppStorage(CardioService.autoImportKey) private var autoImportCardio: Bool = false
 
+    /// Why import might be showing nothing. Refreshed on appear and after every
+    /// import attempt.
+    @State private var diagnosis: HealthKitService.ImportDiagnosis = .unavailable
+
     var body: some View {
         ZStack {
             Theme.background.ignoresSafeArea()
@@ -26,6 +30,8 @@ struct CardioListView: View {
                 VStack(spacing: 0) {
                     if showAutoImportPrompt {
                         autoImportPrompt
+                    } else if diagnosis == .noAccessOrNoData {
+                        noHealthDataHint
                     }
                     if service.sessions.isEmpty {
                         emptyState
@@ -65,6 +71,7 @@ struct CardioListView: View {
             guard !hasLoaded else { return }
             await load()
             await autoImportIfEnabled()
+            diagnosis = await HealthKitService.shared.diagnose()
         }
         .refreshable { await load() }
         .overlay(alignment: .bottom) {
@@ -100,6 +107,36 @@ struct CardioListView: View {
     /// a menu item most people never opened.
     private var showAutoImportPrompt: Bool {
         !autoImportCardio && HealthKitService.shared.isAvailable
+    }
+
+    /// Shown when import is on, has run, and has never once seen a workout.
+    ///
+    /// That state is ambiguous by design — HealthKit will not say whether read
+    /// access was denied — so this names both possibilities rather than the
+    /// old "Nothing new to import", which asserted the harmless one.
+    private var noHealthDataHint: some View {
+        HStack(spacing: Theme.Spacing.md) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.title3)
+                .foregroundStyle(Theme.alert)
+
+            VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
+                Text("No workouts found in Health")
+                    .font(Theme.fontFootnote.weight(.semibold))
+                    .foregroundStyle(Theme.textPrimary)
+                Text("Either nothing has synced yet, or XomFit doesn't have permission. Check Health → Sharing → Apps → XomFit and turn on Workouts.")
+                    .font(Theme.fontCaption)
+                    .foregroundStyle(Theme.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer(minLength: 0)
+        }
+        .padding(Theme.Spacing.md)
+        .background(Theme.surface, in: .rect(cornerRadius: Theme.Radius.md))
+        .padding(.horizontal, Theme.Spacing.md)
+        .padding(.bottom, Theme.Spacing.sm)
+        .accessibilityElement(children: .combine)
     }
 
     private var autoImportPrompt: some View {
@@ -176,8 +213,9 @@ struct CardioListView: View {
         let count = await service.importNewFromHealth(userId: userId)
         await service.fetchSessions(userId: userId)
         isImporting = false
+        diagnosis = await HealthKitService.shared.diagnose()
         importMessage = count == 0
-            ? "Nothing new in Health yet"
+            ? "No workouts found in Health"
             : "Imported \(count) session\(count == 1 ? "" : "s") from Health"
         Haptics.light()
         try? await Task.sleep(for: .seconds(2.5))
@@ -193,8 +231,10 @@ struct CardioListView: View {
         let count = await service.importFromHealth(userId: userId)
         isImporting = false
 
+        diagnosis = await HealthKitService.shared.diagnose()
         importMessage = count == 0
-            ? "Nothing new to import"
+            // "Nothing new" is only true when we can actually read Health.
+            ? (diagnosis == .noAccessOrNoData ? "No workouts found in Health" : "Nothing new to import")
             : "Imported \(count) session\(count == 1 ? "" : "s")"
         Haptics.light()
 
