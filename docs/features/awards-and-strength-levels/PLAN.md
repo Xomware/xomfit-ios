@@ -1,6 +1,6 @@
 # Plan: Awards, Milestones, and Strength Levels
 
-**Status**: Phases 1 and 2 complete — Phase 3 not started
+**Status**: All three phases complete
 **Created**: 2026-08-22
 
 ## Headline finding
@@ -53,7 +53,7 @@ matched on exercise id so arrival order doesn't matter (the PR check is a networ
 round trip; the tier check is local and lands first). Celebrations are dropped
 rather than queued — two banners back-to-back mid-set is noise.
 
-## Phase 3 — More badges
+## Phase 3 — More badges ✅ DONE
 
 ### 3a. Badges that need no new data
 
@@ -84,7 +84,9 @@ Two options:
    through the backend. Costs a schema change on `xomfit-backend`, but the badge
    becomes derivable from history like every other one.
 
-**Recommend option 2** — every other badge is a pure function of workout history,
+**Chose option 2.** Migration `20260822_beat_rest_timer.sql`; `WorkoutSet.beatRestTimer`.
+
+Original reasoning: — every other badge is a pure function of workout history,
 and one counter that isn't breaks that property. But it's a backend change, so
 flag it before starting.
 
@@ -95,9 +97,9 @@ within 15s of rest ending" — same behavior (be ready), better incentive.
 ## Sequencing
 
 1. ~~Phase 1 — pure wiring of finished components.~~ Done.
-2. Phase 3a — additive catalog entries, no schema risk.
+2. ~~Phase 3a — additive catalog entries.~~ Done. Catalog 10 → 26 badges.
 3. ~~Phase 2 — tier-up moment.~~ Done.
-4. Phase 3b — only after the `beatRestTimer` storage decision is made.
+4. ~~Phase 3b.~~ Done — persisted on the set, counts forward from the migration.
 
 ## Open questions for Dominick
 

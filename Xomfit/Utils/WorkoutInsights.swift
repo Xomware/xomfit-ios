@@ -73,6 +73,33 @@ enum WorkoutInsights {
         return best
     }
 
+    /// Longest run of consecutive calendar weeks containing at least one workout.
+    ///
+    /// The weekly counterpart to `longestStreak`. A consecutive-*day* streak
+    /// breaks on every rest day, which makes it a bad measure of consistency for
+    /// lifting specifically — training six days a week and taking Sunday off
+    /// should read as consistent, not as a streak of one.
+    static func longestWeeklyStreak(workouts: [Workout], calendar: Calendar = .current) -> Int {
+        let weeks = Set(workouts.compactMap { workout -> Date? in
+            calendar.dateInterval(of: .weekOfYear, for: workout.startTime)?.start
+        })
+        guard !weeks.isEmpty else { return 0 }
+
+        let sorted = weeks.sorted()
+        var best = 1
+        var run = 1
+        for i in 1..<sorted.count {
+            if let next = calendar.date(byAdding: .weekOfYear, value: 1, to: sorted[i - 1]),
+               next == sorted[i] {
+                run += 1
+                best = max(best, run)
+            } else {
+                run = 1
+            }
+        }
+        return best
+    }
+
     // MARK: - Per-day rollups
 
     /// Map of `startOfDay -> workout count` for the given workouts.

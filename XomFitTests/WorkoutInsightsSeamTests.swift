@@ -132,4 +132,105 @@ final class WorkoutInsightsSeamTests: XCTestCase {
         XCTAssertEqual(TrainingRegion.legs.templateCategory, .legs)
         XCTAssertEqual(TrainingRegion.core.templateCategory, .custom)
     }
+
+    // MARK: - Weekly streak
+
+    private func workout(daysAgo: Int, hour: Int = 12, beatTheClockSets: Int = 0) -> Workout {
+        let cal = Calendar.current
+        let day = cal.date(byAdding: .day, value: -daysAgo, to: Date())!
+        let start = cal.date(bySettingHour: hour, minute: 0, second: 0, of: day)!
+        let bench = ExerciseDatabase.byId["ex-bench-flat"]!
+        let sets = (0..<3).map { i in
+            WorkoutSet(
+                id: "s-\(daysAgo)-\(i)", exerciseId: bench.id, weight: 100, reps: 8,
+                rpe: nil, isPersonalRecord: false, completedAt: start,
+                beatRestTimer: i < beatTheClockSets
+            )
+        }
+        return Workout(
+            id: "w-\(daysAgo)-\(hour)", userId: "u1", name: "W",
+            exercises: [WorkoutExercise(id: "we-\(daysAgo)-\(hour)", exercise: bench, sets: sets, notes: nil)],
+            startTime: start
+        )
+    }
+
+    /// The reason this exists instead of reusing `longestStreak`: training six
+    /// days a week and resting Sunday should read as consistent, not as a
+    /// one-day streak.
+    func testWeeklyStreakSurvivesRestDays() {
+        // One workout a week for four weeks — no two are on consecutive days.
+        let workouts = [0, 7, 14, 21].map { workout(daysAgo: $0) }
+
+        XCTAssertEqual(WorkoutInsights.longestWeeklyStreak(workouts: workouts), 4)
+        XCTAssertEqual(
+            WorkoutInsights.longestStreak(workouts: workouts), 1,
+            "Day streak sees these as unrelated, which is the whole point"
+        )
+    }
+
+    func testWeeklyStreakBreaksOnAMissedWeek() {
+        // Weeks 0, 1, then a gap, then two more.
+        let workouts = [0, 7, 28, 35].map { workout(daysAgo: $0) }
+        XCTAssertEqual(WorkoutInsights.longestWeeklyStreak(workouts: workouts), 2)
+    }
+
+    func testWeeklyStreakIsZeroWithNoWorkouts() {
+        XCTAssertEqual(WorkoutInsights.longestWeeklyStreak(workouts: []), 0)
+    }
+
+    // MARK: - Badge criteria
+
+    func testTierBadgesCountBetterTiersToo() {
+        // Reaching Diamond must not un-earn the Gold badge on the way past it.
+        let unlocked = BadgeEvaluator.unlocked(
+            for: [workout(daysAgo: 0)],
+            firstPRDate: nil,
+            rankedTiers: [.diamond, .diamond, .diamond]
+        ).map(\.id)
+
+        XCTAssertTrue(unlocked.contains("tier-gold-1"))
+        XCTAssertTrue(unlocked.contains("tier-diamond-3"))
+    }
+
+    /// Ranks are unavailable until bodyweight is known. That must leave the
+    /// badges locked, never falsely unlocked.
+    func testTierBadgesStayLockedWithoutRanks() {
+        let unlocked = BadgeEvaluator.unlocked(
+            for: [workout(daysAgo: 0)], firstPRDate: nil, rankedTiers: []
+        ).map(\.id)
+
+        XCTAssertFalse(unlocked.contains("tier-gold-1"))
+    }
+
+    func testEarlyBirdAndNightOwlAreCountedSeparately() {
+        let early = (0..<10).map { workout(daysAgo: $0, hour: 5) }
+        let unlocked = BadgeEvaluator.unlocked(for: early, firstPRDate: nil).map(\.id)
+
+        XCTAssertTrue(unlocked.contains("early-bird-10"))
+        XCTAssertFalse(unlocked.contains("night-owl-10"))
+    }
+
+    func testBeatTheClockCountsSetsAcrossWorkouts() {
+        // 4 workouts x 3 qualifying sets = 12, over the 10 threshold.
+        let workouts = (0..<4).map { workout(daysAgo: $0, beatTheClockSets: 3) }
+        let unlocked = BadgeEvaluator.unlocked(for: workouts, firstPRDate: nil).map(\.id)
+
+        XCTAssertTrue(unlocked.contains("beat-the-clock-10"))
+        XCTAssertFalse(unlocked.contains("beat-the-clock-100"))
+    }
+
+    /// Sets logged before the column existed decode as false, so history must
+    /// not retroactively unlock this.
+    func testBeatTheClockIgnoresSetsThatDidNotBeatTheClock() {
+        let workouts = (0..<20).map { workout(daysAgo: $0, beatTheClockSets: 0) }
+        let unlocked = BadgeEvaluator.unlocked(for: workouts, firstPRDate: nil).map(\.id)
+
+        XCTAssertFalse(unlocked.contains("beat-the-clock-10"))
+    }
+
+    func testEveryCatalogBadgeHasAUniqueId() {
+        let ids = BadgeCatalog.all.map(\.id)
+        XCTAssertEqual(Set(ids).count, ids.count, "Duplicate badge ids would collide in the unlocked set")
+    }
+
 }

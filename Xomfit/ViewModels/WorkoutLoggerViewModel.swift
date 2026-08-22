@@ -743,8 +743,19 @@ final class WorkoutLoggerViewModel {
             // Toggle off
             exercises[exerciseIndex].sets[setIndex].completedAt = Date.distantPast
             exercises[exerciseIndex].sets[setIndex].isPersonalRecord = false
+            exercises[exerciseIndex].sets[setIndex].beatRestTimer = false
         } else {
             exercises[exerciseIndex].sets[setIndex].completedAt = Date()
+
+            // Did they beat the clock? Read *before* `startRestTimer` below
+            // replaces the timer with this set's own rest — after that call the
+            // answer is always yes and the badge is worthless.
+            //
+            // `restTimeRemaining > 0` rather than just `isRestTimerActive`: the
+            // timer keeps running into overtime, and finishing a set 40 seconds
+            // past the buzzer is not beating anything.
+            exercises[exerciseIndex].sets[setIndex].beatRestTimer =
+                isRestTimerActive && restTimeRemaining > 0 && !isPaused
 
             // Decide whether to start the rest timer based on superset / drop-set context.
             //
