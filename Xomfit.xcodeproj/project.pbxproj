@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		06ACBBC7B67A972F6F39A214 /* WorkoutGeneratorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 138F935F3800CBB4B66CD6CC /* WorkoutGeneratorTests.swift */; };
 		0F2396BE1C58B7C7F99F5BC6 /* WorkoutInsightsSeamTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 730E45C30DECC5AA5563EAB4 /* WorkoutInsightsSeamTests.swift */; };
+		AA01B0010000000000000003 /* XomfitWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 30C92F27893E848084361AD6 /* XomfitWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		175D9C785D217A06EBCC6054 /* XomfitWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F3CBFE99B6D75BC1136FCB9 /* XomfitWatchApp.swift */; };
 		2652623F55494AE501D17728 /* AuthServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7B33E534C5D4F6F4A221677 /* AuthServiceTests.swift */; };
 		3AD31D27EAD82F60EE882599 /* AnimationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 325D34C169BA7253ADECB318 /* AnimationTests.swift */; };
@@ -53,6 +54,13 @@
 			remoteGlobalIDString = F2FA6B082F7C0635009E1AB8;
 			remoteInfo = XomfitWidgetExtension;
 		};
+		AA01B0010000000000000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F29F21292F5F61DC00683551 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = D519D8F09D195B6FD3C93CAC;
+			remoteInfo = XomfitWatch;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -65,6 +73,17 @@
 				F2FA6B1F2F7C0636009E1AB8 /* XomfitWidgetExtension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AA01B0010000000000000004 /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				AA01B0010000000000000003 /* XomfitWatch.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
@@ -604,11 +623,13 @@
 				F29F212E2F5F61DC00683551 /* Frameworks */,
 				F29F212F2F5F61DC00683551 /* Resources */,
 				F2FA6B242F7C0636009E1AB8 /* Embed Foundation Extensions */,
+				AA01B0010000000000000004 /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				F2FA6B1E2F7C0636009E1AB8 /* PBXTargetDependency */,
+				AA01B0010000000000000002 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				F29F21332F5F61DC00683551 /* Xomfit */,
@@ -781,6 +802,11 @@
 			target = F2FA6B082F7C0635009E1AB8 /* XomfitWidgetExtension */;
 			targetProxy = F2FA6B1D2F7C0636009E1AB8 /* PBXContainerItemProxy */;
 		};
+		AA01B0010000000000000002 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = D519D8F09D195B6FD3C93CAC /* XomfitWatch */;
+			targetProxy = AA01B0010000000000000001 /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
@@ -815,6 +841,8 @@
 				INFOPLIST_KEY_CFBundleDisplayName = XomFit;
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "XomFit reads your heart rate and calories during a workout so your session on the watch stays accurate.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "XomFit saves your workout to Health so it counts toward your activity rings.";
+				CODE_SIGN_ENTITLEMENTS = XomfitWatch/XomfitWatch.entitlements;
+				INFOPLIST_FILE = XomfitWatch/Info.plist;
 				INFOPLIST_KEY_WKApplication = YES;
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.Xomware.Xomfit;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Xomware.Xomfit.watchkitapp;
@@ -840,6 +868,8 @@
 				INFOPLIST_KEY_CFBundleDisplayName = XomFit;
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "XomFit reads your heart rate and calories during a workout so your session on the watch stays accurate.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "XomFit saves your workout to Health so it counts toward your activity rings.";
+				CODE_SIGN_ENTITLEMENTS = XomfitWatch/XomfitWatch.entitlements;
+				INFOPLIST_FILE = XomfitWatch/Info.plist;
 				INFOPLIST_KEY_WKApplication = YES;
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.Xomware.Xomfit;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Xomware.Xomfit.watchkitapp;

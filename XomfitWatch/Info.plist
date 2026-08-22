@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Xcode has no INFOPLIST_KEY_ equivalent for this one — the build setting
+	     is accepted and then silently dropped from the generated plist, which is
+	     how it went missing. Everything else here is still generated;
+	     GENERATE_INFOPLIST_FILE merges its keys on top of this file.
+
+	     Without workout-processing, watchOS suspends the app on wrist-down and
+	     the HKWorkoutSession dies with it — taking the elapsed timer with it. -->
+	<key>WKBackgroundModes</key>
+	<array>
+		<string>workout-processing</string>
+	</array>
+</dict>
+</plist>
