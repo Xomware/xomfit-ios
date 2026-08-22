@@ -319,6 +319,41 @@ final class StrengthStandardsTests: XCTestCase {
         XCTAssertEqual(TierProgressStore.record(.olympian, for: "ex-squat"), .olympian)
     }
 
+    // MARK: - Published ranks
+
+    /// The privacy line this whole design exists for: a published rank carries
+    /// the tier and nothing else. Bodyweight, sex and age never leave the
+    /// device, and the weights behind the tier aren't shared either.
+    @MainActor
+    func testPublishedRankCarriesNoWeights() {
+        let rank = PublishedRank(
+            exerciseId: "ex-bench-flat",
+            exerciseName: "Bench Press",
+            tier: .diamond
+        )
+        XCTAssertEqual(rank.tier, .diamond)
+        XCTAssertEqual(rank.id, rank.exerciseId, "Identity is the lift, one rank per exercise")
+    }
+
+    /// Another lifter's ranks are read, never computed — this viewer's
+    /// bodyweight must not be able to influence them.
+    @MainActor
+    func testRanksForUnknownUserAreEmptyRatherThanComputed() {
+        let ranks = StrengthRankService.shared.ranks(for: "nobody")
+        XCTAssertTrue(ranks.isEmpty)
+    }
+
+    /// `unranked` is represented by the absence of a row, so it must never be
+    /// publishable — the column has a CHECK (tier BETWEEN 1 AND 6).
+    @MainActor
+    func testUnrankedLiftsAreNotPublishable() {
+        XCTAssertEqual(StrengthTier.unranked.rawValue, 0)
+        XCTAssertTrue(
+            StrengthTier.ranked.allSatisfy { (1...6).contains($0.rawValue) },
+            "Every publishable tier must fit the database CHECK constraint"
+        )
+    }
+
     /// `tierDistribution` is derived from `rankedLifts`, so the bar on the
     /// profile can never disagree with the list beneath it.
     @MainActor

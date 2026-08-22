@@ -235,6 +235,7 @@ struct ProfileView: View {
                 workouts: viewModel.workouts,
                 firstPRDate: viewModel.allPRs.map(\.date).min(),
                 allPRs: viewModel.allPRs,
+                viewedUserId: resolvedUserId,
                 onStartWorkout: statsEmptyStateAction
             )
         case .music:
