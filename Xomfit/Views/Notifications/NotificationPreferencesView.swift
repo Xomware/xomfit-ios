@@ -63,6 +63,9 @@ struct NotificationPreferencesView: View {
                     Section {
                         prefToggle("PR Celebrations", icon: "trophy.fill", isOn: prefs.personalRecords)
                         prefToggle("Workout Reminders", icon: "alarm.fill", isOn: prefs.workoutReminders)
+                        if prefs.workoutReminders.wrappedValue {
+                            reminderSchedule(prefs)
+                        }
                         prefToggle("Challenges", icon: "flag.fill", isOn: prefs.challenges)
                         localToggle(
                             "Weekly Report",
@@ -99,6 +102,92 @@ struct NotificationPreferencesView: View {
             }
         }
     }
+
+    /// Time-of-day and day-of-week controls for the workout reminder.
+    ///
+    /// These preferences existed on the model since the first release and were
+    /// never editable, so the reminder had no schedule to fire on even once
+    /// something read them.
+    @ViewBuilder
+    private func reminderSchedule(_ prefs: Binding<NotificationPreferences>) -> some View {
+        DatePicker(
+            "Time",
+            selection: reminderTimeBinding(prefs),
+            displayedComponents: .hourAndMinute
+        )
+        .font(Theme.fontBody)
+        .foregroundStyle(Theme.textPrimary)
+        .tint(Theme.accent)
+        .listRowBackground(Theme.surface)
+
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            Text("Days")
+                .font(Theme.fontBody)
+                .foregroundStyle(Theme.textPrimary)
+
+            HStack(spacing: Theme.Spacing.xs) {
+                ForEach(0..<7, id: \.self) { day in
+                    dayPill(day, prefs: prefs)
+                }
+            }
+
+            if prefs.reminderDays.wrappedValue.isEmpty {
+                // A reminder switched on with no days selected fires never,
+                // which reads as broken rather than as "off".
+                Text("Pick at least one day or the reminder won't fire.")
+                    .font(Theme.fontCaption)
+                    .foregroundStyle(Theme.destructive)
+            }
+        }
+        .padding(.vertical, Theme.Spacing.xs)
+        .listRowBackground(Theme.surface)
+    }
+
+    private func dayPill(_ day: Int, prefs: Binding<NotificationPreferences>) -> some View {
+        let isOn = prefs.reminderDays.wrappedValue.contains(day)
+        return Button {
+            Haptics.selection()
+            var days = Set(prefs.reminderDays.wrappedValue)
+            if days.contains(day) { days.remove(day) } else { days.insert(day) }
+            prefs.reminderDays.wrappedValue = days.sorted()
+        } label: {
+            Text(Self.dayInitials[day])
+                .font(Theme.fontCaption.weight(.bold))
+                .foregroundStyle(isOn ? .black : Theme.textSecondary)
+                .frame(maxWidth: .infinity, minHeight: 36)
+                .background(
+                    isOn ? AnyShapeStyle(Theme.accent) : AnyShapeStyle(Theme.surfaceElevated),
+                    in: .rect(cornerRadius: Theme.Radius.sm)
+                )
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(Self.dayNames[day])
+        .accessibilityValue(isOn ? "On" : "Off")
+        .accessibilityAddTraits(isOn ? [.isSelected] : [])
+    }
+
+    /// Bridges the stored hour/minute pair to the `DatePicker`'s `Date`.
+    /// Only the time components are ever read back out.
+    private func reminderTimeBinding(_ prefs: Binding<NotificationPreferences>) -> Binding<Date> {
+        Binding(
+            get: {
+                var components = DateComponents()
+                components.hour = prefs.reminderHour.wrappedValue
+                components.minute = prefs.reminderMinute.wrappedValue
+                return Calendar.current.date(from: components) ?? Date()
+            },
+            set: { newDate in
+                let components = Calendar.current.dateComponents([.hour, .minute], from: newDate)
+                prefs.reminderHour.wrappedValue = components.hour ?? 18
+                prefs.reminderMinute.wrappedValue = components.minute ?? 0
+            }
+        )
+    }
+
+    private static let dayInitials = ["S", "M", "T", "W", "T", "F", "S"]
+    private static let dayNames = [
+        "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
+    ]
 
     private func prefToggle(_ label: String, icon: String, isOn: Binding<Bool>) -> some View {
         Toggle(isOn: isOn) {

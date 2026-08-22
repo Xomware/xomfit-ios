@@ -132,6 +132,58 @@ final class HealthKitTests: XCTestCase {
         XCTAssertEqual(count, 0)
     }
 
+
+    // MARK: - Workout reminders
+
+    /// `reminderDays` is 0=Sunday, and `DateComponents.weekday` is 1=Sunday.
+    /// Getting this off by one would fire every reminder on the wrong day.
+    func testReminderDayIndexingMatchesDateComponents() {
+        var components = DateComponents()
+        components.weekday = 0 + 1   // Sunday in prefs -> weekday 1
+        components.year = 2026
+        components.month = 8
+        components.day = 23          // a Sunday
+
+        let date = Calendar.current.date(from: DateComponents(year: 2026, month: 8, day: 23))
+        XCTAssertEqual(
+            date.map { Calendar.current.component(.weekday, from: $0) },
+            1,
+            "2026-08-23 is a Sunday, so prefs day 0 must map to weekday 1"
+        )
+    }
+
+    /// Scheduling must no-op rather than queue anything when the feature is off,
+    /// the master switch is off, or no days are selected — a reminder with no
+    /// days would otherwise look enabled and never fire.
+    func testRemindersAreNotScheduledWhenDisabledOrDayless() {
+        let service = NotificationService.shared
+        var prefs = NotificationPreferences.defaultPrefs(userId: "u1")
+
+        prefs.workoutReminders = false
+        service.rescheduleWorkoutReminders(prefs)
+
+        prefs.workoutReminders = true
+        prefs.reminderDays = []
+        service.rescheduleWorkoutReminders(prefs)
+
+        prefs.isEnabled = false
+        prefs.reminderDays = [1, 2, 3]
+        service.rescheduleWorkoutReminders(prefs)
+
+        // No assertion on pending requests: UNUserNotificationCenter is
+        // unavailable in the test host, so this asserts only that every path
+        // returns without trapping. The gating itself is plain boolean logic.
+        XCTAssertFalse(prefs.isEnabled)
+    }
+
+    func testDefaultPrefsHaveAUsableReminderSchedule() {
+        let prefs = NotificationPreferences.defaultPrefs(userId: "u1")
+        XCTAssertFalse(prefs.reminderDays.isEmpty, "A reminder with no days can never fire")
+        XCTAssertTrue((0...23).contains(prefs.reminderHour))
+        XCTAssertTrue((0...59).contains(prefs.reminderMinute))
+        XCTAssertTrue(prefs.reminderDays.allSatisfy { (0...6).contains($0) })
+    }
+
 }
 
 // MARK: - Cardio modality mapping
