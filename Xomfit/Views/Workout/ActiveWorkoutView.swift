@@ -261,6 +261,15 @@ struct ActiveWorkoutView: View {
             }
         }
         .animation(.xomChill, value: viewModel.activeCelebration)
+        // Post-workout recap. Presented from here rather than the finish sheet
+        // because the finish sheet dismisses itself on save; and it owns the
+        // teardown, so the workout stays alive until the lifter taps Done.
+        .sheet(item: $viewModel.lastSummary) { summary in
+            WorkoutSummarySheet(summary: summary) {
+                viewModel.lastSummary = nil
+                dismiss()
+            }
+        }
         // Exercise-transition card — same reasoning as the rest bar. Finishing
         // an exercise in focus mode used to set `showExerciseTransition` with
         // nothing on screen to render it, so the flow silently advanced and the
@@ -994,7 +1003,9 @@ struct ActiveWorkoutView: View {
             await viewModel.finishWorkout(userId: userId, notes: notes.isEmpty ? nil : notes, photoURLs: uploadedURLs)
             if viewModel.errorMessage == nil {
                 showFinishSheet = false
-                dismiss()
+                // Deliberately not dismissing here. The summary is presented
+                // from this view, so tearing it down now would take the sheet
+                // with it — `dismiss()` moves to the summary's Done button.
             }
         }
     }

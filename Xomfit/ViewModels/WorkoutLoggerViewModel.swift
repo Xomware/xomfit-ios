@@ -94,6 +94,16 @@ final class WorkoutLoggerViewModel {
     // *shown* is decided by `activeCelebration`.
     var newPR: PersonalRecord? = nil
 
+    /// PRs set during this session, in the order they happened. Feeds the
+    /// post-workout summary — `newPR` only ever holds the most recent one.
+    private(set) var sessionPRs: [PersonalRecord] = []
+
+    /// Tier promotions earned during this session.
+    private(set) var sessionTierUps: [WorkoutSummary.TierUp] = []
+
+    /// Built at finish, held until the summary sheet is dismissed.
+    var lastSummary: WorkoutSummary? = nil
+
     /// The one celebration currently on screen, if any.
     ///
     /// Replaces the old `showPRCelebration` flag. A single slot rather than a
@@ -230,6 +240,8 @@ final class WorkoutLoggerViewModel {
         workoutId = UUID().uuidString
         newPR = nil
         activeCelebration = nil
+        sessionPRs = []
+        sessionTierUps = []
         showExerciseTransition = false
         completedExerciseIndex = 0
         nextExerciseIndex = nil
@@ -291,6 +303,8 @@ final class WorkoutLoggerViewModel {
         errorMessage = nil
         newPR = nil
         activeCelebration = nil
+        sessionPRs = []
+        sessionTierUps = []
         showExerciseTransition = false
         completedExerciseIndex = 0
         nextExerciseIndex = nil
@@ -857,8 +871,14 @@ final class WorkoutLoggerViewModel {
                 //      them to head straight to the Finish flow without an
                 //      extra modal (#387). The existing "all complete" cue in
                 //      the persistent pill / footer is enough.
-                let isFinalExercise = nextExerciseIndex == nil
-                if !midSupersetRotation && kind != .timedCircuit && !isFinalExercise {
+                // The card used to be suppressed on the final exercise (#387),
+                // on the theory that the lifter would head straight to Finish
+                // and the footer's "all complete" cue was enough. In practice
+                // the session just went quiet with nothing prompting the
+                // obvious next action. The card's all-complete state — Add
+                // Exercise / Finish Workout — already existed and was simply
+                // unreachable.
+                if !midSupersetRotation && kind != .timedCircuit {
                     showExerciseTransition = true
                 }
             }
@@ -1591,6 +1611,9 @@ final class WorkoutLoggerViewModel {
 
         guard let promotion = TierProgressStore.record(rank.tier, for: exerciseId) else { return }
 
+        sessionTierUps.append(
+            WorkoutSummary.TierUp(exerciseName: loggedExercise.exercise.name, tier: promotion)
+        )
         present(.tierUp(
             exerciseId: exerciseId,
             exerciseName: loggedExercise.exercise.name,
@@ -1654,6 +1677,7 @@ final class WorkoutLoggerViewModel {
 
         // Trigger the celebration banner
         newPR = headline
+        sessionPRs.append(headline)
         present(.personalRecord(headline))
 
         // Also drop it in the inbox. The celebration banner is transient and is
@@ -2137,6 +2161,45 @@ final class WorkoutLoggerViewModel {
 
     // MARK: - Finish Workout
 
+    /// Assembles the post-workout summary.
+    ///
+    /// Badges are diffed against history *without* this workout, so the summary
+    /// reports what this session earned rather than everything the lifter holds.
+    ///
+    /// `firstPRDate` and `rankedTiers` are deliberately passed identically to
+    /// both sides of the diff, which means the "First PR" and strength-tier
+    /// badges can never appear here. That is intentional, not an oversight:
+    /// both already have their own section in the summary, and listing a tier
+    /// promotion twice reads as a bug.
+    private func buildSummary(
+        for workout: Workout,
+        historyBefore: [Workout]
+    ) -> WorkoutSummary {
+        let before = Set(
+            BadgeEvaluator.unlocked(for: historyBefore, firstPRDate: nil).map(\.id)
+        )
+        let after = BadgeEvaluator.unlocked(for: historyBefore + [workout], firstPRDate: nil)
+        let newBadges = after.filter { !before.contains($0.id) }
+
+        let beatTheClock = workout.exercises.reduce(0) { total, exercise in
+            total + exercise.sets.filter { $0.beatRestTimer }.count
+        }
+
+        return WorkoutSummary(
+            workoutName: workout.name,
+            // `duration` already nets out paused intervals; end-minus-start
+            // would count time the lifter explicitly stopped the clock for.
+            duration: duration,
+            totalVolume: workout.totalVolume,
+            totalSets: workout.totalSets,
+            exerciseCount: workout.exercises.count,
+            beatTheClockSets: beatTheClock,
+            personalRecords: sessionPRs,
+            tierUps: sessionTierUps,
+            newBadges: newBadges
+        )
+    }
+
     func finishWorkout(userId: String, notes: String? = nil, photoURLs: [String]? = nil) async {
         endLiveActivity()
         isSaving = true
@@ -2223,6 +2286,10 @@ final class WorkoutLoggerViewModel {
             return picked.uuidString
         }()
 
+        // Snapshot the badge state BEFORE this workout joins the cache, so the
+        // summary can report what this session actually pushed over the line.
+        let historyBefore = WorkoutService.shared.fetchWorkoutsFromCache(userId: userId)
+
         let workout = Workout(
             id: UUID().uuidString,
             userId: userId,
@@ -2241,6 +2308,8 @@ final class WorkoutLoggerViewModel {
             shareFullSoundtrack: shareFullSoundtrack,
             detailedRatings: detailedRatings.hasAnyRating ? detailedRatings : nil
         )
+
+        lastSummary = buildSummary(for: workout, historyBefore: historyBefore)
 
         do {
             // Save workout to Supabase (queues for retry on failure).

@@ -257,4 +257,81 @@ final class WorkoutSkipCursorTests: XCTestCase {
         )
     }
 
+
+    // MARK: - All-exercises-done prompt
+
+    /// The card used to be suppressed on the final exercise, on the theory that
+    /// the lifter would head straight to Finish. In practice the session went
+    /// quiet with nothing prompting the obvious next action.
+    func testTransitionCardShowsWhenTheLastExerciseCompletes() {
+        seed(exercises: 2, sets: 2)
+        for exIdx in 0..<2 {
+            for setIdx in 0..<2 {
+                sut.completeSet(exerciseIndex: exIdx, setIndex: setIdx)
+            }
+        }
+
+        XCTAssertTrue(sut.allExercisesComplete)
+        XCTAssertTrue(
+            sut.showExerciseTransition,
+            "Finishing the last exercise must prompt Add Exercise / Finish Workout"
+        )
+        XCTAssertNil(
+            sut.nextExerciseIndex,
+            "Nothing left to move on to — the card should be in its all-done state"
+        )
+    }
+
+    /// Mid-workout the card still points somewhere, so the all-done branch must
+    /// not take over early.
+    func testTransitionCardStillOffersTheNextExerciseMidWorkout() {
+        seed(exercises: 2, sets: 2)
+        for setIdx in 0..<2 {
+            sut.completeSet(exerciseIndex: 0, setIndex: setIdx)
+        }
+
+        XCTAssertTrue(sut.showExerciseTransition)
+        XCTAssertFalse(sut.allExercisesComplete)
+        XCTAssertEqual(sut.nextExerciseIndex, 1)
+    }
+
+    // MARK: - Beat the clock
+
+    /// Read before `startRestTimer` replaces the clock — after that call the
+    /// answer would always be yes and the badge would be worthless.
+    func testSetCompletedWhileRestingCountsAsBeatingTheClock() {
+        seed(exercises: 1, sets: 3)
+
+        // First set: no rest running yet, so there is no clock to beat.
+        sut.completeSet(exerciseIndex: 0, setIndex: 0)
+        XCTAssertFalse(sut.exercises[0].sets[0].beatRestTimer)
+
+        // That started a rest timer, so the next set beats it.
+        XCTAssertTrue(sut.isRestTimerActive)
+        sut.completeSet(exerciseIndex: 0, setIndex: 1)
+        XCTAssertTrue(sut.exercises[0].sets[1].beatRestTimer)
+    }
+
+    func testLettingRestExpireDoesNotCountAsBeatingTheClock() {
+        seed(exercises: 1, sets: 3)
+        sut.completeSet(exerciseIndex: 0, setIndex: 0)
+
+        // Run the clock out. Overtime keeps the timer active but there is
+        // nothing left to beat.
+        sut.restTimeRemaining = 0
+        sut.completeSet(exerciseIndex: 0, setIndex: 1)
+
+        XCTAssertFalse(sut.exercises[0].sets[1].beatRestTimer)
+    }
+
+    func testTogglingASetOffClearsBeatTheClock() {
+        seed(exercises: 1, sets: 3)
+        sut.completeSet(exerciseIndex: 0, setIndex: 0)
+        sut.completeSet(exerciseIndex: 0, setIndex: 1)
+        XCTAssertTrue(sut.exercises[0].sets[1].beatRestTimer)
+
+        sut.completeSet(exerciseIndex: 0, setIndex: 1)   // toggle off
+        XCTAssertFalse(sut.exercises[0].sets[1].beatRestTimer)
+    }
+
 }

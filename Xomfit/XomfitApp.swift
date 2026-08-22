@@ -382,6 +382,16 @@ struct XomFitApp: App {
             }
         }
 
+        // Complete EVERY exercise so the transition card's all-done state
+        // (Add Exercise / Finish Workout) can be screenshotted.
+        if env["XOMFIT_AUTO_COMPLETE_ALL"] == "1" {
+            for exIdx in workoutSession.exercises.indices {
+                for setIdx in workoutSession.exercises[exIdx].sets.indices {
+                    workoutSession.completeSet(exerciseIndex: exIdx, setIndex: setIdx)
+                }
+            }
+        }
+
         // Screenshot helper for the "Last shows prior in-session set" change:
         // seed only set 1 of the first exercise with concrete weight/reps and
         // mark it complete via direct field writes (no side effects). Skips
@@ -424,6 +434,29 @@ struct XomFitApp: App {
                 exerciseName: "Bench Press",
                 tier: tier
             ))
+        }
+        // Present the post-workout recap without actually finishing (which
+        // needs the network). Seeds one of each achievement kind.
+        if env["XOMFIT_AUTO_SUMMARY"] == "1" {
+            workoutSession.lastSummary = WorkoutSummary(
+                workoutName: "Screenshot Workout",
+                duration: 62 * 60,
+                totalVolume: 24_310,
+                totalSets: 18,
+                exerciseCount: 5,
+                beatTheClockSets: 6,
+                personalRecords: [
+                    PersonalRecord(
+                        id: "debug-pr", userId: userId, exerciseId: "ex-bench-flat",
+                        exerciseName: "Bench Press", weight: 245, reps: 5,
+                        date: Date(), previousBest: 225
+                    )
+                ],
+                tierUps: [
+                    WorkoutSummary.TierUp(exerciseName: "Bench Press", tier: .diamond)
+                ],
+                newBadges: Array(BadgeCatalog.all.prefix(2))
+            )
         }
         if env["XOMFIT_AUTO_ENTER_FOCUS"] == "1" {
             workoutSession.focusMode = true

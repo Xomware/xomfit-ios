@@ -1,9 +1,9 @@
 # Plan: All-Exercises-Done Prompt + Post-Workout Summary
 
-**Status**: Draft — not started
+**Status**: Both items shipped
 **Created**: 2026-08-22
 
-## 1. Prompt when every exercise is complete
+## 1. Prompt when every exercise is complete ✅ DONE
 
 Today the transition card is **deliberately suppressed** on the final exercise:
 
@@ -31,7 +31,7 @@ be reused verbatim; it needs a distinct state, not a hidden row.
 
 Keep the `midSupersetRotation` and `timedCircuit` suppressions — both still hold.
 
-## 2. Post-finish summary modal
+## 2. Post-finish summary modal ✅ DONE
 
 After the finish sheet saves, the workout currently just ends. Add a summary
 modal: duration, total volume, sets, PRs hit, and any milestones earned during
@@ -49,7 +49,17 @@ So build Phase 1 + 2 of the awards plan first, or the summary has nothing to
 show beyond volume and time — which the existing history detail view already
 covers.
 
-## Sequencing
+## Outcome
 
-1. Item 1 (all-done prompt) is independent and small. Can ship alone.
-2. Item 2 waits on the awards work.
+Item 1 was a one-line unsuppression — the card's all-complete state (Add
+Exercise / Finish Workout) already existed and was simply unreachable.
+
+Item 2 shipped after the awards work, so it has real achievements to show:
+`WorkoutSummary` carries duration, volume, sets, exercises, beat-the-clock
+count, this session's PRs and tier promotions, and the badges this workout
+pushed over the line.
+
+Badge diffing passes `firstPRDate` and `rankedTiers` identically to both sides,
+so the "First PR" and strength-tier badges can never appear in the badge list.
+That is deliberate — both already have their own section, and listing a tier
+promotion twice reads as a bug.
