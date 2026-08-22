@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		06ACBBC7B67A972F6F39A214 /* WorkoutGeneratorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 138F935F3800CBB4B66CD6CC /* WorkoutGeneratorTests.swift */; };
 		0F2396BE1C58B7C7F99F5BC6 /* WorkoutInsightsSeamTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 730E45C30DECC5AA5563EAB4 /* WorkoutInsightsSeamTests.swift */; };
+		AA01B0010000000000000006 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA01B0010000000000000005 /* Assets.xcassets */; };
 		AA01B0010000000000000003 /* XomfitWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 30C92F27893E848084361AD6 /* XomfitWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		175D9C785D217A06EBCC6054 /* XomfitWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F3CBFE99B6D75BC1136FCB9 /* XomfitWatchApp.swift */; };
 		2652623F55494AE501D17728 /* AuthServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7B33E534C5D4F6F4A221677 /* AuthServiceTests.swift */; };
@@ -90,6 +91,7 @@
 
 /* Begin PBXFileReference section */
 		138F935F3800CBB4B66CD6CC /* WorkoutGeneratorTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkoutGeneratorTests.swift; sourceTree = "<group>"; };
+		AA01B0010000000000000005 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		1F3CBFE99B6D75BC1136FCB9 /* XomfitWatchApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = XomfitWatchApp.swift; sourceTree = "<group>"; };
 		1F5C89119347DF10938D0467 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/WatchOS.platform/Developer/SDKs/WatchOS11.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		21257445D3A360054D42C415 /* WatchWorkoutState.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchWorkoutState.swift; sourceTree = "<group>"; };
@@ -264,6 +266,7 @@
 				21257445D3A360054D42C415 /* WatchWorkoutState.swift */,
 				1F3CBFE99B6D75BC1136FCB9 /* XomfitWatchApp.swift */,
 				473EB31945A7063B399BD147 /* WatchWorkoutSessionManager.swift */,
+				AA01B0010000000000000005 /* Assets.xcassets */,
 			);
 			name = XomfitWatch;
 			path = XomfitWatch;
@@ -722,6 +725,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AA01B0010000000000000006 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
