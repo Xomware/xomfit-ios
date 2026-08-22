@@ -182,6 +182,40 @@ final class CardioService {
         return count
     }
 
+#if DEBUG
+    /// Seeds the in-memory cache for the auth-bypass screenshot harness, so the
+    /// profile's cardio section renders populated without Supabase.
+    func seedDebugFixtures(userId: String) {
+        let now = Date()
+        func daysAgo(_ n: Int) -> Date {
+            Calendar.current.date(byAdding: .day, value: -n, to: now) ?? now
+        }
+        sessions = [
+            CardioSession(
+                id: "debug-cardio-1", userId: userId, modality: .outdoorRun,
+                startTime: daysAgo(1), endTime: daysAgo(1).addingTimeInterval(2_040),
+                durationSeconds: 2_040, distanceMiles: 4.02, activeCalories: 430,
+                averageHeartRate: 152, maxHeartRate: 171, elevationGainFeet: 210,
+                notes: nil, healthKitUUID: "debug-hk-1", sourceName: "Garmin Connect"
+            ),
+            CardioSession(
+                id: "debug-cardio-2", userId: userId, modality: .outdoorBike,
+                startTime: daysAgo(4), endTime: daysAgo(4).addingTimeInterval(3_600),
+                durationSeconds: 3_600, distanceMiles: 18.4, activeCalories: 610,
+                averageHeartRate: 138, maxHeartRate: 160, elevationGainFeet: 890,
+                notes: nil, healthKitUUID: "debug-hk-2", sourceName: "Apple Watch"
+            ),
+            CardioSession(
+                id: "debug-cardio-3", userId: userId, modality: .row,
+                startTime: daysAgo(9), endTime: daysAgo(9).addingTimeInterval(1_200),
+                durationSeconds: 1_200, distanceMiles: nil, activeCalories: 240,
+                averageHeartRate: 145, maxHeartRate: 166, elevationGainFeet: nil,
+                notes: nil, healthKitUUID: nil, sourceName: nil
+            )
+        ]
+    }
+#endif
+
     // MARK: - Automatic import
 
     /// Whether the lifter has opted into automatic Health imports.

@@ -33,6 +33,7 @@ final class AuthService {
 
             WorkoutService.shared.seedDebugFixtures(userId: mockUser.id.uuidString)
             TemplateService.shared.seedDebugFixtures()
+            CardioService.shared.seedDebugFixtures(userId: mockUser.id.uuidString)
 
             // Mark fitness questionnaire as completed so bypass agents land in
             // the main app, not the onboarding gate.
