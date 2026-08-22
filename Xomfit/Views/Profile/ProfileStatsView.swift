@@ -64,8 +64,12 @@ struct ProfileStatsView: View {
             // against the *signed-in* lifter's bodyweight, sex and age, so
             // running someone else's PRs through them produces a confident
             // number that is simply wrong.
-            if userId != nil {
+            if let userId {
                 StrengthRanksSection(personalRecords: allPRs)
+                // Own profile only, and enforced by the database rather than
+                // chosen here: `cardio_sessions` RLS is `user_id = auth.uid()`,
+                // so another user's sessions are simply unreadable.
+                CardioSection(userId: userId)
             }
             // Own profile only — same signal the Body link uses. Ranks are scored
             // against the *signed-in* lifter's bodyweight, sex and age, so
