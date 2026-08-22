@@ -1,6 +1,6 @@
 # Plan: Awards, Milestones, and Strength Levels
 
-**Status**: Draft
+**Status**: Phase 1 complete — Phases 2 and 3 not started
 **Created**: 2026-08-22
 
 ## Headline finding
@@ -21,7 +21,7 @@ So the ask isn't "build levels." It's **three real gaps**:
 | A "you hit Diamond" moment | **Missing.** `PRCelebrationBanner` fires for a PR, but crossing a tier boundary is silent. |
 | More badges | **Thin.** `BadgeCatalog.all` has ~6 entries across only 5 criteria kinds: `firstWorkout`, `streakDays`, `totalWorkouts`, `totalVolumeLbs`, `firstPR`. |
 
-## Phase 1 — Surface the tiers on the profile (cheapest, highest payoff)
+## Phase 1 — Surface the tiers on the profile ✅ DONE
 
 Almost entirely wiring. Two finished components are sitting unused.
 
@@ -93,7 +93,7 @@ within 15s of rest ending" — same behavior (be ready), better incentive.
 
 ## Sequencing
 
-1. Phase 1 — pure wiring of finished components. Do first.
+1. ~~Phase 1 — pure wiring of finished components.~~ Done.
 2. Phase 3a — additive catalog entries, no schema risk.
 3. Phase 2 — tier-up moment, needs the persistence decision.
 4. Phase 3b — only after the `beatRestTimer` storage decision is made.

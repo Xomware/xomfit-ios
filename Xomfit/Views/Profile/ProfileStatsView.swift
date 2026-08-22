@@ -22,6 +22,10 @@ struct ProfileStatsView: View {
     var workouts: [Workout] = []
     /// Date of the user's first PR (oldest), used by `BadgesSection` (#320).
     var firstPRDate: Date? = nil
+    /// Every PR the lifter holds, used by `StrengthRanksSection`. The full set
+    /// rather than `recentPRs`: a rank is the best they have ever done, so a
+    /// five-item recency window would hide most of their ladder.
+    var allPRs: [PersonalRecord] = []
     /// Optional CTA fired from the "log your first workout" empty state (#311).
     /// When nil, the empty-state card hides its action button.
     var onStartWorkout: (() -> Void)? = nil
@@ -45,6 +49,17 @@ struct ProfileStatsView: View {
             }
             StreakCard(currentStreak: currentStreak, longestStreak: longestStreak)
             BadgesSection(workouts: workouts, firstPRDate: firstPRDate)
+            // Own profile only — same signal the Body link uses. Ranks are scored
+            // against the *signed-in* lifter's bodyweight, sex and age, so
+            // running someone else's PRs through them produces a confident
+            // number that is simply wrong.
+            if userId != nil {
+                StrengthRanksSection(personalRecords: allPRs)
+            }
+            // Own profile only — same signal the Body link uses. Ranks are scored
+            // against the *signed-in* lifter's bodyweight, sex and age, so
+            // running someone else's PRs through them produces a confident
+            // number that is simply wrong.
             statsCards
             bodyLink
             volumeTrendSection

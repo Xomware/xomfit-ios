@@ -232,4 +232,65 @@ final class StrengthStandardsTests: XCTestCase {
         let distribution = service.tierDistribution(from: records)
         XCTAssertEqual(distribution.values.reduce(0, +), 2)
     }
+
+    /// The profile section lists a lifter's best rank per exercise, so a weaker
+    /// PR logged later must not demote them.
+    @MainActor
+    func testRankedLiftsKeepsBestPerExerciseAndSortsStrongestFirst() {
+        StrengthLevelService.shared.setManualBodyweight(200)
+        StrengthLevelService.shared.sex = .male
+
+        let records = [
+            PersonalRecord(id: "1", userId: "u", exerciseId: "ex-bench-flat",
+                           exerciseName: "Bench Press", weight: 315, reps: 1,
+                           date: Date(), previousBest: nil,
+                           kind: .e1rm, estimated1RM: 315),
+            // Same lift, weaker, logged after — must be ignored.
+            PersonalRecord(id: "2", userId: "u", exerciseId: "ex-bench-flat",
+                           exerciseName: "Bench Press", weight: 135, reps: 1,
+                           date: Date(), previousBest: nil,
+                           kind: .e1rm, estimated1RM: 135),
+            PersonalRecord(id: "3", userId: "u", exerciseId: "ex-squat",
+                           exerciseName: "Squat", weight: 225, reps: 1,
+                           date: Date(), previousBest: nil,
+                           kind: .e1rm, estimated1RM: 225)
+        ]
+
+        let lifts = service.rankedLifts(from: records)
+
+        XCTAssertEqual(lifts.count, 2, "One entry per exercise, not per PR")
+        let bench = lifts.first { $0.exerciseId == "ex-bench-flat" }
+        XCTAssertEqual(bench?.rank.estimated1RM, 315, "Best PR wins, not the latest")
+
+        // Sorted strongest-tier-first so the profile leads with the headline rank.
+        let tiers = lifts.map(\.rank.tier)
+        XCTAssertEqual(tiers, tiers.sorted(by: >))
+    }
+
+    /// `tierDistribution` is derived from `rankedLifts`, so the bar on the
+    /// profile can never disagree with the list beneath it.
+    @MainActor
+    func testTierDistributionAgreesWithRankedLifts() {
+        StrengthLevelService.shared.setManualBodyweight(200)
+        StrengthLevelService.shared.sex = .male
+
+        let records = [
+            PersonalRecord(id: "1", userId: "u", exerciseId: "ex-bench-flat",
+                           exerciseName: "Bench Press", weight: 225, reps: 1,
+                           date: Date(), previousBest: nil,
+                           kind: .e1rm, estimated1RM: 225),
+            PersonalRecord(id: "2", userId: "u", exerciseId: "ex-squat",
+                           exerciseName: "Squat", weight: 315, reps: 1,
+                           date: Date(), previousBest: nil,
+                           kind: .e1rm, estimated1RM: 315)
+        ]
+
+        let lifts = service.rankedLifts(from: records)
+        let distribution = service.tierDistribution(from: records)
+
+        XCTAssertEqual(distribution.values.reduce(0, +), lifts.count)
+        for lift in lifts {
+            XCTAssertGreaterThan(distribution[lift.rank.tier] ?? 0, 0)
+        }
+    }
 }

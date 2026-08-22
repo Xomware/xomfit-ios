@@ -209,22 +209,58 @@ final class StrengthLevelService {
 
     // MARK: - Aggregate
 
-    /// Highest rank held on each exercise, for the profile tier breakdown.
-    func tierDistribution(from records: [PersonalRecord]) -> [StrengthTier: Int] {
-        var counts: [StrengthTier: Int] = [:]
-        var bestByExercise: [String: StrengthTier] = [:]
+    /// One ranked lift — the lifter's best rank on a single exercise.
+    struct RankedLift: Identifiable {
+        var id: String { exerciseId }
+        let exerciseId: String
+        let exerciseName: String
+        let rank: StrengthRank
+    }
+
+    /// Best rank held on each ranked exercise, strongest first.
+    ///
+    /// Deduped by exercise and keyed on the *highest* e1RM rather than the most
+    /// recent: a rank is the best a lifter has done, not the last thing they
+    /// logged. A bad day shouldn't demote them.
+    ///
+    /// Ties break on exercise name so the profile ordering is stable between
+    /// renders rather than shuffling on every dictionary iteration.
+    func rankedLifts(from records: [PersonalRecord]) -> [RankedLift] {
+        var bestByExercise: [String: RankedLift] = [:]
 
         for record in records where record.kind == .e1rm {
             let e1rm = record.estimated1RM ?? Exercise.estimateMax(
                 weight: record.weight, reps: record.reps
             )
-            guard let rank = rank(exerciseId: record.exerciseId, estimated1RM: e1rm) else { continue }
-            let existing = bestByExercise[record.exerciseId] ?? .unranked
-            if rank.tier > existing { bestByExercise[record.exerciseId] = rank.tier }
+            guard let rank = rank(exerciseId: record.exerciseId, estimated1RM: e1rm),
+                  rank.tier != .unranked else { continue }
+
+            let candidate = RankedLift(
+                exerciseId: record.exerciseId,
+                exerciseName: record.exerciseName,
+                rank: rank
+            )
+            if let existing = bestByExercise[record.exerciseId],
+               existing.rank.estimated1RM >= rank.estimated1RM {
+                continue
+            }
+            bestByExercise[record.exerciseId] = candidate
         }
 
-        for tier in bestByExercise.values where tier != .unranked {
-            counts[tier, default: 0] += 1
+        return bestByExercise.values.sorted { lhs, rhs in
+            if lhs.rank.tier != rhs.rank.tier { return lhs.rank.tier > rhs.rank.tier }
+            if lhs.rank.estimated1RM != rhs.rank.estimated1RM {
+                return lhs.rank.estimated1RM > rhs.rank.estimated1RM
+            }
+            return lhs.exerciseName < rhs.exerciseName
+        }
+    }
+
+    /// Highest rank held on each exercise, for the profile tier breakdown.
+    func tierDistribution(from records: [PersonalRecord]) -> [StrengthTier: Int] {
+        var counts: [StrengthTier: Int] = [:]
+        for lift in rankedLifts(from: records) {
+            counts[lift.rank.tier, default: 0] += 1
         }
         return counts
     }
