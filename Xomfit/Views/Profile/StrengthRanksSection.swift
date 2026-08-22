@@ -19,9 +19,16 @@ import SwiftUI
 ///     a way to fix it. Silently showing a confident Gold that's actually wrong
 ///     is how this feature loses trust on first view.
 struct StrengthRanksSection: View {
-    let personalRecords: [PersonalRecord]
+    /// The lifter's own PRs. Empty when viewing someone else — their records are
+    /// private (`personal_records` is `user_id = auth.uid()`), which is exactly
+    /// why published ranks exist.
+    var personalRecords: [PersonalRecord] = []
+    /// Whose profile this is. Drives which source the ranks come from.
+    let profileUserId: String
+    let isOwnProfile: Bool
 
     @State private var strength = StrengthLevelService.shared
+    @State private var rankService = StrengthRankService.shared
     @State private var showLifterDetails = false
     @State private var isExpanded = false
 
@@ -33,45 +40,87 @@ struct StrengthRanksSection: View {
         strength.rankedLifts(from: personalRecords)
     }
 
+    /// Ranks published by whoever's profile this is. Used for other lifters,
+    /// where the PRs behind the rank are not readable.
+    private var publishedRanks: [PublishedRank] {
+        rankService.ranks(for: profileUserId)
+    }
+
+    /// One shape for both sources. The next-tier target is own-profile only —
+    /// "25 lb from Gold" would leak the weights the tier deliberately hides.
+    private struct Row: Identifiable {
+        let id: String
+        let exerciseName: String
+        let tier: StrengthTier
+        let nextTierPrompt: String?
+        let isTopOfLadder: Bool
+    }
+
+    private var rows: [Row] {
+        if isOwnProfile {
+            return rankedLifts.map {
+                Row(
+                    id: $0.exerciseId,
+                    exerciseName: $0.exerciseName,
+                    tier: $0.rank.tier,
+                    nextTierPrompt: $0.rank.nextTierPrompt,
+                    isTopOfLadder: $0.rank.tier == .god
+                )
+            }
+        }
+        return publishedRanks.map {
+            Row(
+                id: $0.exerciseId,
+                exerciseName: $0.exerciseName,
+                tier: $0.tier,
+                nextTierPrompt: nil,
+                isTopOfLadder: $0.tier == .god
+            )
+        }
+    }
+
     private var distribution: [StrengthTier: Int] {
-        // Derived from the same pass as `rankedLifts`, so the bar and the list
+        // Derived from the same rows the list renders, so the bar and the list
         // can never disagree about how many Golds the lifter holds.
         var counts: [StrengthTier: Int] = [:]
-        for lift in rankedLifts { counts[lift.rank.tier, default: 0] += 1 }
+        for row in rows { counts[row.tier, default: 0] += 1 }
         return counts
     }
 
-    private var visibleLifts: [StrengthLevelService.RankedLift] {
-        isExpanded ? rankedLifts : Array(rankedLifts.prefix(Self.collapsedLimit))
+    private var visibleRows: [Row] {
+        isExpanded ? rows : Array(rows.prefix(Self.collapsedLimit))
     }
 
     /// Strongest tier the lifter holds on any lift — the headline number.
     private var topTier: StrengthTier? {
-        rankedLifts.first?.rank.tier
+        rows.first?.tier
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
             header
 
-            if strength.bodyweight <= 0 {
+            if isOwnProfile && strength.bodyweight <= 0 {
                 needsBodyweightState
-            } else if rankedLifts.isEmpty {
+            } else if rows.isEmpty {
                 emptyState
             } else {
-                if strength.isProvisional {
+                // Provisional only applies to ranks computed here. Another
+                // lifter's ranks were computed on their device against their
+                // own attributes, so this viewer's missing details are irrelevant.
+                if isOwnProfile && strength.isProvisional {
                     provisionalNotice
                 }
 
                 TierDistributionView(distribution: distribution)
 
                 VStack(spacing: Theme.Spacing.xs) {
-                    ForEach(visibleLifts) { lift in
-                        rankRow(lift)
+                    ForEach(visibleRows) { row in
+                        rankRow(row)
                     }
                 }
 
-                if rankedLifts.count > Self.collapsedLimit {
+                if rows.count > Self.collapsedLimit {
                     showAllToggle
                 }
             }
@@ -80,6 +129,16 @@ struct StrengthRanksSection: View {
         .cardStyle()
         .sheet(isPresented: $showLifterDetails) {
             LifterDetailsSheet()
+        }
+        .task(id: profileUserId) {
+            if isOwnProfile {
+                // Publishing here rather than on every rank computation: this is
+                // the one place the lifter's full PR history is already loaded,
+                // and it re-runs whenever they open their profile.
+                await rankService.publish(rankedLifts, userId: profileUserId)
+            } else {
+                await rankService.fetchRanks(userId: profileUserId)
+            }
         }
     }
 
@@ -99,36 +158,36 @@ struct StrengthRanksSection: View {
 
     // MARK: - Rows
 
-    private func rankRow(_ lift: StrengthLevelService.RankedLift) -> some View {
+    private func rankRow(_ row: Row) -> some View {
         HStack(spacing: Theme.Spacing.sm) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(lift.exerciseName)
+                Text(row.exerciseName)
                     .font(Theme.fontFootnote.weight(.semibold))
                     .foregroundStyle(Theme.textPrimary)
                     .lineLimit(1)
 
                 // The next-tier target is the point of a rank — a label with no
-                // visible next step is just decoration.
-                if let prompt = lift.rank.nextTierPrompt {
+                // visible next step is just decoration. Own profile only.
+                if let prompt = row.nextTierPrompt {
                     Text(prompt)
                         .font(Theme.fontCaption2)
                         .foregroundStyle(Theme.textSecondary)
-                } else if lift.rank.tier == .god {
+                } else if row.isTopOfLadder {
                     Text("Top of the ladder")
                         .font(Theme.fontCaption2)
-                        .foregroundStyle(lift.rank.tier.color)
+                        .foregroundStyle(row.tier.color)
                 }
             }
 
             Spacer(minLength: Theme.Spacing.sm)
 
-            StrengthTierBadge(tier: lift.rank.tier, size: .small)
+            StrengthTierBadge(tier: row.tier, size: .small)
         }
         .padding(.vertical, Theme.Spacing.xs)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(
-            "\(lift.exerciseName), \(lift.rank.tier.displayName)"
-                + (lift.rank.nextTierPrompt.map { ". \($0)" } ?? "")
+            "\(row.exerciseName), \(row.tier.displayName)"
+                + (row.nextTierPrompt.map { ". \($0)" } ?? "")
         )
     }
 
@@ -189,7 +248,7 @@ struct StrengthRanksSection: View {
     }
 
     private var emptyState: some View {
-        Text("Log a few heavy sets to earn your first ranks.")
+        Text(isOwnProfile ? "Log a few heavy sets to earn your first ranks." : "No ranks yet.")
             .font(Theme.fontCaption)
             .foregroundStyle(Theme.textSecondary)
             .padding(.vertical, Theme.Spacing.xs)
@@ -198,7 +257,11 @@ struct StrengthRanksSection: View {
 
 #Preview {
     ScrollView {
-        StrengthRanksSection(personalRecords: PersonalRecord.mockPRs)
+        StrengthRanksSection(
+            personalRecords: PersonalRecord.mockPRs,
+            profileUserId: "preview-user",
+            isOwnProfile: true
+        )
             .padding()
     }
     .background(Theme.background)

@@ -27,6 +27,10 @@ struct ProfileStatsView: View {
     /// five-item recency window would hide most of their ladder.
     var allPRs: [PersonalRecord] = []
 
+    /// Whose profile is being viewed — set for everyone, unlike `userId`, which
+    /// is nil on someone else's profile and acts as the own-profile signal.
+    var viewedUserId: String = ""
+
     /// Best tier on each ranked lift, derived once here and shared by the badge
     /// grid and the strength section so the two can never disagree.
     private var rankedTiers: [StrengthTier] {
@@ -64,8 +68,18 @@ struct ProfileStatsView: View {
             // against the *signed-in* lifter's bodyweight, sex and age, so
             // running someone else's PRs through them produces a confident
             // number that is simply wrong.
+            // Ranks render on every profile. On your own they are computed from
+            // your PRs; on someone else's they come from what that lifter
+            // published, since their records aren't readable here.
+            if !viewedUserId.isEmpty {
+                StrengthRanksSection(
+                    personalRecords: allPRs,
+                    profileUserId: viewedUserId,
+                    isOwnProfile: userId != nil
+                )
+            }
+
             if let userId {
-                StrengthRanksSection(personalRecords: allPRs)
                 // Own profile only, and enforced by the database rather than
                 // chosen here: `cardio_sessions` RLS is `user_id = auth.uid()`,
                 // so another user's sessions are simply unreadable.
