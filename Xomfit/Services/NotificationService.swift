@@ -73,6 +73,8 @@ final class NotificationService {
     private static let restHapticsKey = "xomfit_notif_rest_haptics_enabled"
     private static let trainingNudgeKey = "xomfit_notif_training_nudge_enabled"
     static let trainingNudgeNotifId = "training-nudge"
+    /// One repeating request per selected weekday, suffixed with that weekday.
+    static let workoutReminderPrefix = "workout-reminder-"
     /// Hour of day (local) the come-back nudge is delivered.
     static let trainingNudgeHour = 18
     private static let restNotifPrefix = "rest-"
@@ -212,6 +214,60 @@ final class NotificationService {
         )
     }
 
+    // MARK: - Workout reminders
+
+    /// Rebuilds the weekly workout-reminder schedule from the user's preferences.
+    ///
+    /// These preferences (`workoutReminders`, `reminderHour`, `reminderMinute`,
+    /// `reminderDays`) shipped a long time ago and nothing ever read them —
+    /// the toggle in Settings wrote a flag that no code path consumed, so the
+    /// feature has never once fired. This is the missing half.
+    ///
+    /// Repeating calendar triggers rather than a rolling window of one-shots:
+    /// they survive the app never being opened, which is the entire point of a
+    /// reminder. The tradeoff is that a repeating trigger can't know whether the
+    /// lifter already trained that day, so a reminder can land on a day they've
+    /// already been to the gym. A rolling window could suppress that, but only
+    /// while the app is opened often enough to keep refilling it — which is
+    /// exactly the user this feature is not for.
+    func rescheduleWorkoutReminders(_ prefs: NotificationPreferences) {
+        cancelWorkoutReminders()
+
+        guard prefs.isEnabled, prefs.workoutReminders, isPermissionGranted else { return }
+        guard !prefs.reminderDays.isEmpty else { return }
+
+        let content = UNMutableNotificationContent()
+        content.title = "Time to train"
+        content.body = "Your workout is scheduled for now. Go get it 💪"
+        content.sound = .default
+        content.userInfo = ["type": "workout_reminder"]
+
+        for day in Set(prefs.reminderDays) where (0...6).contains(day) {
+            var components = DateComponents()
+            // `reminderDays` is 0=Sunday to match Swift's weekday indexing being
+            // 1-based for the same day.
+            components.weekday = day + 1
+            components.hour = prefs.reminderHour
+            components.minute = prefs.reminderMinute
+
+            let request = UNNotificationRequest(
+                identifier: "\(Self.workoutReminderPrefix)\(day)",
+                content: content,
+                trigger: UNCalendarNotificationTrigger(dateMatching: components, repeats: true)
+            )
+            UNUserNotificationCenter.current().add(request) { error in
+                if let error {
+                    print("[NotificationService] Failed to schedule reminder for day \(day): \(error.localizedDescription)")
+                }
+            }
+        }
+    }
+
+    func cancelWorkoutReminders() {
+        let ids = (0...6).map { "\(Self.workoutReminderPrefix)\($0)" }
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ids)
+    }
+
     // MARK: - Training nudge (come-back notification)
 
     /// Re-evaluates the under-trained-muscle nudge and schedules (or clears) a
@@ -283,6 +339,11 @@ final class NotificationService {
     var preferences: NotificationPreferences?
 
     func updatePreferences(_ prefs: NotificationPreferences) {
+        // Rebuild the schedule on every write. Cheaper than diffing which of
+        // the four reminder fields changed, and it self-heals a schedule that
+        // drifted (permission revoked and re-granted, prefs synced from another
+        // device).
+        defer { rescheduleWorkoutReminders(prefs) }
         preferences = prefs
         savePreferences()
         Task { await syncPreferencesToSupabase(prefs) }

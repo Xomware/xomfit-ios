@@ -29,7 +29,7 @@ struct MainTabView: View {
     @State private var isDrawerOpen = false
     /// A destination without a tab of its own (Stretches / Stats / Settings),
     /// presented over the shell.
-    @State private var secondaryDestination: AppDestination?
+    @State private var secondaryDestination: AppDestination? = MainTabView.initialSecondaryDestination()
     @State private var tickId = UUID()
 
     /// Pulls an optional initial destination from `XOMFIT_INITIAL_DESTINATION`
@@ -38,11 +38,24 @@ struct MainTabView: View {
     private static func initialDestination() -> AppDestination {
         #if DEBUG
         let raw = ProcessInfo.processInfo.environment["XOMFIT_INITIAL_DESTINATION"]
-        if let raw, let value = AppDestination(rawValue: raw) {
+        if let raw, let value = AppDestination(rawValue: raw), tabbedDestinations.contains(value) {
             return value
         }
         #endif
         return .feed
+    }
+
+    /// Destinations without a tab (Settings, Stats, Stretches) are presented
+    /// over the shell, so `XOMFIT_INITIAL_DESTINATION` has to route them
+    /// separately — pointing `destination` at one just landed on Feed.
+    private static func initialSecondaryDestination() -> AppDestination? {
+        #if DEBUG
+        let raw = ProcessInfo.processInfo.environment["XOMFIT_INITIAL_DESTINATION"]
+        if let raw, let value = AppDestination(rawValue: raw), !tabbedDestinations.contains(value) {
+            return value
+        }
+        #endif
+        return nil
     }
 
     /// App-open streak / new-PR celebration toast (#250). Cleared after auto-dismiss.

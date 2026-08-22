@@ -31,7 +31,6 @@ struct SettingsView: View {
 
     // MARK: - Notifications top-level toggle (#312)
 
-    @AppStorage("workoutRemindersEnabled") private var workoutRemindersEnabled: Bool = false
     /// Opt-in, defaulted off: reading a lifter's Health history without them
     /// asking for it is not a default worth taking.
     @AppStorage(CardioService.autoImportKey) private var autoImportCardio: Bool = false
@@ -555,23 +554,38 @@ struct SettingsView: View {
 
     /// Custom binding so flipping the master toggle on triggers a permission
     /// prompt when the system has not yet authorized push.
+    /// Master switch for workout reminders.
+    ///
+    /// Drives `NotificationPreferences.workoutReminders` — the value that is
+    /// synced and that scheduling actually reads. It used to write a local
+    /// `workoutRemindersEnabled` flag instead, which meant this screen and
+    /// Notification Settings each owned a different switch for the same feature
+    /// and neither of them scheduled anything.
     private var workoutRemindersBinding: Binding<Bool> {
         Binding(
-            get: { workoutRemindersEnabled && notificationsAuthorized },
+            get: { (NotificationService.shared.preferences?.workoutReminders ?? false) && notificationsAuthorized },
             set: { newValue in
-                workoutRemindersEnabled = newValue
+                setWorkoutReminders(newValue)
                 if newValue && !notificationsAuthorized {
                     Task {
                         await NotificationService.shared.requestPermission()
                         await refreshNotificationStatus()
                         // If the system denied, drop the master switch back to off.
                         if !notificationsAuthorized {
-                            workoutRemindersEnabled = false
+                            setWorkoutReminders(false)
                         }
                     }
                 }
             }
         )
+    }
+
+    private func setWorkoutReminders(_ enabled: Bool) {
+        let userId = authService.currentUser?.id.uuidString.lowercased() ?? ""
+        var prefs = NotificationService.shared.preferences
+            ?? NotificationPreferences.defaultPrefs(userId: userId)
+        prefs.workoutReminders = enabled
+        NotificationService.shared.updatePreferences(prefs)
     }
 
     // MARK: - Helpers
