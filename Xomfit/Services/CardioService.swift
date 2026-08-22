@@ -3,6 +3,16 @@ import Supabase
 
 // MARK: - Rows
 
+/// Projection used by the import dedupe check — selecting the whole row to read
+/// one column would pull every cardio session the user has on every import.
+private struct HealthKitUUIDRow: Codable {
+    let healthkitUUID: String?
+
+    enum CodingKeys: String, CodingKey {
+        case healthkitUUID = "healthkit_uuid"
+    }
+}
+
 private struct CardioRow: Codable {
     let id: String
     let userId: String
@@ -170,6 +180,92 @@ final class CardioService {
             count += 1
         }
         return count
+    }
+
+    // MARK: - Automatic import
+
+    /// Whether the lifter has opted into automatic Health imports.
+    ///
+    /// Read here rather than passed in so every entry point — tab appear, app
+    /// foreground — is gated by the same check and none can forget it.
+    var autoImportEnabled: Bool {
+        UserDefaults.standard.bool(forKey: Self.autoImportKey)
+    }
+
+    static let autoImportKey = "health.autoImportCardio"
+
+    /// Imports anything HealthKit has not handed us before.
+    ///
+    /// Unlike `importFromHealth`, this is safe to call repeatedly and on every
+    /// launch: it is anchored rather than date-windowed, so it never re-reads
+    /// what it has already seen and never misses what fell outside a window.
+    ///
+    /// Returns the number of sessions imported.
+    @discardableResult
+    func importNewFromHealth(userId: String) async -> Int {
+        guard !userId.isEmpty else { return 0 }
+
+        let (candidates, anchor) = await HealthKitService.shared.newCardioSessions(userId: userId)
+
+        // Nothing new, but the cursor still moved past samples we correctly
+        // ignored (our own workouts, non-cardio types). Commit it or they get
+        // re-examined forever.
+        guard !candidates.isEmpty else {
+            if let anchor { HealthKitService.shared.commitCardioAnchor(anchor) }
+            return 0
+        }
+
+        // Dedupe against the database, not the in-memory cache. The cache is
+        // empty on a cold launch, and the anchor can legitimately diverge from
+        // what is stored — a reinstall clears it, a second device has its own.
+        // Without this the unique index rejects the insert and the whole batch
+        // reports as failed.
+        let uuids = candidates.compactMap(\.healthKitUUID)
+        let known = await existingHealthKitUUIDs(userId: userId, among: uuids)
+        let fresh = candidates.filter { session in
+            guard let uuid = session.healthKitUUID else { return false }
+            return !known.contains(uuid)
+        }
+
+        var saved = 0
+        var allSucceeded = true
+        for session in fresh {
+            if await save(session) {
+                saved += 1
+            } else {
+                allSucceeded = false
+            }
+        }
+
+        // Only advance the cursor when nothing was dropped. Advancing past a
+        // failed save loses that session permanently — the next run would never
+        // be offered it again.
+        if allSucceeded, let anchor {
+            HealthKitService.shared.commitCardioAnchor(anchor)
+        }
+        return saved
+    }
+
+    /// Which of `uuids` this user already has stored.
+    ///
+    /// Queried rather than derived from `sessions` so it is correct before any
+    /// list has loaded. Returns everything as "known" on failure — skipping an
+    /// import is recoverable on the next run; a duplicate row is not.
+    private func existingHealthKitUUIDs(userId: String, among uuids: [String]) async -> Set<String> {
+        guard !uuids.isEmpty else { return [] }
+        do {
+            let rows: [HealthKitUUIDRow] = try await supabase
+                .from("cardio_sessions")
+                .select("healthkit_uuid")
+                .eq("user_id", value: userId)
+                .in("healthkit_uuid", values: uuids)
+                .execute()
+                .value
+            return Set(rows.compactMap(\.healthkitUUID))
+        } catch {
+            print("[CardioService] dedupe lookup failed: \(error)")
+            return Set(uuids)
+        }
     }
 
     // MARK: - Mapping

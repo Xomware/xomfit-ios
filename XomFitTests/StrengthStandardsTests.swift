@@ -232,4 +232,117 @@ final class StrengthStandardsTests: XCTestCase {
         let distribution = service.tierDistribution(from: records)
         XCTAssertEqual(distribution.values.reduce(0, +), 2)
     }
+
+    /// The profile section lists a lifter's best rank per exercise, so a weaker
+    /// PR logged later must not demote them.
+    @MainActor
+    func testRankedLiftsKeepsBestPerExerciseAndSortsStrongestFirst() {
+        StrengthLevelService.shared.setManualBodyweight(200)
+        StrengthLevelService.shared.sex = .male
+
+        let records = [
+            PersonalRecord(id: "1", userId: "u", exerciseId: "ex-bench-flat",
+                           exerciseName: "Bench Press", weight: 315, reps: 1,
+                           date: Date(), previousBest: nil,
+                           kind: .e1rm, estimated1RM: 315),
+            // Same lift, weaker, logged after — must be ignored.
+            PersonalRecord(id: "2", userId: "u", exerciseId: "ex-bench-flat",
+                           exerciseName: "Bench Press", weight: 135, reps: 1,
+                           date: Date(), previousBest: nil,
+                           kind: .e1rm, estimated1RM: 135),
+            PersonalRecord(id: "3", userId: "u", exerciseId: "ex-squat",
+                           exerciseName: "Squat", weight: 225, reps: 1,
+                           date: Date(), previousBest: nil,
+                           kind: .e1rm, estimated1RM: 225)
+        ]
+
+        let lifts = service.rankedLifts(from: records)
+
+        XCTAssertEqual(lifts.count, 2, "One entry per exercise, not per PR")
+        let bench = lifts.first { $0.exerciseId == "ex-bench-flat" }
+        XCTAssertEqual(bench?.rank.estimated1RM, 315, "Best PR wins, not the latest")
+
+        // Sorted strongest-tier-first so the profile leads with the headline rank.
+        let tiers = lifts.map(\.rank.tier)
+        XCTAssertEqual(tiers, tiers.sorted(by: >))
+    }
+
+    // MARK: - Tier progress
+
+    /// The flood guard. Shipping tier-ups to a lifter with years of history must
+    /// not fire a celebration for every lift in their next workout.
+    @MainActor
+    func testFirstSightingSeedsSilentlyWithoutCelebrating() {
+        TierProgressStore.resetForTesting()
+
+        XCTAssertNil(
+            TierProgressStore.record(.diamond, for: "ex-bench-flat"),
+            "First sighting records a baseline but must not report a promotion"
+        )
+        XCTAssertEqual(TierProgressStore.bestTier(for: "ex-bench-flat"), .diamond)
+    }
+
+    @MainActor
+    func testPromotionIsReportedOnceAndOnlyOnce() {
+        TierProgressStore.resetForTesting()
+        TierProgressStore.record(.gold, for: "ex-bench-flat")   // baseline
+
+        XCTAssertEqual(TierProgressStore.record(.diamond, for: "ex-bench-flat"), .diamond)
+        XCTAssertNil(
+            TierProgressStore.record(.diamond, for: "ex-bench-flat"),
+            "Re-hitting the same tier is not a new promotion"
+        )
+    }
+
+    /// Gaining bodyweight can drop a bodyweight-relative rank. Demoting someone
+    /// mid-set for that would be a hostile way to deliver the news.
+    @MainActor
+    func testRecordedTierNeverRegresses() {
+        TierProgressStore.resetForTesting()
+        TierProgressStore.record(.gold, for: "ex-bench-flat")
+        TierProgressStore.record(.diamond, for: "ex-bench-flat")
+
+        XCTAssertNil(TierProgressStore.record(.silver, for: "ex-bench-flat"))
+        XCTAssertEqual(TierProgressStore.bestTier(for: "ex-bench-flat"), .diamond)
+    }
+
+    @MainActor
+    func testSeedDoesNotLowerExistingProgress() {
+        TierProgressStore.resetForTesting()
+        TierProgressStore.record(.diamond, for: "ex-bench-flat")
+
+        TierProgressStore.seed(["ex-bench-flat": .bronze, "ex-squat": .gold])
+
+        XCTAssertEqual(TierProgressStore.bestTier(for: "ex-bench-flat"), .diamond)
+        XCTAssertEqual(TierProgressStore.bestTier(for: "ex-squat"), .gold)
+        // A seeded entry counts as a baseline, so the next real promotion fires.
+        XCTAssertEqual(TierProgressStore.record(.olympian, for: "ex-squat"), .olympian)
+    }
+
+    /// `tierDistribution` is derived from `rankedLifts`, so the bar on the
+    /// profile can never disagree with the list beneath it.
+    @MainActor
+    func testTierDistributionAgreesWithRankedLifts() {
+        StrengthLevelService.shared.setManualBodyweight(200)
+        StrengthLevelService.shared.sex = .male
+
+        let records = [
+            PersonalRecord(id: "1", userId: "u", exerciseId: "ex-bench-flat",
+                           exerciseName: "Bench Press", weight: 225, reps: 1,
+                           date: Date(), previousBest: nil,
+                           kind: .e1rm, estimated1RM: 225),
+            PersonalRecord(id: "2", userId: "u", exerciseId: "ex-squat",
+                           exerciseName: "Squat", weight: 315, reps: 1,
+                           date: Date(), previousBest: nil,
+                           kind: .e1rm, estimated1RM: 315)
+        ]
+
+        let lifts = service.rankedLifts(from: records)
+        let distribution = service.tierDistribution(from: records)
+
+        XCTAssertEqual(distribution.values.reduce(0, +), lifts.count)
+        for lift in lifts {
+            XCTAssertGreaterThan(distribution[lift.rank.tier] ?? 0, 0)
+        }
+    }
 }

@@ -314,6 +314,13 @@ struct XomFitApp: App {
     ///                                     complete (90×7) without firing the rest
     ///                                     timer — used to screenshot the in-session
     ///                                     "Last 90×7" caption on set 2.
+    ///   XOMFIT_AUTO_PR_BANNER=1         → seed a fake PR celebration so the
+    ///                                     banner can be screenshotted without
+    ///                                     a live network PR check.
+    ///   XOMFIT_AUTO_TIER_BANNER=<n>     → seed a tier-up celebration at
+    ///                                     StrengthTier rawValue n (4 = Diamond).
+    ///                                     Set alongside XOMFIT_AUTO_PR_BANNER to
+    ///                                     check that one banner wins, not two.
     ///   XOMFIT_AUTO_SHOW_JUMPER=1       → auto-open the Switch Exercise sheet on
     ///                                     first appearance — used to screenshot
     ///                                     the new Add Exercise (+) toolbar button.
@@ -375,6 +382,16 @@ struct XomFitApp: App {
             }
         }
 
+        // Complete EVERY exercise so the transition card's all-done state
+        // (Add Exercise / Finish Workout) can be screenshotted.
+        if env["XOMFIT_AUTO_COMPLETE_ALL"] == "1" {
+            for exIdx in workoutSession.exercises.indices {
+                for setIdx in workoutSession.exercises[exIdx].sets.indices {
+                    workoutSession.completeSet(exerciseIndex: exIdx, setIndex: setIdx)
+                }
+            }
+        }
+
         // Screenshot helper for the "Last shows prior in-session set" change:
         // seed only set 1 of the first exercise with concrete weight/reps and
         // mark it complete via direct field writes (no side effects). Skips
@@ -398,6 +415,49 @@ struct XomFitApp: App {
 
         // Flip into focus mode so the gym-floor layout is the first thing the
         // user / agent sees (#402).
+        // Seed a celebration so the banner's placement and auto-dismiss can be
+        // screenshotted without a live PR (which needs the network) or a real
+        // tier promotion (which needs matching PR history).
+        if env["XOMFIT_AUTO_PR_BANNER"] == "1" {
+            let pr = PersonalRecord(
+                id: "debug-pr", userId: userId, exerciseId: "ex-bench-flat",
+                exerciseName: "Bench Press", weight: 245, reps: 5,
+                date: Date(), previousBest: 225
+            )
+            workoutSession.newPR = pr
+            workoutSession.present(.personalRecord(pr))
+        }
+        if let raw = env["XOMFIT_AUTO_TIER_BANNER"],
+           let tier = StrengthTier(rawValue: Int(raw) ?? -1) {
+            workoutSession.present(.tierUp(
+                exerciseId: "ex-bench-flat",
+                exerciseName: "Bench Press",
+                tier: tier
+            ))
+        }
+        // Present the post-workout recap without actually finishing (which
+        // needs the network). Seeds one of each achievement kind.
+        if env["XOMFIT_AUTO_SUMMARY"] == "1" {
+            workoutSession.lastSummary = WorkoutSummary(
+                workoutName: "Screenshot Workout",
+                duration: 62 * 60,
+                totalVolume: 24_310,
+                totalSets: 18,
+                exerciseCount: 5,
+                beatTheClockSets: 6,
+                personalRecords: [
+                    PersonalRecord(
+                        id: "debug-pr", userId: userId, exerciseId: "ex-bench-flat",
+                        exerciseName: "Bench Press", weight: 245, reps: 5,
+                        date: Date(), previousBest: 225
+                    )
+                ],
+                tierUps: [
+                    WorkoutSummary.TierUp(exerciseName: "Bench Press", tier: .diamond)
+                ],
+                newBadges: Array(BadgeCatalog.all.prefix(2))
+            )
+        }
         if env["XOMFIT_AUTO_ENTER_FOCUS"] == "1" {
             workoutSession.focusMode = true
             workoutSession.syncFocusToCurrentExercise()

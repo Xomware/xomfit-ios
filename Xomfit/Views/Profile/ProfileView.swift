@@ -80,6 +80,13 @@ struct ProfileView: View {
         .toolbarColorScheme(.dark, for: .navigationBar)
         .task {
             await viewModel.loadAll(userId: resolvedUserId, currentUserId: currentUserId)
+            // Pull the latest logged bodyweight so strength ranks score against
+            // a current number. Nothing called this before, which meant the
+            // service always fell back to the manually-entered value even for
+            // lifters who log measurements.
+            if viewModel.isOwnProfile {
+                await StrengthLevelService.shared.refreshBodyweight(userId: resolvedUserId)
+            }
         }
         .refreshable {
             await viewModel.loadAll(userId: resolvedUserId, currentUserId: currentUserId)
@@ -227,6 +234,7 @@ struct ProfileView: View {
                 userId: viewModel.isOwnProfile ? resolvedUserId : nil,
                 workouts: viewModel.workouts,
                 firstPRDate: viewModel.allPRs.map(\.date).min(),
+                allPRs: viewModel.allPRs,
                 onStartWorkout: statsEmptyStateAction
             )
         case .music:

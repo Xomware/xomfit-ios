@@ -10,6 +10,8 @@ struct NotificationPreferencesView: View {
     @State private var restTimerEnabled: Bool = NotificationService.shared.restTimerLocalEnabled
     @State private var warmupEnabled: Bool = NotificationService.shared.warmupLocalEnabled
     @State private var weeklyReportEnabled: Bool = NotificationService.shared.weeklyReportEnabled
+    @State private var restHapticsEnabled: Bool = NotificationService.shared.restHapticsEnabled
+    @State private var trainingNudgeEnabled: Bool = NotificationService.shared.trainingNudgeEnabled
 
     private var userId: String {
         authService.currentUser?.id.uuidString.lowercased() ?? ""
@@ -36,10 +38,15 @@ struct NotificationPreferencesView: View {
                             icon: "figure.cooldown",
                             isOn: $warmupEnabled
                         ) { NotificationService.shared.warmupLocalEnabled = $0 }
+                        localToggle(
+                            "Rest Countdown Haptics",
+                            icon: "iphone.radiowaves.left.and.right",
+                            isOn: $restHapticsEnabled
+                        ) { NotificationService.shared.restHapticsEnabled = $0 }
                     } header: {
                         XomMetricLabel("In-Workout")
                     } footer: {
-                        Text("Local alerts that ping you when a rest or warmup timer completes — useful when your phone is in your pocket.")
+                        Text("Local alerts that ping you when a rest or warmup timer completes — useful when your phone is in your pocket. Haptics tick for the last five seconds of rest, then buzz for three.")
                             .font(Theme.fontCaption)
                             .foregroundStyle(Theme.textSecondary)
                     }
@@ -62,8 +69,17 @@ struct NotificationPreferencesView: View {
                             icon: "chart.bar.doc.horizontal",
                             isOn: $weeklyReportEnabled
                         ) { NotificationService.shared.weeklyReportEnabled = $0 }
+                        localToggle(
+                            "Come-Back Nudges",
+                            icon: "figure.run.circle",
+                            isOn: $trainingNudgeEnabled
+                        ) { NotificationService.shared.trainingNudgeEnabled = $0 }
                     } header: {
                         XomMetricLabel("Activity")
+                    } footer: {
+                        Text("Come-back nudges ping you at 6pm when a muscle group is behind your usual week — even if you haven't opened the app.")
+                            .font(Theme.fontCaption)
+                            .foregroundStyle(Theme.textSecondary)
                     }
                     .listRowSeparatorTint(Theme.hairline)
                 }

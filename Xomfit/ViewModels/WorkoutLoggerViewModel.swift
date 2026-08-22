@@ -89,9 +89,27 @@ final class WorkoutLoggerViewModel {
         return stored > 0 ? stored : 90
     }
 
-    // PR celebration — set when a completed set beats the user's record
+    // PR celebration — set when a completed set beats the user's record.
+    // Kept as data for the finish flow and the notification inbox; what is
+    // *shown* is decided by `activeCelebration`.
     var newPR: PersonalRecord? = nil
-    var showPRCelebration: Bool = false
+
+    /// PRs set during this session, in the order they happened. Feeds the
+    /// post-workout summary — `newPR` only ever holds the most recent one.
+    private(set) var sessionPRs: [PersonalRecord] = []
+
+    /// Tier promotions earned during this session.
+    private(set) var sessionTierUps: [WorkoutSummary.TierUp] = []
+
+    /// Built at finish, held until the summary sheet is dismissed.
+    var lastSummary: WorkoutSummary? = nil
+
+    /// The one celebration currently on screen, if any.
+    ///
+    /// Replaces the old `showPRCelebration` flag. A single slot rather than a
+    /// per-kind flag is what lets a tier-up and the PR that caused it resolve to
+    /// one banner instead of two — see `present(_:)`.
+    private(set) var activeCelebration: Celebration? = nil
 
     // Exercise transition — shown when all sets of an exercise are complete
     var showExerciseTransition: Bool = false
@@ -221,7 +239,9 @@ final class WorkoutLoggerViewModel {
         activeUserId = userId
         workoutId = UUID().uuidString
         newPR = nil
-        showPRCelebration = false
+        activeCelebration = nil
+        sessionPRs = []
+        sessionTierUps = []
         showExerciseTransition = false
         completedExerciseIndex = 0
         nextExerciseIndex = nil
@@ -282,7 +302,9 @@ final class WorkoutLoggerViewModel {
         isSaving = false
         errorMessage = nil
         newPR = nil
-        showPRCelebration = false
+        activeCelebration = nil
+        sessionPRs = []
+        sessionTierUps = []
         showExerciseTransition = false
         completedExerciseIndex = 0
         nextExerciseIndex = nil
@@ -724,13 +746,30 @@ final class WorkoutLoggerViewModel {
     func completeSet(exerciseIndex: Int, setIndex: Int) {
         guard exercises.indices.contains(exerciseIndex),
               exercises[exerciseIndex].sets.indices.contains(setIndex) else { return }
+        // Any pending transition card belongs to the *previous* completion. If
+        // the lifter is logging again, that card is stale — clear it before we
+        // possibly re-raise it below, so it can never resurface later over a
+        // set they've already moved past.
+        showExerciseTransition = false
+
         let isCurrentlyCompleted = exercises[exerciseIndex].sets[setIndex].completedAt != Date.distantPast
         if isCurrentlyCompleted {
             // Toggle off
             exercises[exerciseIndex].sets[setIndex].completedAt = Date.distantPast
             exercises[exerciseIndex].sets[setIndex].isPersonalRecord = false
+            exercises[exerciseIndex].sets[setIndex].beatRestTimer = false
         } else {
             exercises[exerciseIndex].sets[setIndex].completedAt = Date()
+
+            // Did they beat the clock? Read *before* `startRestTimer` below
+            // replaces the timer with this set's own rest — after that call the
+            // answer is always yes and the badge is worthless.
+            //
+            // `restTimeRemaining > 0` rather than just `isRestTimerActive`: the
+            // timer keeps running into overtime, and finishing a set 40 seconds
+            // past the buzzer is not beating anything.
+            exercises[exerciseIndex].sets[setIndex].beatRestTimer =
+                isRestTimerActive && restTimeRemaining > 0 && !isPaused
 
             // Decide whether to start the rest timer based on superset / drop-set context.
             //
@@ -774,9 +813,15 @@ final class WorkoutLoggerViewModel {
             } else if focusExerciseIndex == exerciseIndex && focusSetIndex == setIndex {
                 focusAdvance()
             }
-            // Fire PR check asynchronously — non-blocking
             let set = exercises[exerciseIndex].sets[setIndex]
             let loggedExercise = exercises[exerciseIndex]
+
+            // Strength rank first — it is local arithmetic, so it resolves
+            // before the PR round trip and lets `present(_:)` absorb the PR that
+            // caused it rather than showing two banners for one set.
+            checkForTierUp(set: set, loggedExercise: loggedExercise)
+
+            // Fire PR check asynchronously — non-blocking
             Task {
                 await checkForPR(
                     set: set,
@@ -826,8 +871,14 @@ final class WorkoutLoggerViewModel {
                 //      them to head straight to the Finish flow without an
                 //      extra modal (#387). The existing "all complete" cue in
                 //      the persistent pill / footer is enough.
-                let isFinalExercise = nextExerciseIndex == nil
-                if !midSupersetRotation && kind != .timedCircuit && !isFinalExercise {
+                // The card used to be suppressed on the final exercise (#387),
+                // on the theory that the lifter would head straight to Finish
+                // and the footer's "all complete" cue was enough. In practice
+                // the session just went quiet with nothing prompting the
+                // obvious next action. The card's all-complete state — Add
+                // Exercise / Finish Workout — already existed and was simply
+                // unreachable.
+                if !midSupersetRotation && kind != .timedCircuit {
                     showExerciseTransition = true
                 }
             }
@@ -1366,6 +1417,18 @@ final class WorkoutLoggerViewModel {
     /// Timestamp when the rest timer was started — used to survive background suspension.
     private var restTimerStartDate: Date?
 
+    /// Whole second the countdown haptic last fired for, or nil when nothing has
+    /// fired for the current rest period. `0` means the end-of-rest alarm has
+    /// already played.
+    ///
+    /// Tracking the *second* rather than a bare `didFire` flag matters because
+    /// the tick isn't the only thing that moves `restTimeRemaining`:
+    /// `recalculateRestTimer` snaps it to wall-clock on foreground, and
+    /// `extendRestTimer` pushes it back up. Keying off the second makes both
+    /// safe — a jump from 5 to 1 fires once for 1 rather than five times or not
+    /// at all, and +30s naturally re-arms the countdown.
+    private var lastRestHapticSecond: Int?
+
     /// Starts the rest timer using the per-exercise override when set, otherwise falls
     /// back to the global default. Reading the override at fire-time means edits to
     /// a pill mid-workout take effect on the very next set.
@@ -1386,6 +1449,7 @@ final class WorkoutLoggerViewModel {
         // what's up next, and Skip; tapping it expands to the ring.
         isRestTimerMinimized = true
         restTimerStartDate = Date()
+        lastRestHapticSecond = nil
         updateLiveActivity()
 
         // Schedule a local "rest done" notification keyed by workoutId (#369).
@@ -1404,16 +1468,47 @@ final class WorkoutLoggerViewModel {
         guard isRestTimerActive, !isPaused, let startDate = restTimerStartDate else { return }
         let elapsed = Date().timeIntervalSince(startDate)
         restTimeRemaining = restDuration - elapsed
+        fireRestCountdownHapticIfNeeded()
     }
 
     func tickRestTimer() {
         guard isRestTimerActive, !isPaused else { return }
         restTimeRemaining -= 1
+        fireRestCountdownHapticIfNeeded()
     }
+
+    /// Ticks the wrist/phone for each of the final `restHapticLeadInSeconds`, then
+    /// plays the three-second alarm once at zero.
+    ///
+    /// Called from both `tickRestTimer` and `recalculateRestTimer` so returning
+    /// from the background mid-countdown still gets the alarm rather than
+    /// silently skipping it.
+    private func fireRestCountdownHapticIfNeeded() {
+        guard isRestTimerActive, !isPaused else { return }
+        guard NotificationService.shared.restHapticsEnabled else { return }
+
+        if restTimeRemaining <= 0 {
+            guard lastRestHapticSecond != 0 else { return }
+            lastRestHapticSecond = 0
+            Haptics.restAlarm()
+            return
+        }
+
+        // `ceil` so 4.2s remaining is "5 seconds left", matching what the bar reads.
+        let second = Int(ceil(restTimeRemaining))
+        guard second <= Self.restHapticLeadInSeconds else { return }
+        guard lastRestHapticSecond != second else { return }
+        lastRestHapticSecond = second
+        Haptics.restCountdownTick()
+    }
+
+    /// How many seconds of countdown ticks precede the end-of-rest alarm.
+    static let restHapticLeadInSeconds = 5
 
     func skipRestTimer() {
         restTimeRemaining = 0
         isRestTimerActive = false
+        lastRestHapticSecond = nil
         // Reset minimize state so the next rest period always starts fullscreen.
         isRestTimerMinimized = false
         updateLiveActivity()
@@ -1426,6 +1521,8 @@ final class WorkoutLoggerViewModel {
     func extendRestTimer(_ seconds: Double = 30) {
         restTimeRemaining += seconds
         restDuration += seconds
+        // +30s from an already-elapsed timer must be able to alarm again.
+        lastRestHapticSecond = nil
         updateLiveActivity()
     }
 
@@ -1458,6 +1555,83 @@ final class WorkoutLoggerViewModel {
     }
 
     // MARK: - PR Detection
+
+    // MARK: - Celebrations
+
+    /// Shows a celebration, resolving it against whatever is already on screen.
+    ///
+    /// The rules exist because a tier-up and the PR that caused it fire from the
+    /// same set. Crossing a tier requires a new best e1RM, which *is* a PR, so
+    /// naively showing both would double-banner nearly every tier-up.
+    ///
+    ///   * A tier-up replaces a PR banner for the same lift — same moment, told
+    ///     better.
+    ///   * A PR is dropped when a tier-up for that lift is already showing,
+    ///     which covers the PR check finishing after the tier check.
+    ///   * Otherwise the higher-ranked celebration wins and the loser is
+    ///     dropped, not queued. Two banners back-to-back mid-set is noise.
+    func present(_ celebration: Celebration) {
+        if let active = activeCelebration {
+            // Same lift: the tier-up is the better telling of the same moment.
+            if active.exerciseId == celebration.exerciseId {
+                guard celebration.rank > active.rank else { return }
+            } else if celebration.rank < active.rank {
+                return
+            }
+        }
+
+        activeCelebration = celebration
+
+        switch celebration {
+        case .tierUp:         Haptics.workoutComplete()
+        case .personalRecord: Haptics.prCelebration()
+        }
+    }
+
+    func dismissCelebration() {
+        activeCelebration = nil
+    }
+
+    /// Records the tier this set puts the lifter at and celebrates a promotion.
+    ///
+    /// Called synchronously from `completeSet` rather than off the back of the
+    /// PR check: ranking is local arithmetic, so it needs no network, and firing
+    /// it first means the tier-up is already on screen when the slower PR
+    /// response lands and gets absorbed by `present(_:)`.
+    private func checkForTierUp(set: WorkoutSet, loggedExercise: WorkoutExercise) {
+        guard set.reps > 0, set.weight > 0 else { return }
+
+        let exerciseId = loggedExercise.exercise.id
+        guard let rank = StrengthLevelService.shared.rank(
+            exerciseId: exerciseId,
+            weight: set.weight,
+            reps: set.reps,
+            weightMode: set.weightMode
+        ), rank.tier != .unranked else { return }
+
+        guard let promotion = TierProgressStore.record(rank.tier, for: exerciseId) else { return }
+
+        sessionTierUps.append(
+            WorkoutSummary.TierUp(exerciseName: loggedExercise.exercise.name, tier: promotion)
+        )
+        present(.tierUp(
+            exerciseId: exerciseId,
+            exerciseName: loggedExercise.exercise.name,
+            tier: promotion
+        ))
+
+        // The banner is transient and easy to miss mid-set; the inbox entry is
+        // the record the lifter can go back and find. Mirrors what the PR path
+        // does for the same reason.
+        NotificationService.shared.addNotification(
+            AppNotification(
+                type: .newPR,
+                title: "\(promotion.displayName) unlocked",
+                body: "\(loggedExercise.exercise.name) — \(promotion.blurb)",
+                targetId: exerciseId
+            )
+        )
+    }
 
     private func checkForPR(
         set: WorkoutSet,
@@ -1503,8 +1677,8 @@ final class WorkoutLoggerViewModel {
 
         // Trigger the celebration banner
         newPR = headline
-        showPRCelebration = true
-        Haptics.prCelebration()
+        sessionPRs.append(headline)
+        present(.personalRecord(headline))
 
         // Also drop it in the inbox. The celebration banner is transient and is
         // easy to miss mid-set, and the backend push for this only reaches the
@@ -1918,7 +2092,7 @@ final class WorkoutLoggerViewModel {
         restTimeRemaining = 0
         restDuration = 0
         showExerciseTransition = false
-        showPRCelebration = false
+        activeCelebration = nil
 
         // Restore soundtrack state (#411 follow-up). Captured tracks from
         // BEFORE the quit are pushed onto `persistedCapturedTracks` so
@@ -1986,6 +2160,45 @@ final class WorkoutLoggerViewModel {
     }
 
     // MARK: - Finish Workout
+
+    /// Assembles the post-workout summary.
+    ///
+    /// Badges are diffed against history *without* this workout, so the summary
+    /// reports what this session earned rather than everything the lifter holds.
+    ///
+    /// `firstPRDate` and `rankedTiers` are deliberately passed identically to
+    /// both sides of the diff, which means the "First PR" and strength-tier
+    /// badges can never appear here. That is intentional, not an oversight:
+    /// both already have their own section in the summary, and listing a tier
+    /// promotion twice reads as a bug.
+    private func buildSummary(
+        for workout: Workout,
+        historyBefore: [Workout]
+    ) -> WorkoutSummary {
+        let before = Set(
+            BadgeEvaluator.unlocked(for: historyBefore, firstPRDate: nil).map(\.id)
+        )
+        let after = BadgeEvaluator.unlocked(for: historyBefore + [workout], firstPRDate: nil)
+        let newBadges = after.filter { !before.contains($0.id) }
+
+        let beatTheClock = workout.exercises.reduce(0) { total, exercise in
+            total + exercise.sets.filter { $0.beatRestTimer }.count
+        }
+
+        return WorkoutSummary(
+            workoutName: workout.name,
+            // `duration` already nets out paused intervals; end-minus-start
+            // would count time the lifter explicitly stopped the clock for.
+            duration: duration,
+            totalVolume: workout.totalVolume,
+            totalSets: workout.totalSets,
+            exerciseCount: workout.exercises.count,
+            beatTheClockSets: beatTheClock,
+            personalRecords: sessionPRs,
+            tierUps: sessionTierUps,
+            newBadges: newBadges
+        )
+    }
 
     func finishWorkout(userId: String, notes: String? = nil, photoURLs: [String]? = nil) async {
         endLiveActivity()
@@ -2073,6 +2286,10 @@ final class WorkoutLoggerViewModel {
             return picked.uuidString
         }()
 
+        // Snapshot the badge state BEFORE this workout joins the cache, so the
+        // summary can report what this session actually pushed over the line.
+        let historyBefore = WorkoutService.shared.fetchWorkoutsFromCache(userId: userId)
+
         let workout = Workout(
             id: UUID().uuidString,
             userId: userId,
@@ -2091,6 +2308,8 @@ final class WorkoutLoggerViewModel {
             shareFullSoundtrack: shareFullSoundtrack,
             detailedRatings: detailedRatings.hasAnyRating ? detailedRatings : nil
         )
+
+        lastSummary = buildSummary(for: workout, historyBefore: historyBefore)
 
         do {
             // Save workout to Supabase (queues for retry on failure).

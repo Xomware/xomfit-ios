@@ -148,7 +148,20 @@ final class ProfileViewModel {
     }
 
     // MARK: - Tab state
-    var selectedTab: ProfileTab = .feed
+    var selectedTab: ProfileTab = ProfileViewModel.initialTab()
+
+    /// Agent UI verification: land directly on a profile tab via
+    /// `XOMFIT_PROFILE_TAB=stats`, matching `XOMFIT_INITIAL_DESTINATION` on the
+    /// shell. Compiled out of Release builds.
+    private static func initialTab() -> ProfileTab {
+        #if DEBUG
+        if let raw = ProcessInfo.processInfo.environment["XOMFIT_PROFILE_TAB"],
+           let tab = ProfileTab(rawValue: raw) {
+            return tab
+        }
+        #endif
+        return .feed
+    }
 
     // MARK: - Feed
     var feedItems: [SocialFeedItem] = [] {

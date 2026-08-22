@@ -37,6 +37,7 @@ private struct WorkoutSetRow: Codable {
     // absent means the row predates the column, and everything logged then was
     // total, which is exactly what WeightMode's own default resolves to.
     var weightMode: String?
+    var beatRestTimer: Bool?
     var isDropSet: Bool?
     var videoURL: String?
 
@@ -52,6 +53,7 @@ private struct WorkoutSetRow: Codable {
         case completedAt = "completed_at"
         case weightMode = "weight_mode"
         case isDropSet = "is_drop_set"
+        case beatRestTimer = "beat_rest_timer"
         case videoURL = "video_url"
     }
 }
@@ -183,6 +185,7 @@ private struct WorkoutSetInsertPayload: Encodable {
     let completed_at: String?
     let weight_mode: String
     let is_drop_set: Bool
+    let beat_rest_timer: Bool
     let video_url: String?
 }
 
@@ -586,6 +589,7 @@ final class WorkoutService {
                     completed_at: iso8601.string(from: workoutSet.completedAt),
                     weight_mode: workoutSet.weightMode.rawValue,
                     is_drop_set: workoutSet.isDropSet,
+                    beat_rest_timer: workoutSet.beatRestTimer,
                     // Prefer the uploaded URL; a local-only file URL is
                     // meaningless on another device, so it is not persisted.
                     video_url: workoutSet.videoRemoteURL?.absoluteString
@@ -663,6 +667,10 @@ final class WorkoutService {
                             // migration; `.total` matches how they were logged.
                             weightMode: setRow.weightMode.flatMap { WeightMode(rawValue: $0) } ?? .total,
                             isDropSet: setRow.isDropSet ?? false,
+                            // Missing on rows written before the 20260822
+                            // migration. False is honest there: the app was not
+                            // recording it, so we do not know and must not guess.
+                            beatRestTimer: setRow.beatRestTimer ?? false,
                             videoRemoteURL: setRow.videoURL.flatMap { URL(string: $0) }
                         )
                     }

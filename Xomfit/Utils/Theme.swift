@@ -194,6 +194,68 @@ enum Haptics {
 
     // MARK: - Custom Patterns (CoreHaptics)
 
+    // MARK: Rest timer
+
+    /// Engine retained for the rest alarm.
+    ///
+    /// Every other pattern here builds a throwaway local `CHHapticEngine`, which
+    /// survives only because the patterns are a few hundred milliseconds long.
+    /// The rest alarm runs for three seconds — long enough that a deallocated
+    /// engine cuts it off partway — so this one is held for the app's lifetime
+    /// and restarted on demand.
+    private static var restEngine: CHHapticEngine?
+
+    /// Light tick for each of the final seconds of rest.
+    ///
+    /// Deliberately a plain transient impact rather than a CoreHaptics pattern:
+    /// this fires up to five times in five seconds, and the tick needs to read
+    /// as clearly *smaller* than the alarm that follows it.
+    static func restCountdownTick() {
+        UIImpactFeedbackGenerator(style: .rigid).impactOccurred(intensity: 0.7)
+    }
+
+    /// Three-second alarm when rest hits zero — "get back under the bar".
+    ///
+    /// Built as six continuous 0.35s buzzes separated by 0.15s gaps rather than
+    /// one unbroken three-second event. A single long continuous haptic reads as
+    /// a stuck phone; the pulsing reads as an alarm, which is the intent.
+    static func restAlarm() {
+        guard CHHapticEngine.capabilitiesForHardware().supportsHaptics else {
+            // No haptic hardware — fall back to the standard notification tap so
+            // the moment isn't silent.
+            success()
+            return
+        }
+        do {
+            let engine = try restEngine ?? CHHapticEngine()
+            restEngine = engine
+            // The system stops the engine when the app backgrounds or on audio
+            // interruption, so start unconditionally — it's a no-op when running.
+            try engine.start()
+
+            var events: [CHHapticEvent] = []
+            var time: TimeInterval = 0
+            for _ in 0..<6 {
+                events.append(
+                    CHHapticEvent(eventType: .hapticContinuous, parameters: [
+                        CHHapticEventParameter(parameterID: .hapticIntensity, value: 1.0),
+                        CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.8)
+                    ], relativeTime: time, duration: 0.35)
+                )
+                time += 0.5
+            }
+
+            let pattern = try CHHapticPattern(events: events, parameters: [])
+            let player = try engine.makePlayer(with: pattern)
+            try player.start(atTime: 0)
+        } catch {
+            // Engine construction can fail (Low Power Mode, hardware busy). A
+            // missed buzz shouldn't be silent when we promised an alarm.
+            restEngine = nil
+            success()
+        }
+    }
+
     /// Ascending burst for PR celebration — builds up then hits hard
     static func prCelebration() {
         guard CHHapticEngine.capabilitiesForHardware().supportsHaptics else { return }

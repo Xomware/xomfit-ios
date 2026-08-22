@@ -31,9 +31,79 @@ struct WorkoutSet: Codable, Identifiable, Hashable {
     /// Drop sets immediately follow their parent in the sets array.
     var isDropSet: Bool = false
 
+    /// True when this set was completed while the previous set's rest timer was
+    /// still running — the lifter got back under the bar before the clock ran
+    /// out.
+    ///
+    /// Stored rather than derived: nothing in a saved workout records when rest
+    /// started, so this cannot be reconstructed after the fact. Sets that skip
+    /// rest entirely (drop-set chains) are false — there was no clock to beat.
+    var beatRestTimer: Bool = false
+
     // MARK: - Form Check Video (optional attachment)
     var videoLocalURL: URL?       // locally saved clip after recording
     var videoRemoteURL: URL?      // uploaded to Supabase Storage
+
+    /// Memberwise init, spelled out because the hand-written `init(from:)` below
+    /// suppresses the synthesized one. Parameter order and defaults match the
+    /// property declarations above.
+    init(
+        id: String,
+        exerciseId: String,
+        weight: Double,
+        reps: Int,
+        rpe: Double? = nil,
+        isPersonalRecord: Bool,
+        completedAt: Date,
+        weightMode: WeightMode = .total,
+        skippedAt: Date? = nil,
+        isDropSet: Bool = false,
+        beatRestTimer: Bool = false,
+        videoLocalURL: URL? = nil,
+        videoRemoteURL: URL? = nil
+    ) {
+        self.id = id
+        self.exerciseId = exerciseId
+        self.weight = weight
+        self.reps = reps
+        self.rpe = rpe
+        self.isPersonalRecord = isPersonalRecord
+        self.completedAt = completedAt
+        self.weightMode = weightMode
+        self.skippedAt = skippedAt
+        self.isDropSet = isDropSet
+        self.beatRestTimer = beatRestTimer
+        self.videoLocalURL = videoLocalURL
+        self.videoRemoteURL = videoRemoteURL
+    }
+
+    // MARK: - Decoding
+    //
+    // Written by hand because Swift's synthesized decoder ignores property
+    // defaults: a key that is merely *absent* is a hard failure, not a fallback
+    // to the default. Every field added since the first release is therefore a
+    // decoding break for anything already cached — the in-progress session blob
+    // and the local workout cache both round-trip through this type, so a lifter
+    // updating mid-workout would lose the session.
+    //
+    // Anything with a default is read with `decodeIfPresent`. Add a field with a
+    // default, add it here too.
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        exerciseId = try c.decode(String.self, forKey: .exerciseId)
+        weight = try c.decode(Double.self, forKey: .weight)
+        reps = try c.decode(Int.self, forKey: .reps)
+        rpe = try c.decodeIfPresent(Double.self, forKey: .rpe)
+        isPersonalRecord = try c.decode(Bool.self, forKey: .isPersonalRecord)
+        completedAt = try c.decode(Date.self, forKey: .completedAt)
+        weightMode = try c.decodeIfPresent(WeightMode.self, forKey: .weightMode) ?? .total
+        skippedAt = try c.decodeIfPresent(Date.self, forKey: .skippedAt)
+        isDropSet = try c.decodeIfPresent(Bool.self, forKey: .isDropSet) ?? false
+        beatRestTimer = try c.decodeIfPresent(Bool.self, forKey: .beatRestTimer) ?? false
+        videoLocalURL = try c.decodeIfPresent(URL.self, forKey: .videoLocalURL)
+        videoRemoteURL = try c.decodeIfPresent(URL.self, forKey: .videoRemoteURL)
+    }
 
     /// True when the lifter chose not to do this set.
     var isSkipped: Bool { skippedAt != nil }

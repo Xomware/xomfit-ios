@@ -16,7 +16,6 @@ struct ActiveWorkoutView: View {
     @State private var selectedPhotos: [PhotosPickerItem] = []
     @State private var photoImages: [UIImage] = []
     @State private var timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
-    @State private var restTimerHapticFired = false
     @State private var showExerciseJumper = false
     /// Shared geometry namespace for the list → focus zoom push. Each exercise
     /// card is a `matchedTransitionSource`; the pushed `WorkoutFocusView`
@@ -46,6 +45,12 @@ struct ActiveWorkoutView: View {
     @State private var showFirstTutorial = false
     /// Single-shot rest timer onboarding toast.
     @State private var restTimerToast: Toast?
+
+    /// Height of an inline navigation bar, used to keep the celebration banner
+    /// clear of the back button.
+    private static let navigationBarHeight: CGFloat = 44
+    /// How long a celebration stays on screen before dismissing itself.
+    private static let celebrationDuration: TimeInterval = 5
 
     var body: some View {
         @Bindable var viewModel = viewModel
@@ -170,17 +175,6 @@ struct ActiveWorkoutView: View {
                 // Soundtrack capture icon — small circle in bottom-right corner,
                 // visible while at least one capture service is polling.
 
-                // PR Celebration Banner
-                if viewModel.showPRCelebration, let pr = viewModel.newPR {
-                    VStack {
-                        PRCelebrationBanner(pr: pr) {
-                            withAnimation { viewModel.showPRCelebration = false }
-                        }
-                        .transition(.move(edge: .top).combined(with: .opacity))
-                        Spacer()
-                    }
-                }
-
                 // First-run tutorial overlay (#310). Sits above the rest of
                 // the workout UI so it's the first thing the user sees on
                 // their first active workout. Persisted by AppStorage so it
@@ -193,52 +187,12 @@ struct ActiveWorkoutView: View {
                         firstTutorialSeen = true
                     }
                 }
-
-                // Exercise Transition Overlay
-                if viewModel.showExerciseTransition {
-                    Color.black.opacity(0.4)
-                        .ignoresSafeArea()
-                        .onTapGesture { withAnimation { viewModel.dismissTransition() } }
-
-                    VStack {
-                        Spacer()
-                        ExerciseTransitionCard(
-                            viewModel: viewModel,
-                            onAddExercise: { showExercisePicker = true },
-                            onFinishWorkout: {
-                                Haptics.success()
-                                workoutDescription = ""
-                                showFinishSheet = true
-                            }
-                        )
-                            .padding(Theme.Spacing.md)
-                            .transition(.move(edge: .bottom).combined(with: .opacity))
-                    }
-                    .animation(.xomConfident, value: viewModel.showExerciseTransition)
-                }
             }
             .overlay(alignment: .bottomTrailing) {
                 if isAnyCaptureActive {
                     soundtrackCaptureIcon
                         .padding(.trailing, Theme.Spacing.md)
                         .padding(.bottom, Theme.Spacing.sm)
-                }
-            }
-            // Rest timer — one presentation shared by list and focus mode.
-            // It used to render three different ways (inline card in list,
-            // full-screen overlay in focus, in-flow banner when minimized),
-            // which is a large part of why the two modes felt like different
-            // apps.
-            .safeAreaInset(edge: .bottom) {
-                if viewModel.isRestTimerActive {
-                    RestTimerBar(
-                        viewModel: viewModel,
-                        onSkip: {
-                            viewModel.skipRestTimer()
-                            restTimerHapticFired = false
-                        }
-                    )
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
             }
             .toolbar(.hidden, for: .navigationBar)
@@ -261,6 +215,92 @@ struct ActiveWorkoutView: View {
                     .environment(authService)
             }
         }
+        // Rest timer — one presentation shared by list and focus mode.
+        //
+        // It hangs off the NavigationStack, NOT the list screen inside it.
+        // Focus mode is a real push now, so anything attached inside the stack
+        // is covered by the pushed screen: the timer kept running but the bar
+        // simply wasn't on screen in focus mode. Docking it here means the same
+        // bar stays put across the push, which is also why the collapsed/
+        // expanded choice survives navigating between the two.
+        .safeAreaInset(edge: .bottom) {
+            if viewModel.isRestTimerActive {
+                RestTimerBar(
+                    viewModel: viewModel,
+                    onSkip: { viewModel.skipRestTimer() }
+                )
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
+        // PR celebration — third and last thing that was trapped inside the
+        // list screen. A lifter hits a PR in focus mode more often than in the
+        // list, which is exactly where the banner never appeared.
+        //
+        // `.top` rather than a safeAreaInset: a celebration that shoves the
+        // whole screen down mid-set is worse than one that floats over the
+        // header for a few seconds.
+        .overlay(alignment: .top) {
+            if let celebration = viewModel.activeCelebration {
+                CelebrationBanner(celebration: celebration) {
+                    withAnimation { viewModel.dismissCelebration() }
+                }
+                // Clear the navigation bar. The overlay is measured against the
+                // whole stack, which the nav bar is drawn inside rather than
+                // below, so without this the banner covers the back button and
+                // the pause control on the focus screen.
+                .padding(.top, Self.navigationBarHeight)
+                .transition(.move(edge: .top).combined(with: .opacity))
+                // Auto-dismiss. The banner had no timer and no dismissal other
+                // than the close button, so a PR hit mid-set used to sit on
+                // screen for the rest of the workout.
+                .task(id: celebration.id) {
+                    try? await Task.sleep(for: .seconds(Self.celebrationDuration))
+                    guard !Task.isCancelled else { return }
+                    withAnimation(.xomChill) { viewModel.dismissCelebration() }
+                }
+            }
+        }
+        .animation(.xomChill, value: viewModel.activeCelebration)
+        // Post-workout recap. Presented from here rather than the finish sheet
+        // because the finish sheet dismisses itself on save; and it owns the
+        // teardown, so the workout stays alive until the lifter taps Done.
+        .sheet(item: $viewModel.lastSummary) { summary in
+            WorkoutSummarySheet(summary: summary) {
+                viewModel.lastSummary = nil
+                dismiss()
+            }
+        }
+        // Exercise-transition card — same reasoning as the rest bar. Finishing
+        // an exercise in focus mode used to set `showExerciseTransition` with
+        // nothing on screen to render it, so the flow silently advanced and the
+        // card ambushed the lifter later, when they popped back to the list.
+        // Overlaying the whole stack means it appears the moment the exercise
+        // completes, in whichever mode they're in.
+        .overlay {
+            if viewModel.showExerciseTransition {
+                ZStack {
+                    Color.black.opacity(0.4)
+                        .ignoresSafeArea()
+                        .onTapGesture { withAnimation { viewModel.dismissTransition() } }
+
+                    VStack {
+                        Spacer()
+                        ExerciseTransitionCard(
+                            viewModel: viewModel,
+                            onAddExercise: { showExercisePicker = true },
+                            onFinishWorkout: {
+                                Haptics.success()
+                                workoutDescription = ""
+                                showFinishSheet = true
+                            }
+                        )
+                        .padding(Theme.Spacing.md)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                    }
+                }
+            }
+        }
+        .animation(.xomConfident, value: viewModel.showExerciseTransition)
         #if DEBUG
         .task {
             // Agent screenshot helper. Auto-open the mid-workout exercise
@@ -273,18 +313,14 @@ struct ActiveWorkoutView: View {
         }
         #endif
         .onReceive(timer) { _ in
+            // Rest haptics (5s of ticks, then the alarm at zero) are owned by
+            // `tickRestTimer` now. They used to live here as a single buzz at
+            // zero, which meant they were tied to this view being on screen.
             viewModel.tickRestTimer()
             viewModel.tickLiveActivity()
-            // Haptic fires once when rest timer crosses zero
-            if viewModel.isRestTimerActive && viewModel.restTimeRemaining <= 0 && !restTimerHapticFired {
-                restTimerHapticFired = true
-                let generator = UINotificationFeedbackGenerator()
-                generator.notificationOccurred(.success)
-            }
         }
         .onChange(of: viewModel.isRestTimerActive) { _, isActive in
             if isActive {
-                restTimerHapticFired = false
                 pendingScrollIndex = viewModel.focusExerciseIndex
                 if !firstRestTimerSeen {
                     firstRestTimerSeen = true
@@ -967,7 +1003,9 @@ struct ActiveWorkoutView: View {
             await viewModel.finishWorkout(userId: userId, notes: notes.isEmpty ? nil : notes, photoURLs: uploadedURLs)
             if viewModel.errorMessage == nil {
                 showFinishSheet = false
-                dismiss()
+                // Deliberately not dismissing here. The summary is presented
+                // from this view, so tearing it down now would take the sheet
+                // with it — `dismiss()` moves to the summary's Done button.
             }
         }
     }
@@ -975,23 +1013,28 @@ struct ActiveWorkoutView: View {
 
 // MARK: - PR Celebration Banner
 
-private struct PRCelebrationBanner: View {
-    let pr: PersonalRecord
+/// The single mid-workout celebration banner — PRs, tier-ups, and whatever
+/// `Celebration` grows to cover next. One view rather than one per kind, so a
+/// new achievement type can't quietly ship with different placement, a missing
+/// auto-dismiss, or a mount point that focus mode covers.
+private struct CelebrationBanner: View {
+    let celebration: Celebration
     let onDismiss: () -> Void
 
     var body: some View {
         HStack(spacing: Theme.Spacing.md) {
-            Image(systemName: "trophy.fill")
+            Image(systemName: celebration.iconSystemName)
                 .font(Theme.fontTitle3)
                 .foregroundStyle(.black)
 
             VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
-                Text("New Personal Record!")
+                Text(celebration.title)
                     .font(.subheadline.weight(.black))
                     .foregroundStyle(.black)
-                Text("\(pr.exerciseName) — \(pr.weight.formattedWeight) lbs × \(pr.reps)")
+                Text(celebration.subtitle)
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.black.opacity(0.75))
+                    .lineLimit(1)
             }
 
             Spacer()
@@ -1005,17 +1048,17 @@ private struct PRCelebrationBanner: View {
                     .frame(minWidth: 44, minHeight: 44)
                     .contentShape(Rectangle())
             }
-            .accessibilityLabel("Dismiss new PR banner")
+            .accessibilityLabel("Dismiss celebration")
         }
         .padding(.horizontal, Theme.Spacing.md)
         .padding(.vertical, Theme.Spacing.md)
-        .background(Theme.prGold)
+        .background(celebration.fill)
         .clipShape(.rect(cornerRadius: Theme.cornerRadius))
         .padding(.horizontal, Theme.Spacing.md)
         .padding(.top, Theme.Spacing.sm)
-        .shadow(color: Theme.prGold.opacity(0.5), radius: 8, x: 0, y: 4)
+        .shadow(color: celebration.glow.opacity(0.5), radius: 8, x: 0, y: 4)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("New personal record: \(pr.exerciseName), \(pr.weight.formattedWeight) lbs for \(pr.reps) reps")
+        .accessibilityLabel(celebration.accessibilityLabel)
     }
 }
 
@@ -1600,34 +1643,57 @@ private struct ExerciseTransitionCard: View {
                 .accessibilityLabel("Dismiss")
             }
 
-            // Option 1: Do Another Set - menu with PR, PR+5, Drop, Same options
-            transitionAddSetMenu
-
-            // Option 2: Move to Next Exercise
+            // Where you're already headed. The cursor auto-advances the moment
+            // the last set of an exercise completes, so by the time this card
+            // appears the move has happened — presenting it as a filled accent
+            // CTA asked the lifter to confirm something that was already true,
+            // and made the one real decision here ("another set, or move on?")
+            // read as the secondary option.
+            //
+            // Still tappable: it dismisses the card and guarantees the cursor
+            // lands there, which is worth keeping for the case where focus was
+            // moved by hand in between.
             if let nextIdx = viewModel.nextExerciseIndex, let nextEx = viewModel.nextExercise {
                 Button {
                     withAnimation { viewModel.moveToExercise(index: nextIdx) }
                 } label: {
                     VStack(spacing: Theme.Spacing.tight) {
                         HStack(spacing: Theme.Spacing.sm) {
+                            Text("NEXT")
+                                .font(Theme.fontMetricLabel)
+                                .kerning(0.6)
+                                .foregroundStyle(Theme.textTertiary)
+                            Text(nextEx.exercise.name)
+                                .font(.subheadline.weight(.bold))
+                                .foregroundStyle(Theme.textPrimary)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.8)
+                            Spacer(minLength: Theme.Spacing.xs)
                             Image(systemName: "arrow.right")
-                                .font(.subheadline.weight(.bold))
-                            Text("Move to \(nextEx.exercise.name)")
-                                .font(.subheadline.weight(.bold))
+                                .font(.caption.weight(.bold))
+                                .foregroundStyle(Theme.accent)
                         }
-                        .foregroundStyle(.black)
 
-                        // Show config hints (grips, attachments, positions)
+                        // Setup options for the machine you're walking to —
+                        // the genuinely useful part of this row.
                         configHints(for: nextEx.exercise)
+                            .frame(maxWidth: .infinity, alignment: .leading)
                     }
+                    .padding(.horizontal, Theme.Spacing.md)
+                    .padding(.vertical, Theme.Spacing.md)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-                    .background(Theme.accent)
+                    .background(Theme.surfaceElevated)
                     .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall))
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("Move to \(nextEx.exercise.name)")
+                .accessibilityLabel("Next exercise: \(nextEx.exercise.name)")
+                .accessibilityHint("Closes this card and continues with \(nextEx.exercise.name)")
             }
+
+            // The one actual decision on this card: stay on this exercise for
+            // another set, or let the auto-advance stand.
+            transitionAddSetMenu
 
             // All exercises complete — prompt to add or finish
             if viewModel.allExercisesComplete {
@@ -1872,9 +1938,12 @@ private struct ExerciseTransitionCard: View {
     private func configHints(for exercise: Exercise) -> some View {
         let hints = buildConfigHints(for: exercise)
         if !hints.isEmpty {
+            // Was `.black.opacity(0.6)`, which only worked against the accent
+            // fill this row used to have. On the elevated surface it would be
+            // near-invisible.
             Text(hints.joined(separator: " \u{2022} "))
                 .font(.caption.weight(.medium))
-                .foregroundStyle(.black.opacity(0.6))
+                .foregroundStyle(Theme.textSecondary)
         }
     }
 

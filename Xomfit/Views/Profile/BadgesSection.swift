@@ -6,11 +6,21 @@ import SwiftUI
 struct BadgesSection: View {
     let workouts: [Workout]
     let firstPRDate: Date?
+    /// Best tier per ranked lift, for the strength-rank badges. Passed in rather
+    /// than computed here because ranking depends on the signed-in lifter's
+    /// bodyweight, sex and age — see `BadgeEvaluator`.
+    var rankedTiers: [StrengthTier] = []
 
     @State private var selectedBadge: ActivityBadge?
 
     private var unlockedIds: Set<String> {
-        Set(BadgeEvaluator.unlocked(for: workouts, firstPRDate: firstPRDate).map(\.id))
+        Set(
+            BadgeEvaluator.unlocked(
+                for: workouts,
+                firstPRDate: firstPRDate,
+                rankedTiers: rankedTiers
+            ).map(\.id)
+        )
     }
 
     private let columns: [GridItem] = [
@@ -181,15 +191,29 @@ private struct BadgeDetailSheet: View {
         case .totalWorkouts(let n):
             return "Log \(n) total workouts."
         case .totalVolumeLbs(let lbs):
-            let formatted: String
-            if lbs >= 1000 {
-                formatted = String(format: "%.0fk", lbs / 1000)
-            } else {
-                formatted = String(format: "%.0f", lbs)
-            }
-            return "Lift \(formatted) lbs total."
+            return "Lift \(Self.formatVolume(lbs)) lbs total."
         case .firstPR:
             return "Set your first personal record."
+        case let .tierReached(tier, count):
+            return count == 1
+                ? "Reach \(tier.displayName) on any lift."
+                : "Reach \(tier.displayName) on \(count) different lifts."
+        case .singleWorkoutVolumeLbs(let lbs):
+            return "Move \(Self.formatVolume(lbs)) lbs in a single workout."
+        case .earlyBirdWorkouts(let n):
+            return "Start \(n) workouts before \(BadgeEvaluator.earlyHour)am."
+        case .nightOwlWorkouts(let n):
+            return "Start \(n) workouts after \(BadgeEvaluator.lateHour - 12)pm."
+        case .consecutiveWeeks(let n):
+            return "Train at least once a week for \(n) weeks straight."
+        case .beatTheClockSets(let n):
+            return "Start \(n) sets before the rest timer runs out."
         }
+    }
+
+    private static func formatVolume(_ lbs: Double) -> String {
+        lbs >= 1000
+            ? String(format: "%.0fk", lbs / 1000)
+            : String(format: "%.0f", lbs)
     }
 }

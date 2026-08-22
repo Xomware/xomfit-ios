@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 // MARK: - ActivityBadge
 //
@@ -28,6 +29,23 @@ enum BadgeCriteria: Codable, Hashable {
     case totalVolumeLbs(Double)
     /// Set their first PR.
     case firstPR
+    /// Held `tier` or better on at least `count` distinct lifts.
+    case tierReached(StrengthTier, count: Int)
+    /// Moved at least this much volume within a single workout.
+    case singleWorkoutVolumeLbs(Double)
+    /// Started at least N workouts before `BadgeEvaluator.earlyHour`.
+    case earlyBirdWorkouts(Int)
+    /// Started at least N workouts at or after `BadgeEvaluator.lateHour`.
+    case nightOwlWorkouts(Int)
+    /// Trained in each of N consecutive calendar weeks.
+    ///
+    /// Distinct from `streakDays`, and a better fit for how most people
+    /// actually train: a consecutive-*day* streak punishes rest days, which is
+    /// the opposite of what a lifting app should reward.
+    case consecutiveWeeks(Int)
+    /// Completed at least N sets while the previous set's rest timer was still
+    /// running.
+    case beatTheClockSets(Int)
 }
 
 // MARK: - BadgeCatalog
@@ -105,6 +123,127 @@ enum BadgeCatalog {
             description: "Lifted 100,000 lbs total.",
             iconSystemName: "bolt.fill",
             unlockCriteria: .totalVolumeLbs(100_000)
+        ),
+        ActivityBadge(
+            id: "volume-500k",
+            title: "Half a Million",
+            description: "Lifted 500,000 lbs total.",
+            iconSystemName: "mountain.2.fill",
+            unlockCriteria: .totalVolumeLbs(500_000)
+        ),
+        ActivityBadge(
+            id: "volume-1m",
+            title: "Millionaire",
+            description: "Lifted 1,000,000 lbs total.",
+            iconSystemName: "crown.fill",
+            unlockCriteria: .totalVolumeLbs(1_000_000)
+        ),
+        ActivityBadge(
+            id: "workouts-250",
+            title: "Regular",
+            description: "Logged 250 total workouts.",
+            iconSystemName: "calendar.badge.checkmark",
+            unlockCriteria: .totalWorkouts(250)
+        ),
+        ActivityBadge(
+            id: "workouts-500",
+            title: "Lifer",
+            description: "Logged 500 total workouts.",
+            iconSystemName: "infinity.circle.fill",
+            unlockCriteria: .totalWorkouts(500)
+        ),
+        ActivityBadge(
+            id: "streak-14",
+            title: "Fortnight",
+            description: "Worked out 14 days in a row.",
+            iconSystemName: "flame.circle",
+            unlockCriteria: .streakDays(14)
+        ),
+        ActivityBadge(
+            id: "streak-100",
+            title: "Unbroken",
+            description: "Worked out 100 days in a row.",
+            iconSystemName: "seal.fill",
+            unlockCriteria: .streakDays(100)
+        ),
+
+        // Consistency measured in weeks, not days — a day streak punishes rest
+        // days, which is the opposite of what this app should reward.
+        ActivityBadge(
+            id: "weeks-8",
+            title: "Two Months Solid",
+            description: "Trained at least once a week for 8 weeks straight.",
+            iconSystemName: "checkmark.seal.fill",
+            unlockCriteria: .consecutiveWeeks(8)
+        ),
+        ActivityBadge(
+            id: "weeks-26",
+            title: "Half a Year",
+            description: "Trained at least once a week for 26 weeks straight.",
+            iconSystemName: "medal.fill",
+            unlockCriteria: .consecutiveWeeks(26)
+        ),
+
+        // Strength ranks — the ladder, mirrored into the badge grid.
+        ActivityBadge(
+            id: "tier-gold-1",
+            title: "Struck Gold",
+            description: "Reached Gold on any lift.",
+            iconSystemName: "medal.fill",
+            unlockCriteria: .tierReached(.gold, count: 1)
+        ),
+        ActivityBadge(
+            id: "tier-diamond-1",
+            title: "Diamond Hands",
+            description: "Reached Diamond on any lift.",
+            iconSystemName: "diamond.fill",
+            unlockCriteria: .tierReached(.diamond, count: 1)
+        ),
+        ActivityBadge(
+            id: "tier-diamond-3",
+            title: "Triple Threat",
+            description: "Reached Diamond on three different lifts.",
+            iconSystemName: "diamond.circle.fill",
+            unlockCriteria: .tierReached(.diamond, count: 3)
+        ),
+
+        ActivityBadge(
+            id: "single-volume-20k",
+            title: "Big Day",
+            description: "Moved 20,000 lbs in a single workout.",
+            iconSystemName: "figure.strengthtraining.traditional",
+            unlockCriteria: .singleWorkoutVolumeLbs(20_000)
+        ),
+        ActivityBadge(
+            id: "early-bird-10",
+            title: "Early Bird",
+            description: "Started 10 workouts before 6am.",
+            iconSystemName: "sunrise.fill",
+            unlockCriteria: .earlyBirdWorkouts(10)
+        ),
+        ActivityBadge(
+            id: "night-owl-10",
+            title: "Night Owl",
+            description: "Started 10 workouts after 9pm.",
+            iconSystemName: "moon.stars.fill",
+            unlockCriteria: .nightOwlWorkouts(10)
+        ),
+
+        // Only badge that needs data the app did not previously record, so it
+        // counts forward from the 20260822 migration rather than across history.
+        ActivityBadge(
+            id: "beat-the-clock-10",
+            title: "Back Under the Bar",
+            description: "Started 10 sets before the rest timer ran out.",
+            iconSystemName: "timer",
+            unlockCriteria: .beatTheClockSets(10)
+        ),
+        ActivityBadge(
+            id: "beat-the-clock-100",
+            title: "No Dawdling",
+            description: "Started 100 sets before the rest timer ran out.",
+            iconSystemName: "hare.fill",
+            unlockCriteria: .beatTheClockSets(100)
         )
     ]
 }
