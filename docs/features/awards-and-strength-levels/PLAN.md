@@ -1,6 +1,6 @@
 # Plan: Awards, Milestones, and Strength Levels
 
-**Status**: Phase 1 complete — Phases 2 and 3 not started
+**Status**: Phases 1 and 2 complete — Phase 3 not started
 **Created**: 2026-08-22
 
 ## Headline finding
@@ -35,7 +35,7 @@ can be visibly wrong. The service already reports this — the profile UI must s
 "provisional" rather than a confident Gold, or the whole feature loses trust on
 first view.
 
-## Phase 2 — Tier-up celebration
+## Phase 2 — Tier-up celebration ✅ DONE
 
 New tier is only knowable by comparing against the previous tier, so this needs
 persistence — there is no stored "best tier per exercise" today.
@@ -48,9 +48,10 @@ persistence — there is no stored "best tier per exercise" today.
 
 Copy: "Diamond on Bench Press 💎".
 
-**Decision needed**: does a tier-up *replace* the PR banner when both fire on the
-same set (they usually will — a tier-up is almost always driven by a PR), or
-queue behind it? Recommend replace: tier-up is the rarer, bigger moment.
+**Decided**: replace, not queue. A tier-up supersedes the PR that caused it,
+matched on exercise id so arrival order doesn't matter (the PR check is a network
+round trip; the tier check is local and lands first). Celebrations are dropped
+rather than queued — two banners back-to-back mid-set is noise.
 
 ## Phase 3 — More badges
 
@@ -95,7 +96,7 @@ within 15s of rest ending" — same behavior (be ready), better incentive.
 
 1. ~~Phase 1 — pure wiring of finished components.~~ Done.
 2. Phase 3a — additive catalog entries, no schema risk.
-3. Phase 2 — tier-up moment, needs the persistence decision.
+3. ~~Phase 2 — tier-up moment.~~ Done.
 4. Phase 3b — only after the `beatRestTimer` storage decision is made.
 
 ## Open questions for Dominick

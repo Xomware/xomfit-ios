@@ -267,6 +267,58 @@ final class StrengthStandardsTests: XCTestCase {
         XCTAssertEqual(tiers, tiers.sorted(by: >))
     }
 
+    // MARK: - Tier progress
+
+    /// The flood guard. Shipping tier-ups to a lifter with years of history must
+    /// not fire a celebration for every lift in their next workout.
+    @MainActor
+    func testFirstSightingSeedsSilentlyWithoutCelebrating() {
+        TierProgressStore.resetForTesting()
+
+        XCTAssertNil(
+            TierProgressStore.record(.diamond, for: "ex-bench-flat"),
+            "First sighting records a baseline but must not report a promotion"
+        )
+        XCTAssertEqual(TierProgressStore.bestTier(for: "ex-bench-flat"), .diamond)
+    }
+
+    @MainActor
+    func testPromotionIsReportedOnceAndOnlyOnce() {
+        TierProgressStore.resetForTesting()
+        TierProgressStore.record(.gold, for: "ex-bench-flat")   // baseline
+
+        XCTAssertEqual(TierProgressStore.record(.diamond, for: "ex-bench-flat"), .diamond)
+        XCTAssertNil(
+            TierProgressStore.record(.diamond, for: "ex-bench-flat"),
+            "Re-hitting the same tier is not a new promotion"
+        )
+    }
+
+    /// Gaining bodyweight can drop a bodyweight-relative rank. Demoting someone
+    /// mid-set for that would be a hostile way to deliver the news.
+    @MainActor
+    func testRecordedTierNeverRegresses() {
+        TierProgressStore.resetForTesting()
+        TierProgressStore.record(.gold, for: "ex-bench-flat")
+        TierProgressStore.record(.diamond, for: "ex-bench-flat")
+
+        XCTAssertNil(TierProgressStore.record(.silver, for: "ex-bench-flat"))
+        XCTAssertEqual(TierProgressStore.bestTier(for: "ex-bench-flat"), .diamond)
+    }
+
+    @MainActor
+    func testSeedDoesNotLowerExistingProgress() {
+        TierProgressStore.resetForTesting()
+        TierProgressStore.record(.diamond, for: "ex-bench-flat")
+
+        TierProgressStore.seed(["ex-bench-flat": .bronze, "ex-squat": .gold])
+
+        XCTAssertEqual(TierProgressStore.bestTier(for: "ex-bench-flat"), .diamond)
+        XCTAssertEqual(TierProgressStore.bestTier(for: "ex-squat"), .gold)
+        // A seeded entry counts as a baseline, so the next real promotion fires.
+        XCTAssertEqual(TierProgressStore.record(.olympian, for: "ex-squat"), .olympian)
+    }
+
     /// `tierDistribution` is derived from `rankedLifts`, so the bar on the
     /// profile can never disagree with the list beneath it.
     @MainActor

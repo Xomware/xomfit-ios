@@ -317,6 +317,10 @@ struct XomFitApp: App {
     ///   XOMFIT_AUTO_PR_BANNER=1         → seed a fake PR celebration so the
     ///                                     banner can be screenshotted without
     ///                                     a live network PR check.
+    ///   XOMFIT_AUTO_TIER_BANNER=<n>     → seed a tier-up celebration at
+    ///                                     StrengthTier rawValue n (4 = Diamond).
+    ///                                     Set alongside XOMFIT_AUTO_PR_BANNER to
+    ///                                     check that one banner wins, not two.
     ///   XOMFIT_AUTO_SHOW_JUMPER=1       → auto-open the Switch Exercise sheet on
     ///                                     first appearance — used to screenshot
     ///                                     the new Add Exercise (+) toolbar button.
@@ -402,14 +406,24 @@ struct XomFitApp: App {
         // Flip into focus mode so the gym-floor layout is the first thing the
         // user / agent sees (#402).
         // Seed a celebration so the banner's placement and auto-dismiss can be
-        // screenshotted without a live PR (which needs the network).
+        // screenshotted without a live PR (which needs the network) or a real
+        // tier promotion (which needs matching PR history).
         if env["XOMFIT_AUTO_PR_BANNER"] == "1" {
-            workoutSession.newPR = PersonalRecord(
+            let pr = PersonalRecord(
                 id: "debug-pr", userId: userId, exerciseId: "ex-bench-flat",
                 exerciseName: "Bench Press", weight: 245, reps: 5,
                 date: Date(), previousBest: 225
             )
-            workoutSession.showPRCelebration = true
+            workoutSession.newPR = pr
+            workoutSession.present(.personalRecord(pr))
+        }
+        if let raw = env["XOMFIT_AUTO_TIER_BANNER"],
+           let tier = StrengthTier(rawValue: Int(raw) ?? -1) {
+            workoutSession.present(.tierUp(
+                exerciseId: "ex-bench-flat",
+                exerciseName: "Bench Press",
+                tier: tier
+            ))
         }
         if env["XOMFIT_AUTO_ENTER_FOCUS"] == "1" {
             workoutSession.focusMode = true

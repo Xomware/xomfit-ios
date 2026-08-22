@@ -197,4 +197,64 @@ final class WorkoutSkipCursorTests: XCTestCase {
 
         XCTAssertEqual(sut.focusSetIndex, 3, "Advance must land on the next set actually owed")
     }
+
+    // MARK: - Celebration precedence
+
+    private func makePR(id: String, exerciseId: String) -> PersonalRecord {
+        PersonalRecord(
+            id: id, userId: "test-user", exerciseId: exerciseId,
+            exerciseName: "Bench Press", weight: 245, reps: 5,
+            date: Date(), previousBest: 225
+        )
+    }
+
+    /// Crossing a tier requires a new best e1RM, which *is* a PR — so nearly
+    /// every tier-up arrives alongside one. Showing both would double-banner the
+    /// same moment.
+    func testTierUpSupersedesThePRForTheSameLift() {
+        sut.present(.personalRecord(makePR(id: "pr-1", exerciseId: "ex-bench-flat")))
+        sut.present(.tierUp(exerciseId: "ex-bench-flat", exerciseName: "Bench Press", tier: .diamond))
+
+        XCTAssertEqual(
+            sut.activeCelebration,
+            .tierUp(exerciseId: "ex-bench-flat", exerciseName: "Bench Press", tier: .diamond)
+        )
+    }
+
+    /// The PR check is a network round trip and the tier check is local, so the
+    /// PR routinely lands second. It must not overwrite the tier-up.
+    func testPRArrivingAfterATierUpForTheSameLiftIsDropped() {
+        sut.present(.tierUp(exerciseId: "ex-bench-flat", exerciseName: "Bench Press", tier: .diamond))
+        sut.present(.personalRecord(makePR(id: "pr-1", exerciseId: "ex-bench-flat")))
+
+        guard case .tierUp = sut.activeCelebration else {
+            return XCTFail("Tier-up should still be showing, got \(String(describing: sut.activeCelebration))")
+        }
+    }
+
+    /// A PR on a different lift is a separate achievement, but two banners
+    /// back-to-back mid-set is noise — the higher-ranked one wins outright.
+    func testLowerRankedCelebrationOnAnotherLiftIsDroppedNotQueued() {
+        sut.present(.tierUp(exerciseId: "ex-squat", exerciseName: "Squat", tier: .gold))
+        sut.present(.personalRecord(makePR(id: "pr-1", exerciseId: "ex-bench-flat")))
+
+        guard case .tierUp = sut.activeCelebration else {
+            return XCTFail("Higher-ranked celebration should survive")
+        }
+
+        // ...and dismissing leaves nothing behind, rather than revealing a queue.
+        sut.dismissCelebration()
+        XCTAssertNil(sut.activeCelebration)
+    }
+
+    func testHigherRankedCelebrationOnAnotherLiftReplacesTheCurrentOne() {
+        sut.present(.personalRecord(makePR(id: "pr-1", exerciseId: "ex-bench-flat")))
+        sut.present(.tierUp(exerciseId: "ex-squat", exerciseName: "Squat", tier: .gold))
+
+        XCTAssertEqual(
+            sut.activeCelebration,
+            .tierUp(exerciseId: "ex-squat", exerciseName: "Squat", tier: .gold)
+        )
+    }
+
 }

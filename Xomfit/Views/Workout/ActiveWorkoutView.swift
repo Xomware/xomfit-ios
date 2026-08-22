@@ -240,9 +240,9 @@ struct ActiveWorkoutView: View {
         // whole screen down mid-set is worse than one that floats over the
         // header for a few seconds.
         .overlay(alignment: .top) {
-            if viewModel.showPRCelebration, let pr = viewModel.newPR {
-                PRCelebrationBanner(pr: pr) {
-                    withAnimation { viewModel.showPRCelebration = false }
+            if let celebration = viewModel.activeCelebration {
+                CelebrationBanner(celebration: celebration) {
+                    withAnimation { viewModel.dismissCelebration() }
                 }
                 // Clear the navigation bar. The overlay is measured against the
                 // whole stack, which the nav bar is drawn inside rather than
@@ -253,14 +253,14 @@ struct ActiveWorkoutView: View {
                 // Auto-dismiss. The banner had no timer and no dismissal other
                 // than the close button, so a PR hit mid-set used to sit on
                 // screen for the rest of the workout.
-                .task(id: pr.id) {
+                .task(id: celebration.id) {
                     try? await Task.sleep(for: .seconds(Self.celebrationDuration))
                     guard !Task.isCancelled else { return }
-                    withAnimation(.xomChill) { viewModel.showPRCelebration = false }
+                    withAnimation(.xomChill) { viewModel.dismissCelebration() }
                 }
             }
         }
-        .animation(.xomChill, value: viewModel.showPRCelebration)
+        .animation(.xomChill, value: viewModel.activeCelebration)
         // Exercise-transition card — same reasoning as the rest bar. Finishing
         // an exercise in focus mode used to set `showExerciseTransition` with
         // nothing on screen to render it, so the flow silently advanced and the
@@ -1002,23 +1002,28 @@ struct ActiveWorkoutView: View {
 
 // MARK: - PR Celebration Banner
 
-private struct PRCelebrationBanner: View {
-    let pr: PersonalRecord
+/// The single mid-workout celebration banner — PRs, tier-ups, and whatever
+/// `Celebration` grows to cover next. One view rather than one per kind, so a
+/// new achievement type can't quietly ship with different placement, a missing
+/// auto-dismiss, or a mount point that focus mode covers.
+private struct CelebrationBanner: View {
+    let celebration: Celebration
     let onDismiss: () -> Void
 
     var body: some View {
         HStack(spacing: Theme.Spacing.md) {
-            Image(systemName: "trophy.fill")
+            Image(systemName: celebration.iconSystemName)
                 .font(Theme.fontTitle3)
                 .foregroundStyle(.black)
 
             VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
-                Text("New Personal Record!")
+                Text(celebration.title)
                     .font(.subheadline.weight(.black))
                     .foregroundStyle(.black)
-                Text("\(pr.exerciseName) — \(pr.weight.formattedWeight) lbs × \(pr.reps)")
+                Text(celebration.subtitle)
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.black.opacity(0.75))
+                    .lineLimit(1)
             }
 
             Spacer()
@@ -1032,17 +1037,17 @@ private struct PRCelebrationBanner: View {
                     .frame(minWidth: 44, minHeight: 44)
                     .contentShape(Rectangle())
             }
-            .accessibilityLabel("Dismiss new PR banner")
+            .accessibilityLabel("Dismiss celebration")
         }
         .padding(.horizontal, Theme.Spacing.md)
         .padding(.vertical, Theme.Spacing.md)
-        .background(Theme.prGold)
+        .background(celebration.fill)
         .clipShape(.rect(cornerRadius: Theme.cornerRadius))
         .padding(.horizontal, Theme.Spacing.md)
         .padding(.top, Theme.Spacing.sm)
-        .shadow(color: Theme.prGold.opacity(0.5), radius: 8, x: 0, y: 4)
+        .shadow(color: celebration.glow.opacity(0.5), radius: 8, x: 0, y: 4)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("New personal record: \(pr.exerciseName), \(pr.weight.formattedWeight) lbs for \(pr.reps) reps")
+        .accessibilityLabel(celebration.accessibilityLabel)
     }
 }
 

@@ -89,9 +89,17 @@ final class WorkoutLoggerViewModel {
         return stored > 0 ? stored : 90
     }
 
-    // PR celebration — set when a completed set beats the user's record
+    // PR celebration — set when a completed set beats the user's record.
+    // Kept as data for the finish flow and the notification inbox; what is
+    // *shown* is decided by `activeCelebration`.
     var newPR: PersonalRecord? = nil
-    var showPRCelebration: Bool = false
+
+    /// The one celebration currently on screen, if any.
+    ///
+    /// Replaces the old `showPRCelebration` flag. A single slot rather than a
+    /// per-kind flag is what lets a tier-up and the PR that caused it resolve to
+    /// one banner instead of two — see `present(_:)`.
+    private(set) var activeCelebration: Celebration? = nil
 
     // Exercise transition — shown when all sets of an exercise are complete
     var showExerciseTransition: Bool = false
@@ -221,7 +229,7 @@ final class WorkoutLoggerViewModel {
         activeUserId = userId
         workoutId = UUID().uuidString
         newPR = nil
-        showPRCelebration = false
+        activeCelebration = nil
         showExerciseTransition = false
         completedExerciseIndex = 0
         nextExerciseIndex = nil
@@ -282,7 +290,7 @@ final class WorkoutLoggerViewModel {
         isSaving = false
         errorMessage = nil
         newPR = nil
-        showPRCelebration = false
+        activeCelebration = nil
         showExerciseTransition = false
         completedExerciseIndex = 0
         nextExerciseIndex = nil
@@ -780,9 +788,15 @@ final class WorkoutLoggerViewModel {
             } else if focusExerciseIndex == exerciseIndex && focusSetIndex == setIndex {
                 focusAdvance()
             }
-            // Fire PR check asynchronously — non-blocking
             let set = exercises[exerciseIndex].sets[setIndex]
             let loggedExercise = exercises[exerciseIndex]
+
+            // Strength rank first — it is local arithmetic, so it resolves
+            // before the PR round trip and lets `present(_:)` absorb the PR that
+            // caused it rather than showing two banners for one set.
+            checkForTierUp(set: set, loggedExercise: loggedExercise)
+
+            // Fire PR check asynchronously — non-blocking
             Task {
                 await checkForPR(
                     set: set,
@@ -1511,6 +1525,80 @@ final class WorkoutLoggerViewModel {
 
     // MARK: - PR Detection
 
+    // MARK: - Celebrations
+
+    /// Shows a celebration, resolving it against whatever is already on screen.
+    ///
+    /// The rules exist because a tier-up and the PR that caused it fire from the
+    /// same set. Crossing a tier requires a new best e1RM, which *is* a PR, so
+    /// naively showing both would double-banner nearly every tier-up.
+    ///
+    ///   * A tier-up replaces a PR banner for the same lift — same moment, told
+    ///     better.
+    ///   * A PR is dropped when a tier-up for that lift is already showing,
+    ///     which covers the PR check finishing after the tier check.
+    ///   * Otherwise the higher-ranked celebration wins and the loser is
+    ///     dropped, not queued. Two banners back-to-back mid-set is noise.
+    func present(_ celebration: Celebration) {
+        if let active = activeCelebration {
+            // Same lift: the tier-up is the better telling of the same moment.
+            if active.exerciseId == celebration.exerciseId {
+                guard celebration.rank > active.rank else { return }
+            } else if celebration.rank < active.rank {
+                return
+            }
+        }
+
+        activeCelebration = celebration
+
+        switch celebration {
+        case .tierUp:         Haptics.workoutComplete()
+        case .personalRecord: Haptics.prCelebration()
+        }
+    }
+
+    func dismissCelebration() {
+        activeCelebration = nil
+    }
+
+    /// Records the tier this set puts the lifter at and celebrates a promotion.
+    ///
+    /// Called synchronously from `completeSet` rather than off the back of the
+    /// PR check: ranking is local arithmetic, so it needs no network, and firing
+    /// it first means the tier-up is already on screen when the slower PR
+    /// response lands and gets absorbed by `present(_:)`.
+    private func checkForTierUp(set: WorkoutSet, loggedExercise: WorkoutExercise) {
+        guard set.reps > 0, set.weight > 0 else { return }
+
+        let exerciseId = loggedExercise.exercise.id
+        guard let rank = StrengthLevelService.shared.rank(
+            exerciseId: exerciseId,
+            weight: set.weight,
+            reps: set.reps,
+            weightMode: set.weightMode
+        ), rank.tier != .unranked else { return }
+
+        guard let promotion = TierProgressStore.record(rank.tier, for: exerciseId) else { return }
+
+        present(.tierUp(
+            exerciseId: exerciseId,
+            exerciseName: loggedExercise.exercise.name,
+            tier: promotion
+        ))
+
+        // The banner is transient and easy to miss mid-set; the inbox entry is
+        // the record the lifter can go back and find. Mirrors what the PR path
+        // does for the same reason.
+        NotificationService.shared.addNotification(
+            AppNotification(
+                type: .newPR,
+                title: "\(promotion.displayName) unlocked",
+                body: "\(loggedExercise.exercise.name) — \(promotion.blurb)",
+                targetId: exerciseId
+            )
+        )
+    }
+
     private func checkForPR(
         set: WorkoutSet,
         loggedExercise: WorkoutExercise,
@@ -1555,8 +1643,7 @@ final class WorkoutLoggerViewModel {
 
         // Trigger the celebration banner
         newPR = headline
-        showPRCelebration = true
-        Haptics.prCelebration()
+        present(.personalRecord(headline))
 
         // Also drop it in the inbox. The celebration banner is transient and is
         // easy to miss mid-set, and the backend push for this only reaches the
@@ -1970,7 +2057,7 @@ final class WorkoutLoggerViewModel {
         restTimeRemaining = 0
         restDuration = 0
         showExerciseTransition = false
-        showPRCelebration = false
+        activeCelebration = nil
 
         // Restore soundtrack state (#411 follow-up). Captured tracks from
         // BEFORE the quit are pushed onto `persistedCapturedTracks` so
