@@ -32,6 +32,9 @@ struct SettingsView: View {
     // MARK: - Notifications top-level toggle (#312)
 
     @AppStorage("workoutRemindersEnabled") private var workoutRemindersEnabled: Bool = false
+    /// Opt-in, defaulted off: reading a lifter's Health history without them
+    /// asking for it is not a default worth taking.
+    @AppStorage(CardioService.autoImportKey) private var autoImportCardio: Bool = false
     @State private var notificationsAuthorized: Bool = false
 
     private var weightUnit: WeightUnit {
@@ -80,6 +83,7 @@ struct SettingsView: View {
             List {
                 accountSection
                 notificationsSection
+                healthSection
                 appPreferencesSection
                 trainingSection
                 aiCoachSection
@@ -185,6 +189,48 @@ struct SettingsView: View {
         }
         .listRowBackground(Theme.surface)
         .listRowSeparatorTint(Theme.hairline)
+    }
+
+    private var healthSection: some View {
+        Section {
+            Toggle(isOn: autoImportCardioBinding) {
+                HStack(spacing: Theme.Spacing.md) {
+                    Image(systemName: "heart.text.square.fill")
+                        .frame(width: Theme.Spacing.lg)
+                        .foregroundStyle(Theme.accent)
+                    Text("Auto-import cardio")
+                        .foregroundStyle(Theme.textPrimary)
+                }
+            }
+            .tint(Theme.accent)
+            .accessibilityHint("Automatically bring runs and rides from Apple Health into XomFit")
+        } header: {
+            XomMetricLabel("Health")
+        } footer: {
+            Text("Brings runs, rides and other cardio recorded by your watch into XomFit without tapping import. Garmin, Apple Watch, Whoop and Polar all write to Apple Health, so this covers any of them. Strength workouts are not imported.")
+                .font(Theme.fontCaption)
+                .foregroundStyle(Theme.textSecondary)
+        }
+        .listRowBackground(Theme.surface)
+        .listRowSeparatorTint(Theme.hairline)
+    }
+
+    /// Turning the toggle on requests Health permission and runs an import
+    /// immediately — a switch that silently does nothing until tomorrow reads as
+    /// broken, which is the state the manual-only import was already in.
+    private var autoImportCardioBinding: Binding<Bool> {
+        Binding(
+            get: { autoImportCardio },
+            set: { newValue in
+                autoImportCardio = newValue
+                guard newValue else { return }
+                Task {
+                    await HealthKitService.shared.requestAuthorization()
+                    guard let userId = authService.currentUser?.id.uuidString.lowercased() else { return }
+                    await CardioService.shared.importNewFromHealth(userId: userId)
+                }
+            }
+        )
     }
 
     private var appPreferencesSection: some View {

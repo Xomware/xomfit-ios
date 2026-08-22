@@ -82,6 +82,56 @@ final class HealthKitTests: XCTestCase {
         )
         XCTAssertFalse(ok, "An end before its start is not a workout")
     }
+    // MARK: - Import anchor
+
+    /// The anchor is the whole reason automatic import is idempotent. If it does
+    /// not survive an archive round-trip it silently degrades to "re-read
+    /// everything, every launch".
+    func testAnchorSurvivesArchiveRoundTrip() {
+        service.resetCardioAnchor()
+        addTeardownBlock { Task { @MainActor in HealthKitService.shared.resetCardioAnchor() } }
+
+        let anchor = HKQueryAnchor(fromValue: 42)
+        service.commitCardioAnchor(anchor)
+
+        guard let data = UserDefaults.standard.data(forKey: "health.cardioImportAnchor") else {
+            return XCTFail("Anchor was not persisted")
+        }
+        let restored = try? NSKeyedUnarchiver.unarchivedObject(ofClass: HKQueryAnchor.self, from: data)
+        XCTAssertEqual(restored, anchor)
+    }
+
+    func testResetClearsTheAnchor() {
+        service.commitCardioAnchor(HKQueryAnchor(fromValue: 7))
+        service.resetCardioAnchor()
+        XCTAssertNil(UserDefaults.standard.data(forKey: "health.cardioImportAnchor"))
+    }
+
+    /// On the simulator HealthKit is unavailable, so this must return empty
+    /// rather than trap — and critically must not hand back an anchor, which
+    /// would advance the cursor past samples that were never read.
+    func testNewCardioSessionsDegradesWithoutHealthKit() async {
+        guard !service.isAvailable else { return }
+        let result = await service.newCardioSessions(userId: "test-user")
+        XCTAssertTrue(result.sessions.isEmpty)
+        XCTAssertNil(result.anchor)
+    }
+
+    // MARK: - Opt-in gating
+
+    /// Automatic import must stay off until asked for. Reading someone's Health
+    /// history by default is not a default worth taking.
+    func testAutoImportIsOffByDefault() {
+        UserDefaults.standard.removeObject(forKey: CardioService.autoImportKey)
+        let enabled = CardioService.shared.autoImportEnabled
+        XCTAssertFalse(enabled)
+    }
+
+    func testImportIsANoOpWithoutAUserId() async {
+        let count = await CardioService.shared.importNewFromHealth(userId: "")
+        XCTAssertEqual(count, 0)
+    }
+
 }
 
 // MARK: - Cardio modality mapping
@@ -178,4 +228,5 @@ final class CardioModalityTests: XCTestCase {
             distanceMiles: distance
         )
     }
+
 }

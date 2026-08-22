@@ -74,7 +74,7 @@ one buzz at zero the end of it? Current phone behavior is one-and-done.
 
 ---
 
-## Phase 3 — Garmin data (the real answer)
+## Phase 3 — Garmin data (the real answer) — MOSTLY SHIPPED
 
 **There is no Garmin integration and there is deliberately not going to be one.**
 The strategy is documented in `Xomfit/Xomfit.entitlements` and
@@ -85,17 +85,23 @@ cover strictly less.
 
 So "Garmin doesn't show my stuff" is one of four things, in likelihood order:
 
-1. **Nothing auto-imports.** The only path is a manual "Import from Health"
-   button in `CardioListView`. If you never tapped it, nothing is there.
-   → **Fix: Phase 2 of `watch-embed-auto-cardio/PLAN.md`** (`HKObserverQuery` +
-   background delivery + persisted anchor + opt-in toggle).
-2. **The 30-day window.** `CardioService.importFromHealth` defaults to
-   `since: -30 days`. Older Garmin activities are invisible even after a manual
-   import. → Offer an "import everything" first-run path.
-3. **Read permission was never granted.** HealthKit never reports read-permission
-   status, so a denied grant is indistinguishable from "no data" — the app shows
-   "Nothing new to import" either way. → Detect "authorized but zero workouts
-   ever" and surface a "check Health → Sources → XomFit" hint.
+1. ~~**Nothing auto-imports.**~~ **Fixed.** Anchored auto-import now runs on app
+   foreground and on Cardio-tab appearance, behind an opt-in toggle. Uses an
+   `HKQueryAnchor` rather than a date window, so repeated runs are idempotent.
+2. ~~**The 30-day window.**~~ **Fixed.** The first automatic import reaches back a
+   year; every run after that is anchored and unbounded. The manual button keeps
+   its 30-day window, which is correct for a button.
+3. ~~**Read permission was never granted.**~~ **Partly fixed.** The Cardio tab now
+   shows a "Bring in your watch data / Turn on" prompt until the lifter opts in,
+   which is where someone lands when their watch data is missing. Still no
+   detection of "authorized but zero workouts ever" → "check Health → Sources".
+
+**Still missing: delivery while the app is closed.** That needs
+`enableBackgroundDelivery` plus the
+`com.apple.developer.healthkit.background-delivery` entitlement — and that
+entitlement must be added to the provisioning profile in the Apple Developer
+portal first, or the Release archive fails to sign. Deliberately not done blind.
+Until then, data lands the next time the app is opened.
 4. **Strength training is filtered out on purpose.** `HealthKitService.session(from:)`
    returns nil for anything `CardioModality.from(healthKitType:)` doesn't map —
    which is every non-cardio type. If your Garmin lifting sessions are the

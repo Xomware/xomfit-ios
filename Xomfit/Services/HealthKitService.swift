@@ -193,6 +193,93 @@ final class HealthKitService {
         }
     }
 
+    // MARK: - Automatic import
+    //
+    // The manual "Import from Health" button walks a 30-day date window every
+    // time it is tapped. That is fine for a button and wrong for anything
+    // automatic: a window re-reads the same samples on every run and silently
+    // hides anything older than the window. The automatic path uses an
+    // `HKQueryAnchor` instead, which is HealthKit's own "what have I not seen
+    // yet" cursor and is the only thing that makes repeated imports idempotent.
+
+    /// Cap on how far back the *first* automatic import reaches.
+    ///
+    /// With no stored anchor an anchored query returns a lifter's entire Health
+    /// history, which for a long-time Garmin user is thousands of workouts on
+    /// first launch. A year is enough to make the feature obviously work without
+    /// that. Subsequent runs are anchored and unbounded.
+    private static let firstImportWindow: TimeInterval = 365 * 24 * 60 * 60
+
+    private static let anchorKey = "health.cardioImportAnchor"
+
+    private var storedAnchor: HKQueryAnchor? {
+        guard let data = UserDefaults.standard.data(forKey: Self.anchorKey) else { return nil }
+        return try? NSKeyedUnarchiver.unarchivedObject(ofClass: HKQueryAnchor.self, from: data)
+    }
+
+    /// Advances the cursor. Called **only** after every session in the batch has
+    /// been persisted — advancing on fetch instead would drop samples for good
+    /// the moment a save failed.
+    func commitCardioAnchor(_ anchor: HKQueryAnchor) {
+        guard let data = try? NSKeyedArchiver.archivedData(
+            withRootObject: anchor, requiringSecureCoding: true
+        ) else { return }
+        UserDefaults.standard.set(data, forKey: Self.anchorKey)
+    }
+
+    /// Clears the cursor so the next automatic import re-reads the full window.
+    func resetCardioAnchor() {
+        UserDefaults.standard.removeObject(forKey: Self.anchorKey)
+    }
+
+    /// Cardio sessions HealthKit has not handed us before.
+    ///
+    /// Returns the new anchor alongside the sessions rather than storing it, so
+    /// the caller can persist it only once the sessions are safely saved.
+    func newCardioSessions(
+        userId: String
+    ) async -> (sessions: [CardioSession], anchor: HKQueryAnchor?) {
+        guard isAvailable else { return ([], nil) }
+
+        let anchor = storedAnchor
+        // The date predicate applies to the first run only. Once anchored,
+        // bounding by date would re-introduce exactly the blind spot the anchor
+        // exists to remove.
+        let predicate: NSPredicate? = anchor == nil
+            ? HKQuery.predicateForSamples(
+                withStart: Date().addingTimeInterval(-Self.firstImportWindow),
+                end: nil,
+                options: .strictStartDate
+              )
+            : nil
+
+        let result: ([HKWorkout], HKQueryAnchor?) = await withCheckedContinuation { continuation in
+            let query = HKAnchoredObjectQuery(
+                type: HKObjectType.workoutType(),
+                predicate: predicate,
+                anchor: anchor,
+                limit: HKObjectQueryNoLimit
+            ) { _, samples, _, newAnchor, error in
+                if let error {
+                    Task { @MainActor in self.lastImportError = error.localizedDescription }
+                    // No anchor on failure — a partial read must not advance the
+                    // cursor past samples we never saw.
+                    continuation.resume(returning: ([], nil))
+                    return
+                }
+                continuation.resume(returning: ((samples as? [HKWorkout]) ?? [], newAnchor))
+            }
+            store.execute(query)
+        }
+
+        let ownBundleId = Bundle.main.bundleIdentifier
+        let sessions = result.0.compactMap { workout -> CardioSession? in
+            guard workout.sourceRevision.source.bundleIdentifier != ownBundleId else { return nil }
+            return session(from: workout, userId: userId)
+        }
+        return (sessions, result.1)
+    }
+
     private func session(from workout: HKWorkout, userId: String) -> CardioSession? {
         let isIndoor = (workout.metadata?[HKMetadataKeyIndoorWorkout] as? Bool) ?? false
         guard let modality = CardioModality.from(

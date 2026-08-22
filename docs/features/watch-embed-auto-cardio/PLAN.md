@@ -1,6 +1,6 @@
 # Plan: Ship the Watch App + Opt-In Auto Cardio Import
 
-**Status**: Draft
+**Status**: Phase 2 partially shipped (foreground auto-import). Phase 1 not started.
 **Created**: 2026-08-21
 **Last updated**: 2026-08-21
 **Issue**: TBD (two issues — one per phase)

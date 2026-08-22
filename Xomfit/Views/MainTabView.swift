@@ -190,8 +190,17 @@ struct MainTabView: View {
         // an accurate notification queued before the user stops opening the app,
         // which is exactly the case this nudge exists for.
         .onChange(of: scenePhase) { _, phase in
-            guard phase == .background else { return }
-            refreshTrainingNudgeSchedule()
+            switch phase {
+            case .background:
+                refreshTrainingNudgeSchedule()
+            case .active:
+                // Anchored, so running it on every foreground costs nothing when
+                // there is nothing new. This is what makes a run recorded on a
+                // Garmin appear without the lifter opening the Cardio tab.
+                Task { await autoImportCardioIfEnabled() }
+            default:
+                break
+            }
         }
         .task(id: authService.currentUser?.id) {
             await hydrateDrawerProfile()
@@ -369,6 +378,15 @@ struct MainTabView: View {
 
     // MARK: - Drawer Profile Hydration
 
+
+    /// Pulls in anything new from Apple Health, when the lifter has opted in.
+    private func autoImportCardioIfEnabled() async {
+        guard CardioService.shared.autoImportEnabled,
+              HealthKitService.shared.isAvailable,
+              let userId = authService.currentUser?.id.uuidString.lowercased()
+        else { return }
+        await CardioService.shared.importNewFromHealth(userId: userId)
+    }
 
     /// Re-evaluates and re-queues the "light on legs" come-back notification.
     private func refreshTrainingNudgeSchedule() {

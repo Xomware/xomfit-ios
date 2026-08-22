@@ -10,16 +10,29 @@ struct CardioListView: View {
     @State private var importMessage: String?
     @State private var hasLoaded = false
 
+    /// Opt-in for automatic Health imports. Surfaced here as well as in Settings
+    /// because this is the screen someone lands on when their watch data is
+    /// missing — a toggle buried three taps away in Settings does not answer
+    /// "why isn't my Garmin run here".
+    @AppStorage(CardioService.autoImportKey) private var autoImportCardio: Bool = false
+
     var body: some View {
         ZStack {
             Theme.background.ignoresSafeArea()
 
             if !hasLoaded {
                 XomFitLoaderPulse()
-            } else if service.sessions.isEmpty {
-                emptyState
             } else {
-                sessionList
+                VStack(spacing: 0) {
+                    if showAutoImportPrompt {
+                        autoImportPrompt
+                    }
+                    if service.sessions.isEmpty {
+                        emptyState
+                    } else {
+                        sessionList
+                    }
+                }
             }
         }
         .navigationTitle("Cardio")
@@ -51,6 +64,7 @@ struct CardioListView: View {
         .task {
             guard !hasLoaded else { return }
             await load()
+            await autoImportIfEnabled()
         }
         .refreshable { await load() }
         .overlay(alignment: .bottom) {
@@ -81,6 +95,49 @@ struct CardioListView: View {
         }
     }
 
+    /// Shown until the lifter has made a choice. Health access is the single
+    /// most common reason watch data is missing, and until now the only cure was
+    /// a menu item most people never opened.
+    private var showAutoImportPrompt: Bool {
+        !autoImportCardio && HealthKitService.shared.isAvailable
+    }
+
+    private var autoImportPrompt: some View {
+        HStack(spacing: Theme.Spacing.md) {
+            Image(systemName: "heart.text.square.fill")
+                .font(.title3)
+                .foregroundStyle(Theme.accent)
+
+            VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
+                Text("Bring in your watch data")
+                    .font(Theme.fontFootnote.weight(.semibold))
+                    .foregroundStyle(Theme.textPrimary)
+                Text("Garmin, Apple Watch, Whoop and Polar all write to Apple Health.")
+                    .font(Theme.fontCaption)
+                    .foregroundStyle(Theme.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer(minLength: Theme.Spacing.sm)
+
+            Button {
+                Haptics.selection()
+                Task { await enableAutoImport() }
+            } label: {
+                Text("Turn on")
+                    .font(Theme.fontCaption.weight(.bold))
+                    .foregroundStyle(Theme.accent)
+                    .frame(minHeight: 44)
+            }
+            .buttonStyle(.plain)
+            .disabled(isImporting)
+        }
+        .padding(Theme.Spacing.md)
+        .background(Theme.surface, in: .rect(cornerRadius: Theme.Radius.md))
+        .padding(.horizontal, Theme.Spacing.md)
+        .padding(.bottom, Theme.Spacing.sm)
+    }
+
     private var emptyState: some View {
         XomEmptyState(
             icon: "figure.run",
@@ -96,6 +153,35 @@ struct CardioListView: View {
     private func load() async {
         await service.fetchSessions(userId: userId)
         hasLoaded = true
+    }
+
+    /// Anchored import — safe to run on every appearance because it only ever
+    /// fetches what HealthKit has not handed us before.
+    private func autoImportIfEnabled() async {
+        guard autoImportCardio, HealthKitService.shared.isAvailable else { return }
+        let count = await service.importNewFromHealth(userId: userId)
+        guard count > 0 else { return }
+        await service.fetchSessions(userId: userId)
+        importMessage = "Imported \(count) session\(count == 1 ? "" : "s") from Health"
+        try? await Task.sleep(for: .seconds(2.5))
+        importMessage = nil
+    }
+
+    /// Turns auto-import on from the prompt, requesting Health access and
+    /// running the first import straight away.
+    private func enableAutoImport() async {
+        autoImportCardio = true
+        isImporting = true
+        await HealthKitService.shared.requestAuthorization()
+        let count = await service.importNewFromHealth(userId: userId)
+        await service.fetchSessions(userId: userId)
+        isImporting = false
+        importMessage = count == 0
+            ? "Nothing new in Health yet"
+            : "Imported \(count) session\(count == 1 ? "" : "s") from Health"
+        Haptics.light()
+        try? await Task.sleep(for: .seconds(2.5))
+        importMessage = nil
     }
 
     private func importFromHealth() async {
