@@ -51,7 +51,10 @@ struct RestTimerBar: View {
             }
         }
         .padding(.horizontal, Theme.Spacing.md)
-        .padding(.bottom, Theme.Spacing.sm)
+        // No bottom padding. `safeAreaInset` already places this at the bottom
+        // edge of the safe area; padding underneath lifts the bar off that edge
+        // and leaves a strip of scrolling content showing below it, which reads
+        // as a layout bug rather than breathing room.
         .animation(.xomConfident, value: viewModel.isRestTimerMinimized)
     }
 
@@ -83,16 +86,34 @@ struct RestTimerBar: View {
 
                 Spacer(minLength: Theme.Spacing.sm)
 
-                Text("Skip")
+                // "Lift", not "Skip". The button ends rest and starts the next
+                // set, which is the thing the lifter is about to do — "Skip"
+                // described the mechanism and made the normal action sound like
+                // giving up on something.
+                Text("Lift")
                     .font(.caption.weight(.bold))
-                    .foregroundStyle(Theme.textPrimary)
+                    .foregroundStyle(.black)
                     .padding(.horizontal, Theme.Spacing.md)
                     .frame(minHeight: 34)
-                    .background(Theme.textSecondary.opacity(0.18), in: .capsule)
+                    .background(tint, in: .capsule)
                     .onTapGesture {
                         Haptics.light()
                         onSkip()
                     }
+
+                // +30s belongs beside it, not hidden behind expanding the bar.
+                // Needing more rest is at least as common as being ready early,
+                // and the collapsed bar is where lifters spend the rest period.
+                Image(systemName: "goforward.30")
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(Theme.textPrimary)
+                    .frame(width: 34, height: 34)
+                    .background(Theme.textSecondary.opacity(0.18), in: .circle)
+                    .onTapGesture {
+                        Haptics.light()
+                        viewModel.extendRestTimer()
+                    }
+                    .accessibilityLabel("Add 30 seconds to rest")
             }
             .padding(.horizontal, Theme.Spacing.md)
             .padding(.vertical, Theme.Spacing.sm)
@@ -188,7 +209,7 @@ struct RestTimerBar: View {
                     Haptics.light()
                     onSkip()
                 } label: {
-                    Text("Skip Rest")
+                    Text("Lift")
                         .font(.subheadline.weight(.bold))
                         .foregroundStyle(.black)
                         .frame(maxWidth: .infinity)
@@ -196,7 +217,7 @@ struct RestTimerBar: View {
                         .background(tint, in: .capsule)
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("Skip rest and continue")
+                .accessibilityLabel("End rest and start the next set")
             }
         }
         .padding(Theme.Spacing.card)

@@ -230,6 +230,14 @@ final class WorkoutLoggerViewModel {
     // MARK: - Workout Lifecycle
 
     func startWorkout(name: String, userId: String = "") {
+        // Ask the Garmin to come to the front. It prompts on the watch rather
+        // than launching silently — Garmin's design — but that beats expecting
+        // the lifter to find XomFit in their activity list with a bar loaded.
+        //
+        // No equivalent exists for the Apple Watch: iOS cannot launch a watchOS
+        // app, so that one is reached through its complication or the app list.
+        GarminSyncService.shared.requestOpenOnWatch()
+
         defaultRestDuration = WorkoutLoggerViewModel.loadRestDuration()
         workoutName = name.isEmpty ? "Workout" : name
         exercises = []
