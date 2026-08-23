@@ -248,6 +248,9 @@ extension GarminSyncService: IQAppMessageDelegate {
             case "skipRest":
                 NotificationCenter.default.post(name: .garminActionReceived, object: nil,
                                                userInfo: ["action": "skipRest"])
+            case "extendRest":
+                NotificationCenter.default.post(name: .garminActionReceived, object: nil,
+                                               userInfo: ["action": "extendRest"])
             case "nextExercise":
                 NotificationCenter.default.post(name: .garminActionReceived, object: nil,
                                                userInfo: ["action": "nextExercise"])
