@@ -83,11 +83,39 @@ So: one new repo, plus a feature branch here.
 ## Prerequisites (Dominick)
 
 1. ~~Install the Connect IQ SDK + VS Code Monkey C extension.~~ Done.
-2. **Register as a Connect IQ developer**: https://www.garmin.com/en-US/forms/ciq-registration/
-   It is a plain form, not an application to be approved, and there is no fee.
-   Publishing later happens by uploading a `.iq` file (produced by the VS Code
-   command `Monkey C: Export Project`) to the Connect IQ Store.
+2. **No developer account signup is needed.** See below — this was a wrong turn.
 3. ~~Confirm the Garmin model.~~ **Venu 4.**
+
+## Three different Garmin programs — only one is relevant
+
+developer.garmin.com hosts several programs with similar names, which is why the
+signup was hard to find. They are not the same thing:
+
+| Program | What it is | Access |
+|---|---|---|
+| **Connect IQ** | Watch apps in Monkey C. **What we want.** | No approval. SDK is a free download; publish with a normal Garmin account. |
+| **Garmin Connect Developer Program** | Health / Activity / Training REST APIs — server-to-server access to user data | Requires application **and approval**. This is the "partnership" route noted earlier as out of scope. |
+| **FIT SDK** | The FIT binary activity-file format | Free download; irrelevant here, since activities reach us through Apple Health already parsed. |
+
+### The ciq-registration form is a mailing list
+
+`garmin.com/en-US/forms/ciq-registration/` is reached from the Connect IQ site
+under **"Stay Informed — Join the Garmin Connect IQ developer program to be
+notified about new versions of the SDK"**. It is a newsletter signup wearing the
+words "developer program". Its being closed blocks nothing.
+
+### How publishing actually works
+
+1. Sign in at **https://apps.garmin.com** with an ordinary Garmin Connect account.
+2. Tap **DEVELOPER** in the top right — that is the developer dashboard.
+3. Upload the `.iq` file produced by the VS Code command `Monkey C: Export Project`.
+4. Garmin reviews it. While pending it is downloadable for your own testing but
+   not listed publicly.
+
+No separate account, no application, no fee.
+
+Nothing about development is gated either: the SDK, the simulator, and
+sideloading to your own watch all work today.
 
 ## Target device: Venu 4
 
