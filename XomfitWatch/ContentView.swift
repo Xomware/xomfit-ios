@@ -22,6 +22,16 @@ struct ContentView: View {
     /// that forgets which second it last fired for would buzz on every redraw.
     @State private var haptics = WatchRestHaptics()
 
+    /// Created once, not in `body`.
+    ///
+    /// This was inline in the view body and the haptics never fired once.
+    /// `body` re-evaluates on every state push from the phone, and an inline
+    /// `Timer.publish(...).autoconnect()` builds a *new* publisher each time,
+    /// tearing down the previous one before it reaches its first tick. A
+    /// half-second timer rebuilt more often than every half second never fires
+    /// at all.
+    private let tick = Timer.publish(every: 0.5, on: .main, in: .common).autoconnect()
+
     var body: some View {
         Group {
             if let state = sessionStore.state {
@@ -40,11 +50,18 @@ struct ContentView: View {
                 // Drives itself from the absolute rest end date rather than
                 // waiting on a message per second — the buzz must be exact at
                 // the one moment it fires, and Bluetooth is not.
-                .onReceive(Timer.publish(every: 0.5, on: .main, in: .common).autoconnect()) { _ in
+                .onReceive(tick) { _ in
+                    // Read through the store rather than the captured `state`,
+                    // so the closure always sees the current snapshot instead of
+                    // whichever one existed when this body ran.
+                    guard let current = sessionStore.state else {
+                        haptics.reset()
+                        return
+                    }
                     haptics.update(
-                        restEndDate: state.isResting ? state.restEndDate : nil,
-                        isPaused: state.isPaused,
-                        enabled: state.wristHaptics
+                        restEndDate: current.isResting ? current.restEndDate : nil,
+                        isPaused: current.isPaused,
+                        enabled: current.wristHaptics
                     )
                 }
             } else {

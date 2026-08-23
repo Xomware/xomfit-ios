@@ -99,6 +99,34 @@ final class GarminSyncService: NSObject {
         return true
     }
 
+    // MARK: - Opening
+
+    /// Asks the Garmin to open XomFit.
+    ///
+    /// Garmin shows a prompt on the watch rather than launching silently — that
+    /// is the platform's design, not a limitation we can route around, and it is
+    /// still far better than expecting the lifter to scroll their activity list
+    /// with a barbell waiting.
+    ///
+    /// Called when a workout starts. Safe to call when the app is already
+    /// running: the SDK reports that as its own result rather than an error, and
+    /// nothing is shown to the user.
+    func requestOpenOnWatch() {
+        guard let app, isWatchReady else { return }
+        ConnectIQ.sharedInstance().openAppRequest(app) { result in
+            #if DEBUG
+            switch result {
+            case .success:
+                print("[Garmin] open prompt shown")
+            case .failure_AppAlreadyRunning:
+                print("[Garmin] app already running")
+            default:
+                print("[Garmin] open request failed: \(result.rawValue)")
+            }
+            #endif
+        }
+    }
+
     // MARK: - Sending
 
     /// Mirrors the workout to every known device.
