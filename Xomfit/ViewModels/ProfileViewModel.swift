@@ -594,7 +594,10 @@ final class ProfileViewModel {
         do {
             let items = try await FeedService.shared.fetchUserFeed(userId: userId)
             feedItems = items
-            feedItemCount = items.count
+            // Counted separately, not measured off the page. `fetchUserFeed`
+            // is paginated, so `items.count` silently capped the header at the
+            // page size — twenty posts forever, however many you actually had.
+            feedItemCount = await FeedService.shared.countUserFeed(userId: userId) ?? items.count
         } catch {
             // Non-fatal
         }

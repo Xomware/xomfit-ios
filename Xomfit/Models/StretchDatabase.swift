@@ -473,9 +473,11 @@ struct StretchDatabase {
         var pickedIds = Set<String>()
         var remaining = target
 
-        // Always lead with a dynamic full-body stretch if we have one and there's room.
-        if let opener = all.first(where: { $0.id == "st-worlds-greatest" }),
-           remaining >= TimeInterval(opener.durationSeconds) {
+        // Lead with a full-body stretch, rotated rather than fixed. This used to
+        // hardcode `st-worlds-greatest`, so every warmup a lifter ever did opened
+        // with the same movement — the single most visible reason the routine
+        // felt identical each time.
+        if let opener = rotatingOpener(), remaining >= TimeInterval(opener.durationSeconds) {
             picked.append(opener)
             pickedIds.insert(opener.id)
             remaining -= TimeInterval(opener.durationSeconds)
@@ -588,8 +590,38 @@ struct StretchDatabase {
     }
 
     /// A balanced full-body warmup used when we have no workout-specific info.
+    /// Fallback routine, used when the workout has no muscle groups to tailor to
+    /// — a warmup started before any exercises are picked, most often.
+    ///
+    /// Rotated by day rather than fixed. The order here used to be constant, so
+    /// anyone who warmed up before building their workout got the same seven
+    /// stretches in the same order, forever.
+    /// A full-body stretch to open with, rotated daily.
+    ///
+    /// Drawn from the `.full` category rather than a hardcoded id, so adding a
+    /// full-body stretch to the database widens the rotation automatically.
+    static func rotatingOpener() -> Stretch? {
+        let openers = all
+            .filter { $0.category == .fullBody }
+            .sorted { $0.id < $1.id }
+        guard !openers.isEmpty else { return nil }
+        return openers[variationIndex(count: openers.count)]
+    }
+
+    /// Stable-within-a-day rotation index.
+    ///
+    /// Keyed on the day of the year, not randomness: a warmup that reshuffled
+    /// every time the view redrew would be actively worse than one that repeats,
+    /// and a lifter halfway through a routine should not have it change under
+    /// them.
+    static func variationIndex(count: Int) -> Int {
+        guard count > 0 else { return 0 }
+        let day = Calendar.current.ordinality(of: .day, in: .year, for: Date()) ?? 0
+        return day % count
+    }
+
     static func defaultRoutine(target: TimeInterval = 360) -> [Stretch] {
-        let preferredOrder = [
+        let pool = [
             "st-worlds-greatest",
             "st-cat-cow",
             "st-shoulder-dislocates",
@@ -598,6 +630,11 @@ struct StretchDatabase {
             "st-childs-pose",
             "st-leg-swings",
         ]
+        // Rotate the starting point so the routine differs day to day while
+        // staying stable within one — a warmup screen that reshuffled on every
+        // redraw would be worse than one that repeats.
+        let offset = variationIndex(count: pool.count)
+        let preferredOrder = Array(pool[offset...]) + Array(pool[..<offset])
         var picked: [Stretch] = []
         var remaining = target
         for id in preferredOrder {

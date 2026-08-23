@@ -143,6 +143,35 @@ final class FeedService {
 
     // MARK: - Fetch User Feed
 
+    /// How many feed items a lifter has posted, in total.
+    ///
+    /// Counted on the server rather than by measuring a page. The profile header
+    /// was showing `fetchUserFeed(...).count`, which is capped by that call's
+    /// `limit` — so anyone past twenty posts saw exactly twenty forever, while
+    /// their own feed and calendar showed the real number.
+    ///
+    /// Returns nil on failure so the caller can leave the previous count alone
+    /// rather than flashing a zero.
+    func countUserFeed(userId: String) async -> Int? {
+        #if DEBUG
+        if ProcessInfo.processInfo.environment["XOMFIT_AUTH_BYPASS"] == "1" {
+            return DebugFixtures.bypassFeed().filter { $0.userId == userId }.count
+        }
+        #endif
+
+        do {
+            let response = try await supabase
+                .from("feed_items")
+                .select("id", head: true, count: .exact)
+                .eq("user_id", value: userId)
+                .execute()
+            return response.count
+        } catch {
+            print("[FeedService] countUserFeed failed: \(error)")
+            return nil
+        }
+    }
+
     func fetchUserFeed(userId: String, limit: Int = 20, offset: Int = 0) async throws -> [SocialFeedItem] {
         #if DEBUG
         // #403 + #353 bypass — same as `fetchFeed` but filtered to a single

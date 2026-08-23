@@ -24,6 +24,9 @@ struct AICoachView: View {
     /// Stored in `@AppStorage` for v1 — TODO Keychain.
     @AppStorage("aiCoach.anthropicAPIKey") private var apiKeyOverride: String = ""
 
+    /// Drives the inline key-entry sheet reached from the error banner.
+    @State private var showAPIKeySetup = false
+
     /// User-selected Anthropic model. Persisted in Settings → AI Coach (#371).
     @AppStorage("aiCoach.model") private var modelRawValue: String = AICoachModel.sonnet45.rawValue
 
@@ -93,6 +96,9 @@ struct AICoachView: View {
                     }
                 }
             }
+        }
+        .sheet(isPresented: $showAPIKeySetup) {
+            AICoachKeySheet(apiKey: $apiKeyOverride)
         }
         .sheet(isPresented: $showHistoryStub) {
             pastConversationsStub
@@ -280,25 +286,50 @@ struct AICoachView: View {
 
     // MARK: - Error banner
 
+    /// True when the failure is "no key", which is the one error the lifter can
+    /// actually resolve — and the one that needs a way to get there, not just a
+    /// sentence telling them a screen exists.
+    private func isMissingKey(_ message: String) -> Bool {
+        message.localizedCaseInsensitiveContains("api key")
+    }
+
     private func errorBanner(_ message: String) -> some View {
-        HStack(alignment: .top, spacing: Theme.Spacing.sm) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .foregroundStyle(Theme.alert)
-            Text(message)
-                .font(Theme.fontCaption)
-                .foregroundStyle(Theme.textPrimary)
-                .multilineTextAlignment(.leading)
-            Spacer(minLength: 0)
-            Button {
-                viewModel.errorMessage = nil
-            } label: {
-                Image(systemName: "xmark")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(Theme.textSecondary)
-                    .frame(minWidth: 44, minHeight: 44)
-                    .contentShape(Rectangle())
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            HStack(alignment: .top, spacing: Theme.Spacing.sm) {
+                Image(systemName: isMissingKey(message) ? "key.slash.fill" : "exclamationmark.triangle.fill")
+                    .foregroundStyle(Theme.alert)
+                Text(message)
+                    .font(Theme.fontCaption)
+                    .foregroundStyle(Theme.textPrimary)
+                    .multilineTextAlignment(.leading)
+                Spacer(minLength: 0)
+                Button {
+                    viewModel.errorMessage = nil
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(Theme.textSecondary)
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(Rectangle())
+                }
+                .accessibilityLabel("Dismiss error")
             }
-            .accessibilityLabel("Dismiss error")
+
+            // Telling someone a setting exists and making them find it are
+            // different things. This is the only error with a fix the lifter
+            // owns, so it gets the button.
+            if isMissingKey(message) {
+                Button {
+                    Haptics.selection()
+                    showAPIKeySetup = true
+                } label: {
+                    Label("Add an API key", systemImage: "arrow.right.circle.fill")
+                        .font(Theme.fontCaption.weight(.semibold))
+                        .foregroundStyle(Theme.accent)
+                        .frame(minHeight: 44)
+                }
+                .buttonStyle(.plain)
+            }
         }
         .padding(Theme.Spacing.md)
         .background(
