@@ -320,18 +320,22 @@ struct MainTabView: View {
     /// Applied to every tab root so the chrome is identical across them.
     @ToolbarContentBuilder
     fileprivate var rootToolbar: some ToolbarContent {
+        // A hamburger rather than the avatar. Your own face is not a menu — it
+        // reads as "my profile", so the one entry point to Stretches, Stats and
+        // Settings was the only control on screen that announced nothing about
+        // what it did. The glyph is unambiguous and costs nothing; the avatar
+        // still has a home on the Profile tab, where it means what it looks like.
         ToolbarItem(placement: .topBarLeading) {
             Button {
                 Haptics.light()
                 openDrawer()
             } label: {
-                XomAvatar(
-                    name: drawerProfile.displayName.isEmpty ? drawerProfile.username : drawerProfile.displayName,
-                    size: 30,
-                    imageURL: drawerProfile.avatarURL
-                )
+                Image(systemName: "line.3.horizontal")
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(Theme.textPrimary)
             }
-            .accessibilityLabel("More destinations and account")
+            .accessibilityLabel("Menu")
+            .accessibilityHint("Stretches, Stats, Settings and account")
         }
 
         ToolbarItem(placement: .topBarTrailing) {
