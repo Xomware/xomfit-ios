@@ -228,23 +228,34 @@ struct StrengthRanksSection: View {
         .buttonStyle(.plain)
     }
 
+    /// Shown when there is no bodyweight, which blocks the entire feature.
+    ///
+    /// A filled button rather than a tinted text row, because this is not a
+    /// suggestion — nothing in this section can render until it is done, and a
+    /// lifter reading "we need that first" next to a link-coloured label has no
+    /// reason to think one tap fixes it.
     private var needsBodyweightState: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-            Text("Ranks are relative to your bodyweight, so we need that first.")
+            Text("Ranks are scored against your bodyweight, so we need that before we can place you on the ladder.")
                 .font(Theme.fontCaption)
                 .foregroundStyle(Theme.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
 
             Button {
                 Haptics.selection()
                 showLifterDetails = true
             } label: {
-                Label("Add your details", systemImage: "person.crop.circle.badge.plus")
-                    .font(Theme.fontCaption.weight(.semibold))
-                    .foregroundStyle(Theme.accent)
+                Label("Add Your Details", systemImage: "person.crop.circle.badge.plus")
+                    .font(Theme.fontCaption.weight(.bold))
+                    .foregroundStyle(Theme.background)
+                    .frame(maxWidth: .infinity)
                     .frame(minHeight: 44)
+                    .background(Theme.accent, in: .rect(cornerRadius: Theme.Radius.md))
             }
             .buttonStyle(.plain)
+            .accessibilityHint("Takes about fifteen seconds and unlocks strength ranks")
         }
+        .padding(.vertical, Theme.Spacing.xs)
     }
 
     private var emptyState: some View {

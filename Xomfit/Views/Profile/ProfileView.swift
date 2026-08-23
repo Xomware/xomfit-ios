@@ -6,11 +6,6 @@ struct ProfileView: View {
     @State private var viewModel = ProfileViewModel()
     @State private var showEditSheet = false
 
-    /// Destination picked from the profile's quick links. Presented here rather
-    /// than routed through `MainTabView`, so Profile owns its own navigation
-    /// instead of reaching back into the shell.
-    @State private var quickLink: AppDestination?
-
     /// Pass a userId to view another user's profile. nil = current user (tab root).
     var userId: String? = nil
 
@@ -96,69 +91,9 @@ struct ProfileView: View {
         .refreshable {
             await viewModel.loadAll(userId: resolvedUserId, currentUserId: currentUserId)
         }
-        .fullScreenCover(item: $quickLink) { destination in
-            NavigationStack {
-                quickLinkDestination(destination)
-                    .toolbar {
-                        ToolbarItem(placement: .cancellationAction) {
-                            Button("Done") { quickLink = nil }
-                                .foregroundStyle(Theme.accent)
-                        }
-                    }
-            }
-            .environment(authService)
-            .preferredColorScheme(.dark)
-        }
         .sheet(isPresented: $showEditSheet) {
             EditProfileSheet(viewModel: viewModel, userId: resolvedUserId)
         }
-    }
-
-    @ViewBuilder
-    private func quickLinkDestination(_ destination: AppDestination) -> some View {
-        switch destination {
-        case .stretches: StretchesView()
-        case .stats:     XomProgressView()
-        default:         SettingsView()
-        }
-    }
-
-    /// Rows into the destinations that have no tab of their own.
-    private var profileQuickLinks: some View {
-        VStack(spacing: 0) {
-            quickLinkRow("Stretches", icon: "figure.cooldown") { quickLink = .stretches }
-            Divider().overlay(Theme.hairline)
-            quickLinkRow("Stats", icon: "chart.bar.xaxis") { quickLink = .stats }
-            Divider().overlay(Theme.hairline)
-            quickLinkRow("Settings", icon: "gearshape.fill") { quickLink = .settings }
-        }
-        .background(Theme.surface, in: .rect(cornerRadius: Theme.Radius.md))
-        .padding(.horizontal, Theme.Spacing.md)
-        .padding(.top, Theme.Spacing.sm)
-    }
-
-    private func quickLinkRow(_ title: String, icon: String, action: @escaping () -> Void) -> some View {
-        Button {
-            Haptics.selection()
-            action()
-        } label: {
-            HStack(spacing: Theme.Spacing.md) {
-                Image(systemName: icon)
-                    .frame(width: Theme.Spacing.lg)
-                    .foregroundStyle(Theme.accent)
-                Text(title)
-                    .font(Theme.fontBody)
-                    .foregroundStyle(Theme.textPrimary)
-                Spacer()
-                Image(systemName: "chevron.right")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(Theme.textTertiary)
-            }
-            .padding(.horizontal, Theme.Spacing.md)
-            .frame(minHeight: 48)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
     }
 
     // MARK: - Skeleton Loading
@@ -245,15 +180,6 @@ struct ProfileView: View {
                         )
                     }
                 )
-
-                // The 4th tab as the "more" destination, which is what a bottom
-                // nav bar implies it is. These lived only behind the avatar in
-                // the toolbar — a second navigation system layered on top of the
-                // tabs, and the one place nothing announced itself. The avatar
-                // still works; it just is not the only way in any more.
-                if viewModel.isOwnProfile {
-                    profileQuickLinks
-                }
 
                 // Tab picker (pinned) + tab content
                 Section {

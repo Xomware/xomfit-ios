@@ -59,15 +59,13 @@ struct ProfileStatsView: View {
                 firstWorkoutEmptyState
             }
             StreakCard(currentStreak: currentStreak, longestStreak: longestStreak)
-            BadgesSection(
-                workouts: workouts,
-                firstPRDate: firstPRDate,
-                rankedTiers: rankedTiers
-            )
-            // Own profile only — same signal the Body link uses. Ranks are scored
-            // against the *signed-in* lifter's bodyweight, sex and age, so
-            // running someone else's PRs through them produces a confident
-            // number that is simply wrong.
+            // Ranks sit directly under the streak, above the badge grid.
+            //
+            // They were below it, which put the Bronze → God ladder several
+            // screens down a scrolling profile — far enough that the honest
+            // report from a lifter was "where is my tiered weights view". A
+            // ladder you have to hunt for is not a ladder anyone climbs.
+            //
             // Ranks render on every profile. On your own they are computed from
             // your PRs; on someone else's they come from what that lifter
             // published, since their records aren't readable here.
@@ -78,6 +76,11 @@ struct ProfileStatsView: View {
                     isOwnProfile: userId != nil
                 )
             }
+            BadgesSection(
+                workouts: workouts,
+                firstPRDate: firstPRDate,
+                rankedTiers: rankedTiers
+            )
 
             if let userId {
                 // Own profile only, and enforced by the database rather than

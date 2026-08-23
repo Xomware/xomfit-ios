@@ -132,6 +132,7 @@ struct SettingsView: View {
                     ) {
                         SettingsGroupScreen(title: "Devices & Services") {
                             healthSection
+                            garminSection
                             musicSourcesSection
                             aiCoachSection
                         }
@@ -303,6 +304,46 @@ struct SettingsView: View {
         }
         .listRowBackground(Theme.surface)
         .listRowSeparatorTint(Theme.hairline)
+    }
+
+    /// Garmin lives beside Health rather than inside it. Health is a one-way
+    /// import of finished cardio; this is a live two-way link to a watch during
+    /// a lift. Same hardware, different question, so they read as separate rows.
+    ///
+    /// The subtitle carries the connection state because the failure this
+    /// integration actually had was invisible: everything looked configured and
+    /// nothing was, since no screen existed to pair a watch in the first place.
+    private var garminSection: some View {
+        Section {
+            NavigationLink {
+                GarminDeviceView()
+            } label: {
+                HStack(spacing: Theme.Spacing.md) {
+                    Image(systemName: "applewatch.radiowaves.left.and.right")
+                        .frame(width: Theme.Spacing.lg)
+                        .foregroundStyle(Theme.accent)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Garmin Watch")
+                            .foregroundStyle(Theme.textPrimary)
+                        Text(garminSummary)
+                            .font(Theme.fontCaption)
+                            .foregroundStyle(Theme.textSecondary)
+                    }
+                }
+            }
+            .tint(Theme.textTertiary)
+        } header: {
+            XomMetricLabel("Garmin")
+        }
+        .listRowBackground(Theme.surface)
+        .listRowSeparatorTint(Theme.hairline)
+    }
+
+    private var garminSummary: String {
+        let garmin = GarminSyncService.shared
+        guard let device = garmin.primaryDevice else { return "Not paired" }
+        let name = device.friendlyName ?? device.modelName ?? "Paired"
+        return garmin.isWatchReady ? "\(name) — connected" : "\(name) — not connected"
     }
 
     /// Turning the toggle on requests Health permission and runs an import

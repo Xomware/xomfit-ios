@@ -20,8 +20,39 @@ final class GarminSyncService: NSObject {
     /// discovery round trip leaves the app, and making the lifter repeat it
     /// every launch would be worse than a stale entry.
     private(set) var knownDevices: [IQDevice] = []
-    /// Whether any known device currently has XomFit installed and reachable.
-    private(set) var isWatchReady = false
+
+    /// Connection status per device uuid, as last reported by the SDK.
+    ///
+    /// Per device rather than one global flag. The old single `isWatchReady`
+    /// Bool was written by whichever device reported last, so a second paired
+    /// watch going `.notConnected` would mark the connected one unreachable and
+    /// silently stop every send.
+    private(set) var deviceStatuses: [UUID: IQDeviceStatus] = [:]
+
+    /// Device uuids whose characteristics the SDK has finished discovering.
+    ///
+    /// `.connected` alone is not enough to talk to a watch — Garmin's own header
+    /// says so explicitly, and `deviceCharacteristicsDiscovered:` exists to mark
+    /// the real ready point. Sending in the gap between the two fails silently.
+    private(set) var readyDevices: Set<UUID> = []
+
+    /// Whether XomFit is installed on the primary watch. Nil until asked.
+    private(set) var isAppInstalled: Bool?
+
+    /// The watch messages are sent to — the first paired device.
+    var primaryDevice: IQDevice? { knownDevices.first }
+
+    /// Whether the primary watch is connected and ready to receive.
+    var isWatchReady: Bool {
+        guard let id = primaryDevice?.uuid else { return false }
+        return deviceStatuses[id] == .connected && readyDevices.contains(id)
+    }
+
+    /// Status of the primary watch, for display.
+    var primaryStatus: IQDeviceStatus? {
+        guard let id = primaryDevice?.uuid else { return nil }
+        return deviceStatuses[id]
+    }
 
     /// Must match the `id` in the Garmin app's `manifest.xml`. If these drift,
     /// messages are sent into a mailbox nothing is listening to — silently, with
@@ -182,13 +213,71 @@ final class GarminSyncService: NSObject {
     private func registerForDeviceEvents() {
         for device in knownDevices {
             ConnectIQ.sharedInstance().register(forDeviceEvents: device, delegate: self)
+            // Seed from the SDK rather than waiting for an event. A watch that
+            // was already connected when the app launched may not generate a
+            // status change at all, which would leave the pairing screen
+            // claiming "not connected" over a working link.
+            if let id = device.uuid {
+                deviceStatuses[id] = ConnectIQ.sharedInstance().getDeviceStatus(device)
+            }
         }
-        if let device = knownDevices.first {
+        if let device = primaryDevice {
             app = IQApp(uuid: Self.watchAppUUID, store: nil, device: device)
             if let app {
                 ConnectIQ.sharedInstance().register(forAppMessages: app, delegate: self)
             }
         }
+        refreshAppStatus()
+    }
+
+    /// Re-reads connection status for every paired device.
+    func refreshStatuses() {
+        for device in knownDevices {
+            guard let id = device.uuid else { continue }
+            deviceStatuses[id] = ConnectIQ.sharedInstance().getDeviceStatus(device)
+        }
+        refreshAppStatus()
+    }
+
+    /// Asks whether the XomFit watch app is installed on the paired device.
+    ///
+    /// Worth distinguishing from "not connected": a lifter who paired their
+    /// watch but never installed the Connect IQ app sees messages go nowhere,
+    /// and "connected" alone would tell them everything is fine.
+    func refreshAppStatus() {
+        guard let app else {
+            isAppInstalled = nil
+            return
+        }
+        ConnectIQ.sharedInstance().getAppStatus(app) { status in
+            // Read the value out here: `IQAppStatus` is not Sendable and must
+            // not cross the actor boundary.
+            let installed = status?.isInstalled
+            Task { @MainActor in
+                GarminSyncService.shared.isAppInstalled = installed
+            }
+        }
+    }
+
+    /// Opens the Connect IQ store page for the watch app, so a lifter whose
+    /// watch is paired but missing the app has somewhere to go.
+    func showStoreListing() {
+        guard let app else { return }
+        ConnectIQ.sharedInstance().showStore(for: app)
+    }
+
+    /// Drops every paired device and stops listening.
+    func forgetDevices() {
+        ConnectIQ.sharedInstance().unregister(forAllDeviceEvents: self)
+        if let app {
+            ConnectIQ.sharedInstance().unregister(forAppMessages: app, delegate: self)
+        }
+        app = nil
+        knownDevices = []
+        deviceStatuses = [:]
+        readyDevices = []
+        isAppInstalled = nil
+        UserDefaults.standard.removeObject(forKey: Self.storedDevicesKey)
     }
 
     /// Devices persist as archived data rather than ids: `IQDevice` carries the
@@ -213,14 +302,35 @@ final class GarminSyncService: NSObject {
 // MARK: - Device status
 
 extension GarminSyncService: IQDeviceEventDelegate {
-    nonisolated func devicesChanged() {}
-
-    nonisolated func device(_ device: IQDevice, statusChanged status: IQDeviceStatus) {
+    /// The Connect IQ selector is `deviceStatusChanged:status:`.
+    ///
+    /// This used to be spelled `device(_:statusChanged:)`, which Swift maps to
+    /// the selector `device:statusChanged:` — a different selector entirely.
+    /// Every method on `IQDeviceEventDelegate` is `@optional`, so nothing failed
+    /// to compile and nothing warned; the callback simply never fired, which
+    /// left `isWatchReady` false forever and made every send and open request a
+    /// silent no-op. Verified against the selector table in the framework
+    /// binary rather than the spelling in the header.
+    nonisolated func deviceStatusChanged(_ device: IQDevice, status: IQDeviceStatus) {
+        guard let uuid = device.uuid else { return }
         Task { @MainActor in
-            // Only `connected` means messages will actually arrive. Anything
-            // else — not paired, Garmin Connect not running, Bluetooth off —
-            // should stop us sending into the void.
-            self.isWatchReady = (status == .connected)
+            self.deviceStatuses[uuid] = status
+            // Characteristics do not survive a disconnect, so drop readiness
+            // whenever the device leaves `.connected`.
+            if status != .connected {
+                self.readyDevices.remove(uuid)
+            }
+        }
+    }
+
+    /// The point a device is genuinely able to receive messages.
+    nonisolated func deviceCharacteristicsDiscovered(_ device: IQDevice) {
+        guard let uuid = device.uuid else { return }
+        Task { @MainActor in
+            self.readyDevices.insert(uuid)
+            // Now that the link is real, find out whether the watch app is
+            // actually installed — the other silent failure mode.
+            self.refreshAppStatus()
         }
     }
 }
