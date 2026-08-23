@@ -102,6 +102,8 @@ struct XomFitApp: App {
                                 workoutSession.completeFocusedSetFromWatch()
                             case "skipRest":
                                 workoutSession.skipRestTimer()
+                            case "extendRest":
+                                workoutSession.extendRestTimer()
                             case "nextExercise":
                                 workoutSession.focusNextExercise()
                             case "adjustSet":
