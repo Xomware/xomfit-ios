@@ -275,6 +275,93 @@ final class HealthKitTests: XCTestCase {
         XCTAssertFalse(GarminSyncService.shared.isWatchReady)
     }
 
+
+    // MARK: - Haptic targets
+
+    /// Wrist and phone are independent, so every combination is reachable —
+    /// both, either, or neither. A picker would have made "neither" impossible
+    /// without also flipping the master switch.
+    func testHapticTargetsAreIndependent() {
+        let service = NotificationService.shared
+        let originalMaster = service.restHapticsEnabled
+        let originalWrist = service.wristHapticsEnabled
+        let originalPhone = service.phoneHapticsEnabled
+        addTeardownBlock {
+            Task { @MainActor in
+                NotificationService.shared.restHapticsEnabled = originalMaster
+                NotificationService.shared.wristHapticsEnabled = originalWrist
+                NotificationService.shared.phoneHapticsEnabled = originalPhone
+            }
+        }
+
+        service.restHapticsEnabled = true
+
+        service.wristHapticsEnabled = true
+        service.phoneHapticsEnabled = false
+        XCTAssertTrue(service.wristHapticsEnabled)
+        XCTAssertFalse(service.phoneHapticsEnabled)
+
+        service.wristHapticsEnabled = false
+        service.phoneHapticsEnabled = true
+        XCTAssertFalse(service.wristHapticsEnabled)
+        XCTAssertTrue(service.phoneHapticsEnabled)
+
+        // Neither is a legitimate state, not an accident.
+        service.wristHapticsEnabled = false
+        service.phoneHapticsEnabled = false
+        XCTAssertFalse(service.wristHapticsEnabled)
+        XCTAssertFalse(service.phoneHapticsEnabled)
+    }
+
+    /// The wrist is where the lifter is, so it is on out of the box.
+    func testWristHapticsDefaultOn() {
+        UserDefaults.standard.removeObject(forKey: "xomfit_notif_wrist_haptics_enabled")
+        UserDefaults.standard.set(true, forKey: "xomfit_notif_wrist_haptics_enabled")
+        XCTAssertTrue(UserDefaults.standard.bool(forKey: "xomfit_notif_wrist_haptics_enabled"))
+    }
+
+    /// The watch cannot read iPhone defaults, so the flag travels in the state
+    /// payload. If it stopped being sent, the wrist would silently go quiet.
+    func testWristHapticFlagTravelsInTheWatchPayload() throws {
+        let state = WatchWorkoutState(
+            workoutName: "Push",
+            currentExercise: "Bench Press",
+            setNumber: 1,
+            totalSets: 3,
+            isResting: false,
+            restEndDate: nil,
+            isPaused: false,
+            elapsedSeconds: 0,
+            wristHaptics: false
+        )
+        let encoded = try JSONEncoder().encode(state)
+        let decoded = try JSONDecoder().decode(WatchWorkoutState.self, from: encoded)
+        XCTAssertFalse(decoded.wristHaptics)
+    }
+
+    /// A watch on an older build must still decode a newer phone's payload.
+    /// Codable treats a missing key as a hard failure, so the new fields carry
+    /// defaults — the two sides update through separate stores and will drift.
+    func testOlderWatchPayloadStillDecodes() throws {
+        let legacy = """
+        {
+          "workoutName": "Push",
+          "currentExercise": "Bench Press",
+          "setNumber": 1,
+          "totalSets": 3,
+          "isResting": false,
+          "isPaused": false,
+          "elapsedSeconds": 0
+        }
+        """.data(using: .utf8)!
+
+        let decoded = try JSONDecoder().decode(WatchWorkoutState.self, from: legacy)
+        XCTAssertEqual(decoded.currentExercise, "Bench Press")
+        XCTAssertTrue(decoded.upNext.isEmpty)
+        XCTAssertNil(decoded.reps)
+        XCTAssertTrue(decoded.wristHaptics, "Absent flag should default to buzzing, not silence")
+    }
+
 }
 
 // MARK: - Cardio modality mapping

@@ -11,6 +11,8 @@ struct NotificationPreferencesView: View {
     @State private var warmupEnabled: Bool = NotificationService.shared.warmupLocalEnabled
     @State private var weeklyReportEnabled: Bool = NotificationService.shared.weeklyReportEnabled
     @State private var restHapticsEnabled: Bool = NotificationService.shared.restHapticsEnabled
+    @State private var wristHapticsEnabled: Bool = NotificationService.shared.wristHapticsEnabled
+    @State private var phoneHapticsEnabled: Bool = NotificationService.shared.phoneHapticsEnabled
     @State private var trainingNudgeEnabled: Bool = NotificationService.shared.trainingNudgeEnabled
 
     private var userId: String {
@@ -40,13 +42,28 @@ struct NotificationPreferencesView: View {
                         ) { NotificationService.shared.warmupLocalEnabled = $0 }
                         localToggle(
                             "Rest Countdown Haptics",
-                            icon: "iphone.radiowaves.left.and.right",
+                            icon: "waveform.path",
                             isOn: $restHapticsEnabled
                         ) { NotificationService.shared.restHapticsEnabled = $0 }
+
+                        // Independent rather than exclusive, so every
+                        // combination is reachable — both, either, or neither.
+                        if restHapticsEnabled {
+                            localToggle(
+                                "  Buzz my watch",
+                                icon: "applewatch",
+                                isOn: $wristHapticsEnabled
+                            ) { NotificationService.shared.wristHapticsEnabled = $0 }
+                            localToggle(
+                                "  Buzz my phone",
+                                icon: "iphone.radiowaves.left.and.right",
+                                isOn: $phoneHapticsEnabled
+                            ) { NotificationService.shared.phoneHapticsEnabled = $0 }
+                        }
                     } header: {
                         XomMetricLabel("In-Workout")
                     } footer: {
-                        Text("Local alerts that ping you when a rest or warmup timer completes — useful when your phone is in your pocket. Haptics tick for the last five seconds of rest, then buzz for three.")
+                        Text("Local alerts that ping you when a rest or warmup timer completes. Haptics tick for the last five seconds of rest, then buzz for three — on your Apple Watch, your Garmin, your phone, or any combination. Most lifters turn the phone off once a watch is paired; it's in your bag, not on you.")
                             .font(Theme.fontCaption)
                             .foregroundStyle(Theme.textSecondary)
                     }

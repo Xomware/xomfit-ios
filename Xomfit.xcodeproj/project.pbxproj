@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		06ACBBC7B67A972F6F39A214 /* WorkoutGeneratorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 138F935F3800CBB4B66CD6CC /* WorkoutGeneratorTests.swift */; };
 		0F2396BE1C58B7C7F99F5BC6 /* WorkoutInsightsSeamTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 730E45C30DECC5AA5563EAB4 /* WorkoutInsightsSeamTests.swift */; };
+		AA03D0010000000000000002 /* WatchRestHaptics.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA03D0010000000000000001 /* WatchRestHaptics.swift */; };
 		175D9C785D217A06EBCC6054 /* XomfitWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F3CBFE99B6D75BC1136FCB9 /* XomfitWatchApp.swift */; };
 		2652623F55494AE501D17728 /* AuthServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7B33E534C5D4F6F4A221677 /* AuthServiceTests.swift */; };
 		3AD31D27EAD82F60EE882599 /* AnimationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 325D34C169BA7253ADECB318 /* AnimationTests.swift */; };
@@ -92,6 +93,7 @@
 
 /* Begin PBXFileReference section */
 		138F935F3800CBB4B66CD6CC /* WorkoutGeneratorTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkoutGeneratorTests.swift; sourceTree = "<group>"; };
+		AA03D0010000000000000001 /* WatchRestHaptics.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchRestHaptics.swift; sourceTree = "<group>"; };
 		1F3CBFE99B6D75BC1136FCB9 /* XomfitWatchApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = XomfitWatchApp.swift; sourceTree = "<group>"; };
 		1F5C89119347DF10938D0467 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/WatchOS.platform/Developer/SDKs/WatchOS11.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		21257445D3A360054D42C415 /* WatchWorkoutState.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchWorkoutState.swift; sourceTree = "<group>"; };
@@ -266,6 +268,7 @@
 				21257445D3A360054D42C415 /* WatchWorkoutState.swift */,
 				1F3CBFE99B6D75BC1136FCB9 /* XomfitWatchApp.swift */,
 				473EB31945A7063B399BD147 /* WatchWorkoutSessionManager.swift */,
+				AA03D0010000000000000001 /* WatchRestHaptics.swift */,
 				AA01B0010000000000000005 /* Assets.xcassets */,
 			);
 			path = XomfitWatch;
@@ -774,6 +777,7 @@
 				5C2AA90AE5A46AC33FE64E38 /* WatchSessionStore.swift in Sources */,
 				98693D89E524AC44A696C524 /* WatchWorkoutState.swift in Sources */,
 				175D9C785D217A06EBCC6054 /* XomfitWatchApp.swift in Sources */,
+				AA03D0010000000000000002 /* WatchRestHaptics.swift in Sources */,
 				87F65E7F1F17484A4BA8042B /* WatchWorkoutSessionManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1039,9 +1043,9 @@
 				DEVELOPMENT_TEAM = A3HMLDS2AL;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Config/Xomfit-Info.plist";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSAppleMusicUsageDescription = "XomFit captures the songs that played during your workout so you can see your soundtrack later.";
-				INFOPLIST_FILE = Config/Xomfit-Info.plist;
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "XomFit uses Bluetooth to mirror your workout to a Garmin watch and receive completed sets back.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "XomFit reads your workouts, heart rate and calories from Health so runs, rides and rows recorded on your watch show up alongside your lifting.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "XomFit saves your completed workouts to Health so they count toward your activity rings.";
@@ -1081,9 +1085,9 @@
 				DEVELOPMENT_TEAM = A3HMLDS2AL;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Config/Xomfit-Info.plist";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSAppleMusicUsageDescription = "XomFit captures the songs that played during your workout so you can see your soundtrack later.";
-				INFOPLIST_FILE = Config/Xomfit-Info.plist;
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "XomFit uses Bluetooth to mirror your workout to a Garmin watch and receive completed sets back.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "XomFit reads your workouts, heart rate and calories from Health so runs, rides and rows recorded on your watch show up alongside your lifting.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "XomFit saves your completed workouts to Health so they count toward your activity rings.";
