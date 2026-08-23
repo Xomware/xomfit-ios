@@ -17,6 +17,13 @@
 	<true/>
 	<key>com.apple.developer.healthkit.access</key>
 	<array/>
+	<!-- Lets an HKObserverQuery wake the app when Health gains a workout, so a
+	     run recorded on a Garmin appears in XomFit without the app being opened.
+	     Requires HealthKit to be enabled on the App ID; automatic signing adds
+	     it to the profile. If a TestFlight archive ever fails signing on this,
+	     tick Background Delivery under HealthKit for the App ID in the portal. -->
+	<key>com.apple.developer.healthkit.background-delivery</key>
+	<true/>
 	<key>com.apple.security.application-groups</key>
 	<array>
 		<string>group.com.xomware.xomfit</string>

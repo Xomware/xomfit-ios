@@ -208,9 +208,11 @@ struct MainTabView: View {
                 refreshTrainingNudgeSchedule()
             case .active:
                 // Anchored, so running it on every foreground costs nothing when
-                // there is nothing new. This is what makes a run recorded on a
-                // Garmin appear without the lifter opening the Cardio tab.
+                // there is nothing new.
                 Task { await autoImportCardioIfEnabled() }
+                // And register for wake-ups, so the next one doesn't need the
+                // app to be opened at all.
+                startCardioObserverIfEnabled()
             default:
                 break
             }
@@ -391,6 +393,20 @@ struct MainTabView: View {
 
     // MARK: - Drawer Profile Hydration
 
+
+    /// Registers for Health wake-ups so imports happen without the app being
+    /// opened. Idempotent — the observer is built once per launch.
+    private func startCardioObserverIfEnabled() {
+        guard CardioService.shared.autoImportEnabled, HealthKitService.shared.isAvailable else { return }
+        HealthKitService.shared.startCardioObserver {
+            // Resolve the user inside the closure, from the Supabase session
+            // rather than a captured id: a background wake can arrive long after
+            // registration, and the app may have been signed out since.
+            guard let session = try? await supabase.auth.session else { return }
+            let userId = session.user.id.uuidString.lowercased()
+            await CardioService.shared.importNewFromHealth(userId: userId)
+        }
+    }
 
     /// Pulls in anything new from Apple Health, when the lifter has opted in.
     private func autoImportCardioIfEnabled() async {
