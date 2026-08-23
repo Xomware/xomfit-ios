@@ -275,6 +275,32 @@ final class HealthKitTests: XCTestCase {
         XCTAssertFalse(GarminSyncService.shared.isWatchReady)
     }
 
+    /// Every method on `IQDeviceEventDelegate` and `IQAppMessageDelegate` is
+    /// `@optional`, so a misspelled delegate method is not a compile error and
+    /// not even a warning — it is simply never called.
+    ///
+    /// That is exactly what happened. The status handler was written as
+    /// `device(_:statusChanged:)`, which Swift maps to the selector
+    /// `device:statusChanged:`, while the SDK calls `deviceStatusChanged:status:`.
+    /// The callback never fired, `isWatchReady` never became true, and every
+    /// send and open request returned at its first guard — for weeks, with no
+    /// error anywhere.
+    ///
+    /// Asserted against the literal selector strings found in the framework
+    /// binary, so a future rename or a "tidier" Swift signature breaks a test
+    /// instead of the feature.
+    func testGarminDelegateSelectorsMatchTheSDK() {
+        let service = GarminSyncService.shared
+        for name in ["deviceStatusChanged:status:",
+                     "deviceCharacteristicsDiscovered:",
+                     "receivedMessage:fromApp:"] {
+            XCTAssertTrue(
+                service.responds(to: Selector(name)),
+                "GarminSyncService does not implement \(name) — the SDK will never call it, and the failure is silent"
+            )
+        }
+    }
+
 
     // MARK: - Haptic targets
 
