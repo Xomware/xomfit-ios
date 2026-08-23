@@ -1790,6 +1790,10 @@ final class WorkoutLoggerViewModel {
             elapsedSeconds: Int(duration)
         )
         WatchSyncService.shared.send(state: watchState)
+        // Same snapshot to the Garmin. One payload, both wearables — the wire
+        // format on the watch side was written to match `WatchWorkoutState`
+        // precisely so this stays a second call and not a second model.
+        GarminSyncService.shared.send(state: watchState)
     }
 
     private func endLiveActivity() {

@@ -9,8 +9,6 @@
 /* Begin PBXBuildFile section */
 		06ACBBC7B67A972F6F39A214 /* WorkoutGeneratorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 138F935F3800CBB4B66CD6CC /* WorkoutGeneratorTests.swift */; };
 		0F2396BE1C58B7C7F99F5BC6 /* WorkoutInsightsSeamTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 730E45C30DECC5AA5563EAB4 /* WorkoutInsightsSeamTests.swift */; };
-		AA01B0010000000000000006 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA01B0010000000000000005 /* Assets.xcassets */; };
-		AA01B0010000000000000003 /* XomfitWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 30C92F27893E848084361AD6 /* XomfitWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		175D9C785D217A06EBCC6054 /* XomfitWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F3CBFE99B6D75BC1136FCB9 /* XomfitWatchApp.swift */; };
 		2652623F55494AE501D17728 /* AuthServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7B33E534C5D4F6F4A221677 /* AuthServiceTests.swift */; };
 		3AD31D27EAD82F60EE882599 /* AnimationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 325D34C169BA7253ADECB318 /* AnimationTests.swift */; };
@@ -24,11 +22,14 @@
 		9FA42ECEF9AB18EF0FD630C2 /* SessionManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C74D5365A1D42D343FCEB6A /* SessionManagerTests.swift */; };
 		A2D9DA19EA001353F94F1B0D /* ProgressiveOverloadEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F8269C3E626F9E0F867A286 /* ProgressiveOverloadEngineTests.swift */; };
 		A5CB31EA8149518294CBCF7A /* AuthValidationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50574B785553CFAF12535276 /* AuthValidationTests.swift */; };
+		AA01B0010000000000000003 /* XomfitWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 30C92F27893E848084361AD6 /* XomfitWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		AA01B0010000000000000006 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA01B0010000000000000005 /* Assets.xcassets */; };
 		AC63B77329F22ECBEC449710 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1F5C89119347DF10938D0467 /* Foundation.framework */; };
 		B2F201D886D61139D367C906 /* GoalBaselineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2971609F94FDA4AAE995734 /* GoalBaselineTests.swift */; };
 		BBBE2A7245E89C33ED8D85D8 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 37E1F812E63DCA86C4966EEE /* Foundation.framework */; };
 		D7E81C3DC92EC92262FDBC0D /* WorkoutSkipCursorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F679CA7346950355AE957485 /* WorkoutSkipCursorTests.swift */; };
 		E276BDE8A780ED0925F68800 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8932635DA9D7B3E27AD4A2 /* ContentView.swift */; };
+		F2245A37303B26BE00DF4379 /* ConnectIQ in Frameworks */ = {isa = PBXBuildFile; productRef = AA02C0010000000000000002 /* ConnectIQ */; };
 		F29F21412F5F620700683551 /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = F29F21402F5F620700683551 /* Auth */; };
 		F29F21432F5F620700683551 /* Functions in Frameworks */ = {isa = PBXBuildFile; productRef = F29F21422F5F620700683551 /* Functions */; };
 		F29F21452F5F620700683551 /* PostgREST in Frameworks */ = {isa = PBXBuildFile; productRef = F29F21442F5F620700683551 /* PostgREST */; };
@@ -48,13 +49,6 @@
 			remoteGlobalIDString = F29F21302F5F61DC00683551;
 			remoteInfo = Xomfit;
 		};
-		F2FA6B1D2F7C0636009E1AB8 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = F29F21292F5F61DC00683551 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = F2FA6B082F7C0635009E1AB8;
-			remoteInfo = XomfitWidgetExtension;
-		};
 		AA01B0010000000000000001 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = F29F21292F5F61DC00683551 /* Project object */;
@@ -62,20 +56,16 @@
 			remoteGlobalIDString = D519D8F09D195B6FD3C93CAC;
 			remoteInfo = XomfitWatch;
 		};
+		F2FA6B1D2F7C0636009E1AB8 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F29F21292F5F61DC00683551 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F2FA6B082F7C0635009E1AB8;
+			remoteInfo = XomfitWidgetExtension;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		F2FA6B242F7C0636009E1AB8 /* Embed Foundation Extensions */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 13;
-			files = (
-				F2FA6B1F2F7C0636009E1AB8 /* XomfitWidgetExtension.appex in Embed Foundation Extensions */,
-			);
-			name = "Embed Foundation Extensions";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		AA01B0010000000000000004 /* Embed Watch Content */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -87,11 +77,21 @@
 			name = "Embed Watch Content";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		F2FA6B242F7C0636009E1AB8 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				F2FA6B1F2F7C0636009E1AB8 /* XomfitWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		138F935F3800CBB4B66CD6CC /* WorkoutGeneratorTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkoutGeneratorTests.swift; sourceTree = "<group>"; };
-		AA01B0010000000000000005 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		1F3CBFE99B6D75BC1136FCB9 /* XomfitWatchApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = XomfitWatchApp.swift; sourceTree = "<group>"; };
 		1F5C89119347DF10938D0467 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/WatchOS.platform/Developer/SDKs/WatchOS11.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		21257445D3A360054D42C415 /* WatchWorkoutState.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchWorkoutState.swift; sourceTree = "<group>"; };
@@ -104,6 +104,7 @@
 		5C74D5365A1D42D343FCEB6A /* SessionManagerTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SessionManagerTests.swift; sourceTree = "<group>"; };
 		730E45C30DECC5AA5563EAB4 /* WorkoutInsightsSeamTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkoutInsightsSeamTests.swift; sourceTree = "<group>"; };
 		8C8932635DA9D7B3E27AD4A2 /* ContentView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		AA01B0010000000000000005 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B7B33E534C5D4F6F4A221677 /* AuthServiceTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AuthServiceTests.swift; sourceTree = "<group>"; };
 		BC49DBCE1EDC7F48166EC8AE /* WatchSessionStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchSessionStore.swift; sourceTree = "<group>"; };
 		C26FE97F0134F021E9D0622B /* ExerciseVariantTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ExerciseVariantTests.swift; sourceTree = "<group>"; };
@@ -201,8 +202,6 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		F29F21332F5F61DC00683551 /* Xomfit */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = Xomfit;
 			sourceTree = "<group>";
 		};
@@ -237,6 +236,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F2245A37303B26BE00DF4379 /* ConnectIQ in Frameworks */,
 				F29F21452F5F620700683551 /* PostgREST in Frameworks */,
 				F29F21432F5F620700683551 /* Functions in Frameworks */,
 				F29F21412F5F620700683551 /* Auth in Frameworks */,
@@ -268,7 +268,6 @@
 				473EB31945A7063B399BD147 /* WatchWorkoutSessionManager.swift */,
 				AA01B0010000000000000005 /* Assets.xcassets */,
 			);
-			name = XomfitWatch;
 			path = XomfitWatch;
 			sourceTree = SOURCE_ROOT;
 		};
@@ -294,7 +293,6 @@
 				E2971609F94FDA4AAE995734 /* GoalBaselineTests.swift */,
 				F679CA7346950355AE957485 /* WorkoutSkipCursorTests.swift */,
 			);
-			name = XomfitTests;
 			path = XomfitTests;
 			sourceTree = "<group>";
 		};
@@ -645,6 +643,7 @@
 				F29F21462F5F620700683551 /* Realtime */,
 				F29F21482F5F620700683551 /* Storage */,
 				F29F214A2F5F620700683551 /* Supabase */,
+				AA02C0010000000000000002 /* ConnectIQ */,
 			);
 			productName = Xomfit;
 			productReference = F29F21312F5F61DC00683551 /* Xomfit.app */;
@@ -699,6 +698,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				F29F213F2F5F620700683551 /* XCRemoteSwiftPackageReference "supabase-swift" */,
+				AA02C0010000000000000001 /* XCRemoteSwiftPackageReference "connectiq-companion-app-sdk-ios" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = F29F21322F5F61DC00683551 /* Products */;
@@ -801,15 +801,15 @@
 			target = F29F21302F5F61DC00683551 /* Xomfit */;
 			targetProxy = 99113C0D83D81981E918B3AD /* PBXContainerItemProxy */;
 		};
-		F2FA6B1E2F7C0636009E1AB8 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = F2FA6B082F7C0635009E1AB8 /* XomfitWidgetExtension */;
-			targetProxy = F2FA6B1D2F7C0636009E1AB8 /* PBXContainerItemProxy */;
-		};
 		AA01B0010000000000000002 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = D519D8F09D195B6FD3C93CAC /* XomfitWatch */;
 			targetProxy = AA01B0010000000000000001 /* PBXContainerItemProxy */;
+		};
+		F2FA6B1E2F7C0636009E1AB8 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F2FA6B082F7C0635009E1AB8 /* XomfitWidgetExtension */;
+			targetProxy = F2FA6B1D2F7C0636009E1AB8 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -838,15 +838,15 @@
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = XomfitWatch/XomfitWatch.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = A3HMLDS2AL;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = XomfitWatch/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = XomFit;
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "XomFit reads your heart rate and calories during a workout so your session on the watch stays accurate.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "XomFit saves your workout to Health so it counts toward your activity rings.";
-				CODE_SIGN_ENTITLEMENTS = XomfitWatch/XomfitWatch.entitlements;
-				INFOPLIST_FILE = XomfitWatch/Info.plist;
 				INFOPLIST_KEY_WKApplication = YES;
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.Xomware.Xomfit;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Xomware.Xomfit.watchkitapp;
@@ -865,15 +865,15 @@
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = XomfitWatch/XomfitWatch.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = A3HMLDS2AL;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = XomfitWatch/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = XomFit;
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "XomFit reads your heart rate and calories during a workout so your session on the watch stays accurate.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "XomFit saves your workout to Health so it counts toward your activity rings.";
-				CODE_SIGN_ENTITLEMENTS = XomfitWatch/XomfitWatch.entitlements;
-				INFOPLIST_FILE = XomfitWatch/Info.plist;
 				INFOPLIST_KEY_WKApplication = YES;
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.Xomware.Xomfit;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Xomware.Xomfit.watchkitapp;
@@ -1041,6 +1041,8 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSAppleMusicUsageDescription = "XomFit captures the songs that played during your workout so you can see your soundtrack later.";
+				INFOPLIST_FILE = Config/Xomfit-Info.plist;
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "XomFit uses Bluetooth to mirror your workout to a Garmin watch and receive completed sets back.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "XomFit reads your workouts, heart rate and calories from Health so runs, rides and rows recorded on your watch show up alongside your lifting.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "XomFit saves your completed workouts to Health so they count toward your activity rings.";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
@@ -1054,6 +1056,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 2.2.4;
+				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_BUNDLE_IDENTIFIER = com.Xomware.Xomfit;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -1080,6 +1083,8 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSAppleMusicUsageDescription = "XomFit captures the songs that played during your workout so you can see your soundtrack later.";
+				INFOPLIST_FILE = Config/Xomfit-Info.plist;
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "XomFit uses Bluetooth to mirror your workout to a Garmin watch and receive completed sets back.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "XomFit reads your workouts, heart rate and calories from Health so runs, rides and rows recorded on your watch show up alongside your lifting.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "XomFit saves your completed workouts to Health so they count toward your activity rings.";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
@@ -1093,6 +1098,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 2.2.4;
+				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_BUNDLE_IDENTIFIER = com.Xomware.Xomfit;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -1222,6 +1228,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		AA02C0010000000000000001 /* XCRemoteSwiftPackageReference "connectiq-companion-app-sdk-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/garmin/connectiq-companion-app-sdk-ios";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.8.0;
+			};
+		};
 		F29F213F2F5F620700683551 /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/supabase/supabase-swift";
@@ -1233,6 +1247,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		AA02C0010000000000000002 /* ConnectIQ */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AA02C0010000000000000001 /* XCRemoteSwiftPackageReference "connectiq-companion-app-sdk-ios" */;
+			productName = ConnectIQ;
+		};
 		F29F21402F5F620700683551 /* Auth */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = F29F213F2F5F620700683551 /* XCRemoteSwiftPackageReference "supabase-swift" */;

@@ -77,8 +77,24 @@ struct XomFitApp: App {
                             WatchSyncService.shared.onDoneSetReceived = { [weak workoutSession] in
                                 workoutSession?.completeFocusedSetFromWatch()
                             }
+                            // Garmin takes the same route. `initialize` has to
+                            // happen before any device work, and the URL scheme
+                            // it registers is how Garmin Connect hands devices
+                            // back after selection.
+                            GarminSyncService.shared.start()
                             evaluateFitnessQuestionnaireGate()
                             evaluateActiveSessionRestore()
+                        }
+                        .onOpenURL { url in
+                            // Garmin Connect returns here after device
+                            // selection. Returns false when the URL is not
+                            // ours, so other deep links still work.
+                            _ = GarminSyncService.shared.handleOpenURL(url)
+                        }
+                        .onReceive(NotificationCenter.default.publisher(for: .garminDoneSetReceived)) { _ in
+                            // Same idempotent entry point the Apple Watch uses:
+                            // Bluetooth can deliver the same message twice.
+                            workoutSession.completeFocusedSetFromWatch()
                         }
                         .alert(
                             "Resume workout?",

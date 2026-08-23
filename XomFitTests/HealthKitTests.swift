@@ -212,6 +212,69 @@ final class HealthKitTests: XCTestCase {
         XCTAssertFalse(UserDefaults.standard.bool(forKey: key))
     }
 
+
+    // MARK: - Garmin link
+
+    /// The watch app's manifest id and this constant must match exactly.
+    /// If they drift, messages go to a mailbox nothing is listening on —
+    /// silently, with no error, which is the worst way for this to break.
+    func testGarminAppIdMatchesTheWatchManifest() {
+        let id = GarminSyncService.watchAppId
+        XCTAssertEqual(id.count, 32, "Connect IQ app ids are 32 hex characters")
+        XCTAssertNil(
+            id.range(of: "[^0-9a-f]", options: .regularExpression),
+            "App id must be lowercase hex"
+        )
+        // The raw manifest form is NOT a valid UUID string — undashed hex is
+        // rejected outright. That is the trap: passing it straight to IQApp
+        // yields a nil uuid and every message vanishes with no error.
+        XCTAssertNil(UUID(uuidString: id), "Manifest ids are undashed; if this ever parses, revisit the conversion")
+        XCTAssertNotNil(GarminSyncService.watchAppUUID, "The dashed conversion is what IQApp needs")
+        XCTAssertEqual(
+            GarminSyncService.watchAppUUID?.uuidString.lowercased().replacingOccurrences(of: "-", with: ""),
+            id,
+            "Converting to UUID and back must round-trip to the manifest id"
+        )
+    }
+
+    /// The scheme is declared in Config/Xomfit-Info.plist and passed to the SDK
+    /// at init. A mismatch means Garmin Connect has nowhere to hand devices back
+    /// to, and device selection silently never completes.
+    func testGarminURLSchemeIsRegisteredInTheBundle() {
+        // The host app's bundle, not `Bundle.main` — under XCTest that is the
+        // test bundle, which has no URL types of its own.
+        let host = Bundle(identifier: "com.Xomware.Xomfit") ?? Bundle.main
+        let declared = host.object(forInfoDictionaryKey: "CFBundleURLTypes") as? [[String: Any]] ?? []
+        let schemes = declared.flatMap { ($0["CFBundleURLSchemes"] as? [String]) ?? [] }
+        XCTAssertTrue(
+            schemes.contains(GarminSyncService.urlScheme),
+            "GarminSyncService.urlScheme (\(GarminSyncService.urlScheme)) is not in CFBundleURLTypes: \(schemes)"
+        )
+    }
+
+    /// A URL from some other feature must be passed on, not swallowed.
+    func testGarminIgnoresForeignURLs() {
+        let handled = GarminSyncService.shared.handleOpenURL(URL(string: "xomfit://workout")!)
+        XCTAssertFalse(handled)
+    }
+
+    /// Sending with no paired device must be a no-op rather than a crash — this
+    /// is the state every user is in until they run device selection.
+    func testGarminSendWithoutADeviceIsANoOp() {
+        let state = WatchWorkoutState(
+            workoutName: "Test",
+            currentExercise: "Bench Press",
+            setNumber: 2,
+            totalSets: 4,
+            isResting: true,
+            restEndDate: Date().addingTimeInterval(90),
+            isPaused: false,
+            elapsedSeconds: 600
+        )
+        GarminSyncService.shared.send(state: state)
+        XCTAssertFalse(GarminSyncService.shared.isWatchReady)
+    }
+
 }
 
 // MARK: - Cardio modality mapping

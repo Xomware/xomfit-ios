@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Lives in Config/ rather than Xomfit/ on purpose: the app target uses a
+	     filesystem-synchronized group, so a plist inside Xomfit/ would be picked
+	     up as a bundle resource *and* as INFOPLIST_FILE, and the build fails with
+	     "Multiple commands produce Info.plist".
+
+	     Only the keys Xcode cannot generate live here. GENERATE_INFOPLIST_FILE
+	     stays on and merges everything else on top, so this file should stay
+	     small — the same arrangement the watch target uses for WKBackgroundModes.
+
+	     Garmin Connect launches back into XomFit through this scheme after the
+	     lifter picks their watch. Device selection leaves the app entirely, so
+	     without a registered scheme the round trip has nowhere to land. -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.Xomware.Xomfit.garmin</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>xomfit-garmin</string>
+			</array>
+		</dict>
+	</array>
+	<!-- Garmin Connect is a separate app, and iOS will not let us open it
+	     without declaring it. Device discovery depends on that handoff. -->
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>gcm-ciq</string>
+	</array>
+</dict>
+</plist>
