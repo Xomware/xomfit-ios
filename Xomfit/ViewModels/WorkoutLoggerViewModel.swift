@@ -1790,6 +1790,55 @@ final class WorkoutLoggerViewModel {
             elapsedSeconds: Int(duration)
         )
         WatchSyncService.shared.send(state: watchState)
+        // Same snapshot to the Garmin, plus the extras only that watch shows.
+        // The shared wire format is why this is a second call and not a second
+        // model.
+        GarminSyncService.shared.send(state: watchState, detail: garminDetail())
+    }
+
+    /// The parts of the workout only the Garmin app displays.
+    ///
+    /// Assembled here rather than in the service because it needs the exercise
+    /// list and the set cursor, and the service deliberately does not reach into
+    /// the view model.
+    private func garminDetail() -> WatchWorkoutDetail {
+        let set = focusSet
+        // One cue, not the whole instruction set. Nobody reads a paragraph off a
+        // watch mid-set, and the device mailbox is too small to carry one.
+        let cue = ExerciseInstructionLibrary
+            .instructions(for: focusExercise?.exercise.id ?? "")?
+            .execution.first
+
+        let upcoming = exercises.indices
+            .filter { $0 > focusExerciseIndex && exercises[$0].sets.contains { $0.isPending } }
+            .map { exercises[$0].exercise.name }
+
+        return WatchWorkoutDetail(
+            reps: set.map { $0.reps },
+            weight: set.map { Int($0.weight.rounded()) },
+            upNext: upcoming,
+            instruction: cue
+        )
+    }
+
+    /// Applies a set adjustment made on the Garmin.
+    ///
+    /// Either field can be absent — the watch edits one at a time — so the other
+    /// keeps whatever the set already had.
+    func adjustFocusedSetFromWatch(reps: Int?, weight: Int?) {
+        guard isActive,
+              exercises.indices.contains(focusExerciseIndex),
+              exercises[focusExerciseIndex].sets.indices.contains(focusSetIndex)
+        else { return }
+
+        let current = exercises[focusExerciseIndex].sets[focusSetIndex]
+        updateSet(
+            exerciseIndex: focusExerciseIndex,
+            setIndex: focusSetIndex,
+            weight: weight.map(Double.init) ?? current.weight,
+            reps: reps ?? current.reps
+        )
+        saveActiveSession(force: true)
     }
 
     private func endLiveActivity() {

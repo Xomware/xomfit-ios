@@ -370,4 +370,39 @@ final class WorkoutSkipCursorTests: XCTestCase {
         XCTAssertEqual(best?.weight, 245, "The card should show the better lift, not the first one")
     }
 
+
+    // MARK: - Garmin set adjustment
+
+    /// The watch edits one field at a time, so the other must survive.
+    func testAdjustingRepsFromTheWatchLeavesWeightAlone() {
+        seed(exercises: 1, sets: 3)
+        sut.updateSet(exerciseIndex: 0, setIndex: 0, weight: 225, reps: 5)
+        sut.setCursor(exercise: 0, set: 0)
+
+        sut.adjustFocusedSetFromWatch(reps: 8, weight: nil)
+
+        XCTAssertEqual(sut.exercises[0].sets[0].reps, 8)
+        XCTAssertEqual(sut.exercises[0].sets[0].weight, 225, "Weight must not be reset by a reps-only edit")
+    }
+
+    func testAdjustingWeightFromTheWatchLeavesRepsAlone() {
+        seed(exercises: 1, sets: 3)
+        sut.updateSet(exerciseIndex: 0, setIndex: 0, weight: 225, reps: 5)
+        sut.setCursor(exercise: 0, set: 0)
+
+        sut.adjustFocusedSetFromWatch(reps: nil, weight: 245)
+
+        XCTAssertEqual(sut.exercises[0].sets[0].weight, 245)
+        XCTAssertEqual(sut.exercises[0].sets[0].reps, 5, "Reps must not be reset by a weight-only edit")
+    }
+
+    /// A message can arrive after the workout ends — Bluetooth is not
+    /// synchronous with the UI.
+    func testAdjustingWithNoActiveWorkoutIsANoOp() {
+        seed(exercises: 1, sets: 2)
+        sut.discardWorkout()
+        sut.adjustFocusedSetFromWatch(reps: 12, weight: 100)
+        XCTAssertFalse(sut.isActive)
+    }
+
 }
