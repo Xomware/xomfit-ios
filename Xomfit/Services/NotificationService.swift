@@ -55,9 +55,28 @@ final class NotificationService {
     }
     /// Countdown ticks + end-of-rest alarm haptic. Gates the buzz only — the
     /// visual timer and the "rest's up" notification are separate toggles, so
-    /// turning this off silences the wrist without losing the cue.
+    /// turning this off silences everything without losing the cue.
     var restHapticsEnabled: Bool {
         didSet { UserDefaults.standard.set(restHapticsEnabled, forKey: Self.restHapticsKey) }
+    }
+
+    /// Whether a paired wearable buzzes through the end of rest.
+    ///
+    /// The wrist is the primary target and defaults on: it is where the lifter
+    /// actually is. Sent to the watch in the state payload, since a watch cannot
+    /// read iPhone defaults itself.
+    var wristHapticsEnabled: Bool {
+        didSet { UserDefaults.standard.set(wristHapticsEnabled, forKey: Self.wristHapticsKey) }
+    }
+
+    /// Whether the phone itself buzzes.
+    ///
+    /// Independent of the wrist rather than exclusive with it, so every
+    /// combination is reachable — both, either, or neither. Defaults on so a
+    /// lifter with no wearable is not silently left without a cue; the natural
+    /// move once a watch is paired is to turn this off.
+    var phoneHapticsEnabled: Bool {
+        didSet { UserDefaults.standard.set(phoneHapticsEnabled, forKey: Self.phoneHapticsKey) }
     }
     /// "Light on legs" style come-back nudges, delivered while the app is closed.
     var trainingNudgeEnabled: Bool {
@@ -71,6 +90,8 @@ final class NotificationService {
     private static let warmupKey = "xomfit_notif_warmup_enabled"
     private static let weeklyReportKey = "xomfit_notif_weekly_report_enabled"
     private static let restHapticsKey = "xomfit_notif_rest_haptics_enabled"
+    private static let wristHapticsKey = "xomfit_notif_wrist_haptics_enabled"
+    private static let phoneHapticsKey = "xomfit_notif_phone_haptics_enabled"
     private static let trainingNudgeKey = "xomfit_notif_training_nudge_enabled"
     static let trainingNudgeNotifId = "training-nudge"
     /// One repeating request per selected weekday, suffixed with that weekday.
@@ -90,11 +111,15 @@ final class NotificationService {
         if defaults.object(forKey: Self.warmupKey) == nil { defaults.set(true, forKey: Self.warmupKey) }
         if defaults.object(forKey: Self.weeklyReportKey) == nil { defaults.set(true, forKey: Self.weeklyReportKey) }
         if defaults.object(forKey: Self.restHapticsKey) == nil { defaults.set(true, forKey: Self.restHapticsKey) }
+        if defaults.object(forKey: Self.wristHapticsKey) == nil { defaults.set(true, forKey: Self.wristHapticsKey) }
+        if defaults.object(forKey: Self.phoneHapticsKey) == nil { defaults.set(true, forKey: Self.phoneHapticsKey) }
         if defaults.object(forKey: Self.trainingNudgeKey) == nil { defaults.set(true, forKey: Self.trainingNudgeKey) }
         self.restTimerLocalEnabled = defaults.bool(forKey: Self.restTimerKey)
         self.warmupLocalEnabled = defaults.bool(forKey: Self.warmupKey)
         self.weeklyReportEnabled = defaults.bool(forKey: Self.weeklyReportKey)
         self.restHapticsEnabled = defaults.bool(forKey: Self.restHapticsKey)
+        self.wristHapticsEnabled = defaults.bool(forKey: Self.wristHapticsKey)
+        self.phoneHapticsEnabled = defaults.bool(forKey: Self.phoneHapticsKey)
         self.trainingNudgeEnabled = defaults.bool(forKey: Self.trainingNudgeKey)
         loadNotifications()
         loadPreferences()

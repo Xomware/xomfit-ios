@@ -1485,7 +1485,10 @@ final class WorkoutLoggerViewModel {
     /// silently skipping it.
     private func fireRestCountdownHapticIfNeeded() {
         guard isRestTimerActive, !isPaused else { return }
-        guard NotificationService.shared.restHapticsEnabled else { return }
+        // Only the phone's own buzz is gated here. The wrist decides for itself
+        // from the flag in the state payload, because a watch counting down
+        // locally is steadier than one waiting on a message every second.
+        guard NotificationService.shared.phoneHapticsEnabled else { return }
 
         if restTimeRemaining <= 0 {
             guard lastRestHapticSecond != 0 else { return }
@@ -1779,6 +1782,7 @@ final class WorkoutLoggerViewModel {
 
         // Broadcast the same snapshot to the paired Apple Watch (#256).
         // No-op when no watch is paired / WCSession isn't supported.
+        let detail = garminDetail()
         let watchState = WatchWorkoutState(
             workoutName: workoutName,
             currentExercise: currentExName,
@@ -1787,13 +1791,18 @@ final class WorkoutLoggerViewModel {
             isResting: isRestTimerActive,
             restEndDate: restEnd,
             isPaused: isPaused,
-            elapsedSeconds: Int(duration)
+            elapsedSeconds: Int(duration),
+            reps: detail.reps,
+            weight: detail.weight.map(Double.init),
+            upNext: detail.upNext,
+            instruction: detail.instruction,
+            wristHaptics: NotificationService.shared.wristHapticsEnabled
         )
         WatchSyncService.shared.send(state: watchState)
         // Same snapshot to the Garmin, plus the extras only that watch shows.
         // The shared wire format is why this is a second call and not a second
         // model.
-        GarminSyncService.shared.send(state: watchState, detail: garminDetail())
+        GarminSyncService.shared.send(state: watchState, detail: detail)
     }
 
     /// The parts of the workout only the Garmin app displays.
