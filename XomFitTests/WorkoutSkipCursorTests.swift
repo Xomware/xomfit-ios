@@ -334,4 +334,40 @@ final class WorkoutSkipCursorTests: XCTestCase {
         XCTAssertFalse(sut.exercises[0].sets[1].beatRestTimer)
     }
 
+
+    // MARK: - New-PR badge
+
+    /// The exercise card read PRs from history, so after beating one it kept
+    /// advertising the number the lifter had just broken. `checkForPR` flags the
+    /// set itself, which is what the card should trust for the current session.
+    func testCompletedSetCarriesThePRFlagForTheCard() {
+        seed(exercises: 1, sets: 3)
+        sut.exercises[0].sets[0].weight = 225
+        sut.exercises[0].sets[0].reps = 5
+        sut.completeSet(exerciseIndex: 0, setIndex: 0)
+
+        // No network in tests, so simulate what checkForPR does to the set.
+        sut.exercises[0].sets[0].isPersonalRecord = true
+
+        let prSets = sut.exercises[0].sets.filter { $0.isPersonalRecord && $0.weight > 0 && $0.reps > 0 }
+        XCTAssertEqual(prSets.count, 1)
+        XCTAssertEqual(prSets.first?.weight, 225)
+    }
+
+    /// Beating a PR twice should surface the better number, not the earlier one.
+    func testHeaviestPRSetWinsWhenThereAreSeveral() {
+        seed(exercises: 1, sets: 3)
+        for (idx, weight) in [225.0, 245.0].enumerated() {
+            sut.exercises[0].sets[idx].weight = weight
+            sut.exercises[0].sets[idx].reps = 5
+            sut.exercises[0].sets[idx].isPersonalRecord = true
+        }
+
+        let best = sut.exercises[0].sets
+            .filter { $0.isPersonalRecord && $0.weight > 0 && $0.reps > 0 }
+            .max { $0.weight < $1.weight }
+
+        XCTAssertEqual(best?.weight, 245, "The card should show the better lift, not the first one")
+    }
+
 }

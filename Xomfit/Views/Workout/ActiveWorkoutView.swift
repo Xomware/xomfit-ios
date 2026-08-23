@@ -1104,6 +1104,18 @@ private struct SetTableHeader: View {
 private struct ExerciseCard: View {
     let exerciseIndex: Int
     let viewModel: WorkoutLoggerViewModel
+
+    /// Heaviest record-setting set logged for this exercise in this session, or
+    /// nil if none. `checkForPR` flags the set itself, so this needs no history.
+    ///
+    /// Heaviest rather than first: hitting a PR and then beating it again in a
+    /// later set should show the better number, not the one that happened to
+    /// come first.
+    private func bestNewPRSet(in exercise: WorkoutExercise) -> WorkoutSet? {
+        exercise.sets
+            .filter { $0.isPersonalRecord && $0.weight > 0 && $0.reps > 0 }
+            .max { $0.weight < $1.weight }
+    }
     /// Invoked when the lifter taps the card's title area.
     ///
     /// Entering focus used to be possible only through an "eye" icon in the
@@ -1440,9 +1452,31 @@ private struct ExerciseCard: View {
                                     .fixedSize()
                                 }
 
-                                // PR badge — show the user's personal record for this exercise
-                                if let pr = viewModel.personalRecordForExercise(exercise.exercise.id),
-                                   pr.weight > 0, pr.reps > 0 {
+                                // PR badge. A record set *this session* wins over
+                                // the stored one: `personalRecordForExercise`
+                                // reads history, so after beating a PR the card
+                                // went on advertising the number the lifter had
+                                // just broken.
+                                //
+                                // Filled rather than tinted for a new record —
+                                // the celebration banner is long gone by the time
+                                // they look back at the card.
+                                if let fresh = bestNewPRSet(in: exercise) {
+                                    HStack(spacing: 3) {
+                                        Image(systemName: "trophy.fill")
+                                            .font(.system(size: 9, weight: .bold))
+                                        Text("NEW PR: \(fresh.weight.formattedWeight) x \(fresh.reps)")
+                                            .font(.system(size: 10, weight: .bold))
+                                    }
+                                    .foregroundStyle(.black)
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, Theme.Spacing.tighter)
+                                    .background(Theme.prGold)
+                                    .clipShape(.rect(cornerRadius: 4))
+                                    .fixedSize()
+                                    .accessibilityLabel("New personal record: \(fresh.weight.formattedWeight) pounds for \(fresh.reps) reps")
+                                } else if let pr = viewModel.personalRecordForExercise(exercise.exercise.id),
+                                          pr.weight > 0, pr.reps > 0 {
                                     HStack(spacing: 3) {
                                         Image(systemName: "trophy.fill")
                                             .font(.system(size: 9, weight: .bold))
