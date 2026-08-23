@@ -91,10 +91,27 @@ struct XomFitApp: App {
                             // ours, so other deep links still work.
                             _ = GarminSyncService.shared.handleOpenURL(url)
                         }
-                        .onReceive(NotificationCenter.default.publisher(for: .garminDoneSetReceived)) { _ in
-                            // Same idempotent entry point the Apple Watch uses:
-                            // Bluetooth can deliver the same message twice.
-                            workoutSession.completeFocusedSetFromWatch()
+                        .onReceive(NotificationCenter.default.publisher(for: .garminActionReceived)) { note in
+                            // The Garmin asks; the phone decides. Routing through
+                            // a notification keeps the sync service from reaching
+                            // into the view model.
+                            switch note.userInfo?["action"] as? String {
+                            case "doneSet":
+                                // Idempotent entry point, same as the Apple
+                                // Watch: Bluetooth can deliver twice.
+                                workoutSession.completeFocusedSetFromWatch()
+                            case "skipRest":
+                                workoutSession.skipRestTimer()
+                            case "nextExercise":
+                                workoutSession.focusNextExercise()
+                            case "adjustSet":
+                                workoutSession.adjustFocusedSetFromWatch(
+                                    reps: note.userInfo?["reps"] as? Int,
+                                    weight: note.userInfo?["weight"] as? Int
+                                )
+                            default:
+                                break
+                            }
                         }
                         .alert(
                             "Resume workout?",

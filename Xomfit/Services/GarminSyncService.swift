@@ -106,19 +106,30 @@ final class GarminSyncService: NSObject {
     /// Sent transient. A rest countdown updates every second, and Garmin's
     /// device-side mailbox is small — queueing every tick would flood it, and a
     /// countdown delivered late is worse than one dropped.
-    func send(state: WatchWorkoutState) {
+    func send(state: WatchWorkoutState, detail: WatchWorkoutDetail = .empty) {
         guard let app, isWatchReady else { return }
 
-        let message: [String: Any] = [
+        var message: [String: Any] = [
             "exercise": state.currentExercise,
             "set": state.setNumber,
             "totalSets": state.totalSets,
             "elapsed": state.elapsedSeconds,
-            // The watch counts down in whole seconds and treats negatives as
-            // overtime, matching how the phone already models rest.
-            "rest": restSeconds(from: state) as Any,
             "paused": state.isPaused
-        ].compactMapValues { $0 }
+        ]
+        // The watch counts down in whole seconds and treats negatives as
+        // overtime, matching how the phone already models rest.
+        if let rest = restSeconds(from: state) {
+            message["rest"] = rest
+        }
+        if let reps = detail.reps { message["reps"] = reps }
+        if let weight = detail.weight { message["weight"] = weight }
+        if let instruction = detail.instruction { message["instruction"] = instruction }
+        if !detail.upNext.isEmpty {
+            // Capped before it leaves the phone. The device mailbox is small and
+            // the watch only draws a handful — sending twenty names would cost
+            // bandwidth to display four.
+            message["upNext"] = Array(detail.upNext.prefix(Self.upNextLimit))
+        }
 
         ConnectIQ.sharedInstance().sendMessage(
             message,
@@ -127,6 +138,9 @@ final class GarminSyncService: NSObject {
             completion: { _ in }
         )
     }
+
+    /// How many upcoming exercise names travel to the watch.
+    private static let upNextLimit = 6
 
     /// Converts the absolute rest end date the phone tracks into the countdown
     /// the watch shows. Nil when not resting.
@@ -188,20 +202,58 @@ extension GarminSyncService: IQDeviceEventDelegate {
 extension GarminSyncService: IQAppMessageDelegate {
     nonisolated func receivedMessage(_ message: Any, from app: IQApp) {
         guard let dict = message as? [String: Any],
-              dict["type"] as? String == "doneSet"
+              let type = dict["type"] as? String
         else { return }
 
+        // Reps and weight are read here, off the main actor, because the
+        // dictionary must not cross the isolation boundary.
+        let reps = dict["reps"] as? Int
+        let weight = dict["weight"] as? Int
+
         Task { @MainActor in
-            // The same entry point the Apple Watch uses. It is idempotent per
-            // set, which matters here too: Bluetooth can deliver twice.
-            NotificationCenter.default.post(name: .garminDoneSetReceived, object: nil)
+            switch type {
+            case "doneSet":
+                // The same entry point the Apple Watch uses. It is idempotent
+                // per set, which matters here too: Bluetooth can deliver twice.
+                NotificationCenter.default.post(name: .garminActionReceived, object: nil,
+                                               userInfo: ["action": "doneSet"])
+            case "skipRest":
+                NotificationCenter.default.post(name: .garminActionReceived, object: nil,
+                                               userInfo: ["action": "skipRest"])
+            case "nextExercise":
+                NotificationCenter.default.post(name: .garminActionReceived, object: nil,
+                                               userInfo: ["action": "nextExercise"])
+            case "adjustSet":
+                var info: [String: Any] = ["action": "adjustSet"]
+                if let reps { info["reps"] = reps }
+                if let weight { info["weight"] = weight }
+                NotificationCenter.default.post(name: .garminActionReceived, object: nil,
+                                               userInfo: info)
+            default:
+                break
+            }
         }
     }
 }
 
+/// The parts of a workout the watch shows that `WatchWorkoutState` does not
+/// carry.
+///
+/// Kept separate rather than widened into `WatchWorkoutState`, because the Apple
+/// Watch does not display any of it and every field added there costs bandwidth
+/// on a link that already works.
+struct WatchWorkoutDetail {
+    var reps: Int?
+    var weight: Int?
+    var upNext: [String]
+    var instruction: String?
+
+    static let empty = WatchWorkoutDetail(reps: nil, weight: nil, upNext: [], instruction: nil)
+}
+
 extension Notification.Name {
-    /// Posted when the Garmin watch reports a completed set. Observed by the app
-    /// shell, which owns the workout view model — the service deliberately does
-    /// not reach into it.
-    static let garminDoneSetReceived = Notification.Name("garminDoneSetReceived")
+    /// Posted when the Garmin watch asks for something. `userInfo["action"]`
+    /// carries which. Observed by the app shell, which owns the workout view
+    /// model — the service deliberately does not reach into it.
+    static let garminActionReceived = Notification.Name("garminActionReceived")
 }
