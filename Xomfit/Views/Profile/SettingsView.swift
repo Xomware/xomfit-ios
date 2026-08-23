@@ -79,19 +79,79 @@ struct SettingsView: View {
         ZStack {
             Theme.background.ignoresSafeArea()
 
+            // Five groups that drill down, not twelve sections that scroll.
+            //
+            // The old screen was a flat list of twelve sections, most holding one
+            // to three controls. Nothing was hard to find because it was hidden —
+            // it was hard to find because everything was equally visible, in no
+            // order, and the screen was longer than a phone. Grouping by what a
+            // lifter came here to *do* gives the list a shape and puts the top
+            // level on one screen.
             List {
-                accountSection
-                notificationsSection
-                healthSection
-                appPreferencesSection
-                trainingSection
-                aiCoachSection
-                toolsSection
-                musicSourcesSection
-                dataPrivacySection
-                supportSection
-                aboutSection
-                signOutSection
+                Section {
+                    settingsGroupLink(
+                        "Profile & Account",
+                        icon: "person.crop.circle.fill",
+                        detail: authService.currentUser?.email ?? "Signed in"
+                    ) {
+                        SettingsGroupScreen(title: "Profile & Account") {
+                            accountSection
+                            signOutSection
+                        }
+                    }
+
+                    settingsGroupLink(
+                        "Training",
+                        icon: "dumbbell.fill",
+                        detail: "Units, rest, week start"
+                    ) {
+                        SettingsGroupScreen(title: "Training") {
+                            appPreferencesSection
+                            trainingSection
+                        }
+                    }
+
+                    settingsGroupLink(
+                        "Alerts & Haptics",
+                        icon: "bell.badge.fill",
+                        detail: "Reminders, rest buzz, nudges"
+                    ) {
+                        SettingsGroupScreen(title: "Alerts & Haptics") {
+                            notificationsSection
+                        }
+                    }
+
+                    // Everything that reaches outside the app. Health, watches
+                    // and music were scattered across three separate places even
+                    // though they are the same kind of decision: what XomFit is
+                    // allowed to talk to.
+                    settingsGroupLink(
+                        "Devices & Services",
+                        icon: "antenna.radiowaves.left.and.right",
+                        detail: "Health, watch, music, AI"
+                    ) {
+                        SettingsGroupScreen(title: "Devices & Services") {
+                            healthSection
+                            musicSourcesSection
+                            aiCoachSection
+                        }
+                    }
+
+                    settingsGroupLink(
+                        "App",
+                        icon: "gearshape.fill",
+                        detail: "Tools, privacy, support"
+                    ) {
+                        SettingsGroupScreen(title: "App") {
+                            toolsSection
+                            dataPrivacySection
+                            supportSection
+                            aboutSection
+                        }
+                    }
+                }
+                .listRowBackground(Theme.surface)
+                .listRowSeparatorTint(Theme.hairline)
             }
             .listStyle(.insetGrouped)
             .scrollContentBackground(.hidden)
@@ -137,6 +197,37 @@ struct SettingsView: View {
     }
 
     // MARK: - Sections
+
+    /// One row in the top-level list: icon, title, and a line of what is inside.
+    ///
+    /// The detail line matters more than it looks — it is what stops a drill-down
+    /// menu becoming a guessing game about which group holds the thing you want.
+    private func settingsGroupLink<Destination: View>(
+        _ title: String,
+        icon: String,
+        detail: String,
+        @ViewBuilder destination: () -> Destination
+    ) -> some View {
+        NavigationLink {
+            destination()
+        } label: {
+            HStack(spacing: Theme.Spacing.md) {
+                Image(systemName: icon)
+                    .frame(width: Theme.Spacing.lg)
+                    .foregroundStyle(Theme.accent)
+                VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
+                    Text(title)
+                        .foregroundStyle(Theme.textPrimary)
+                    Text(detail)
+                        .font(Theme.fontCaption)
+                        .foregroundStyle(Theme.textTertiary)
+                        .lineLimit(1)
+                }
+            }
+            .padding(.vertical, Theme.Spacing.tighter)
+        }
+        .tint(Theme.textTertiary)
+    }
 
     private var accountSection: some View {
         Section {
@@ -809,5 +900,26 @@ extension SettingsView {
                 .font(.caption2.weight(.semibold))
                 .foregroundStyle(Theme.textTertiary)
         }
+    }
+}
+
+/// Shell for a settings group. Exists so every group screen gets the same
+/// background, list style and title treatment without each one repeating it.
+private struct SettingsGroupScreen<Content: View>: View {
+    let title: String
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        ZStack {
+            Theme.background.ignoresSafeArea()
+            List {
+                content
+            }
+            .listStyle(.insetGrouped)
+            .scrollContentBackground(.hidden)
+        }
+        .navigationTitle(title)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarColorScheme(.dark, for: .navigationBar)
     }
 }
