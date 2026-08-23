@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		06ACBBC7B67A972F6F39A214 /* WorkoutGeneratorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 138F935F3800CBB4B66CD6CC /* WorkoutGeneratorTests.swift */; };
 		0F2396BE1C58B7C7F99F5BC6 /* WorkoutInsightsSeamTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 730E45C30DECC5AA5563EAB4 /* WorkoutInsightsSeamTests.swift */; };
-		AA03D0010000000000000002 /* WatchRestHaptics.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA03D0010000000000000001 /* WatchRestHaptics.swift */; };
 		175D9C785D217A06EBCC6054 /* XomfitWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F3CBFE99B6D75BC1136FCB9 /* XomfitWatchApp.swift */; };
 		2652623F55494AE501D17728 /* AuthServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7B33E534C5D4F6F4A221677 /* AuthServiceTests.swift */; };
 		3AD31D27EAD82F60EE882599 /* AnimationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 325D34C169BA7253ADECB318 /* AnimationTests.swift */; };
@@ -25,6 +24,7 @@
 		A5CB31EA8149518294CBCF7A /* AuthValidationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50574B785553CFAF12535276 /* AuthValidationTests.swift */; };
 		AA01B0010000000000000003 /* XomfitWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 30C92F27893E848084361AD6 /* XomfitWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		AA01B0010000000000000006 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA01B0010000000000000005 /* Assets.xcassets */; };
+		AA03D0010000000000000002 /* WatchRestHaptics.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA03D0010000000000000001 /* WatchRestHaptics.swift */; };
 		AC63B77329F22ECBEC449710 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1F5C89119347DF10938D0467 /* Foundation.framework */; };
 		B2F201D886D61139D367C906 /* GoalBaselineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2971609F94FDA4AAE995734 /* GoalBaselineTests.swift */; };
 		BBBE2A7245E89C33ED8D85D8 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 37E1F812E63DCA86C4966EEE /* Foundation.framework */; };
@@ -93,7 +93,6 @@
 
 /* Begin PBXFileReference section */
 		138F935F3800CBB4B66CD6CC /* WorkoutGeneratorTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkoutGeneratorTests.swift; sourceTree = "<group>"; };
-		AA03D0010000000000000001 /* WatchRestHaptics.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchRestHaptics.swift; sourceTree = "<group>"; };
 		1F3CBFE99B6D75BC1136FCB9 /* XomfitWatchApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = XomfitWatchApp.swift; sourceTree = "<group>"; };
 		1F5C89119347DF10938D0467 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/WatchOS.platform/Developer/SDKs/WatchOS11.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		21257445D3A360054D42C415 /* WatchWorkoutState.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchWorkoutState.swift; sourceTree = "<group>"; };
@@ -107,6 +106,7 @@
 		730E45C30DECC5AA5563EAB4 /* WorkoutInsightsSeamTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkoutInsightsSeamTests.swift; sourceTree = "<group>"; };
 		8C8932635DA9D7B3E27AD4A2 /* ContentView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		AA01B0010000000000000005 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		AA03D0010000000000000001 /* WatchRestHaptics.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchRestHaptics.swift; sourceTree = "<group>"; };
 		B7B33E534C5D4F6F4A221677 /* AuthServiceTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AuthServiceTests.swift; sourceTree = "<group>"; };
 		BC49DBCE1EDC7F48166EC8AE /* WatchSessionStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchSessionStore.swift; sourceTree = "<group>"; };
 		C26FE97F0134F021E9D0622B /* ExerciseVariantTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ExerciseVariantTests.swift; sourceTree = "<group>"; };

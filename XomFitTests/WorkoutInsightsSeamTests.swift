@@ -233,4 +233,45 @@ final class WorkoutInsightsSeamTests: XCTestCase {
         XCTAssertEqual(Set(ids).count, ids.count, "Duplicate badge ids would collide in the unlocked set")
     }
 
+
+    // MARK: - Stretch variety
+
+    /// The tailored routine used to hardcode `st-worlds-greatest` as its opener,
+    /// so every warmup a lifter ever did began with the same movement. That was
+    /// the most visible reason the routine felt identical each time.
+    func testOpenerIsDrawnFromTheFullBodyPoolNotOneHardcodedId() {
+        let openers = StretchDatabase.all.filter { $0.category == .fullBody }
+        XCTAssertGreaterThan(openers.count, 1, "Rotation needs something to rotate through")
+
+        let opener = StretchDatabase.rotatingOpener()
+        XCTAssertNotNil(opener)
+        XCTAssertEqual(opener?.category, .fullBody)
+    }
+
+    /// Stable within a day, on purpose. A warmup that reshuffled on every redraw
+    /// would be worse than one that repeats — a lifter halfway through a routine
+    /// should not have it change under them.
+    func testVariationIsStableWithinARun() {
+        let first = StretchDatabase.rotatingOpener()?.id
+        let second = StretchDatabase.rotatingOpener()?.id
+        XCTAssertEqual(first, second)
+    }
+
+    func testVariationIndexStaysInBounds() {
+        for count in 1...12 {
+            let index = StretchDatabase.variationIndex(count: count)
+            XCTAssertTrue((0..<count).contains(index), "index \(index) out of bounds for \(count)")
+        }
+        XCTAssertEqual(StretchDatabase.variationIndex(count: 0), 0, "Empty pool must not divide by zero")
+    }
+
+    /// The fallback routine is what a lifter gets when they warm up before
+    /// picking exercises — the most common way to see the same list repeatedly.
+    func testDefaultRoutineIsNotEmptyAndRespectsTheBudget() {
+        let routine = StretchDatabase.defaultRoutine(target: 360)
+        XCTAssertFalse(routine.isEmpty)
+        let total = routine.reduce(0) { $0 + $1.durationSeconds }
+        XCTAssertLessThanOrEqual(TimeInterval(total), 360)
+    }
+
 }
