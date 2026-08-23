@@ -265,6 +265,104 @@ final class WorkoutInsightsSeamTests: XCTestCase {
         XCTAssertEqual(StretchDatabase.variationIndex(count: 0), 0, "Empty pool must not divide by zero")
     }
 
+    // MARK: - Warmup relevance
+
+    private func stretchTestExercise(
+        _ id: String,
+        groups: [MuscleGroup],
+        recommended: [String]? = nil
+    ) -> Exercise {
+        Exercise(
+            id: id,
+            name: id,
+            muscleGroups: groups,
+            equipment: .barbell,
+            category: .compound,
+            description: "",
+            tips: [],
+            recommendedStretchIds: recommended
+        )
+    }
+
+    /// The bug this pins, in the shape it actually took: a template with several
+    /// exercises, each carrying curated stretch ids.
+    ///
+    /// Step 1 walked exercises in order collecting recommendations until it hit
+    /// the six-stretch cap, then two hardcoded openers were pushed in at the
+    /// front and the whole thing was truncated back to six. The result was two
+    /// fixed openers plus the *first* exercise's stretches — every later
+    /// exercise contributed nothing, and the muscle-frequency pass was skipped
+    /// entirely because `picked.count < 3` was already false.
+    ///
+    /// So a full-body template warmed up as if it were only its first lift, the
+    /// same way every single time.
+    func testRoutineCoversLaterExercisesNotJustTheFirst() {
+        let bench = stretchTestExercise(
+            "bench", groups: [.chest, .triceps, .shoulders],
+            recommended: ["st-doorway-chest", "st-overhead-tricep", "st-shoulder-dislocates"]
+        )
+        let row = stretchTestExercise(
+            "row", groups: [.back, .lats, .biceps],
+            recommended: ["st-lat-overhead", "st-bicep-wall"]
+        )
+        let squat = stretchTestExercise(
+            "squat", groups: [.quads, .glutes, .hamstrings],
+            recommended: ["st-hamstring-stretch"]
+        )
+
+        let routine = StretchDatabase.suggestedStretches(
+            forExercises: [bench, row, squat],
+            target: 600
+        )
+
+        let legGroups: Set<MuscleGroup> = [.quads, .glutes, .hamstrings, .calves]
+        let coversLegs = routine.contains { !legGroups.isDisjoint(with: Set($0.targetMuscleGroups)) }
+        XCTAssertTrue(
+            coversLegs,
+            "Squats are in this session but nothing warms the legs: \(routine.map(\.name))"
+        )
+    }
+
+    /// Two different sessions on the same day must not produce the same routine.
+    /// Rotation used to be keyed on the day alone, so push in the morning and
+    /// legs at night opened identically.
+    func testDifferentSessionsOnTheSameDayDiffer() {
+        let push = stretchTestExercise("bench", groups: [.chest, .triceps, .shoulders])
+        let legs = stretchTestExercise("squat", groups: [.quads, .glutes, .hamstrings])
+
+        let pushRoutine = StretchDatabase.suggestedStretches(forExercises: [push], target: 600).map(\.id)
+        let legRoutine = StretchDatabase.suggestedStretches(forExercises: [legs], target: 600).map(\.id)
+
+        XCTAssertNotEqual(pushRoutine, legRoutine)
+    }
+
+    /// Stable within a session, for the same reason the opener is: a routine
+    /// that reshuffles mid-warmup is worse than one that repeats.
+    func testSameSessionIsStableAcrossCalls() {
+        let push = stretchTestExercise("bench", groups: [.chest, .triceps])
+        let first = StretchDatabase.suggestedStretches(forExercises: [push], target: 600).map(\.id)
+        let second = StretchDatabase.suggestedStretches(forExercises: [push], target: 600).map(\.id)
+        XCTAssertEqual(first, second)
+    }
+
+    /// Order must not matter — `[chest, triceps]` and `[triceps, chest]` are the
+    /// same session and should seed the same rotation.
+    func testVariationSeedIgnoresMuscleOrder() {
+        XCTAssertEqual(
+            StretchDatabase.variationSeed(for: [.chest, .triceps]),
+            StretchDatabase.variationSeed(for: [.triceps, .chest])
+        )
+    }
+
+    /// The time budget still binds. A lifter who asks for a three-minute warmup
+    /// should not be handed six minutes of stretches.
+    func testSuggestedRoutineRespectsTheBudget() {
+        let squat = stretchTestExercise("squat", groups: [.quads, .glutes])
+        let routine = StretchDatabase.suggestedStretches(forExercises: [squat], target: 180)
+        let total = routine.reduce(0) { $0 + $1.durationSeconds }
+        XCTAssertLessThanOrEqual(TimeInterval(total), 180)
+    }
+
     /// The fallback routine is what a lifter gets when they warm up before
     /// picking exercises — the most common way to see the same list repeatedly.
     func testDefaultRoutineIsNotEmptyAndRespectsTheBudget() {

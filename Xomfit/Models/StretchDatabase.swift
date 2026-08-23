@@ -347,16 +347,12 @@ struct StretchDatabase {
     /// scannable and the timer reasonable (#349).
     static let maxStretches: Int = 6
 
-    /// Stretch IDs treated as general dynamic openers — flow-friendly stretches
-    /// that pair well with any session and lead the routine.
-    private static let generalOpenerIds: [String] = ["st-cat-cow", "st-worlds-greatest"]
-
     /// Pick a routine of stretches that covers the muscle groups hit by a workout,
     /// summing roughly to `target` seconds (default ~6 minutes).
     ///
     /// Selection order (#349):
     /// 1. Union of `Exercise.recommendedStretchIds` declared by the workout's exercises.
-    /// 2. Pad with 1-2 general dynamic openers (cat-cow, world's greatest) for flow.
+    /// 2. Lead with one rotating dynamic opener for flow.
     /// 3. If still under 3 picks, fall back to frequency-weighted muscle-group selection.
     /// 4. Cap the routine at `maxStretches` (6).
     ///
@@ -388,54 +384,124 @@ struct StretchDatabase {
             return defaultRoutine(target: target)
         }
 
-        // 1) Union of explicit recommended stretches, preserving the source order
-        //    so the first compound's prescription leads the routine.
+        let groups = exercises.flatMap { $0.muscleGroups }
+        // Rotation is keyed on the session as well as the day, so a leg day and
+        // a push day on the same date do not open with the same movement.
+        let seed = variationSeed(for: groups)
+
         var picked: [Stretch] = []
         var pickedIds = Set<String>()
-        for exercise in exercises {
-            guard let ids = exercise.recommendedStretchIds else { continue }
-            for id in ids where !pickedIds.contains(id) {
-                if let stretch = byId(id) {
-                    picked.append(stretch)
-                    pickedIds.insert(id)
-                }
+        var remaining = target
+
+        func add(_ stretch: Stretch) {
+            guard picked.count < maxStretches, !pickedIds.contains(stretch.id) else { return }
+            let cost = TimeInterval(stretch.durationSeconds)
+            guard cost <= remaining else { return }
+            picked.append(stretch)
+            pickedIds.insert(stretch.id)
+            remaining -= cost
+        }
+
+        // 1) One dynamic opener, rotated, in a reserved slot at the front — move
+        //    before static-stretching anything specific.
+        //
+        //    This used to insert two *hardcoded* ids (cat-cow, then world's
+        //    greatest) on every single warmup, which is most of why the routine
+        //    felt identical every time. They also consumed two of six slots
+        //    before anything session-specific was considered.
+        if let opener = rotatingOpener(seed: seed) {
+            add(opener)
+        }
+
+        // 2) Relevance-ordered candidates: what the lifts explicitly ask for
+        //    first, then everything that covers the muscles being trained.
+        //
+        //    The frequency pass now always runs. It used to be gated behind
+        //    `picked.count < 3`, and since step 1 already put two openers in the
+        //    list, a single recommended stretch was enough to reach three — so
+        //    for any workout built from a template the muscle-matching logic
+        //    never executed at all.
+        let explicit = exercises
+            .compactMap(\.recommendedStretchIds)
+            .flatMap { $0 }
+            .compactMap(byId)
+        var candidates: [Stretch] = []
+        var seen = Set<String>()
+        for stretch in explicit + rankedMatches(for: groups) where !seen.contains(stretch.id) {
+            candidates.append(stretch)
+            seen.insert(stretch.id)
+        }
+
+        // 3) Keep the most relevant few outright, then rotate through the rest.
+        //
+        //    Relevance wins where it matters: the strongest matches are always
+        //    present, so the routine genuinely preps the session. Variety comes
+        //    from the tail, which is where two leg days in a row would otherwise
+        //    be indistinguishable.
+        for stretch in candidates.prefix(guaranteedMatches) {
+            add(stretch)
+        }
+
+        let rest = Array(candidates.dropFirst(guaranteedMatches))
+        if !rest.isEmpty {
+            let offset = seed % rest.count
+            for step in 0..<rest.count {
+                add(rest[(offset + step) % rest.count])
                 if picked.count >= maxStretches { break }
             }
-            if picked.count >= maxStretches { break }
-        }
-
-        // 2) Mix in 1-2 general dynamic openers for flow. Insert at the start so
-        //    the user moves before they static-stretch a specific muscle.
-        var openersInserted = 0
-        for id in generalOpenerIds {
-            guard openersInserted < 2, !pickedIds.contains(id) else { continue }
-            if let stretch = byId(id) {
-                picked.insert(stretch, at: openersInserted)
-                pickedIds.insert(id)
-                openersInserted += 1
-            }
-            if picked.count >= maxStretches { break }
-        }
-
-        // 3) Fall back to the frequency logic only when we don't have enough yet.
-        //    Anything we already picked (openers + explicit) wins over the fallback.
-        if picked.count < 3 {
-            let groups = exercises.flatMap { $0.muscleGroups }
-            let fallback = suggestedStretches(forMuscleGroups: groups, target: target)
-            for stretch in fallback where !pickedIds.contains(stretch.id) {
-                picked.append(stretch)
-                pickedIds.insert(stretch.id)
-                if picked.count >= maxStretches { break }
-            }
-        }
-
-        // 4) Final cap. The list can still be small (e.g. exotic exercise with no
-        //    muscle-group hits), in which case we let WarmupView render what we have.
-        if picked.count > maxStretches {
-            picked = Array(picked.prefix(maxStretches))
         }
 
         return picked.isEmpty ? defaultRoutine(target: target) : picked
+    }
+
+    /// Matches that are always kept regardless of rotation.
+    ///
+    /// The point of the warmup is the session in front of you, so rotation is
+    /// never allowed to displace the top matches — it only reorders what is left
+    /// after they are in.
+    private static let guaranteedMatches = 2
+
+    /// Stretches covering `groups`, most relevant first.
+    ///
+    /// Split out of `suggestedStretches(forMuscleGroups:)` so the exercise-aware
+    /// path can rank without also inheriting that function's opener and time
+    /// packing, which it does its own way.
+    private static func rankedMatches(for groups: [MuscleGroup]) -> [Stretch] {
+        guard !groups.isEmpty else { return [] }
+
+        var frequency: [MuscleGroup: Int] = [:]
+        for group in groups {
+            frequency[group, default: 0] += 1
+        }
+
+        return all
+            .map { stretch -> (stretch: Stretch, score: Int) in
+                let score = stretch.targetMuscleGroups.reduce(0) { $0 + (frequency[$1] ?? 0) }
+                return (stretch, score)
+            }
+            .filter { $0.score > 0 }
+            .sorted { lhs, rhs in
+                if lhs.score != rhs.score { return lhs.score > rhs.score }
+                return lhs.stretch.durationSeconds < rhs.stretch.durationSeconds
+            }
+            .map(\.stretch)
+    }
+
+    /// Rotation seed combining the day with which muscles are being trained.
+    ///
+    /// Day alone was not enough: every workout started on the same date drew the
+    /// same opener, so a lifter doing push in the morning and legs at night got
+    /// the same warmup twice. Order-independent, since `[chest, triceps]` and
+    /// `[triceps, chest]` are the same session.
+    static func variationSeed(for groups: [MuscleGroup]) -> Int {
+        let day = Calendar.current.ordinality(of: .day, in: .year, for: Date()) ?? 0
+        let signature = Set(groups)
+            .map(\.rawValue)
+            .sorted()
+            .joined()
+            .unicodeScalars
+            .reduce(0) { ($0 &* 31 &+ Int($1.value)) % 100_003 }
+        return abs(day &+ signature)
     }
 
     /// Underlying selection logic: rank stretches by how many of the workout's
@@ -447,27 +513,8 @@ struct StretchDatabase {
             return defaultRoutine(target: target)
         }
 
-        // How many times does each muscle group appear in the workout?
-        var frequency: [MuscleGroup: Int] = [:]
-        for group in groups {
-            frequency[group, default: 0] += 1
-        }
-
-        // Score each stretch by the total frequency it covers.
-        let scored: [(stretch: Stretch, score: Int)] = all.map { stretch in
-            let score = stretch.targetMuscleGroups.reduce(0) { acc, g in acc + (frequency[g] ?? 0) }
-            return (stretch, score)
-        }
-
-        // Stretches that cover at least one muscle group, sorted by score (desc), then duration (asc)
-        // so we don't blow the time budget early on long stretches.
-        let candidates = scored
-            .filter { $0.score > 0 }
-            .sorted { lhs, rhs in
-                if lhs.score != rhs.score { return lhs.score > rhs.score }
-                return lhs.stretch.durationSeconds < rhs.stretch.durationSeconds
-            }
-            .map(\.stretch)
+        // Shared with the exercise-aware path so both rank identically.
+        let candidates = rankedMatches(for: groups)
 
         var picked: [Stretch] = []
         var pickedIds = Set<String>()
@@ -600,12 +647,15 @@ struct StretchDatabase {
     ///
     /// Drawn from the `.full` category rather than a hardcoded id, so adding a
     /// full-body stretch to the database widens the rotation automatically.
-    static func rotatingOpener() -> Stretch? {
+    /// - Parameter seed: rotation source. Defaults to the day of the year; pass
+    ///   a `variationSeed(for:)` to also vary by which muscles are being worked.
+    static func rotatingOpener(seed: Int? = nil) -> Stretch? {
         let openers = all
             .filter { $0.category == .fullBody }
             .sorted { $0.id < $1.id }
         guard !openers.isEmpty else { return nil }
-        return openers[variationIndex(count: openers.count)]
+        guard let seed else { return openers[variationIndex(count: openers.count)] }
+        return openers[seed % openers.count]
     }
 
     /// Stable-within-a-day rotation index.
