@@ -22,6 +22,7 @@ struct GarminDeviceView: View {
     var body: some View {
         List {
             statusSection
+            outcomeSection
             actionsSection
             if garmin.primaryDevice != nil {
                 testSection
@@ -138,6 +139,72 @@ struct GarminDeviceView: View {
     }
 
     // MARK: - Actions
+
+    /// What the last pairing attempt actually did.
+    ///
+    /// Every failure in this chain has looked the same from the outside —
+    /// Garmin Connect opens and nothing comes back — whether the cause was a
+    /// missing caller, a misspelled selector, a swallowed callback URL, or GCM
+    /// not being installed. This turns "nothing happened" into something a
+    /// lifter can act on.
+    @ViewBuilder
+    private var outcomeSection: some View {
+        switch garmin.pairingOutcome {
+        case .idle:
+            EmptyView()
+
+        case .awaitingGarminConnect:
+            outcomeRow(
+                icon: "hourglass",
+                tint: Theme.alert,
+                title: "Waiting on Garmin Connect",
+                detail: "Garmin Connect was opened but hasn't sent a watch back yet. If you already picked one and returned here, tap Pair again — and if Garmin Connect opened to its home screen rather than a device list, it may not be signed in."
+            )
+
+        case .garminConnectMissing:
+            outcomeRow(
+                icon: "exclamationmark.triangle.fill",
+                tint: Theme.destructive,
+                title: "Garmin Connect isn't installed",
+                detail: "XomFit talks to your watch directly, but Garmin Connect is what finds it in the first place."
+            )
+
+        case .returnedEmpty:
+            outcomeRow(
+                icon: "questionmark.circle",
+                tint: Theme.alert,
+                title: "No watch was shared",
+                detail: "Garmin Connect came back without a device — usually that means the selection was cancelled, or no Connect IQ watch is paired to it."
+            )
+
+        case .paired(let count):
+            outcomeRow(
+                icon: "checkmark.circle.fill",
+                tint: Theme.accent,
+                title: count == 1 ? "Watch paired" : "\(count) watches paired",
+                detail: "XomFit can talk to your watch. Start a workout and it should mirror."
+            )
+        }
+    }
+
+    private func outcomeRow(icon: String, tint: Color, title: String, detail: String) -> some View {
+        HStack(alignment: .top, spacing: Theme.Spacing.md) {
+            Image(systemName: icon)
+                .font(.title3)
+                .foregroundStyle(tint)
+            VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
+                Text(title)
+                    .font(Theme.fontFootnote.weight(.semibold))
+                    .foregroundStyle(Theme.textPrimary)
+                Text(detail)
+                    .font(Theme.fontCaption)
+                    .foregroundStyle(Theme.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(.vertical, Theme.Spacing.xs)
+        .listRowBackground(Theme.surface)
+    }
 
     private var actionsSection: some View {
         Section {

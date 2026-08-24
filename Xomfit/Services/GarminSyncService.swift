@@ -98,11 +98,36 @@ final class GarminSyncService: NSObject {
     // MARK: - Lifecycle
 
     /// Initialises the SDK. Call once at launch.
+    /// What the last pairing attempt did, in the lifter's terms.
+    ///
+    /// Exists because every failure in this chain so far has looked identical
+    /// from the outside — Garmin Connect opens and nothing comes back — whether
+    /// the cause was a missing caller, a misspelled selector, a swallowed URL,
+    /// or GCM simply not being installed. "Nothing happened" is not a diagnosis,
+    /// and four rounds of guessing is enough.
+    enum PairingOutcome: Equatable {
+        case idle
+        /// `showConnectIQDeviceSelection` was called and we are waiting on the
+        /// return URL. If this is where it stops, GCM never handed anything back.
+        case awaitingGarminConnect(since: Date)
+        /// The SDK says Garmin Connect is not installed.
+        case garminConnectMissing
+        /// A URL came back but carried no devices — usually the lifter cancelled.
+        case returnedEmpty
+        case paired(count: Int)
+    }
+
+    private(set) var pairingOutcome: PairingOutcome = .idle
+
     func start() {
+        // A delegate rather than nil. With nil the SDK silently substitutes its
+        // own UI, so the one event it reports — Garmin Connect missing — never
+        // reached us.
         ConnectIQ.sharedInstance().initialize(
             withUrlScheme: Self.urlScheme,
-            uiOverrideDelegate: nil
+            uiOverrideDelegate: self
         )
+        isInitialized = true
         restoreDevices()
     }
 
@@ -110,7 +135,19 @@ final class GarminSyncService: NSObject {
     ///
     /// This leaves XomFit. Garmin Connect returns through the URL scheme, which
     /// is why `handleOpenURL` has to exist and be wired from the app delegate.
+    /// True once `initialize` has run. Every other SDK call depends on it, and
+    /// it happens in a `.task` behind an `await` on the notification permission
+    /// prompt — so a lifter reaching Settings quickly can genuinely get here
+    /// first.
+    private(set) var isInitialized = false
+
     func beginDeviceSelection() {
+        // Self-heal rather than fail silently. Ordering between app launch and
+        // the lifter opening this screen is not something to rely on.
+        if !isInitialized {
+            start()
+        }
+        pairingOutcome = .awaitingGarminConnect(since: Date())
         ConnectIQ.sharedInstance().showDeviceSelection()
     }
 
@@ -121,10 +158,19 @@ final class GarminSyncService: NSObject {
     @discardableResult
     func handleOpenURL(_ url: URL) -> Bool {
         guard url.scheme == Self.urlScheme else { return false }
-        guard let devices = ConnectIQ.sharedInstance().parseDeviceSelectionResponse(from: url) as? [IQDevice] else {
-            return false
+
+        let devices = ConnectIQ.sharedInstance().parseDeviceSelectionResponse(from: url) as? [IQDevice] ?? []
+
+        // Claim the URL either way. It is ours by scheme, and returning false
+        // would drop it into the router's catch-all — which is the exact bug
+        // that made pairing look like nothing happened at all.
+        guard !devices.isEmpty else {
+            pairingOutcome = .returnedEmpty
+            return true
         }
+
         knownDevices = devices
+        pairingOutcome = .paired(count: devices.count)
         persistDevices()
         registerForDeviceEvents()
         return true
@@ -397,4 +443,18 @@ extension Notification.Name {
     /// carries which. Observed by the app shell, which owns the workout view
     /// model — the service deliberately does not reach into it.
     static let garminActionReceived = Notification.Name("garminActionReceived")
+}
+
+// MARK: - SDK-reported problems
+
+extension GarminSyncService: IQUIOverrideDelegate {
+    /// The SDK's only callback for "this cannot work". Passing nil for the
+    /// delegate meant the SDK showed its own UI and the app learned nothing —
+    /// which is indistinguishable, from the lifter's side, from every other
+    /// failure in this chain.
+    nonisolated func needsToInstallConnectMobile() {
+        Task { @MainActor in
+            self.pairingOutcome = .garminConnectMissing
+        }
+    }
 }
