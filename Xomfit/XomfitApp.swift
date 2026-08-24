@@ -85,12 +85,6 @@ struct XomFitApp: App {
                             evaluateFitnessQuestionnaireGate()
                             evaluateActiveSessionRestore()
                         }
-                        .onOpenURL { url in
-                            // Garmin Connect returns here after device
-                            // selection. Returns false when the URL is not
-                            // ours, so other deep links still work.
-                            _ = GarminSyncService.shared.handleOpenURL(url)
-                        }
                         .onReceive(NotificationCenter.default.publisher(for: .garminActionReceived)) { note in
                             // The Garmin asks; the phone decides. Routing through
                             // a notification keeps the sync service from reaching
@@ -225,6 +219,22 @@ struct XomFitApp: App {
             }
             .preferredColorScheme(.dark)
             .onOpenURL { url in
+                // Garmin first, and in this handler rather than a nested one.
+                //
+                // Device selection sends the lifter to Garmin Connect and comes
+                // back as `xomfit-garmin://device-select-resp`. That scheme
+                // matches none of the `xomfit://` cases below and fell through
+                // to the Supabase catch-all at the end, which swallowed it
+                // inside a `try?` — Garmin Connect opened, the lifter picked a
+                // watch, and nothing came back.
+                //
+                // There was a second `.onOpenURL` nested further in that was
+                // meant to catch this. Two handlers on one scene is not a
+                // contract SwiftUI guarantees, and the one that consumed the URL
+                // won. One router now, ordered explicitly.
+                if GarminSyncService.shared.handleOpenURL(url) {
+                    return
+                }
                 if url.scheme == "xomfit", url.host == "workout" {
                     if workoutSession.isActive {
                         workoutSession.isPresented = true
@@ -261,6 +271,9 @@ struct XomFitApp: App {
                     }
                     return
                 }
+                // Anything left is assumed to be a Supabase auth callback.
+                // Deliberately last: it accepts any URL and reports nothing, so
+                // adding a scheme after this point means adding a silent hole.
                 Task {
                     try? await supabase.auth.session(from: url)
                 }
