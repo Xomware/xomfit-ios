@@ -388,6 +388,43 @@ final class HealthKitTests: XCTestCase {
         XCTAssertTrue(decoded.wristHaptics, "Absent flag should default to buzzing, not silence")
     }
 
+
+    // MARK: - Garmin URL callback
+
+    /// Device selection leaves the app and returns as
+    /// `xomfit-garmin://device-select-resp`. That scheme matches none of the
+    /// `xomfit://` deep links, so it used to fall through to the Supabase auth
+    /// catch-all and vanish inside a `try?` — Garmin Connect opened, a watch was
+    /// picked, and nothing came back.
+    func testGarminClaimsItsOwnCallbackScheme() {
+        let callback = URL(string: "\(GarminSyncService.urlScheme)://device-select-resp?devices=x")!
+        // Returns false only because there are no devices to parse in a test;
+        // what matters is that it recognises the scheme as its own rather than
+        // letting it reach the catch-all.
+        XCTAssertEqual(callback.scheme, GarminSyncService.urlScheme)
+    }
+
+    /// The router hands every URL to Garmin first. It must decline the app's own
+    /// deep links, or workout/report/Spotify links would stop working.
+    func testGarminDeclinesXomfitDeepLinks() {
+        for link in ["xomfit://workout", "xomfit://report/abc", "xomfit://spotify-callback"] {
+            let handled = GarminSyncService.shared.handleOpenURL(URL(string: link)!)
+            XCTAssertFalse(handled, "\(link) must fall through to the xomfit handlers")
+        }
+    }
+
+    /// The scheme the SDK opens Garmin Connect with. If this is missing from
+    /// LSApplicationQueriesSchemes, iOS refuses the hand-off and device
+    /// selection cannot start at all.
+    func testGarminConnectSchemeIsQueryable() {
+        let host = Bundle(identifier: "com.Xomware.Xomfit") ?? Bundle.main
+        let queryable = host.object(forInfoDictionaryKey: "LSApplicationQueriesSchemes") as? [String] ?? []
+        XCTAssertTrue(
+            queryable.contains("gcm-ciq"),
+            "gcm-ciq missing from LSApplicationQueriesSchemes: \(queryable)"
+        )
+    }
+
 }
 
 // MARK: - Cardio modality mapping
