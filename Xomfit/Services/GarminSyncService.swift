@@ -188,6 +188,22 @@ final class GarminSyncService: NSObject {
     /// Called when a workout starts. Safe to call when the app is already
     /// running: the SDK reports that as its own result rather than an error, and
     /// nothing is shown to the user.
+    private var lastSetActionAt: Date?
+
+    /// True when enough time has passed to treat this as a new action rather
+    /// than a duplicate delivery.
+    private func acceptSetAction() -> Bool {
+        let now = Date()
+        if let last = lastSetActionAt, now.timeIntervalSince(last) < Self.setActionDebounce {
+            #if DEBUG
+            print("[Garmin] set action ignored (debounced)")
+            #endif
+            return false
+        }
+        lastSetActionAt = now
+        return true
+    }
+
     func requestOpenOnWatch() {
         guard let app, isWatchReady else { return }
         ConnectIQ.sharedInstance().openAppRequest(app) { result in
@@ -229,6 +245,14 @@ final class GarminSyncService: NSObject {
         if let reps = detail.reps { message["reps"] = reps }
         if let weight = detail.weight { message["weight"] = weight }
         if let instruction = detail.instruction { message["instruction"] = instruction }
+        if let index = detail.currentIndex { message["currentIndex"] = index }
+        if !detail.plan.isEmpty {
+            // Capped for the same reason as upNext: the device mailbox is small
+            // and the watch shows four rows at a time.
+            message["plan"] = detail.plan.prefix(Self.planLimit).map {
+                ["name": $0.name, "done": $0.done, "total": $0.total] as [String: Any]
+            }
+        }
         if !detail.upNext.isEmpty {
             // Capped before it leaves the phone. The device mailbox is small and
             // the watch only draws a handful — sending twenty names would cost
@@ -246,6 +270,9 @@ final class GarminSyncService: NSObject {
 
     /// How many upcoming exercise names travel to the watch.
     private static let upNextLimit = 6
+    /// How many plan rows travel. Longer sessions than this exist; the watch
+    /// scrolls, but the payload has to stop somewhere.
+    private static let planLimit = 12
 
     /// Converts the absolute rest end date the phone tracks into the countdown
     /// the watch shows. Nil when not resting.
@@ -384,6 +411,17 @@ extension GarminSyncService: IQDeviceEventDelegate {
 // MARK: - Receiving
 
 extension GarminSyncService: IQAppMessageDelegate {
+    /// Minimum gap between two accepted set-affecting messages.
+    ///
+    /// Bluetooth delivers duplicates, and the consequence here is worse than on
+    /// the Apple Watch path: `completeFocusedSetFromWatch` is idempotent for the
+    /// *same* set, but by the time a duplicate arrives the cursor has advanced,
+    /// so the repeat silently logs the next set too. A test caught it.
+    ///
+    /// 0.75s matches the interval `WatchSyncService` already uses for the same
+    /// class of problem.
+    private static let setActionDebounce: TimeInterval = 0.75
+
     nonisolated func receivedMessage(_ message: Any, from app: IQApp) {
         guard let dict = message as? [String: Any],
               let type = dict["type"] as? String
@@ -397,6 +435,7 @@ extension GarminSyncService: IQAppMessageDelegate {
         Task { @MainActor in
             switch type {
             case "doneSet":
+                guard self.acceptSetAction() else { return }
                 // The same entry point the Apple Watch uses. It is idempotent
                 // per set, which matters here too: Bluetooth can deliver twice.
                 NotificationCenter.default.post(name: .garminActionReceived, object: nil,
@@ -404,6 +443,13 @@ extension GarminSyncService: IQAppMessageDelegate {
             case "skipRest":
                 NotificationCenter.default.post(name: .garminActionReceived, object: nil,
                                                userInfo: ["action": "skipRest"])
+            case "logSet":
+                guard self.acceptSetAction() else { return }
+                var info: [String: Any] = ["action": "logSet"]
+                if let reps { info["reps"] = reps }
+                if let weight { info["weight"] = weight }
+                NotificationCenter.default.post(name: .garminActionReceived, object: nil,
+                                               userInfo: info)
             case "extendRest":
                 NotificationCenter.default.post(name: .garminActionReceived, object: nil,
                                                userInfo: ["action": "extendRest"])
@@ -434,8 +480,23 @@ struct WatchWorkoutDetail {
     var weight: Int?
     var upNext: [String]
     var instruction: String?
+    /// Every exercise with its set progress, for the watch's plan overview.
+    var plan: [PlanRow]
+    /// Which entry in `plan` is being worked.
+    var currentIndex: Int?
 
-    static let empty = WatchWorkoutDetail(reps: nil, weight: nil, upNext: [], instruction: nil)
+    /// One exercise as the watch needs it: a name and how far through it is.
+    /// Deliberately not the sets themselves — per-set weights would multiply the
+    /// payload for detail no watch screen can usefully show.
+    struct PlanRow {
+        let name: String
+        let done: Int
+        let total: Int
+    }
+
+    static let empty = WatchWorkoutDetail(
+        reps: nil, weight: nil, upNext: [], instruction: nil, plan: [], currentIndex: nil
+    )
 }
 
 extension Notification.Name {
