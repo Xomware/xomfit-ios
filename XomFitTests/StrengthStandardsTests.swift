@@ -380,4 +380,55 @@ final class StrengthStandardsTests: XCTestCase {
             XCTAssertGreaterThan(distribution[lift.rank.tier] ?? 0, 0)
         }
     }
+
+    /// Duplicate ids in `ExerciseDatabase.all` are not a compile error — they
+    /// trap at runtime, inside `Dictionary(uniqueKeysWithValues:)`, the first
+    /// time anything looks an exercise up. In the app that is a crash on the
+    /// exercise picker; in the suite it kills the whole test run rather than
+    /// failing one case, so the message never points at the real cause.
+    ///
+    /// Asserting on `all` directly, without touching `byId`, turns that into a
+    /// readable failure that names the offending ids.
+    func testExerciseIdsAreUnique() {
+        var counts: [String: Int] = [:]
+        for exercise in ExerciseDatabase.all {
+            counts[exercise.id, default: 0] += 1
+        }
+
+        let duplicates = counts.filter { $0.value > 1 }.keys.sorted()
+        XCTAssertTrue(
+            duplicates.isEmpty,
+            "Duplicate exercise id(s), which would trap ExerciseDatabase.byId: \(duplicates.joined(separator: ", "))"
+        )
+    }
+
+    /// `byName` is built the same way, so a repeated display name traps too —
+    /// and a duplicate name is a library mistake in its own right.
+    func testExerciseNamesAreUnique() {
+        var counts: [String: Int] = [:]
+        for exercise in ExerciseDatabase.all {
+            counts[exercise.name, default: 0] += 1
+        }
+
+        let duplicates = counts.filter { $0.value > 1 }.keys.sorted()
+        XCTAssertTrue(
+            duplicates.isEmpty,
+            "Duplicate exercise name(s), which would trap ExerciseDatabase.byName: \(duplicates.joined(separator: ", "))"
+        )
+    }
+
+    /// The profile table is a dictionary literal, which traps on a repeated key
+    /// for the same reason. Counting the source keys is not possible from here,
+    /// so this at least pins that every profile still refers to a real
+    /// exercise — a stale key is the usual leftover after a rename.
+    func testEveryProfileRefersToARealExercise() {
+        let known = Set(ExerciseDatabase.all.map(\.id))
+        let stale = StrengthStandards.profiles.keys.filter { !known.contains($0) }.sorted()
+
+        XCTAssertTrue(
+            stale.isEmpty,
+            "Profile(s) for exercises that no longer exist: \(stale.joined(separator: ", "))"
+        )
+    }
+
 }
