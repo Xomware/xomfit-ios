@@ -377,6 +377,31 @@ enum StrengthStandards {
         "ex-ab-wheel":                        Profile(.elbowExtension, 0.45, .bodyweightPlusAdded),
 
         // MARK: Not weight-ranked — holds, mobility, conditioning
+        // Added with the library gap-fill. Ratios are relative to the closest
+        // already-mapped movement: a machine standing calf raise loads more than
+        // a bodyweight one, a leg-press calf raise more again.
+        "ex-standing-calf-machine":           Profile(.calfRaise, 1.10),
+        "ex-leg-press-calf-raise":            Profile(.calfRaise, 1.60),
+        "ex-reverse-wrist-curl":              Profile(.elbowFlexion, 0.28),
+        "ex-behind-back-shrug":               Profile(.shrug, 0.90),
+        "ex-band-tricep-pushdown":            Profile(.elbowExtension, 0.20),
+        "ex-kb-clean-press":                  Profile(.verticalPress, 0.40),
+
+        // Scored by time, distance or bodyweight control rather than load.
+        // Explicitly unranked rather than left unmapped, so the coverage test
+        // stays meaningful — an unmapped exercise is an oversight, an unranked
+        // one is a decision.
+        "ex-farmers-carry":                   unranked,
+        "ex-dead-hang":                       unranked,
+        "ex-plate-pinch":                     unranked,
+        "ex-hanging-knee-raise":              unranked,
+        "ex-hollow-hold":                     unranked,
+        "ex-kb-turkish-getup":                unranked,
+        "ex-kb-front-rack-carry":             unranked,
+        "ex-band-pull-apart":                 unranked,
+        "ex-band-face-pull":                  unranked,
+        "ex-band-good-morning":               unranked,
+        "ex-band-lateral-walk":               unranked,
         "ex-plank":                           unranked,
         "ex-side-plank":                      unranked,
         "ex-copenhagen-plank":                unranked,

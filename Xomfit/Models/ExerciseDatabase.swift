@@ -909,6 +909,117 @@ struct ExerciseDatabase {
                  muscleGroups: [.glutes, .hamstrings], equipment: .bodyweight, category: .stretching,
                  description: "Active 90/90 hip flow — switch sides repeatedly to open the hips through internal and external rotation.",
                  tips: ["Sit with both legs at 90 degrees", "Lean forward over the front shin for a few seconds", "Sweep both legs to the other side and repeat"]),
+
+        // MARK: Calves
+        //
+        // The library had three, one of which (Glute Ham Raise) is not a calf
+        // exercise. Both heads need covering: bent-knee work biases soleus,
+        // straight-leg work biases gastrocnemius, and the split matters to
+        // anyone training calves on purpose.
+        Exercise(id: "ex-standing-calf-machine", name: "Standing Calf Raise (Machine)",
+                 muscleGroups: [.calves], equipment: .machine, category: .isolation,
+                 description: "Loaded standing calf raise. Straight leg biases the gastrocnemius.",
+                 tips: ["Keep a soft knee, not a locked one", "Drop the heel below the platform", "Pause a beat at the top"],
+                 recommendedStretchIds: ["st-standing-calf", "st-soleus-bent-knee-calf"]),
+        Exercise(id: "ex-leg-press-calf-raise", name: "Leg Press Calf Raise",
+                 muscleGroups: [.calves], equipment: .machine, category: .isolation,
+                 description: "Calf raise off the leg press platform — heavy loading with the back supported.",
+                 tips: ["Only the balls of your feet on the platform", "Keep the safeties engaged", "Push through slowly"],
+                 recommendedStretchIds: ["st-soleus-bent-knee-calf"]),
+
+        // MARK: Forearms and grip
+        //
+        // Previously three curl variants, all of which train forearms only as a
+        // side effect. Grip is its own quality and fails before the back does on
+        // heavy pulls.
+        Exercise(id: "ex-farmers-carry", name: "Farmer's Carry",
+                 muscleGroups: [.forearms, .traps, .abs], equipment: .dumbbell, category: .compound,
+                 description: "Walk with heavy weight at your sides. Grip, trunk and posture in one.",
+                 tips: ["Stand tall — do not let the shoulders round", "Squeeze the handles deliberately", "Walk for distance or time, not reps"],
+                 recommendedStretchIds: ["st-forearm-prayer", "st-wrist-circles"]),
+        Exercise(id: "ex-dead-hang", name: "Dead Hang",
+                 muscleGroups: [.forearms, .lats], equipment: .bodyweight, category: .isolation,
+                 description: "Hang from a bar. The simplest grip builder there is, and it decompresses the shoulders.",
+                 tips: ["Full grip, thumb around the bar", "Keep shoulders active rather than fully slack", "Time it and try to beat it"],
+                 recommendedStretchIds: ["st-lat-overhead", "st-forearm-prayer"]),
+        Exercise(id: "ex-reverse-wrist-curl", name: "Reverse Wrist Curl",
+                 muscleGroups: [.forearms], equipment: .dumbbell, category: .isolation,
+                 description: "Wrist extension — trains the back of the forearm, which curls miss entirely.",
+                 tips: ["Forearms flat on a bench, palms down", "Light weight and slow reps", "Full range in both directions"],
+                 supportsUnilateral: true,
+                 recommendedStretchIds: ["st-forearm-prayer", "st-wrist-circles"]),
+        Exercise(id: "ex-plate-pinch", name: "Plate Pinch Hold",
+                 muscleGroups: [.forearms], equipment: .other, category: .isolation,
+                 description: "Pinch plates together and hold. Trains the thumb, which every other grip exercise neglects.",
+                 tips: ["Smooth side of the plates facing out", "Stand tall and still", "Hold for time"],
+                 recommendedStretchIds: ["st-forearm-prayer"]),
+        Exercise(id: "ex-behind-back-shrug", name: "Behind-the-Back Shrug",
+                 muscleGroups: [.traps, .forearms], equipment: .barbell, category: .isolation,
+                 description: "Shrug with the bar behind you — keeps the shoulders back and hits the traps differently.",
+                 tips: ["Bar rests against the back of your thighs", "Shrug straight up, no rolling", "Hold the top for a second"]),
+
+        // MARK: Core
+        //
+        // Twelve was thin for something trained most sessions, and what was
+        // there skewed to flexion. Anti-rotation and anti-extension are what
+        // carry over to lifting.
+        Exercise(id: "ex-hanging-knee-raise", name: "Hanging Knee Raise",
+                 muscleGroups: [.abs, .forearms], equipment: .bodyweight, category: .isolation,
+                 description: "Knees to chest from a hang. A scalable step toward hanging leg raises.",
+                 tips: ["No swinging — start from still", "Curl the pelvis up, do not just lift the knees", "Lower slowly"]),
+        Exercise(id: "ex-hollow-hold", name: "Hollow Body Hold",
+                 muscleGroups: [.abs], equipment: .bodyweight, category: .isolation,
+                 description: "The gymnastics core hold — everything braced, nothing touching the floor but your lower back.",
+                 tips: ["Lower back stays flat on the floor", "Lower the arms and legs only as far as that allows", "Hold for time"]),
+
+        // MARK: Kettlebell
+        //
+        // Two entries for a whole implement. Ballistic hip work has no real
+        // substitute among the barbell and machine lifts already here.
+        Exercise(id: "ex-kb-turkish-getup", name: "Turkish Get-Up",
+                 muscleGroups: [.shoulders, .abs, .glutes], equipment: .kettlebell, category: .compound,
+                 description: "Stand up from lying down with a bell overhead. Shoulder stability and full-body control.",
+                 tips: ["Eyes on the bell the whole way", "One step at a time — never rush it", "Reverse the sequence exactly to come down"],
+                 supportsUnilateral: true, defaultLaterality: .alternating),
+        Exercise(id: "ex-kb-clean-press", name: "Kettlebell Clean and Press",
+                 muscleGroups: [.shoulders, .glutes, .triceps], equipment: .kettlebell, category: .compound,
+                 description: "Clean the bell to the rack, then press overhead.",
+                 tips: ["Guide the bell around the wrist, do not let it bang", "Pause in the rack before pressing", "Lock out fully overhead"],
+                 supportsUnilateral: true, defaultLaterality: .alternating),
+        Exercise(id: "ex-kb-front-rack-carry", name: "Front Rack Carry",
+                 muscleGroups: [.abs, .traps, .shoulders], equipment: .kettlebell, category: .compound,
+                 description: "Walk with the bells racked at the shoulders. Brutal on the trunk.",
+                 tips: ["Ribs down, do not arch the back", "Breathe in short controlled breaths", "Walk for distance or time"]),
+
+        // MARK: Bands
+        //
+        // One entry previously. Bands are what most people have at home and are
+        // the usual substitute when a machine is taken.
+        Exercise(id: "ex-band-pull-apart", name: "Band Pull-Apart",
+                 muscleGroups: [.back, .shoulders, .traps], equipment: .bands, category: .isolation,
+                 description: "Pull a band apart at chest height. Rear delts and upper back, and a good warmup.",
+                 tips: ["Arms straight but not locked", "Lead with the hands, squeeze the blades", "High reps, no rush"],
+                 recommendedStretchIds: ["st-doorway-chest", "st-shoulder-dislocates"]),
+        Exercise(id: "ex-band-face-pull", name: "Band Face Pull",
+                 muscleGroups: [.shoulders, .traps, .back], equipment: .bands, category: .isolation,
+                 description: "Face pull with a band — the shoulder-health staple without needing a cable station.",
+                 tips: ["Anchor at face height", "Pull toward your forehead, elbows high", "Rotate the hands back at the end"],
+                 recommendedStretchIds: ["st-cross-body-shoulder"]),
+        Exercise(id: "ex-band-good-morning", name: "Band Good Morning",
+                 muscleGroups: [.hamstrings, .glutes, .back], equipment: .bands, category: .compound,
+                 description: "Hinge against band tension. Teaches the pattern with no spinal load.",
+                 tips: ["Band under the feet and over the neck", "Push the hips back, soft knees", "Stop when the back wants to round"],
+                 recommendedStretchIds: ["st-hamstring-stretch"]),
+        Exercise(id: "ex-band-lateral-walk", name: "Band Lateral Walk",
+                 muscleGroups: [.glutes], equipment: .bands, category: .isolation,
+                 description: "Side-step against a band above the knees. Glute medius, which squats barely touch.",
+                 tips: ["Stay in a quarter squat throughout", "Step wide, do not let the trailing foot snap in", "Keep constant tension on the band"],
+                 recommendedStretchIds: ["st-figure-four"]),
+        Exercise(id: "ex-band-tricep-pushdown", name: "Band Tricep Pushdown",
+                 muscleGroups: [.triceps], equipment: .bands, category: .isolation,
+                 description: "Pushdown against a band — the cable movement, anywhere.",
+                 tips: ["Anchor high and keep elbows pinned", "Full lockout at the bottom", "Resist on the way up"],
+                 recommendedStretchIds: ["st-overhead-tricep"]),
     ]
 
     // MARK: - Search
