@@ -244,7 +244,7 @@ final class GarminSyncService: NSObject {
         }
         if let reps = detail.reps { message["reps"] = reps }
         if let weight = detail.weight { message["weight"] = weight }
-        if let instruction = detail.instruction { message["instruction"] = instruction }
+        if !detail.tips.isEmpty { message["tips"] = detail.tips }
         if let index = detail.currentIndex { message["currentIndex"] = index }
         if !detail.plan.isEmpty {
             // Capped for the same reason as upNext: the device mailbox is small
@@ -479,7 +479,9 @@ struct WatchWorkoutDetail {
     var reps: Int?
     var weight: Int?
     var upNext: [String]
-    var instruction: String?
+    /// Short form cues for the current lift. Phrases, not sentences: a round
+    /// screen cannot show a sentence and a lifter mid-set will not read one.
+    var tips: [String]
     /// Every exercise with its set progress, for the watch's plan overview.
     var plan: [PlanRow]
     /// Which entry in `plan` is being worked.
@@ -495,7 +497,7 @@ struct WatchWorkoutDetail {
     }
 
     static let empty = WatchWorkoutDetail(
-        reps: nil, weight: nil, upNext: [], instruction: nil, plan: [], currentIndex: nil
+        reps: nil, weight: nil, upNext: [], tips: [], plan: [], currentIndex: nil
     )
 }
 
