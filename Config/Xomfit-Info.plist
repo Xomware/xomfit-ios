@@ -14,6 +14,20 @@
 	     Garmin Connect launches back into XomFit through this scheme after the
 	     lifter picks their watch. Device selection leaves the app entirely, so
 	     without a registered scheme the round trip has nowhere to land. -->
+	<!-- Required by Garmin's SDK, and its absence is why device selection did
+	     nothing for days.
+
+	     `showConnectIQDeviceSelection` builds a request carrying the calling
+	     app's display name. With no CFBundleDisplayName the request is
+	     malformed, and Garmin Connect launches to whatever screen it was last
+	     on rather than a device picker — no error, no callback, nothing. The
+	     symptom is widely reported on Garmin's forums and the fix is this key.
+
+	     Set here rather than via INFOPLIST_KEY_CFBundleDisplayName so it cannot
+	     be dropped by an Xcode project rewrite, which has happened once already
+	     to INFOPLIST_FILE in this project. -->
+	<key>CFBundleDisplayName</key>
+	<string>XomFit</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>

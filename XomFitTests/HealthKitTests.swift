@@ -425,6 +425,19 @@ final class HealthKitTests: XCTestCase {
         )
     }
 
+
+    /// Garmin's SDK reads `CFBundleDisplayName` when building the device
+    /// selection request. Without it the request is malformed and Garmin
+    /// Connect opens to its last screen rather than a device picker — no error,
+    /// no callback, nothing. It cost days, and nothing in the compiler, the
+    /// linker or the SDK will ever mention it.
+    func testBundleDisplayNameIsSetForGarmin() {
+        let host = Bundle(identifier: "com.Xomware.Xomfit") ?? Bundle.main
+        let name = host.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String
+        XCTAssertNotNil(name, "CFBundleDisplayName missing — Garmin device selection will silently do nothing")
+        XCTAssertFalse(name?.isEmpty ?? true)
+    }
+
 }
 
 // MARK: - Cardio modality mapping
