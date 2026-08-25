@@ -96,6 +96,11 @@ struct XomFitApp: App {
                                 workoutSession.completeFocusedSetFromWatch()
                             case "skipRest":
                                 workoutSession.skipRestTimer()
+                            case "logSet":
+                                workoutSession.logSetFromWatch(
+                                    weight: note.userInfo?["weight"] as? Int,
+                                    reps: note.userInfo?["reps"] as? Int
+                                )
                             case "extendRest":
                                 workoutSession.extendRestTimer()
                             case "nextExercise":

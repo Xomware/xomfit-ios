@@ -1830,12 +1830,54 @@ final class WorkoutLoggerViewModel {
             .filter { $0 > focusExerciseIndex && exercises[$0].sets.contains { $0.isPending } }
             .map { exercises[$0].exercise.name }
 
+        // The whole session, not just what is left. The watch's plan screen
+        // answers "how much is done" as well as "what is next", which the
+        // upcoming-only list could not.
+        let plan = exercises.map { exercise in
+            WatchWorkoutDetail.PlanRow(
+                name: exercise.exercise.name,
+                // Resolved sets, not completed ones: a skipped set is decided,
+                // and a progress bar that never fills because of one skip is
+                // wrong about the thing it exists to show.
+                done: exercise.sets.filter { !$0.isPending }.count,
+                total: exercise.sets.count
+            )
+        }
+
         return WatchWorkoutDetail(
             reps: set.map { $0.reps },
             weight: set.map { Int($0.weight.rounded()) },
             upNext: upcoming,
-            instruction: cue
+            instruction: cue,
+            plan: plan,
+            currentIndex: exercises.indices.contains(focusExerciseIndex) ? focusExerciseIndex : nil
         )
+    }
+
+    /// Records a set logged from the watch with the numbers actually lifted,
+    /// then completes it — which starts rest through the normal path.
+    ///
+    /// One call because it is one action to the lifter. Adjusting the target and
+    /// then separately saying "done" is two round trips over Bluetooth for
+    /// something that happens between every set.
+    func logSetFromWatch(weight: Int?, reps: Int?) {
+        guard isActive,
+              exercises.indices.contains(focusExerciseIndex),
+              exercises[focusExerciseIndex].sets.indices.contains(focusSetIndex)
+        else { return }
+
+        let current = exercises[focusExerciseIndex].sets[focusSetIndex]
+        updateSet(
+            exerciseIndex: focusExerciseIndex,
+            setIndex: focusSetIndex,
+            weight: weight.map(Double.init) ?? current.weight,
+            reps: reps ?? current.reps
+        )
+
+        // Idempotent per set, same as the Apple Watch path: Bluetooth can
+        // deliver twice, and completing an already-complete set would toggle it
+        // back off.
+        completeFocusedSetFromWatch()
     }
 
     /// Applies a set adjustment made on the Garmin.

@@ -405,4 +405,51 @@ final class WorkoutSkipCursorTests: XCTestCase {
         XCTAssertFalse(sut.isActive)
     }
 
+
+    // MARK: - Logging a set from the watch
+
+    /// One action on the wrist, because it is one action to the lifter: the
+    /// numbers land and rest starts, rather than adjusting the target and then
+    /// separately saying done.
+    func testLoggingFromTheWatchRecordsNumbersAndStartsRest() {
+        seed(exercises: 1, sets: 3)
+        sut.updateSet(exerciseIndex: 0, setIndex: 0, weight: 185, reps: 8)
+        sut.setCursor(exercise: 0, set: 0)
+
+        sut.logSetFromWatch(weight: 205, reps: 5)
+
+        XCTAssertEqual(sut.exercises[0].sets[0].weight, 205)
+        XCTAssertEqual(sut.exercises[0].sets[0].reps, 5)
+        XCTAssertTrue(sut.exercises[0].sets[0].isCompleted)
+        XCTAssertTrue(sut.isRestTimerActive, "Logging a set should begin rest")
+    }
+
+    /// Two genuine logs in a row advance twice — that is the normal case, and
+    /// the view model must not conflate it with a duplicate delivery.
+    ///
+    /// Deduplication happens in `GarminSyncService`, not here: only the
+    /// transport knows whether two identical messages are one action delivered
+    /// twice or two sets performed. Putting a time window in the view model
+    /// would make rapid legitimate sets unloggable.
+    func testTwoLogsAdvanceThroughConsecutiveSets() {
+        seed(exercises: 1, sets: 3)
+        sut.setCursor(exercise: 0, set: 0)
+
+        sut.logSetFromWatch(weight: 100, reps: 10)
+        XCTAssertTrue(sut.exercises[0].sets[0].isCompleted)
+
+        sut.logSetFromWatch(weight: 110, reps: 8)
+        XCTAssertTrue(sut.exercises[0].sets[1].isCompleted)
+        XCTAssertEqual(sut.exercises[0].sets[1].weight, 110, "The second log lands on the second set")
+    }
+
+    /// A message can arrive after the workout ends — Bluetooth is not
+    /// synchronous with the UI.
+    func testLoggingWithNoActiveWorkoutIsANoOp() {
+        seed(exercises: 1, sets: 2)
+        sut.discardWorkout()
+        sut.logSetFromWatch(weight: 100, reps: 10)
+        XCTAssertFalse(sut.isActive)
+    }
+
 }
