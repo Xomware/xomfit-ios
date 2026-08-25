@@ -438,6 +438,48 @@ final class HealthKitTests: XCTestCase {
         XCTAssertFalse(name?.isEmpty ?? true)
     }
 
+
+    /// Garbage in the stored-devices key must not be able to stop the app
+    /// opening.
+    ///
+    /// `GarminSyncService.restoreDevices()` used to read the paired devices
+    /// with `unarchiveTopLevelObjectWithData`, which raises an **Objective-C
+    /// exception** on anything it cannot decode. Swift's `try?` does not catch
+    /// those, so once a device had been paired, a payload it disliked took the
+    /// process down on every launch — before any UI existed to clear it from.
+    ///
+    /// The replacement, `unarchivedObject(ofClass:from:)`, reports the same
+    /// failure as a Swift error that `try?` genuinely handles. This test pins
+    /// that difference: decoding junk must return nil, not trap.
+    ///
+    /// `NSString` stands in for `IQDevice` — the test target does not link the
+    /// ConnectIQ SDK, and the behaviour under test belongs to NSKeyedUnarchiver
+    /// rather than to any particular archived class.
+    func testCorruptArchiveDecodesToNilRatherThanTrapping() {
+        let junk = Data([0x00, 0x01, 0x02, 0xFF])
+
+        let decoded = try? NSKeyedUnarchiver.unarchivedObject(
+            ofClass: NSString.self, from: junk
+        )
+
+        XCTAssertNil(decoded, "Corrupt data must fail as a catchable Swift error")
+    }
+
+    /// The round trip the service actually performs: archive requiring secure
+    /// coding, read back with the throwing API.
+    func testSecureArchiveRoundTrips() throws {
+        let original = ["Venu 4"] as NSArray
+
+        let data = try NSKeyedArchiver.archivedData(
+            withRootObject: original, requiringSecureCoding: true
+        )
+        let restored = try NSKeyedUnarchiver.unarchivedArrayOfObjects(
+            ofClass: NSString.self, from: data
+        )
+
+        XCTAssertEqual(restored as [String]?, ["Venu 4"])
+    }
+
 }
 
 // MARK: - Cardio modality mapping

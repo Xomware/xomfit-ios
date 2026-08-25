@@ -357,16 +357,40 @@ final class GarminSyncService: NSObject {
     /// friendly name and model the UI needs, and re-deriving those would mean
     /// another trip through Garmin Connect.
     private func persistDevices() {
+        // Secure coding, which `IQDevice` declares support for. The previous
+        // non-secure archive could only be read back through
+        // `unarchiveTopLevelObjectWithData`.
         guard let data = try? NSKeyedArchiver.archivedData(
-            withRootObject: knownDevices, requiringSecureCoding: false
+            withRootObject: knownDevices, requiringSecureCoding: true
         ) else { return }
         UserDefaults.standard.set(data, forKey: Self.storedDevicesKey)
     }
 
+    /// Reads back the paired devices.
+    ///
+    /// This crashed the app on every launch once a device had been paired.
+    /// `unarchiveTopLevelObjectWithData` raises an **Objective-C exception** on
+    /// anything it cannot decode, and Swift's `try?` does not catch those — so a
+    /// payload it disliked took the process down before the UI appeared, over
+    /// and over, with no way for the lifter to get far enough in to clear it.
+    ///
+    /// `unarchivedArrayOfObjects(ofClass:from:)` throws a Swift error instead,
+    /// which `try?` genuinely handles. Bad data is discarded rather than
+    /// retried forever: the cost is pairing once more, against an app that
+    /// cannot open at all.
     private func restoreDevices() {
-        guard let data = UserDefaults.standard.data(forKey: Self.storedDevicesKey),
-              let devices = try? NSKeyedUnarchiver.unarchiveTopLevelObjectWithData(data) as? [IQDevice]
-        else { return }
+        guard let data = UserDefaults.standard.data(forKey: Self.storedDevicesKey) else { return }
+
+        guard let devices = try? NSKeyedUnarchiver.unarchivedArrayOfObjects(
+            ofClass: IQDevice.self, from: data
+        ) else {
+            UserDefaults.standard.removeObject(forKey: Self.storedDevicesKey)
+            #if DEBUG
+            print("[Garmin] stored devices could not be decoded — cleared")
+            #endif
+            return
+        }
+
         knownDevices = devices
         registerForDeviceEvents()
     }
