@@ -1803,7 +1803,7 @@ final class WorkoutLoggerViewModel {
             reps: detail.reps,
             weight: detail.weight.map(Double.init),
             upNext: detail.upNext,
-            instruction: detail.instruction,
+            tips: detail.tips,
             wristHaptics: NotificationService.shared.wristHapticsEnabled
         )
         WatchSyncService.shared.send(state: watchState)
@@ -1820,11 +1820,14 @@ final class WorkoutLoggerViewModel {
     /// the view model.
     private func garminDetail() -> WatchWorkoutDetail {
         let set = focusSet
-        // One cue, not the whole instruction set. Nobody reads a paragraph off a
-        // watch mid-set, and the device mailbox is too small to carry one.
-        let cue = ExerciseInstructionLibrary
-            .instructions(for: focusExercise?.exercise.id ?? "")?
-            .execution.first
+        // The exercise's own tips, not `ExerciseInstructionLibrary`.
+        //
+        // That library holds hand-written guidance for 10 of 194 exercises, so
+        // the watch showed "no cue for this lift" 95% of the time. `tips` is on
+        // every exercise and is already the right shape for a wrist: short
+        // imperative phrases — "Retract shoulder blades", "Feet flat on floor" —
+        // rather than sentences that run off a round screen.
+        let cues = Array((focusExercise?.exercise.tips ?? []).prefix(3))
 
         let upcoming = exercises.indices
             .filter { $0 > focusExerciseIndex && exercises[$0].sets.contains { $0.isPending } }
@@ -1848,7 +1851,7 @@ final class WorkoutLoggerViewModel {
             reps: set.map { $0.reps },
             weight: set.map { Int($0.weight.rounded()) },
             upNext: upcoming,
-            instruction: cue,
+            tips: cues,
             plan: plan,
             currentIndex: exercises.indices.contains(focusExerciseIndex) ? focusExerciseIndex : nil
         )

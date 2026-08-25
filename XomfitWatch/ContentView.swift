@@ -112,29 +112,37 @@ private struct UpNextScreen: View {
 
 // MARK: - How to
 
-/// One form cue for the current lift. Not the full instruction set — nobody
-/// reads a paragraph off a watch mid-workout.
+/// Form cues for the current lift.
+///
+/// Short phrases from the exercise's own tips, not sentences. A watch screen
+/// cannot hold a sentence and a lifter mid-set will not read one.
 private struct HowToScreen: View {
     let state: WatchWorkoutState
 
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(alignment: .leading, spacing: 8) {
             Text("HOW TO")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
 
-            if let instruction = state.instruction {
-                Text(instruction)
-                    .font(.callout)
-                    .multilineTextAlignment(.center)
-            } else {
-                Text("No cue for this lift")
+            if state.tips.isEmpty {
+                Text("No cues for this lift")
                     .font(.callout)
                     .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
+            } else {
+                ForEach(Array(state.tips.enumerated()), id: \.offset) { _, tip in
+                    HStack(alignment: .top, spacing: 6) {
+                        Text("\u{2022}")
+                            .foregroundStyle(.green)
+                        Text(tip)
+                            .font(.caption)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
             }
             Spacer(minLength: 0)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 8)
     }
 }

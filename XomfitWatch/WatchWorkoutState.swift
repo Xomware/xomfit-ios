@@ -36,8 +36,8 @@ struct WatchWorkoutState: Codable, Hashable {
     var weight: Double? = nil
     /// Names of the exercises still to come, nearest first.
     var upNext: [String] = []
-    /// One form cue for the current lift.
-    var instruction: String? = nil
+    /// Short form cues for the current lift.
+    var tips: [String] = []
     /// Whether the wrist should buzz through the end of rest. Decided on the
     /// phone so the setting lives in one place, and sent rather than asked for
     /// because the watch cannot read iPhone defaults.
@@ -69,7 +69,7 @@ struct WatchWorkoutState: Codable, Hashable {
         reps = try c.decodeIfPresent(Int.self, forKey: .reps)
         weight = try c.decodeIfPresent(Double.self, forKey: .weight)
         upNext = try c.decodeIfPresent([String].self, forKey: .upNext) ?? []
-        instruction = try c.decodeIfPresent(String.self, forKey: .instruction)
+        tips = try c.decodeIfPresent([String].self, forKey: .tips) ?? []
         // Defaults to buzzing rather than silence: a dropped flag should not
         // quietly disable the one feature the watch exists for.
         wristHaptics = try c.decodeIfPresent(Bool.self, forKey: .wristHaptics) ?? true
@@ -89,7 +89,7 @@ struct WatchWorkoutState: Codable, Hashable {
         reps: Int? = nil,
         weight: Double? = nil,
         upNext: [String] = [],
-        instruction: String? = nil,
+        tips: [String] = [],
         wristHaptics: Bool = true
     ) {
         self.workoutName = workoutName
@@ -103,7 +103,7 @@ struct WatchWorkoutState: Codable, Hashable {
         self.reps = reps
         self.weight = weight
         self.upNext = upNext
-        self.instruction = instruction
+        self.tips = tips
         self.wristHaptics = wristHaptics
     }
 }
