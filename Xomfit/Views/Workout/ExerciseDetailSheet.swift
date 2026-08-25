@@ -358,13 +358,43 @@ struct ExerciseDetailSheet: View {
 
     // MARK: - Mini Silhouette (#346)
 
+    // MARK: - Muscle highlighting
+
+    /// Opacity applied to the prime mover, and to everything supporting it.
+    static let primaryMuscleOpacity: Double = 0.9
+    static let supportingMuscleOpacity: Double = 0.32
+
+    /// Builds the silhouette's fill map: first muscle group solid, the rest
+    /// washed out.
+    ///
+    /// `muscleGroups` is ordered prime-mover-first throughout
+    /// `ExerciseDatabase` — bench press is `[.chest, .triceps, .shoulders]`,
+    /// pull-ups `[.lats, .back, .biceps]`. That ordering is the only signal
+    /// available; the model carries no explicit primary flag.
+    ///
+    /// Deliberately a static function over plain values so the weighting is
+    /// testable without rendering the sheet.
+    static func highlightFill(for muscleGroups: [MuscleGroup]) -> [MuscleGroup: Color] {
+        var fill: [MuscleGroup: Color] = [:]
+        for (index, muscle) in muscleGroups.enumerated() {
+            let opacity = index == 0 ? primaryMuscleOpacity : supportingMuscleOpacity
+            // Keyed assignment, not Dictionary(uniqueKeysWithValues:), which
+            // traps if an exercise ever repeats a muscle group.
+            fill[muscle] = Theme.accent.opacity(opacity)
+        }
+        return fill
+    }
+
     /// 200x300pt silhouette highlighting only this exercise's muscles. Shows
-    /// front + back side-by-side so all primary muscles are visible without a
-    /// toggle. Non-interactive — `onMuscleTap: nil`.
+    /// front + back side-by-side so all muscles are visible without a toggle.
+    /// Non-interactive — `onMuscleTap: nil`.
+    ///
+    /// The prime mover is painted solid and the supporting muscles are washed
+    /// out behind it. Painting all of them alike said a bench press works chest,
+    /// triceps and shoulders in equal measure, which is the one thing the
+    /// diagram exists to answer.
     private var miniSilhouetteSection: some View {
-        let highlightedFill: [MuscleGroup: Color] = Dictionary(
-            uniqueKeysWithValues: exercise.muscleGroups.map { ($0, Theme.accent.opacity(0.85)) }
-        )
+        let highlightedFill = Self.highlightFill(for: exercise.muscleGroups)
 
         return VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
             Text("Muscles Worked")
@@ -377,14 +407,72 @@ struct ExerciseDetailSheet: View {
             }
             .frame(maxWidth: .infinity)
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel(
-                "Muscles worked diagram. Highlights: \(exercise.muscleGroups.map(\.displayName).joined(separator: ", "))"
-            )
+            .accessibilityLabel(muscleDiagramAccessibilityLabel)
+
+            muscleLegend
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(Theme.Spacing.md)
         .background(Theme.surface)
         .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+    }
+
+    /// Opacity alone is easy to miss, and invisible to anyone who cannot pick
+    /// the two shades apart — the legend names which muscle is which.
+    @ViewBuilder
+    private var muscleLegend: some View {
+        if let primary = exercise.muscleGroups.first {
+            let supporting = exercise.muscleGroups.dropFirst()
+
+            VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
+                legendRow(
+                    swatch: Theme.accent.opacity(0.9),
+                    title: "Primary",
+                    detail: primary.displayName
+                )
+
+                if !supporting.isEmpty {
+                    legendRow(
+                        swatch: Theme.accent.opacity(0.32),
+                        title: "Supporting",
+                        detail: supporting.map(\.displayName).joined(separator: ", ")
+                    )
+                }
+            }
+        }
+    }
+
+    private func legendRow(swatch: Color, title: String, detail: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: Theme.Spacing.tighter) {
+            Circle()
+                .fill(swatch)
+                .frame(width: 8, height: 8)
+
+            Text(title)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(Theme.textPrimary)
+
+            Text(detail)
+                .font(.caption)
+                .foregroundStyle(Theme.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Spacer(minLength: 0)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(title): \(detail)")
+    }
+
+    private var muscleDiagramAccessibilityLabel: String {
+        guard let primary = exercise.muscleGroups.first else {
+            return "Muscles worked diagram."
+        }
+        let supporting = exercise.muscleGroups.dropFirst()
+        guard !supporting.isEmpty else {
+            return "Muscles worked diagram. Primary: \(primary.displayName)."
+        }
+        return "Muscles worked diagram. Primary: \(primary.displayName). "
+            + "Supporting: \(supporting.map(\.displayName).joined(separator: ", "))."
     }
 
     private func miniBody(side: BodySide, fill: [MuscleGroup: Color]) -> some View {
