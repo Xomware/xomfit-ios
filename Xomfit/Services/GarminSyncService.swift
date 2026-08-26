@@ -245,6 +245,8 @@ final class GarminSyncService: NSObject {
         if let reps = detail.reps { message["reps"] = reps }
         if let weight = detail.weight { message["weight"] = weight }
         if !detail.tips.isEmpty { message["tips"] = detail.tips }
+        if let primary = detail.primaryMuscle { message["musclePrimary"] = primary }
+        if let supporting = detail.supportingMuscles { message["muscleSupport"] = supporting }
         if let index = detail.currentIndex { message["currentIndex"] = index }
         if !detail.plan.isEmpty {
             // Capped for the same reason as upNext: the device mailbox is small
@@ -506,6 +508,16 @@ struct WatchWorkoutDetail {
     /// Short form cues for the current lift. Phrases, not sentences: a round
     /// screen cannot show a sentence and a lifter mid-set will not read one.
     var tips: [String]
+    /// The prime mover, already formatted for display.
+    ///
+    /// Two pre-joined strings rather than a list, because the phone can do the
+    /// string work for free and Monkey C cannot — building this on the device
+    /// would cost allocations on every state push, and the mailbox is small
+    /// enough that the shorter payload matters on its own.
+    var primaryMuscle: String?
+    /// Everything else the lift works, comma-joined. Nil when there is nothing
+    /// beyond the prime mover.
+    var supportingMuscles: String?
     /// Every exercise with its set progress, for the watch's plan overview.
     var plan: [PlanRow]
     /// Which entry in `plan` is being worked.
@@ -521,7 +533,9 @@ struct WatchWorkoutDetail {
     }
 
     static let empty = WatchWorkoutDetail(
-        reps: nil, weight: nil, upNext: [], tips: [], plan: [], currentIndex: nil
+        reps: nil, weight: nil, upNext: [], tips: [],
+        primaryMuscle: nil, supportingMuscles: nil,
+        plan: [], currentIndex: nil
     )
 }
 

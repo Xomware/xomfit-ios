@@ -1847,11 +1847,23 @@ final class WorkoutLoggerViewModel {
             )
         }
 
+        // Prime mover first, matching how the phone's diagram reads it.
+        // `muscleGroups` is ordered prime-mover-first across ExerciseDatabase;
+        // there is no explicit primary flag on the model.
+        let muscles = focusExercise?.exercise.muscleGroups ?? []
+        let primaryMuscle = muscles.first?.displayName
+        let supporting = muscles.dropFirst().map(\.displayName)
+
         return WatchWorkoutDetail(
             reps: set.map { $0.reps },
             weight: set.map { Int($0.weight.rounded()) },
             upNext: upcoming,
             tips: cues,
+            primaryMuscle: primaryMuscle,
+            // Joined here rather than on the watch: nil when there is nothing
+            // to say, so the device can skip the row instead of drawing a label
+            // with an empty value after it.
+            supportingMuscles: supporting.isEmpty ? nil : supporting.joined(separator: ", "),
             plan: plan,
             currentIndex: exercises.indices.contains(focusExerciseIndex) ? focusExerciseIndex : nil
         )
