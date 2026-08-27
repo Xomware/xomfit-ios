@@ -24,6 +24,7 @@
 		A2D9DA19EA001353F94F1B0D /* ProgressiveOverloadEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F8269C3E626F9E0F867A286 /* ProgressiveOverloadEngineTests.swift */; };
 		A3EB3EBF73EB4B4E8164340D /* ExerciseInstructionCoverageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 827732DA0E95EA020F612BD9 /* ExerciseInstructionCoverageTests.swift */; };
 		A5CB31EA8149518294CBCF7A /* AuthValidationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50574B785553CFAF12535276 /* AuthValidationTests.swift */; };
+		A9B85412F08C856A8AE144EF /* WatchPushCadenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD26A680A84D010B4E4BE32D /* WatchPushCadenceTests.swift */; };
 		AA01B0010000000000000003 /* XomfitWatch.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 30C92F27893E848084361AD6 /* XomfitWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		AA01B0010000000000000006 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA01B0010000000000000005 /* Assets.xcassets */; };
 		AA03D0010000000000000002 /* WatchRestHaptics.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA03D0010000000000000001 /* WatchRestHaptics.swift */; };
@@ -115,6 +116,7 @@
 		BC49DBCE1EDC7F48166EC8AE /* WatchSessionStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchSessionStore.swift; sourceTree = "<group>"; };
 		C26FE97F0134F021E9D0622B /* ExerciseVariantTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ExerciseVariantTests.swift; sourceTree = "<group>"; };
 		C84C61FE8D97D6A6F27FDF87 /* TrainingNudgeTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TrainingNudgeTests.swift; sourceTree = "<group>"; };
+		CD26A680A84D010B4E4BE32D /* WatchPushCadenceTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchPushCadenceTests.swift; sourceTree = "<group>"; };
 		D34B74E81225372EA6F7B954 /* StrengthStandardsTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = StrengthStandardsTests.swift; sourceTree = "<group>"; };
 		E2971609F94FDA4AAE995734 /* GoalBaselineTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GoalBaselineTests.swift; sourceTree = "<group>"; };
 		ED9BBF5A1F88959BD0A49AAC /* XomfitTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = XomfitTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -566,6 +568,7 @@
 				D34B74E81225372EA6F7B954 /* StrengthStandardsTests.swift */,
 				568B93ED9CB6F96BE8E258E3 /* ExerciseMuscleDiagramTests.swift */,
 				827732DA0E95EA020F612BD9 /* ExerciseInstructionCoverageTests.swift */,
+				CD26A680A84D010B4E4BE32D /* WatchPushCadenceTests.swift */,
 			);
 			path = XomFitTests;
 			sourceTree = "<group>";
@@ -776,6 +779,7 @@
 				D7E81C3DC92EC92262FDBC0D /* WorkoutSkipCursorTests.swift in Sources */,
 				6A1EEF09B2A9B65EF5378D3E /* ExerciseMuscleDiagramTests.swift in Sources */,
 				A3EB3EBF73EB4B4E8164340D /* ExerciseInstructionCoverageTests.swift in Sources */,
+				A9B85412F08C856A8AE144EF /* WatchPushCadenceTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

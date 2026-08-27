@@ -1756,18 +1756,42 @@ final class WorkoutLoggerViewModel {
         }
     }
 
-    private func updateLiveActivity() {
-        guard let activity = liveActivity else { return }
+    /// When the current rest period ends, or nil if it is not counting.
+    ///
+    /// Both watches and the Live Activity render from an absolute end date
+    /// rather than a remaining count, so they stay right between pushes. Paused
+    /// returns nil deliberately: a frozen countdown is shown as a static pill,
+    /// not a timer that has stopped moving for no visible reason.
+    ///
+    /// `nonisolated` and taking `now` so the arithmetic is testable without a
+    /// running workout or a hop to the main actor. It touches no state.
+    nonisolated static func restEnd(
+        isResting: Bool, remaining: TimeInterval, isPaused: Bool,
+        now: Date = Date()
+    ) -> Date? {
+        guard isResting, remaining > 0, !isPaused else { return nil }
+        return now.addingTimeInterval(remaining)
+    }
 
+    /// Pushes the current snapshot to the Live Activity and to both watches.
+    ///
+    /// The watch broadcast used to sit in here *after*
+    /// `guard let activity = liveActivity`, so whenever no Live Activity
+    /// existed — disabled in Settings, `Activity.request` threw, or the workout
+    /// had already cleared it — neither watch received anything at all. Only
+    /// the Live Activity update depends on there being a Live Activity.
+    private func updateLiveActivity() {
         let currentExName = exercises.first(where: { ex in
             ex.sets.contains(where: { $0.isPending })
         })?.exercise.name ?? "Finishing up"
 
         // While paused, suppress restEndDate so the widget renders a static "Paused" pill
         // instead of an active countdown.
-        let restEnd: Date? = (isRestTimerActive && restTimeRemaining > 0 && !isPaused)
-            ? Date().addingTimeInterval(restTimeRemaining)
-            : nil
+        let restEnd = Self.restEnd(
+            isResting: isRestTimerActive,
+            remaining: restTimeRemaining,
+            isPaused: isPaused
+        )
 
         let overtime = isRestTimerActive && restTimeRemaining <= 0 && !isPaused
 
@@ -1784,16 +1808,26 @@ final class WorkoutLoggerViewModel {
             isPaused: isPaused
         )
 
-        Task {
-            await activity.update(.init(state: state, staleDate: nil))
+        if let activity = liveActivity {
+            Task {
+                await activity.update(.init(state: state, staleDate: nil))
+            }
         }
 
-        // Broadcast the same snapshot to the paired Apple Watch (#256).
-        // No-op when no watch is paired / WCSession isn't supported.
+        pushToWatches(currentExercise: currentExName, restEnd: restEnd)
+    }
+
+    /// Sends the current snapshot to both watches.
+    ///
+    /// Separate from the Live Activity, and unthrottled. A Live Activity draws
+    /// a self-updating timer so it only needs state transitions; the Garmin
+    /// draws exactly the number it was last handed, so the same 5s throttle
+    /// made its countdown skip in five-second steps.
+    private func pushToWatches(currentExercise: String, restEnd: Date?) {
         let detail = garminDetail()
         let watchState = WatchWorkoutState(
             workoutName: workoutName,
-            currentExercise: currentExName,
+            currentExercise: currentExercise,
             setNumber: currentSetNumber,
             totalSets: currentExerciseTotalSets,
             isResting: isRestTimerActive,
@@ -1932,8 +1966,23 @@ final class WorkoutLoggerViewModel {
 
     func tickLiveActivity() {
         liveActivityUpdateCounter += 1
-        // Update frequently during rest transitions, otherwise every 30s
-        // (timer style handles real-time display, we just need state pushes)
+
+        // The watches get every tick. They draw the number they were last
+        // handed, so anything slower than once a second is a countdown that
+        // visibly skips.
+        pushToWatches(
+            currentExercise: exercises.first(where: { ex in
+                ex.sets.contains(where: { $0.isPending })
+            })?.exercise.name ?? "Finishing up",
+            restEnd: Self.restEnd(
+                isResting: isRestTimerActive,
+                remaining: restTimeRemaining,
+                isPaused: isPaused
+            )
+        )
+
+        // The Live Activity keeps the throttle: its timer display updates
+        // itself, so it only needs state transitions.
         let interval = isRestTimerActive ? 5 : 30
         if liveActivityUpdateCounter % interval == 0 {
             updateLiveActivity()
