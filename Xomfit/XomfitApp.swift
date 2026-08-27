@@ -105,6 +105,11 @@ struct XomFitApp: App {
                                 workoutSession.extendRestTimer()
                             case "nextExercise":
                                 workoutSession.focusNextExercise()
+                            // The watch asks; the phone decides which state the
+                            // workout ends up in, so both agree even if a
+                            // message drops.
+                            case "togglePause":
+                                workoutSession.togglePause()
                             case "adjustSet":
                                 workoutSession.adjustFocusedSetFromWatch(
                                     reps: note.userInfo?["reps"] as? Int,
