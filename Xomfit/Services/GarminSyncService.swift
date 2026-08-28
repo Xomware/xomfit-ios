@@ -466,6 +466,7 @@ extension GarminSyncService: IQAppMessageDelegate {
         // dictionary must not cross the isolation boundary.
         let reps = dict["reps"] as? Int
         let weight = dict["weight"] as? Int
+        let index = dict["index"] as? Int
 
         Task { @MainActor in
             switch type {
@@ -491,6 +492,17 @@ extension GarminSyncService: IQAppMessageDelegate {
             case "nextExercise":
                 NotificationCenter.default.post(name: .garminActionReceived, object: nil,
                                                userInfo: ["action": "nextExercise"])
+            case "togglePause":
+                NotificationCenter.default.post(name: .garminActionReceived, object: nil,
+                                               userInfo: ["action": "togglePause"])
+            // The plan screen picks an exercise directly rather than stepping
+            // to it. The index is the watch's position in its copy of the plan,
+            // which the view model bounds-checks — that copy can be a message
+            // behind.
+            case "jumpToExercise":
+                guard let index else { break }
+                NotificationCenter.default.post(name: .garminActionReceived, object: nil,
+                                               userInfo: ["action": "jumpToExercise", "index": index])
             case "adjustSet":
                 var info: [String: Any] = ["action": "adjustSet"]
                 if let reps { info["reps"] = reps }
