@@ -40,10 +40,16 @@ struct ContentView: View {
                 // gesture, and a back stack between a lifter mid-set and the
                 // rest countdown is the wrong shape.
                 TabView {
-                    WorkoutScreen(state: state) {
-                        sessionStore.sendDoneSet()
+                    WorkoutScreen(
+                        state: state,
+                        onDoneSet: { sessionStore.sendDoneSet() },
+                        onLogSet: { sessionStore.sendLogSet(weight: $0, reps: $1) },
+                        onAdjust: { sessionStore.sendAdjustSet(weight: $0, reps: $1) },
+                        onLift: { sessionStore.sendSkipRest() }
+                    )
+                    PlanScreen(state: state) {
+                        sessionStore.sendJumpToExercise(index: $0)
                     }
-                    UpNextScreen(state: state)
                     HowToScreen(state: state)
                 }
                 .tabViewStyle(.verticalPage)
@@ -74,48 +80,105 @@ struct ContentView: View {
 
 // MARK: - Up next
 
-/// The exercises still to come. Glanced at during rest.
-private struct UpNextScreen: View {
+/// The whole session: every exercise, how much of it is done, and a tap to
+/// work on any of it.
+///
+/// Replaces a flat list of the names still to come. That list answered "what is
+/// next" and nothing else — not how far through the session the lifter was, and
+/// not letting them go back to an exercise they skipped.
+private struct PlanScreen: View {
     let state: WatchWorkoutState
+    let onJump: (Int) -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("UP NEXT")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-
-            if state.upNext.isEmpty {
-                Text("Last exercise")
-                    .font(.body)
-                    .foregroundStyle(.secondary)
-            } else {
-                // The immediate next lift is the one being asked about, so it is
-                // the only one at full contrast.
-                ForEach(Array(state.upNext.prefix(4).enumerated()), id: \.offset) { index, name in
-                    Text(name)
-                        .font(index == 0 ? .body : .caption)
-                        .foregroundStyle(index == 0 ? .primary : .secondary)
-                        .lineLimit(1)
-                }
-                if state.upNext.count > 4 {
-                    Text("+\(state.upNext.count - 4) more")
+        if state.plan.isEmpty {
+            // An older phone build sends no plan. Fall back rather than showing
+            // an empty screen: the two ship independently and routinely
+            // disagree about which fields exist.
+            LegacyUpNextList(upNext: state.upNext)
+        } else {
+            List {
+                Section {
+                    ForEach(Array(state.plan.enumerated()), id: \.offset) { index, row in
+                        Button {
+                            onJump(index)
+                        } label: {
+                            PlanRowLabel(row: row, isCurrent: index == state.currentIndex)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                } header: {
+                    Text(summary)
                         .font(.caption2)
-                        .foregroundStyle(.tertiary)
                 }
             }
-            Spacer(minLength: 0)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 8)
+    }
+
+    /// Sets done across the whole session. The headline answer before any
+    /// per-exercise detail.
+    private var summary: String {
+        let done = state.plan.reduce(0) { $0 + $1.done }
+        let total = state.plan.reduce(0) { $0 + $1.total }
+        return "\(done) of \(total) sets"
     }
 }
 
-// MARK: - How to
+private struct PlanRowLabel: View {
+    let row: WatchWorkoutState.PlanRow
+    let isCurrent: Bool
 
-/// Form cues for the current lift.
-///
-/// Short phrases from the exercise's own tips, not sentences. A watch screen
-/// cannot hold a sentence and a lifter mid-set will not read one.
+    var body: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            HStack(spacing: 4) {
+                Text(row.name)
+                    .font(.caption)
+                    .foregroundStyle(isCurrent ? .primary : .secondary)
+                    .lineLimit(1)
+                Spacer(minLength: 0)
+                Text("\(row.done)/\(row.total)")
+                    .font(.system(size: 10).monospacedDigit())
+                    .foregroundStyle(.secondary)
+            }
+
+            // A filled proportion answers "how much is left" without being
+            // read, which is what a screen glanced at between sets needs.
+            ProgressView(value: row.fraction)
+                .tint(isCurrent ? .green : .gray)
+        }
+        .padding(.vertical, 2)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(
+            "\(row.name), \(row.done) of \(row.total) sets"
+                + (isCurrent ? ", current exercise" : "")
+        )
+        .accessibilityHint("Tap to work on this exercise.")
+    }
+}
+
+/// What the old screen showed. Kept for phones that predate the plan field.
+private struct LegacyUpNextList: View {
+    let upNext: [String]
+
+    var body: some View {
+        if upNext.isEmpty {
+            Text("Last exercise")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        } else {
+            List {
+                Section("Up next") {
+                    ForEach(upNext, id: \.self) { name in
+                        Text(name)
+                            .font(.caption)
+                            .lineLimit(1)
+                    }
+                }
+            }
+        }
+    }
+}
+
 private struct HowToScreen: View {
     let state: WatchWorkoutState
 
@@ -152,18 +215,98 @@ private struct HowToScreen: View {
 private struct WorkoutScreen: View {
     let state: WatchWorkoutState
     let onDoneSet: () -> Void
+    let onLogSet: (Int, Int) -> Void
+    let onAdjust: (Int?, Int?) -> Void
+    let onLift: () -> Void
+
+    @State private var editing: EditingField?
+
+    /// Which number the crown sheet is editing, if any.
+    private enum EditingField: Identifiable {
+        case weight, reps
+        var id: Int { self == .weight ? 0 : 1 }
+    }
+
+    /// Resting or about to lift.
+    ///
+    /// Every element on the screen means something different depending on
+    /// which, and drawing both at once is how the Garmin app ended up with a
+    /// button that said "Log Set" all the way through the rest countdown.
+    private var isResting: Bool {
+        state.isResting && !state.isPaused
+    }
 
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 6) {
             header
             setLabel
-            targetLabel
-            middleSection
+
+            if isResting {
+                middleSection
+            } else {
+                entryFields
+            }
+
             Spacer(minLength: 0)
-            doneButton
+            primaryButton
         }
         .padding(.horizontal, 6)
         .padding(.vertical, 4)
+        .sheet(item: $editing) { field in
+            switch field {
+            case .weight:
+                NumberEntryView(
+                    title: "WEIGHT",
+                    initial: Int(state.weight ?? 45),
+                    step: 5,
+                    range: 0...995
+                ) { onAdjust($0, nil) }
+            case .reps:
+                NumberEntryView(
+                    title: "REPS",
+                    initial: state.reps ?? 8,
+                    step: 1,
+                    range: 0...99
+                ) { onAdjust(nil, $0) }
+            }
+        }
+    }
+
+    /// The two numbers about to be lifted, each its own target.
+    ///
+    /// They were one muted line of text that nothing could change from the
+    /// wrist — the watch could say a set was done but never say what it was.
+    private var entryFields: some View {
+        HStack(spacing: 6) {
+            fieldButton(
+                label: "LB",
+                value: state.weight.map { String(Int($0)) } ?? "--"
+            ) { editing = .weight }
+
+            fieldButton(
+                label: "REPS",
+                value: state.reps.map(String.init) ?? "--"
+            ) { editing = .reps }
+        }
+    }
+
+    private func fieldButton(
+        label: String, value: String, action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            VStack(spacing: 0) {
+                Text(value)
+                    .font(.system(.title3, design: .rounded).weight(.semibold).monospacedDigit())
+                    .minimumScaleFactor(0.6)
+                    .lineLimit(1)
+                Text(label)
+                    .font(.system(size: 9))
+                    .foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.bordered)
+        .accessibilityLabel("\(label) \(value). Tap to change.")
     }
 
     /// Planned weight x reps. Absent when the phone has not said — a target of
@@ -223,15 +366,35 @@ private struct WorkoutScreen: View {
         }
     }
 
-    private var doneButton: some View {
-        Button(action: onDoneSet) {
-            Text("Done Set")
+    /// The one action, labelled for what pressing it does right now.
+    ///
+    /// While resting that is ending rest, not logging a set — the button used
+    /// to say "Done Set" throughout the countdown, which is the wrong action at
+    /// the one moment there is time to read it.
+    private var primaryButton: some View {
+        Button {
+            if isResting {
+                onLift()
+            } else if let weight = state.weight, let reps = state.reps {
+                // Log what the screen is showing, which the lifter may have
+                // just changed. Falling back to Done Set when the phone has not
+                // said what the target is.
+                onLogSet(Int(weight), reps)
+            } else {
+                onDoneSet()
+            }
+        } label: {
+            Text(isResting ? "Lift" : "Log Set")
                 .font(.system(.body, design: .rounded).weight(.semibold))
                 .frame(maxWidth: .infinity)
         }
         .buttonStyle(.borderedProminent)
         .tint(.green)
-        .accessibilityHint("Marks the current set as complete on your iPhone.")
+        .accessibilityHint(
+            isResting
+                ? "Ends rest and starts the next set."
+                : "Records this set on your iPhone and starts rest."
+        )
     }
 
     private func formatElapsed(_ seconds: Int) -> String {

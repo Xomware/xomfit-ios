@@ -120,6 +120,37 @@ final class WatchSyncService {
             }
             lastDoneSetAt = now
             onDoneSetReceived?()
+            return
+        }
+
+        guard let action = message["action"] as? String else { return }
+
+        // Same debounce as doneSet, for the same reason: WCSession can deliver
+        // one message twice, and a set logged twice is worse than one dropped.
+        if action == "logSet" {
+            let now = Date()
+            if let last = lastDoneSetAt,
+               now.timeIntervalSince(last) < Self.doneSetDebounceInterval {
+                #if DEBUG
+                print("[WatchSync] logSet ignored (debounced)")
+                #endif
+                return
+            }
+            lastDoneSetAt = now
+        }
+
+        // Routed through the same notification the Garmin uses. The phone does
+        // not care which wrist an action came from, and two parallel handlers
+        // would drift apart.
+        var info: [String: Any] = ["action": action]
+        if let reps = message["reps"] as? Int { info["reps"] = reps }
+        if let weight = message["weight"] as? Int { info["weight"] = weight }
+        if let index = message["index"] as? Int { info["index"] = index }
+
+        Task { @MainActor in
+            NotificationCenter.default.post(
+                name: .wristActionReceived, object: nil, userInfo: info
+            )
         }
     }
 

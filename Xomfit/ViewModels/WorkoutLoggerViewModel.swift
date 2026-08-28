@@ -1851,6 +1851,12 @@ final class WorkoutLoggerViewModel {
             weight: detail.weight.map(Double.init),
             upNext: detail.upNext,
             tips: detail.tips,
+            // The same plan the Garmin gets, so both watches can show the whole
+            // session and jump around it rather than only what is next.
+            plan: detail.plan.map {
+                WatchWorkoutState.PlanRow(name: $0.name, done: $0.done, total: $0.total)
+            },
+            currentIndex: detail.currentIndex,
             wristHaptics: NotificationService.shared.wristHapticsEnabled
         )
         WatchSyncService.shared.send(state: watchState)
