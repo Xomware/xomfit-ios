@@ -110,6 +110,13 @@ struct XomFitApp: App {
                             // message drops.
                             case "togglePause":
                                 workoutSession.togglePause()
+                            // The watch's plan screen picks an exercise
+                            // directly. Bounds-checked on the view model, since
+                            // the watch's copy of the plan can lag.
+                            case "jumpToExercise":
+                                if let index = note.userInfo?["index"] as? Int {
+                                    workoutSession.focusExercise(at: index)
+                                }
                             case "adjustSet":
                                 workoutSession.adjustFocusedSetFromWatch(
                                     reps: note.userInfo?["reps"] as? Int,

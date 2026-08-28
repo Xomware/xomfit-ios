@@ -1164,6 +1164,19 @@ final class WorkoutLoggerViewModel {
         focusSetIndex = 0
     }
 
+    /// Jumps straight to an exercise by position.
+    ///
+    /// Used by the watch's plan screen, where the lifter picks the exercise
+    /// they want rather than stepping to it. Bounds-checked rather than
+    /// trusting the index: it arrives over Bluetooth from a watch whose copy of
+    /// the plan may be a message or two behind, and an out-of-range jump would
+    /// trap on the array.
+    func focusExercise(at index: Int) {
+        guard exercises.indices.contains(index) else { return }
+        focusExerciseIndex = index
+        focusSetIndex = 0
+    }
+
     // MARK: - Current-Exercise Pill Accessors (#253)
     //
     // These additive computed properties drive the persistent "current exercise"
