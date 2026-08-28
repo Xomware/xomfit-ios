@@ -204,6 +204,15 @@ final class GarminSyncService: NSObject {
         return true
     }
 
+    /// Whether there is a watch worth offering an "open on watch" action for.
+    ///
+    /// Paired, not ready: readiness flips around as the watch app starts and
+    /// stops, and hiding the one control that restarts it precisely when it is
+    /// not running would be the wrong way round.
+    var hasPairedDevice: Bool {
+        !knownDevices.isEmpty
+    }
+
     func requestOpenOnWatch() {
         guard let app, isWatchReady else { return }
         ConnectIQ.sharedInstance().openAppRequest(app) { result in

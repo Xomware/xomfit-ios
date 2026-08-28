@@ -717,6 +717,18 @@ struct ActiveWorkoutView: View {
             } label: {
                 Label("Reorder Exercises", systemImage: "arrow.up.arrow.down")
             }
+
+            // Getting out of the watch app mid-workout used to be a dead end:
+            // the phone kept the workout, the watch sat on its face, and the
+            // app was buried in the watch's own list. This asks the watch to
+            // reopen it. A no-op if it is already running.
+            if GarminSyncService.shared.hasPairedDevice {
+                Button {
+                    GarminSyncService.shared.requestOpenOnWatch()
+                } label: {
+                    Label("Open on Garmin", systemImage: "applewatch.radiowaves.left.and.right")
+                }
+            }
         }
         .padding(.horizontal, Theme.Spacing.md)
         .padding(.top, Theme.Spacing.xs)
