@@ -45,11 +45,15 @@ struct ContentView: View {
                         onDoneSet: { sessionStore.sendDoneSet() },
                         onLogSet: { sessionStore.sendLogSet(weight: $0, reps: $1) },
                         onAdjust: { sessionStore.sendAdjustSet(weight: $0, reps: $1) },
-                        onLift: { sessionStore.sendSkipRest() }
+                        onLift: { sessionStore.sendSkipRest() },
+                        onExtendRest: { sessionStore.sendExtendRest() }
                     )
-                    PlanScreen(state: state) {
-                        sessionStore.sendJumpToExercise(index: $0)
-                    }
+                    PlanScreen(
+                        state: state,
+                        onJump: { sessionStore.sendJumpToExercise(index: $0) },
+                        onNextExercise: { sessionStore.sendNextExercise() },
+                        onTogglePause: { sessionStore.sendTogglePause() }
+                    )
                     HowToScreen(state: state)
                 }
                 .tabViewStyle(.verticalPage)
@@ -89,15 +93,18 @@ struct ContentView: View {
 private struct PlanScreen: View {
     let state: WatchWorkoutState
     let onJump: (Int) -> Void
+    let onNextExercise: () -> Void
+    let onTogglePause: () -> Void
 
     var body: some View {
-        if state.plan.isEmpty {
-            // An older phone build sends no plan. Fall back rather than showing
-            // an empty screen: the two ship independently and routinely
-            // disagree about which fields exist.
-            LegacyUpNextList(upNext: state.upNext)
-        } else {
-            List {
+        List {
+            if state.plan.isEmpty {
+                // An older phone build sends no plan. Fall back rather than
+                // showing an empty screen: the two ship independently and
+                // routinely disagree about which fields exist. The actions
+                // below stay either way — they do not depend on the plan.
+                legacyUpNext
+            } else {
                 Section {
                     ForEach(Array(state.plan.enumerated()), id: \.offset) { index, row in
                         Button {
@@ -110,6 +117,42 @@ private struct PlanScreen: View {
                 } header: {
                     Text(summary)
                         .font(.caption2)
+                }
+            }
+
+                // Below the plan rather than on the workout screen: these need
+                // reading before pressing, and the main screen is read at arm's
+                // length mid-set.
+                Section {
+                    Button(action: onNextExercise) {
+                        Label("Next Exercise", systemImage: "forward.end")
+                            .font(.caption)
+                    }
+                    Button(action: onTogglePause) {
+                        Label(
+                            state.isPaused ? "Resume" : "Pause",
+                            systemImage: state.isPaused ? "play.fill" : "pause.fill"
+                        )
+                        .font(.caption)
+                    }
+                }
+        }
+    }
+
+    @ViewBuilder
+    private var legacyUpNext: some View {
+        if state.upNext.isEmpty {
+            Section {
+                Text("Last exercise")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        } else {
+            Section("Up next") {
+                ForEach(state.upNext, id: \.self) { name in
+                    Text(name)
+                        .font(.caption)
+                        .lineLimit(1)
                 }
             }
         }
@@ -156,29 +199,6 @@ private struct PlanRowLabel: View {
     }
 }
 
-/// What the old screen showed. Kept for phones that predate the plan field.
-private struct LegacyUpNextList: View {
-    let upNext: [String]
-
-    var body: some View {
-        if upNext.isEmpty {
-            Text("Last exercise")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        } else {
-            List {
-                Section("Up next") {
-                    ForEach(upNext, id: \.self) { name in
-                        Text(name)
-                            .font(.caption)
-                            .lineLimit(1)
-                    }
-                }
-            }
-        }
-    }
-}
-
 private struct HowToScreen: View {
     let state: WatchWorkoutState
 
@@ -218,6 +238,7 @@ private struct WorkoutScreen: View {
     let onLogSet: (Int, Int) -> Void
     let onAdjust: (Int?, Int?) -> Void
     let onLift: () -> Void
+    let onExtendRest: () -> Void
 
     @State private var editing: EditingField?
 
@@ -248,7 +269,24 @@ private struct WorkoutScreen: View {
             }
 
             Spacer(minLength: 0)
-            primaryButton
+
+            if isResting {
+                // Needing longer is at least as common as being ready early,
+                // and the watch had no way to say so at all.
+                HStack(spacing: 6) {
+                    Button(action: onExtendRest) {
+                        Text("+30s")
+                            .font(.system(.caption, design: .rounded).weight(.semibold))
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                    .accessibilityHint("Adds thirty seconds to the rest timer.")
+
+                    primaryButton
+                }
+            } else {
+                primaryButton
+            }
         }
         .padding(.horizontal, 6)
         .padding(.vertical, 4)
