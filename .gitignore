@@ -41,3 +41,6 @@ build/
 # Supabase CLI scratch
 supabase/.temp/
 build-rel/
+
+# Scratch derived-data dir from a one-off A/B build comparison.
+build-prefix/

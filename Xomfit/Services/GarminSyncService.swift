@@ -474,26 +474,26 @@ extension GarminSyncService: IQAppMessageDelegate {
                 guard self.acceptSetAction() else { return }
                 // The same entry point the Apple Watch uses. It is idempotent
                 // per set, which matters here too: Bluetooth can deliver twice.
-                NotificationCenter.default.post(name: .garminActionReceived, object: nil,
+                NotificationCenter.default.post(name: .wristActionReceived, object: nil,
                                                userInfo: ["action": "doneSet"])
             case "skipRest":
-                NotificationCenter.default.post(name: .garminActionReceived, object: nil,
+                NotificationCenter.default.post(name: .wristActionReceived, object: nil,
                                                userInfo: ["action": "skipRest"])
             case "logSet":
                 guard self.acceptSetAction() else { return }
                 var info: [String: Any] = ["action": "logSet"]
                 if let reps { info["reps"] = reps }
                 if let weight { info["weight"] = weight }
-                NotificationCenter.default.post(name: .garminActionReceived, object: nil,
+                NotificationCenter.default.post(name: .wristActionReceived, object: nil,
                                                userInfo: info)
             case "extendRest":
-                NotificationCenter.default.post(name: .garminActionReceived, object: nil,
+                NotificationCenter.default.post(name: .wristActionReceived, object: nil,
                                                userInfo: ["action": "extendRest"])
             case "nextExercise":
-                NotificationCenter.default.post(name: .garminActionReceived, object: nil,
+                NotificationCenter.default.post(name: .wristActionReceived, object: nil,
                                                userInfo: ["action": "nextExercise"])
             case "togglePause":
-                NotificationCenter.default.post(name: .garminActionReceived, object: nil,
+                NotificationCenter.default.post(name: .wristActionReceived, object: nil,
                                                userInfo: ["action": "togglePause"])
             // The plan screen picks an exercise directly rather than stepping
             // to it. The index is the watch's position in its copy of the plan,
@@ -501,13 +501,13 @@ extension GarminSyncService: IQAppMessageDelegate {
             // behind.
             case "jumpToExercise":
                 guard let index else { break }
-                NotificationCenter.default.post(name: .garminActionReceived, object: nil,
+                NotificationCenter.default.post(name: .wristActionReceived, object: nil,
                                                userInfo: ["action": "jumpToExercise", "index": index])
             case "adjustSet":
                 var info: [String: Any] = ["action": "adjustSet"]
                 if let reps { info["reps"] = reps }
                 if let weight { info["weight"] = weight }
-                NotificationCenter.default.post(name: .garminActionReceived, object: nil,
+                NotificationCenter.default.post(name: .wristActionReceived, object: nil,
                                                userInfo: info)
             default:
                 break
@@ -561,10 +561,11 @@ struct WatchWorkoutDetail {
 }
 
 extension Notification.Name {
-    /// Posted when the Garmin watch asks for something. `userInfo["action"]`
+    /// Posted when a watch — Garmin or Apple — asks for something.
+    /// `userInfo["action"]`
     /// carries which. Observed by the app shell, which owns the workout view
     /// model — the service deliberately does not reach into it.
-    static let garminActionReceived = Notification.Name("garminActionReceived")
+    static let wristActionReceived = Notification.Name("wristActionReceived")
 }
 
 // MARK: - SDK-reported problems

@@ -40,10 +40,37 @@ struct WatchWorkoutState: Codable, Hashable {
     var upNext: [String] = []
     /// Short form cues for the current lift.
     var tips: [String] = []
+
+    /// Every exercise in the session with its set progress, for the plan
+    /// screen. Sent so the watch can show the whole workout and jump around it,
+    /// which the flat `upNext` list of names could not support.
+    var plan: [PlanRow] = []
+
+    /// Which entry in `plan` is being worked.
+    var currentIndex: Int? = nil
     /// Whether the wrist should buzz through the end of rest. Decided on the
     /// phone so the setting lives in one place, and sent rather than asked for
     /// because the watch cannot read iPhone defaults.
     var wristHaptics: Bool = true
+
+    /// One exercise as the watch needs it.
+    ///
+    /// Deliberately not the sets themselves — per-set weights would multiply
+    /// the payload for detail no watch screen can usefully show.
+    struct PlanRow: Codable, Hashable {
+        var name: String
+        var done: Int
+        var total: Int
+
+        /// Guarded against a zero total, which would otherwise divide by zero
+        /// on an exercise the phone has sent before its sets exist.
+        var fraction: Double {
+            guard total > 0 else { return 0 }
+            return min(Double(done) / Double(total), 1)
+        }
+
+        var isComplete: Bool { total > 0 && done >= total }
+    }
 
     // MARK: - Decoding
     //
@@ -75,6 +102,8 @@ struct WatchWorkoutState: Codable, Hashable {
         // Defaults to buzzing rather than silence: a dropped flag should not
         // quietly disable the one feature the watch exists for.
         wristHaptics = try c.decodeIfPresent(Bool.self, forKey: .wristHaptics) ?? true
+        plan = try c.decodeIfPresent([PlanRow].self, forKey: .plan) ?? []
+        currentIndex = try c.decodeIfPresent(Int.self, forKey: .currentIndex)
     }
 
     /// Memberwise init, spelled out because the hand-written `init(from:)`
@@ -92,6 +121,8 @@ struct WatchWorkoutState: Codable, Hashable {
         weight: Double? = nil,
         upNext: [String] = [],
         tips: [String] = [],
+        plan: [PlanRow] = [],
+        currentIndex: Int? = nil,
         wristHaptics: Bool = true
     ) {
         self.workoutName = workoutName
@@ -106,6 +137,8 @@ struct WatchWorkoutState: Codable, Hashable {
         self.weight = weight
         self.upNext = upNext
         self.tips = tips
+        self.plan = plan
+        self.currentIndex = currentIndex
         self.wristHaptics = wristHaptics
     }
 }

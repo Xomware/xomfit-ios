@@ -85,7 +85,7 @@ struct XomFitApp: App {
                             evaluateFitnessQuestionnaireGate()
                             evaluateActiveSessionRestore()
                         }
-                        .onReceive(NotificationCenter.default.publisher(for: .garminActionReceived)) { note in
+                        .onReceive(NotificationCenter.default.publisher(for: .wristActionReceived)) { note in
                             // The Garmin asks; the phone decides. Routing through
                             // a notification keeps the sync service from reaching
                             // into the view model.
