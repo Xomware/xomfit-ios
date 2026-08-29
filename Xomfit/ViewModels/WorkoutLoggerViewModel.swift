@@ -1026,6 +1026,45 @@ final class WorkoutLoggerViewModel {
 
     /// Convenience: group `exerciseIndex` with the next exercise in the list, or
     /// (if it already has a group) ungroup the entire group.
+    /// Groups an exercise with any other, not just the one after it.
+    ///
+    /// "Group with next" is the common case and stays its own entry point, but
+    /// a superset is a pairing the lifter chooses — the exercise they want is
+    /// often not the one that happens to be next in the list, and reordering
+    /// the whole workout to make it adjacent is a poor way to say so.
+    ///
+    /// Joining an exercise that is already in a group adds to that group rather
+    /// than starting a second one, which is what "superset these two" means
+    /// when one of them is already paired with something.
+    func groupSuperset(exerciseIndex: Int, with otherIndex: Int) {
+        guard exerciseIndex != otherIndex,
+              exercises.indices.contains(exerciseIndex),
+              exercises.indices.contains(otherIndex) else { return }
+
+        if let existing = exercises[otherIndex].supersetGroupId {
+            exercises[exerciseIndex].supersetGroupId = existing
+            return
+        }
+        if let existing = exercises[exerciseIndex].supersetGroupId {
+            exercises[otherIndex].supersetGroupId = existing
+            return
+        }
+        toggleSuperset(exerciseIndices: [exerciseIndex, otherIndex])
+    }
+
+    /// Exercises that can be superset with this one: everything else in the
+    /// session that is not already grouped with it.
+    func supersetCandidates(for exerciseIndex: Int) -> [Int] {
+        guard exercises.indices.contains(exerciseIndex) else { return [] }
+        let ownGroup = exercises[exerciseIndex].supersetGroupId
+        return exercises.indices.filter { index in
+            guard index != exerciseIndex else { return false }
+            // Already in the same group, so pairing them again is a no-op.
+            if let ownGroup, exercises[index].supersetGroupId == ownGroup { return false }
+            return true
+        }
+    }
+
     func toggleSupersetWithNext(exerciseIndex: Int) {
         guard exercises.indices.contains(exerciseIndex) else { return }
 
@@ -1545,6 +1584,12 @@ final class WorkoutLoggerViewModel {
     func extendRestTimer(_ seconds: Double = 30) {
         restTimeRemaining += seconds
         restDuration += seconds
+        // Move the background alerts with it. They used to stay where they
+        // were, so +30s announced "rest's up" thirty seconds early and then
+        // said nothing at the actual end.
+        NotificationService.shared.rescheduleRestTimerNotification(
+            workoutId: workoutId, remaining: restTimeRemaining
+        )
         // +30s from an already-elapsed timer must be able to alarm again.
         lastRestHapticSecond = nil
         updateLiveActivity()

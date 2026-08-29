@@ -224,7 +224,9 @@ struct ActiveWorkoutView: View {
         // bar stays put across the push, which is also why the collapsed/
         // expanded choice survives navigating between the two.
         .safeAreaInset(edge: .bottom) {
-            if viewModel.isRestTimerActive {
+            // Suppressed while the focus-mode full screen is up, or the bar
+            // would sit underneath it doing the same job twice.
+            if viewModel.isRestTimerActive && !showsFullScreenRest {
                 RestTimerBar(
                     viewModel: viewModel,
                     onSkip: { viewModel.skipRestTimer() }
@@ -232,6 +234,20 @@ struct ActiveWorkoutView: View {
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
+        // Focus mode gives the countdown the whole screen. There is one
+        // exercise showing and nothing to scan during rest, so a bar at the
+        // bottom of an otherwise empty screen was spending the whole display to
+        // show one number small. Minimizing drops back to the collapsed bar.
+        .overlay {
+            if showsFullScreenRest {
+                RestTimerFullScreen(
+                    viewModel: viewModel,
+                    onLift: { viewModel.skipRestTimer() }
+                )
+                .transition(.opacity)
+            }
+        }
+        .animation(.xomConfident, value: showsFullScreenRest)
         // PR celebration — third and last thing that was trapped inside the
         // list screen. A lifter hits a PR in focus mode more often than in the
         // list, which is exactly where the banner never appeared.
@@ -734,6 +750,16 @@ struct ActiveWorkoutView: View {
         .padding(.top, Theme.Spacing.xs)
         .accessibilityLabel(pillAccessibilityLabel)
         .accessibilityHint("Opens the exercise list to switch exercises")
+    }
+
+    /// Whether the countdown should take the whole screen.
+    ///
+    /// Focus mode only, and only while expanded — minimizing is what gets the
+    /// exercise back on screen.
+    private var showsFullScreenRest: Bool {
+        viewModel.focusMode
+            && viewModel.isRestTimerActive
+            && !viewModel.isRestTimerMinimized
     }
 
     /// Voice-over label that names the current exercise + set context.
