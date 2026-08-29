@@ -1861,6 +1861,11 @@ private struct ExerciseTransitionCard: View {
                                 Button {
                                     withAnimation { viewModel.moveToExercise(index: item.index) }
                                 } label: {
+                                    // Chevron and set count, matching the NEXT
+                                    // row above. These were a dim 6pt dot, a
+                                    // name and a Spacer — nothing said they
+                                    // were tappable, or which one was
+                                    // half-finished.
                                     HStack(spacing: Theme.Spacing.sm) {
                                         Circle()
                                             .fill(Theme.accent.opacity(0.3))
@@ -1868,14 +1873,28 @@ private struct ExerciseTransitionCard: View {
                                         Text(item.name)
                                             .font(.subheadline.weight(.medium))
                                             .foregroundStyle(Theme.textPrimary)
-                                        Spacer()
+                                            .lineLimit(1)
+                                        Spacer(minLength: Theme.Spacing.xs)
+                                        if item.setsTotal > 0 {
+                                            Text("\(item.setsDone)/\(item.setsTotal)")
+                                                .font(.caption.monospacedDigit())
+                                                .foregroundStyle(Theme.textTertiary)
+                                        }
+                                        Image(systemName: "chevron.right")
+                                            .font(.caption.weight(.bold))
+                                            .foregroundStyle(Theme.accent)
                                     }
-                                    .padding(.vertical, 10)
+                                    .padding(.vertical, 12)
                                     .padding(.horizontal, Theme.Spacing.md)
                                     .contentShape(Rectangle())
                                 }
                                 .buttonStyle(.plain)
-                                .accessibilityLabel("Switch to \(item.name)")
+                                .accessibilityLabel(
+                                    item.setsTotal > 0
+                                        ? "\(item.name), \(item.setsDone) of \(item.setsTotal) sets done"
+                                        : item.name
+                                )
+                                .accessibilityHint("Switches to this exercise.")
                             }
                         }
                         .transition(.opacity.combined(with: .move(edge: .top)))

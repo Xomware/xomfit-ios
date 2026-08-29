@@ -4,6 +4,12 @@ import SwiftUI
 struct RemainingExercise: Identifiable {
     let index: Int
     let name: String
+    /// Sets already resolved, and how many there are in total.
+    ///
+    /// Carried so the "choose different" rows can say how much of each is left.
+    /// A bare list of names says nothing about which one is half-finished.
+    var setsDone: Int = 0
+    var setsTotal: Int = 0
     var id: Int { index }
 }
 
@@ -866,7 +872,15 @@ final class WorkoutLoggerViewModel {
                 remainingExercises = exercises.enumerated().compactMap { idx, ex in
                     guard idx != exerciseIndex,
                           ex.sets.contains(where: { $0.isPending }) else { return nil }
-                    return RemainingExercise(index: idx, name: ex.exercise.name)
+                    return RemainingExercise(
+                        index: idx,
+                        name: ex.exercise.name,
+                        // Resolved, not completed: a skipped set is decided, and
+                        // a count that never fills because of one skip is wrong
+                        // about the thing it exists to show.
+                        setsDone: ex.sets.filter { !$0.isPending }.count,
+                        setsTotal: ex.sets.count
+                    )
                 }
 
                 // Suppress the transition card in these cases:
