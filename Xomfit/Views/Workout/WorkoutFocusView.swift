@@ -11,6 +11,9 @@ struct WorkoutFocusView: View {
     @FocusState private var repsFieldFocused: Bool
     @State private var showExercisePicker = false
     @State private var showSupersetPicker = false
+    @State private var showReorderSheet = false
+    @State private var showSwapPicker = false
+    @State private var showRemoveConfirm = false
     /// Minimized rest-timer state lives on the VM (#409) so the header chip
     /// in `ActiveWorkoutView` can tap-to-expand the fullscreen overlay. Local
     /// `@State` is gone — read/write through `viewModel.isRestTimerMinimized`.
@@ -181,6 +184,63 @@ struct WorkoutFocusView: View {
         .navigationTitle(exercise?.exercise.name ?? "Workout")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            // Exercise-level actions in one visible place.
+            //
+            // Reordering was behind a long-press on the list screen's pill,
+            // which is invisible, and removing or swapping an exercise could
+            // not be done from here at all — the only route was backing out to
+            // the list.
+            ToolbarItem(placement: .topBarLeading) {
+                Menu {
+                    Button {
+                        Haptics.light()
+                        showSwapPicker = true
+                    } label: {
+                        Label("Change Exercise", systemImage: "arrow.triangle.2.circlepath")
+                    }
+
+                    Button {
+                        Haptics.light()
+                        showSupersetPicker = true
+                    } label: {
+                        Label(
+                            viewModel.supersetMembers(forExercise: viewModel.focusExerciseIndex) == nil
+                                ? "Superset with…"
+                                : "Add to Superset…",
+                            systemImage: "link"
+                        )
+                    }
+
+                    Button {
+                        Haptics.light()
+                        showReorderSheet = true
+                    } label: {
+                        Label("Reorder Exercises", systemImage: "arrow.up.arrow.down")
+                    }
+
+                    Button {
+                        Haptics.light()
+                        showExercisePicker = true
+                    } label: {
+                        Label("Add Exercise", systemImage: "plus")
+                    }
+
+                    Divider()
+
+                    Button(role: .destructive) {
+                        Haptics.light()
+                        showRemoveConfirm = true
+                    } label: {
+                        Label("Remove This Exercise", systemImage: "trash")
+                    }
+                } label: {
+                    Image(systemName: "ellipsis.circle")
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(Theme.textPrimary)
+                }
+                .accessibilityLabel("Exercise options")
+            }
+
             ToolbarItem(placement: .topBarTrailing) {
                 HStack(spacing: Theme.Spacing.sm) {
                     Text(viewModel.durationString)
@@ -200,6 +260,36 @@ struct WorkoutFocusView: View {
                     .accessibilityLabel(viewModel.isPaused ? "Resume workout" : "Pause workout")
                 }
             }
+        }
+        .sheet(isPresented: $showReorderSheet) {
+            ExerciseReorderSheet(viewModel: viewModel)
+        }
+        // Swap keeps this exercise's position in the workout and replaces what
+        // it is, which is what "I picked the wrong machine" means. Removing and
+        // re-adding would send it to the end of the list.
+        .sheet(isPresented: $showSwapPicker) {
+            ExercisePickerView { picked in
+                viewModel.replaceExercise(at: viewModel.focusExerciseIndex, with: picked)
+                showSwapPicker = false
+            }
+        }
+        .confirmationDialog(
+            "Remove \(exercise?.exercise.name ?? "this exercise")?",
+            isPresented: $showRemoveConfirm,
+            titleVisibility: .visible
+        ) {
+            Button("Remove", role: .destructive) {
+                let index = viewModel.focusExerciseIndex
+                viewModel.removeExercise(at: index)
+                // Nothing left to focus on, so go back to the list rather than
+                // showing an empty exercise screen.
+                if viewModel.exercises.isEmpty {
+                    viewModel.focusMode = false
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Its logged sets will be removed from this workout.")
         }
         .sheet(isPresented: $showSupersetPicker) {
             SupersetPickerSheet(
@@ -266,6 +356,17 @@ struct WorkoutFocusView: View {
 
     // MARK: - Exercise Header
 
+    /// The tier the current set's numbers would earn, or nil when the lift is
+    /// not weight-ranked or the lifter has not given a bodyweight.
+    private var currentRank: StrengthRank? {
+        guard let exercise, let set = viewModel.focusSet, set.weight > 0 else { return nil }
+        return StrengthLevelService.shared.rank(
+            exerciseId: exercise.exercise.id,
+            weight: set.weight,
+            reps: max(set.reps, 1)
+        )
+    }
+
     /// Badges only — the exercise name lives in the navigation bar now that
     /// focus mode is a pushed screen, and printing it twice was both redundant
     /// and a waste of the vertical space the big weight/reps controls want.
@@ -282,6 +383,24 @@ struct WorkoutFocusView: View {
                     .background(Theme.accent)
                     .clipShape(.capsule)
                     .accessibilityLabel("Superset \(badge)")
+            }
+
+            // Where this set puts you, live.
+            //
+            // Tiers only appeared on the profile and in the exercise detail
+            // sheet, so the number that decides them was never next to them —
+            // the lifter could not see that five more pounds was a new tier at
+            // the moment they were choosing the weight.
+            if let rank = currentRank {
+                HStack(spacing: Theme.Spacing.tighter) {
+                    StrengthTierBadge(tier: rank.tier, size: .small)
+                    if let next = rank.nextTier, let target = rank.nextTierTarget {
+                        Text("\(target.formattedWeight) for \(next.displayName)")
+                            .font(.caption2)
+                            .foregroundStyle(Theme.textTertiary)
+                    }
+                }
+                .accessibilityElement(children: .combine)
             }
 
             HStack(spacing: Theme.Spacing.tight) {
@@ -411,21 +530,6 @@ struct WorkoutFocusView: View {
         let lastSet = exercise.sets.last
 
         Menu {
-            // Focus mode had no way to superset at all -- grouping lived only
-            // on the list screen, and only as "group with the next exercise".
-            Button {
-                dismissKeyboard()
-                Haptics.light()
-                showSupersetPicker = true
-            } label: {
-                Label(
-                    viewModel.supersetMembers(forExercise: viewModel.focusExerciseIndex) == nil
-                        ? "Superset with…"
-                        : "Add to Superset…",
-                    systemImage: "link"
-                )
-            }
-
             // PR - use personal record weight and reps exactly as achieved
             if let pr = prSet, pr.weight > 0 {
                 Button {

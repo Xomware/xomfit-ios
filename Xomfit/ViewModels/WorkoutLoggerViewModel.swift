@@ -682,6 +682,30 @@ final class WorkoutLoggerViewModel {
     func removeExercise(at index: Int) {
         guard exercises.indices.contains(index) else { return }
         exercises.remove(at: index)
+
+        // Keep the cursor somewhere real. Removing the focused exercise left
+        // `focusExerciseIndex` pointing at whatever slid into that slot, or one
+        // past the end when it was the last one.
+        if focusExerciseIndex >= exercises.count {
+            focusExerciseIndex = max(exercises.count - 1, 0)
+        }
+        focusSetIndex = 0
+
+        updateLiveActivity()
+        saveActiveSession(force: true)
+    }
+
+    /// Swaps what an exercise *is*, keeping its position and set count.
+    ///
+    /// For "I picked the wrong machine". Removing and re-adding would send it
+    /// to the end of the workout and throw away the sets already configured for
+    /// it — the lifter wants the same slot, doing something else.
+    ///
+    /// Completed sets are kept: they were performed, and silently deleting
+    /// logged work is worse than a workout listing a swapped exercise.
+    func replaceExercise(at index: Int, with exercise: Exercise) {
+        guard exercises.indices.contains(index) else { return }
+        exercises[index].exercise = exercise
         updateLiveActivity()
         saveActiveSession(force: true)
     }
