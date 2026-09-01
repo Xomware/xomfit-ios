@@ -12,6 +12,7 @@
 		175D9C785D217A06EBCC6054 /* XomfitWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F3CBFE99B6D75BC1136FCB9 /* XomfitWatchApp.swift */; };
 		2652623F55494AE501D17728 /* AuthServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7B33E534C5D4F6F4A221677 /* AuthServiceTests.swift */; };
 		284A5F0B50AD134023D0B30C /* EstimatedMaxInverseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF919491E135D95E05E0CC27 /* EstimatedMaxInverseTests.swift */; };
+		33BF9460FA3689B72A976DE6 /* TierConsistencyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3883628571952010C9F9B667 /* TierConsistencyTests.swift */; };
 		3AD31D27EAD82F60EE882599 /* AnimationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 325D34C169BA7253ADECB318 /* AnimationTests.swift */; };
 		4361874E4BAC7BF8E4D6AAAD /* NumberEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F598AFE9ECEBE9D1CE5C308 /* NumberEntryView.swift */; };
 		4B29E29052245B3988552687 /* HealthKitTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F23492F5F635F00683551 /* HealthKitTests.swift */; };
@@ -107,6 +108,7 @@
 		30C92F27893E848084361AD6 /* XomfitWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = XomfitWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		325D34C169BA7253ADECB318 /* AnimationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AnimationTests.swift; sourceTree = "<group>"; };
 		37E1F812E63DCA86C4966EEE /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		3883628571952010C9F9B667 /* TierConsistencyTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TierConsistencyTests.swift; sourceTree = "<group>"; };
 		473EB31945A7063B399BD147 /* WatchWorkoutSessionManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchWorkoutSessionManager.swift; sourceTree = "<group>"; };
 		4F8269C3E626F9E0F867A286 /* ProgressiveOverloadEngineTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ProgressiveOverloadEngineTests.swift; sourceTree = "<group>"; };
 		50574B785553CFAF12535276 /* AuthValidationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AuthValidationTests.swift; sourceTree = "<group>"; };
@@ -584,6 +586,7 @@
 				E678B524FF56A6D502AF09B9 /* SupersetPairingTests.swift */,
 				8FAE60DD4EABA26C99B0237B /* ExerciseEditingTests.swift */,
 				BF919491E135D95E05E0CC27 /* EstimatedMaxInverseTests.swift */,
+				3883628571952010C9F9B667 /* TierConsistencyTests.swift */,
 			);
 			path = XomFitTests;
 			sourceTree = "<group>";
@@ -799,6 +802,7 @@
 				559876733DC9EF573203A679 /* SupersetPairingTests.swift in Sources */,
 				CD06CC05B68AFF64FE066C6F /* ExerciseEditingTests.swift in Sources */,
 				284A5F0B50AD134023D0B30C /* EstimatedMaxInverseTests.swift in Sources */,
+				33BF9460FA3689B72A976DE6 /* TierConsistencyTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

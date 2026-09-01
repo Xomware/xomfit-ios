@@ -243,9 +243,15 @@ struct WorkoutFocusView: View {
 
             ToolbarItem(placement: .topBarTrailing) {
                 HStack(spacing: Theme.Spacing.sm) {
+                    // Small and unshrinkable. At the previous size a long
+                    // session ("1:04:22") competed with the exercise title for
+                    // toolbar width and got squeezed to the point of being
+                    // unreadable — the one number that must always be legible.
                     Text(viewModel.durationString)
-                        .font(Theme.fontNumberMedium)
+                        .font(.caption.monospacedDigit().weight(.semibold))
                         .foregroundStyle(Theme.accent)
+                        .lineLimit(1)
+                        .fixedSize()
                         .contentTransition(.numericText())
                         .animation(.xomSnappy, value: viewModel.durationString)
 
@@ -360,10 +366,15 @@ struct WorkoutFocusView: View {
     /// not weight-ranked or the lifter has not given a bodyweight.
     private var currentRank: StrengthRank? {
         guard let exercise, let set = viewModel.focusSet, set.weight > 0 else { return nil }
+        // weightMode matters: a per-side entry is half the load being lifted,
+        // and `checkForTierUp` already passes it. Omitting it here made the
+        // badge and the tier actually awarded disagree on exactly those
+        // exercises — the screen showing a target the lifter had already beaten.
         return StrengthLevelService.shared.rank(
             exerciseId: exercise.exercise.id,
             weight: set.weight,
-            reps: max(set.reps, 1)
+            reps: max(set.reps, 1),
+            weightMode: set.weightMode
         )
     }
 

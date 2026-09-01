@@ -348,10 +348,12 @@ struct WorkoutDetailView: View {
     private func bestTier(for exercise: WorkoutExercise) -> StrengthTier? {
         let ranks = exercise.sets.compactMap { set -> StrengthRank? in
             guard set.weight > 0, set.reps > 0 else { return nil }
+            // Same weightMode the tier was awarded with; see WorkoutFocusView.
             return StrengthLevelService.shared.rank(
                 exerciseId: exercise.exercise.id,
                 weight: set.weight,
-                reps: set.reps
+                reps: set.reps,
+                weightMode: set.weightMode
             )
         }
         // StrengthTier is Comparable, ordered bronze upward.
