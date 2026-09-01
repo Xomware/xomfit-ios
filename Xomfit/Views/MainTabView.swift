@@ -280,10 +280,12 @@ struct MainTabView: View {
                 NavigationStack { ProfileView().rootChrome(self) }
             }
         }
-        // The tab bar gets out of the way while reading a feed or a long
-        // workout list, and comes back the moment you scroll up. iOS 26+ only;
-        // a no-op below, where the tab bar simply stays put.
-        .xomTabBarMinimizeOnScroll()
+        // The tab bar stays put.
+        //
+        // It used to minimize away while scrolling a feed or a long workout
+        // list and return on scroll-up. In practice that reads as the bar
+        // disappearing at random — the navigation vanishing mid-scroll is a
+        // worse trade than the strip of content it buys back.
         // Selection colour follows the brand, not the system default blue.
         .tint(Theme.accent)
     }

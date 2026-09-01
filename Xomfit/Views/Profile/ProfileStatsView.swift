@@ -104,11 +104,42 @@ struct ProfileStatsView: View {
             // number that is simply wrong.
             statsCards
             bodyLink
-            volumeTrendSection
-            consistencySection
-            topExercisesSection
-            heatmapSection
-            prSection
+
+            // The analytical half folds away. All of it used to render at once,
+            // so anything below it was a long scroll past charts nobody asked
+            // for. The headline blocks above stay open.
+            CollapsibleProfileSection(
+                title: "Volume Trend",
+                systemImage: "chart.bar.xaxis",
+                storageKey: "volume",
+                initiallyExpanded: true
+            ) { volumeTrendSection }
+
+            CollapsibleProfileSection(
+                title: "Consistency",
+                systemImage: "calendar",
+                storageKey: "consistency"
+            ) { consistencySection }
+
+            CollapsibleProfileSection(
+                title: "Top Exercises",
+                systemImage: "list.number",
+                storageKey: "topExercises"
+            ) { topExercisesSection }
+
+            CollapsibleProfileSection(
+                title: "Muscles Worked",
+                systemImage: "figure.arms.open",
+                storageKey: "heatmap"
+            ) { heatmapSection }
+
+            CollapsibleProfileSection(
+                title: "Personal Records",
+                systemImage: "trophy",
+                storageKey: "prs",
+                initiallyExpanded: true
+            ) { prSection }
+
             seeAllStatsLink
         }
         .padding(.horizontal, Theme.Spacing.md)
