@@ -11,6 +11,7 @@
 		0F2396BE1C58B7C7F99F5BC6 /* WorkoutInsightsSeamTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 730E45C30DECC5AA5563EAB4 /* WorkoutInsightsSeamTests.swift */; };
 		175D9C785D217A06EBCC6054 /* XomfitWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F3CBFE99B6D75BC1136FCB9 /* XomfitWatchApp.swift */; };
 		2652623F55494AE501D17728 /* AuthServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7B33E534C5D4F6F4A221677 /* AuthServiceTests.swift */; };
+		284A5F0B50AD134023D0B30C /* EstimatedMaxInverseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF919491E135D95E05E0CC27 /* EstimatedMaxInverseTests.swift */; };
 		3AD31D27EAD82F60EE882599 /* AnimationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 325D34C169BA7253ADECB318 /* AnimationTests.swift */; };
 		4361874E4BAC7BF8E4D6AAAD /* NumberEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F598AFE9ECEBE9D1CE5C308 /* NumberEntryView.swift */; };
 		4B29E29052245B3988552687 /* HealthKitTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F23492F5F635F00683551 /* HealthKitTests.swift */; };
@@ -121,6 +122,7 @@
 		AA03D0010000000000000001 /* WatchRestHaptics.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchRestHaptics.swift; sourceTree = "<group>"; };
 		B7B33E534C5D4F6F4A221677 /* AuthServiceTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AuthServiceTests.swift; sourceTree = "<group>"; };
 		BC49DBCE1EDC7F48166EC8AE /* WatchSessionStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchSessionStore.swift; sourceTree = "<group>"; };
+		BF919491E135D95E05E0CC27 /* EstimatedMaxInverseTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = EstimatedMaxInverseTests.swift; sourceTree = "<group>"; };
 		C26FE97F0134F021E9D0622B /* ExerciseVariantTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ExerciseVariantTests.swift; sourceTree = "<group>"; };
 		C84C61FE8D97D6A6F27FDF87 /* TrainingNudgeTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TrainingNudgeTests.swift; sourceTree = "<group>"; };
 		CD26A680A84D010B4E4BE32D /* WatchPushCadenceTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchPushCadenceTests.swift; sourceTree = "<group>"; };
@@ -581,6 +583,7 @@
 				7A54992A7EDE7FAD21BF67DA /* WatchPlanWireTests.swift */,
 				E678B524FF56A6D502AF09B9 /* SupersetPairingTests.swift */,
 				8FAE60DD4EABA26C99B0237B /* ExerciseEditingTests.swift */,
+				BF919491E135D95E05E0CC27 /* EstimatedMaxInverseTests.swift */,
 			);
 			path = XomFitTests;
 			sourceTree = "<group>";
@@ -795,6 +798,7 @@
 				8871273448C50A5179D656C7 /* WatchPlanWireTests.swift in Sources */,
 				559876733DC9EF573203A679 /* SupersetPairingTests.swift in Sources */,
 				CD06CC05B68AFF64FE066C6F /* ExerciseEditingTests.swift in Sources */,
+				284A5F0B50AD134023D0B30C /* EstimatedMaxInverseTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

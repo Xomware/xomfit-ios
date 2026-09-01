@@ -394,8 +394,15 @@ struct WorkoutFocusView: View {
             if let rank = currentRank {
                 HStack(spacing: Theme.Spacing.tighter) {
                     StrengthTierBadge(tier: rank.tier, size: .small)
-                    if let next = rank.nextTier, let target = rank.nextTierTarget {
-                        Text("\(target.formattedWeight) for \(next.displayName)")
+                    // Shown as the weight to load at the reps being done, not
+                    // as the estimated 1RM the threshold is stored in. The raw
+                    // threshold reads like a bar weight and is not one.
+                    if let next = rank.nextTier,
+                       let target = rank.nextTierTarget,
+                       let set = viewModel.focusSet {
+                        let reps = max(set.reps, 1)
+                        let needed = Exercise.weightForEstimatedMax(target, reps: reps)
+                        Text("\(needed.formattedWeight) × \(reps) for \(next.displayName)")
                             .font(.caption2)
                             .foregroundStyle(Theme.textTertiary)
                     }

@@ -108,9 +108,15 @@ struct StrengthRank: Equatable {
     let progressToNext: Double?
 
     /// "92 lb from Gold" — the line that makes the rank actionable.
+    /// How much more is needed, stated as estimated 1RM.
+    ///
+    /// The unit is the point. Thresholds are e1RMs, and phrasing the gap as a
+    /// bare "10 lb from Diamond" reads as ten pounds on the bar — so a lifter
+    /// doing 360 for eight, whose e1RM is already 456, hits Diamond while the
+    /// screen still shows a number above what they lifted.
     var nextTierPrompt: String? {
         guard let nextTier, let target = nextTierTarget else { return nil }
         let remaining = max(0, target - estimated1RM)
-        return "\(remaining.formattedWeight) lb from \(nextTier.displayName)"
+        return "\(remaining.formattedWeight) lb of est. 1RM from \(nextTier.displayName)"
     }
 }

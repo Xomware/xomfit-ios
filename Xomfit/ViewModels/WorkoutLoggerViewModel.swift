@@ -1565,13 +1565,15 @@ final class WorkoutLoggerViewModel {
         restDuration = duration
         restTimeRemaining = duration
         isRestTimerActive = true
-        // Fresh rest periods start as the compact bar. They used to start
-        // expanded, which made sense when expanded meant a full-screen overlay
-        // in focus mode — but the timer is now a docked bottom inset shared by
-        // both views, and opening it full-height shoved the exercise list
-        // off-screen after every single set. The bar still shows the countdown,
-        // what's up next, and Skip; tapping it expands to the ring.
-        isRestTimerMinimized = true
+        // Expanded in focus mode, compact in the list.
+        //
+        // Both used to start compact, because expanded meant a docked inset
+        // that shoved the exercise list off-screen after every set. That is
+        // still true of the list — but in focus mode expanded now means the
+        // full-screen countdown, which is the whole point of finishing a set
+        // there. Starting minimized meant that screen could never appear on its
+        // own.
+        isRestTimerMinimized = !focusMode
         restTimerStartDate = Date()
         lastRestHapticSecond = nil
         updateLiveActivity()

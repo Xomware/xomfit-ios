@@ -172,4 +172,16 @@ extension Exercise {
         if reps == 1 { return weight }
         return weight * (1.0 + Double(reps) / 30.0)
     }
+
+    /// The bar weight that would produce `estimated1RM` at a given rep count.
+    ///
+    /// The inverse of `estimateMax`. Tier thresholds are expressed as estimated
+    /// 1RMs, which made them useless to read mid-set: "370 for Diamond" looks
+    /// like a weight to load, but at eight reps 360 already estimates to 456 —
+    /// so the lifter hit Diamond ninety pounds below the number on screen and
+    /// reasonably concluded it was broken.
+    static func weightForEstimatedMax(_ estimated1RM: Double, reps: Int) -> Double {
+        guard reps > 1 else { return estimated1RM }
+        return estimated1RM / (1.0 + Double(reps) / 30.0)
+    }
 }
