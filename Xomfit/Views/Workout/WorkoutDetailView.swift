@@ -341,6 +341,23 @@ struct WorkoutDetailView: View {
         }
     }
 
+    /// The highest tier any completed set of this exercise reached.
+    ///
+    /// Best set rather than last: the review is a record of what was achieved,
+    /// and a light back-off set after a heavy top set should not lower it.
+    private func bestTier(for exercise: WorkoutExercise) -> StrengthTier? {
+        let ranks = exercise.sets.compactMap { set -> StrengthRank? in
+            guard set.weight > 0, set.reps > 0 else { return nil }
+            return StrengthLevelService.shared.rank(
+                exerciseId: exercise.exercise.id,
+                weight: set.weight,
+                reps: set.reps
+            )
+        }
+        // StrengthTier is Comparable, ordered bronze upward.
+        return ranks.map(\.tier).max()
+    }
+
     private func exerciseCard(exercise: WorkoutExercise, index: Int) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             DisclosureGroup {
@@ -397,6 +414,16 @@ struct WorkoutDetailView: View {
                         .accessibilityLabel("Show details for \(exercise.exercise.name)")
 
                         Spacer()
+
+                        // The tier this exercise's best set earned.
+                        //
+                        // Tiers lived on the profile and in the exercise detail
+                        // sheet only, so reviewing a workout never showed what
+                        // the work was worth — the one screen a lifter opens
+                        // afterwards to see how it went.
+                        if let tier = bestTier(for: exercise) {
+                            StrengthTierBadge(tier: tier, size: .small)
+                        }
 
                         Text("\(exercise.sets.count) sets")
                             .font(Theme.fontCaption)

@@ -235,6 +235,23 @@ final class WorkoutLoggerViewModel {
 
     // MARK: - Workout Lifecycle
 
+    /// Starts the once-a-second clock, replacing any previous one.
+    private func startSessionTicker() {
+        sessionTicker?.invalidate()
+        sessionTicker = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                guard let self else { return }
+                self.tickRestTimer()
+                self.tickLiveActivity()
+            }
+        }
+    }
+
+    private func stopSessionTicker() {
+        sessionTicker?.invalidate()
+        sessionTicker = nil
+    }
+
     func startWorkout(name: String, userId: String = "") {
         // Ask the Garmin to come to the front. It prompts on the watch rather
         // than launching silently — Garmin's design — but that beats expecting
@@ -252,6 +269,7 @@ final class WorkoutLoggerViewModel {
         errorMessage = nil
         activeUserId = userId
         workoutId = UUID().uuidString
+        startSessionTicker()
         newPR = nil
         activeCelebration = nil
         sessionPRs = []
@@ -664,6 +682,30 @@ final class WorkoutLoggerViewModel {
     func removeExercise(at index: Int) {
         guard exercises.indices.contains(index) else { return }
         exercises.remove(at: index)
+
+        // Keep the cursor somewhere real. Removing the focused exercise left
+        // `focusExerciseIndex` pointing at whatever slid into that slot, or one
+        // past the end when it was the last one.
+        if focusExerciseIndex >= exercises.count {
+            focusExerciseIndex = max(exercises.count - 1, 0)
+        }
+        focusSetIndex = 0
+
+        updateLiveActivity()
+        saveActiveSession(force: true)
+    }
+
+    /// Swaps what an exercise *is*, keeping its position and set count.
+    ///
+    /// For "I picked the wrong machine". Removing and re-adding would send it
+    /// to the end of the workout and throw away the sets already configured for
+    /// it — the lifter wants the same slot, doing something else.
+    ///
+    /// Completed sets are kept: they were performed, and silently deleting
+    /// logged work is worse than a workout listing a swapped exercise.
+    func replaceExercise(at index: Int, with exercise: Exercise) {
+        guard exercises.indices.contains(index) else { return }
+        exercises[index].exercise = exercise
         updateLiveActivity()
         saveActiveSession(force: true)
     }
@@ -1491,6 +1533,14 @@ final class WorkoutLoggerViewModel {
     /// Timestamp when the rest timer was started — used to survive background suspension.
     private var restTimerStartDate: Date?
 
+    /// Drives the rest countdown and the watch pushes once a second.
+    ///
+    /// This used to live on `ActiveWorkoutView`, so it stopped the moment the
+    /// lifter looked at any other screen — the watch then showed whatever it
+    /// was last told, which is why its numbers lagged the phone. The workout
+    /// outlives any one view, so its clock has to as well.
+    private var sessionTicker: Timer?
+
     /// Whole second the countdown haptic last fired for, or nil when nothing has
     /// fired for the current rest period. `0` means the end-of-rest alarm has
     /// already played.
@@ -2028,6 +2078,15 @@ final class WorkoutLoggerViewModel {
     }
 
     private func endLiveActivity() {
+        stopSessionTicker()
+
+        // Both watches first, and outside the guard below. They are not the
+        // Live Activity's business, and hanging this off it meant a lifter with
+        // Live Activities disabled left the watch running a workout that had
+        // already finished.
+        WatchSyncService.shared.sendWorkoutEnded()
+        GarminSyncService.shared.sendWorkoutEnded()
+
         guard let activity = liveActivity else { return }
         let finalState = XomfitWidgetAttributes.ContentState(
             elapsedSeconds: Int(duration),
