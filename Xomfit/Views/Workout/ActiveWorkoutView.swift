@@ -328,13 +328,10 @@ struct ActiveWorkoutView: View {
             }
         }
         #endif
-        .onReceive(timer) { _ in
-            // Rest haptics (5s of ticks, then the alarm at zero) are owned by
-            // `tickRestTimer` now. They used to live here as a single buzz at
-            // zero, which meant they were tied to this view being on screen.
-            viewModel.tickRestTimer()
-            viewModel.tickLiveActivity()
-        }
+        // No tick here any more. The view model owns a Timer for the life of
+        // the workout, because this one stopped the moment the lifter looked at
+        // another screen — taking the rest countdown and every watch update
+        // with it, which is why the watch's numbers lagged the phone.
         .onChange(of: viewModel.isRestTimerActive) { _, isActive in
             if isActive {
                 pendingScrollIndex = viewModel.focusExerciseIndex

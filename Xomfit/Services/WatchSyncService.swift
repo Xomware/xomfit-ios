@@ -101,6 +101,20 @@ final class WatchSyncService {
 
     // MARK: - Inbound (watch -> iOS)
 
+    /// Tells the watch the workout is over, so it stops showing one.
+    func sendWorkoutEnded() {
+        guard WCSession.isSupported() else { return }
+        let session = WCSession.default
+        guard session.activationState == .activated else { return }
+
+        let message: [String: Any] = ["workoutEnded": true]
+        if session.isReachable {
+            session.sendMessage(message, replyHandler: nil, errorHandler: nil)
+        } else {
+            session.transferUserInfo(message)
+        }
+    }
+
     /// Minimum gap between two accepted `doneSet` events. WCSession will
     /// occasionally deliver the same message twice (once via `sendMessage`
     /// and once via `transferUserInfo` fallback) — without dedup we'd

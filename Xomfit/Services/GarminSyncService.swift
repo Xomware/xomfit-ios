@@ -279,6 +279,26 @@ final class GarminSyncService: NSObject {
         )
     }
 
+    /// Tells the watch the workout is over.
+    ///
+    /// Without this the Garmin kept showing the last state it was sent and kept
+    /// its own activity recording running after the lifter finished on the
+    /// phone — there was no message that meant "stopped", only ones that meant
+    /// "here is the current set".
+    ///
+    /// Sent reliably rather than transient: a dropped end message leaves the
+    /// watch stuck in a workout that no longer exists, which is worse than a
+    /// late one.
+    func sendWorkoutEnded() {
+        guard let app, isWatchReady else { return }
+        ConnectIQ.sharedInstance().sendMessage(
+            ["workoutEnded": true],
+            to: app,
+            progress: nil,
+            completion: { _ in }
+        )
+    }
+
     /// How many upcoming exercise names travel to the watch.
     private static let upNextLimit = 6
     /// How many plan rows travel. Longer sessions than this exist; the watch
