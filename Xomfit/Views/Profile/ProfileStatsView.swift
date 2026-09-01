@@ -76,6 +76,16 @@ struct ProfileStatsView: View {
                     isOwnProfile: userId != nil
                 )
             }
+
+            // How many lifts sit in each tier, and what moves them up. The
+            // ranks list above answers "what am I"; this answers "how many of
+            // each" and "what is closest", which the profile could not say.
+            //
+            // Own profile only: it is computed from personal records, which are
+            // not readable for anyone else.
+            if userId != nil {
+                TierBreakdownSection(personalRecords: allPRs)
+            }
             BadgesSection(
                 workouts: workouts,
                 firstPRDate: firstPRDate,

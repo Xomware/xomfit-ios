@@ -24,6 +24,11 @@ struct SettingsView: View {
 
     @AppStorage("weightUnit") private var weightUnitRaw: String = WeightUnit.lbs.rawValue
     @AppStorage("restDuration") private var restDurationSeconds: Double = 90
+    /// "", "yes" or "no". Set by the prompt shown before a workout starts, and
+    /// until now settable nowhere else — answering "no" once turned warmups off
+    /// permanently with no way back.
+    @AppStorage("warmupOptIn") private var warmupOptIn: String = ""
+    @AppStorage("warmupMinutes") private var warmupMinutes: Int = 6
     /// 0 = Sunday, 1 = Monday.
     @AppStorage("weekStartDay") private var weekStartDay: Int = 0
     /// "" = system, "light", "dark".
@@ -401,6 +406,48 @@ struct SettingsView: View {
                 }
                 .accessibilityLabel("Default rest duration")
                 .accessibilityValue(formatRest(restDurationSeconds))
+            }
+
+            // Warm-ups. Three states rather than a toggle, because "not asked
+            // yet" is meaningfully different from "no" — Ask keeps the prompt
+            // before each workout, which is what a lifter who has not decided
+            // wants.
+            HStack(spacing: Theme.Spacing.md) {
+                Image(systemName: "figure.cooldown")
+                    .frame(width: Theme.Spacing.lg)
+                    .foregroundStyle(Theme.accent)
+                Text("Warm-ups")
+                    .foregroundStyle(Theme.textPrimary)
+                Spacer()
+                Picker("Warm-ups", selection: $warmupOptIn) {
+                    Text("Ask").tag("")
+                    Text("On").tag("yes")
+                    Text("Off").tag("no")
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 160)
+                .accessibilityLabel("Warm-ups before a workout")
+            }
+
+            if warmupOptIn != "no" {
+                HStack(spacing: Theme.Spacing.md) {
+                    Image(systemName: "clock")
+                        .frame(width: Theme.Spacing.lg)
+                        .foregroundStyle(Theme.accent)
+                    Stepper(value: $warmupMinutes, in: 3...20, step: 1) {
+                        HStack {
+                            Text("Warm-up length")
+                                .foregroundStyle(Theme.textPrimary)
+                            Spacer()
+                            Text("\(warmupMinutes) min")
+                                .font(Theme.fontCaption)
+                                .foregroundStyle(Theme.textTertiary)
+                                .monospacedDigit()
+                        }
+                    }
+                    .accessibilityLabel("Warm-up length")
+                    .accessibilityValue("\(warmupMinutes) minutes")
+                }
             }
 
             // Week start day

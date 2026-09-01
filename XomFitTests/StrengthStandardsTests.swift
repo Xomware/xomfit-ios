@@ -207,7 +207,7 @@ final class StrengthStandardsTests: XCTestCase {
         let prompt = rank?.nextTierPrompt
         XCTAssertNotNil(prompt)
         // 250 lb Gold threshold minus the current 225 e1RM.
-        XCTAssertEqual(prompt, "25 lb from Gold")
+        XCTAssertEqual(prompt, "25 lb of est. 1RM from Gold")
     }
 
     // MARK: - Distribution

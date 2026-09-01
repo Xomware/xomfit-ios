@@ -372,7 +372,10 @@ struct WorkoutCategoryListView: View {
         // Only an explicit "always warm up" still interrupts. Asking by
         // default put a dialog in front of every session start; the offer now
         // lives inside the workout instead. Mirrors `WorkoutView`.
-        if warmupOptIn == "yes" {
+        // "" means the lifter has not been asked, and used to fall through to
+        // starting with no warmup and no prompt -- so a warmup only ever
+        // happened if they had already said yes somewhere else.
+        if warmupOptIn != "no" {
             showWarmup = true
         } else {
             runPendingStartImmediately()
