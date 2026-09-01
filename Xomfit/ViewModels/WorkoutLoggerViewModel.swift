@@ -4,6 +4,12 @@ import SwiftUI
 struct RemainingExercise: Identifiable {
     let index: Int
     let name: String
+    /// Sets already resolved, and how many there are in total.
+    ///
+    /// Carried so the "choose different" rows can say how much of each is left.
+    /// A bare list of names says nothing about which one is half-finished.
+    var setsDone: Int = 0
+    var setsTotal: Int = 0
     var id: Int { index }
 }
 
@@ -866,7 +872,15 @@ final class WorkoutLoggerViewModel {
                 remainingExercises = exercises.enumerated().compactMap { idx, ex in
                     guard idx != exerciseIndex,
                           ex.sets.contains(where: { $0.isPending }) else { return nil }
-                    return RemainingExercise(index: idx, name: ex.exercise.name)
+                    return RemainingExercise(
+                        index: idx,
+                        name: ex.exercise.name,
+                        // Resolved, not completed: a skipped set is decided, and
+                        // a count that never fills because of one skip is wrong
+                        // about the thing it exists to show.
+                        setsDone: ex.sets.filter { !$0.isPending }.count,
+                        setsTotal: ex.sets.count
+                    )
                 }
 
                 // Suppress the transition card in these cases:
@@ -1026,6 +1040,45 @@ final class WorkoutLoggerViewModel {
 
     /// Convenience: group `exerciseIndex` with the next exercise in the list, or
     /// (if it already has a group) ungroup the entire group.
+    /// Groups an exercise with any other, not just the one after it.
+    ///
+    /// "Group with next" is the common case and stays its own entry point, but
+    /// a superset is a pairing the lifter chooses — the exercise they want is
+    /// often not the one that happens to be next in the list, and reordering
+    /// the whole workout to make it adjacent is a poor way to say so.
+    ///
+    /// Joining an exercise that is already in a group adds to that group rather
+    /// than starting a second one, which is what "superset these two" means
+    /// when one of them is already paired with something.
+    func groupSuperset(exerciseIndex: Int, with otherIndex: Int) {
+        guard exerciseIndex != otherIndex,
+              exercises.indices.contains(exerciseIndex),
+              exercises.indices.contains(otherIndex) else { return }
+
+        if let existing = exercises[otherIndex].supersetGroupId {
+            exercises[exerciseIndex].supersetGroupId = existing
+            return
+        }
+        if let existing = exercises[exerciseIndex].supersetGroupId {
+            exercises[otherIndex].supersetGroupId = existing
+            return
+        }
+        toggleSuperset(exerciseIndices: [exerciseIndex, otherIndex])
+    }
+
+    /// Exercises that can be superset with this one: everything else in the
+    /// session that is not already grouped with it.
+    func supersetCandidates(for exerciseIndex: Int) -> [Int] {
+        guard exercises.indices.contains(exerciseIndex) else { return [] }
+        let ownGroup = exercises[exerciseIndex].supersetGroupId
+        return exercises.indices.filter { index in
+            guard index != exerciseIndex else { return false }
+            // Already in the same group, so pairing them again is a no-op.
+            if let ownGroup, exercises[index].supersetGroupId == ownGroup { return false }
+            return true
+        }
+    }
+
     func toggleSupersetWithNext(exerciseIndex: Int) {
         guard exercises.indices.contains(exerciseIndex) else { return }
 
@@ -1545,6 +1598,12 @@ final class WorkoutLoggerViewModel {
     func extendRestTimer(_ seconds: Double = 30) {
         restTimeRemaining += seconds
         restDuration += seconds
+        // Move the background alerts with it. They used to stay where they
+        // were, so +30s announced "rest's up" thirty seconds early and then
+        // said nothing at the actual end.
+        NotificationService.shared.rescheduleRestTimerNotification(
+            workoutId: workoutId, remaining: restTimeRemaining
+        )
         // +30s from an already-elapsed timer must be able to alarm again.
         lastRestHapticSecond = nil
         updateLiveActivity()

@@ -10,6 +10,7 @@ struct WorkoutFocusView: View {
     @FocusState private var weightFieldFocused: Bool
     @FocusState private var repsFieldFocused: Bool
     @State private var showExercisePicker = false
+    @State private var showSupersetPicker = false
     /// Minimized rest-timer state lives on the VM (#409) so the header chip
     /// in `ActiveWorkoutView` can tap-to-expand the fullscreen overlay. Local
     /// `@State` is gone — read/write through `viewModel.isRestTimerMinimized`.
@@ -199,6 +200,12 @@ struct WorkoutFocusView: View {
                     .accessibilityLabel(viewModel.isPaused ? "Resume workout" : "Pause workout")
                 }
             }
+        }
+        .sheet(isPresented: $showSupersetPicker) {
+            SupersetPickerSheet(
+                viewModel: viewModel,
+                exerciseIndex: viewModel.focusExerciseIndex
+            )
         }
         .sheet(isPresented: $showExercisePicker) {
             ExercisePickerView { exercise in
@@ -404,6 +411,21 @@ struct WorkoutFocusView: View {
         let lastSet = exercise.sets.last
 
         Menu {
+            // Focus mode had no way to superset at all -- grouping lived only
+            // on the list screen, and only as "group with the next exercise".
+            Button {
+                dismissKeyboard()
+                Haptics.light()
+                showSupersetPicker = true
+            } label: {
+                Label(
+                    viewModel.supersetMembers(forExercise: viewModel.focusExerciseIndex) == nil
+                        ? "Superset with…"
+                        : "Add to Superset…",
+                    systemImage: "link"
+                )
+            }
+
             // PR - use personal record weight and reps exactly as achieved
             if let pr = prSet, pr.weight > 0 {
                 Button {

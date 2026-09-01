@@ -14,6 +14,7 @@
 		3AD31D27EAD82F60EE882599 /* AnimationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 325D34C169BA7253ADECB318 /* AnimationTests.swift */; };
 		4361874E4BAC7BF8E4D6AAAD /* NumberEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F598AFE9ECEBE9D1CE5C308 /* NumberEntryView.swift */; };
 		4B29E29052245B3988552687 /* HealthKitTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29F23492F5F635F00683551 /* HealthKitTests.swift */; };
+		559876733DC9EF573203A679 /* SupersetPairingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E678B524FF56A6D502AF09B9 /* SupersetPairingTests.swift */; };
 		59CED2BB74729F6E6D6C8417 /* StrengthStandardsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D34B74E81225372EA6F7B954 /* StrengthStandardsTests.swift */; };
 		5C2AA90AE5A46AC33FE64E38 /* WatchSessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC49DBCE1EDC7F48166EC8AE /* WatchSessionStore.swift */; };
 		6A1EEF09B2A9B65EF5378D3E /* ExerciseMuscleDiagramTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 568B93ED9CB6F96BE8E258E3 /* ExerciseMuscleDiagramTests.swift */; };
@@ -123,6 +124,7 @@
 		CD26A680A84D010B4E4BE32D /* WatchPushCadenceTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchPushCadenceTests.swift; sourceTree = "<group>"; };
 		D34B74E81225372EA6F7B954 /* StrengthStandardsTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = StrengthStandardsTests.swift; sourceTree = "<group>"; };
 		E2971609F94FDA4AAE995734 /* GoalBaselineTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GoalBaselineTests.swift; sourceTree = "<group>"; };
+		E678B524FF56A6D502AF09B9 /* SupersetPairingTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SupersetPairingTests.swift; sourceTree = "<group>"; };
 		ED9BBF5A1F88959BD0A49AAC /* XomfitTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = XomfitTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		F29F21312F5F61DC00683551 /* Xomfit.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Xomfit.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F29F22FD2F5F635F00683551 /* CHALLENGES_SCHEMA.sql */ = {isa = PBXFileReference; lastKnownFileType = text; path = CHALLENGES_SCHEMA.sql; sourceTree = "<group>"; };
@@ -575,6 +577,7 @@
 				827732DA0E95EA020F612BD9 /* ExerciseInstructionCoverageTests.swift */,
 				CD26A680A84D010B4E4BE32D /* WatchPushCadenceTests.swift */,
 				7A54992A7EDE7FAD21BF67DA /* WatchPlanWireTests.swift */,
+				E678B524FF56A6D502AF09B9 /* SupersetPairingTests.swift */,
 			);
 			path = XomFitTests;
 			sourceTree = "<group>";
@@ -787,6 +790,7 @@
 				A3EB3EBF73EB4B4E8164340D /* ExerciseInstructionCoverageTests.swift in Sources */,
 				A9B85412F08C856A8AE144EF /* WatchPushCadenceTests.swift in Sources */,
 				8871273448C50A5179D656C7 /* WatchPlanWireTests.swift in Sources */,
+				559876733DC9EF573203A679 /* SupersetPairingTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -178,6 +178,11 @@ final class NotificationService {
         content.title = "Rest's up"
         content.body = "Rest done! Time to lift 💪"
         content.sound = .default
+        // Time-sensitive so it survives a Focus mode. A gym is exactly where
+        // Do Not Disturb is on, and this is the one alert that is useless a
+        // minute late -- a normal notification was being silently held back at
+        // the only moment it mattered.
+        content.interruptionLevel = .timeSensitive
         content.userInfo = ["type": "rest_complete", "workout_id": workoutId]
 
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: duration, repeats: false)
@@ -188,15 +193,65 @@ final class NotificationService {
                 print("[NotificationService] Failed to schedule rest notification: \(error.localizedDescription)")
             }
         }
+
+        scheduleRestLeadIn(workoutId: workoutId, duration: duration)
     }
+
+    /// A warning buzz a few seconds before rest ends.
+    ///
+    /// The in-app countdown ticks through the final seconds, but those run on a
+    /// timer that stops the moment the app is backgrounded -- which is where
+    /// the lifter actually is, phone in a bag. Only a scheduled notification
+    /// fires then, so the lead-in has to be its own scheduled alert rather than
+    /// part of the same one.
+    ///
+    /// Skipped when rest is shorter than the lead-in: an immediate "get ready"
+    /// followed straight away by "go" is noise.
+    private func scheduleRestLeadIn(workoutId: String, duration: TimeInterval) {
+        let identifier = restLeadInIdentifier(for: workoutId)
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [identifier])
+
+        let leadIn = duration - Self.restLeadInSeconds
+        guard leadIn > 1 else { return }
+
+        let content = UNMutableNotificationContent()
+        content.title = "Almost up"
+        content.body = "\(Int(Self.restLeadInSeconds)) seconds — get set"
+        content.sound = .default
+        content.interruptionLevel = .timeSensitive
+        content.userInfo = ["type": "rest_lead_in", "workout_id": workoutId]
+
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: leadIn, repeats: false)
+        UNUserNotificationCenter.current().add(
+            UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
+        )
+    }
+
+    /// How long before the end the warning fires. Matches the in-app countdown
+    /// ticks so backgrounded and foregrounded feel like the same timer.
+    static let restLeadInSeconds: TimeInterval = 5
 
     /// Cancel the pending rest-timer notification for a workout. Safe to call
     /// when none is pending — UNUserNotificationCenter no-ops on unknown ids.
     func cancelRestTimerNotification(workoutId: String) {
-        let identifier = restIdentifier(for: workoutId)
-        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [identifier])
-        // Also clear it from the delivered tray when natural completion just fired.
-        UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: [identifier])
+        let ids = [restIdentifier(for: workoutId), restLeadInIdentifier(for: workoutId)]
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ids)
+        // Also clear them from the delivered tray when natural completion just fired.
+        UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: ids)
+    }
+
+    /// Moves the alerts to a new end time.
+    ///
+    /// Extending rest used to leave the notification where it was, so +30s
+    /// meant the phone announced "rest's up" thirty seconds early and then said
+    /// nothing at the actual end.
+    func rescheduleRestTimerNotification(workoutId: String, remaining: TimeInterval) {
+        cancelRestTimerNotification(workoutId: workoutId)
+        scheduleRestTimerNotification(workoutId: workoutId, duration: remaining)
+    }
+
+    private func restLeadInIdentifier(for workoutId: String) -> String {
+        Self.restNotifPrefix + "leadin-" + workoutId
     }
 
     private func restIdentifier(for workoutId: String) -> String {
