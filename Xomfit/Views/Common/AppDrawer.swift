@@ -47,11 +47,19 @@ enum AppDestination: String, Identifiable, Hashable {
     /// Progress and Profile are one tap away on the tab bar, and listing them
     /// again made the sheet read as a second, competing navigation system.
     enum Section: CaseIterable {
+        case main
         case training
         case account
 
+        /// The drawer lists everything, including the four tab destinations.
+        ///
+        /// It used to hold only what the tab bar left out, so "where do I find
+        /// X" had two answers depending on which half X landed in — and the tab
+        /// bar hides itself while scrolling, leaving no visible way to anything.
+        /// One menu that contains the whole app is a menu you can trust.
         var destinations: [AppDestination] {
             switch self {
+            case .main:     [.feed, .workout, .progress, .profile]
             case .training: [.stretches, .stats]
             case .account:  [.settings]
             }
