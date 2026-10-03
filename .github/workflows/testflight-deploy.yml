@@ -15,8 +15,17 @@ jobs:
     name: Build & Upload to TestFlight
     runs-on: macos-26
     timeout-minutes: 60
+    permissions:
+      id-token: write # read secrets from Infisical
+      contents: read
 
     steps:
+      - uses: Xomware/github-actions/actions/load-infisical-secrets@v1
+        with:
+          path: /shared
+      - uses: Xomware/github-actions/actions/load-infisical-secrets@v1
+        with:
+          path: /xomfit
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
@@ -29,8 +38,8 @@ jobs:
 
       - name: Generate Config.swift
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_URL: ${{ env.IOS_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ env.IOS_SUPABASE_ANON_KEY }}
         run: |
           cat > Xomfit/Config.swift <<EOF
           import Foundation
@@ -60,8 +69,8 @@ jobs:
 
       - name: Write App Store Connect API key
         env:
-          ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
-          ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
+          ASC_API_KEY_P8: ${{ env.ASC_API_KEY_P8 }}
+          ASC_API_KEY_ID: ${{ env.ASC_API_KEY_ID }}
         run: |
           mkdir -p ~/.appstoreconnect/private_keys
           # Accept either raw PEM or base64-encoded; auto-detect.
@@ -107,8 +116,8 @@ jobs:
       - name: Free Apple Development cert slot (revoke oldest if at limit)
         continue-on-error: true
         env:
-          ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
-          ASC_API_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
+          ASC_API_KEY_ID: ${{ env.ASC_API_KEY_ID }}
+          ASC_API_ISSUER_ID: ${{ env.ASC_API_ISSUER_ID }}
         run: |
           python3 <<'PY'
           import os, sys, time, jwt, requests
@@ -146,8 +155,8 @@ jobs:
 
       - name: Archive
         env:
-          ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
-          ASC_API_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
+          ASC_API_KEY_ID: ${{ env.ASC_API_KEY_ID }}
+          ASC_API_ISSUER_ID: ${{ env.ASC_API_ISSUER_ID }}
         run: |
           set -o pipefail
           xcodebuild archive \
@@ -166,7 +175,7 @@ jobs:
 
       - name: Create ExportOptions.plist
         env:
-          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          TEAM_ID: ${{ env.APPLE_TEAM_ID }}
         run: |
           cat > "$RUNNER_TEMP/ExportOptions.plist" <<PLIST
           <?xml version="1.0" encoding="UTF-8"?>
@@ -191,8 +200,8 @@ jobs:
 
       - name: Export IPA
         env:
-          ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
-          ASC_API_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
+          ASC_API_KEY_ID: ${{ env.ASC_API_KEY_ID }}
+          ASC_API_ISSUER_ID: ${{ env.ASC_API_ISSUER_ID }}
         run: |
           set -o pipefail
           xcodebuild -exportArchive \
@@ -206,8 +215,8 @@ jobs:
 
       - name: Upload to TestFlight
         env:
-          ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
-          ASC_API_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
+          ASC_API_KEY_ID: ${{ env.ASC_API_KEY_ID }}
+          ASC_API_ISSUER_ID: ${{ env.ASC_API_ISSUER_ID }}
         run: |
           IPA_PATH=$(find "$RUNNER_TEMP/export" -name "*.ipa" | head -1)
           echo "Uploading: $IPA_PATH"
@@ -219,8 +228,8 @@ jobs:
 
       - name: Assign build to TestFlight groups
         env:
-          ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
-          ASC_API_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
+          ASC_API_KEY_ID: ${{ env.ASC_API_KEY_ID }}
+          ASC_API_ISSUER_ID: ${{ env.ASC_API_ISSUER_ID }}
           BUNDLE_ID: com.Xomware.Xomfit
           BUILD_NUMBER: ${{ steps.version.outputs.build }}
           BETA_GROUPS: 'Beta,Beta Friends'
