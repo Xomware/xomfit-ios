@@ -1672,9 +1672,7 @@ private struct ExerciseCard: View {
             },
             lateralityLabel: exercise.selectedLaterality != .bilateral ? (exercise.exercise.muscleGroups.contains(where: { [.quads, .hamstrings, .glutes, .calves].contains($0) }) ? "/leg" : "/arm") : nil,
             lastSet: viewModel.lastSetHint(exerciseIndex: exerciseIndex, setIndex: setIdx),
-            previousSet: viewModel.previousSet(
-                forExercise: exercise.exercise.id, setIndex: setIdx
-            ),
+            previousSet: viewModel.previousSet(exerciseIndex: exerciseIndex, setIndex: setIdx),
             personalRecord: viewModel.personalRecordForExercise(exercise.exercise.id),
             isCurrentSet: isCurrentSet
         )

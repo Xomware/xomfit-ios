@@ -12,6 +12,7 @@
 		175D9C785D217A06EBCC6054 /* XomfitWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F3CBFE99B6D75BC1136FCB9 /* XomfitWatchApp.swift */; };
 		2652623F55494AE501D17728 /* AuthServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7B33E534C5D4F6F4A221677 /* AuthServiceTests.swift */; };
 		284A5F0B50AD134023D0B30C /* EstimatedMaxInverseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF919491E135D95E05E0CC27 /* EstimatedMaxInverseTests.swift */; };
+		2B583FB10F98F05BD2264B97 /* SetPrefillTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4ADF606A8539CC86944E51AB /* SetPrefillTests.swift */; };
 		33BF9460FA3689B72A976DE6 /* TierConsistencyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3883628571952010C9F9B667 /* TierConsistencyTests.swift */; };
 		3AD31D27EAD82F60EE882599 /* AnimationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 325D34C169BA7253ADECB318 /* AnimationTests.swift */; };
 		4361874E4BAC7BF8E4D6AAAD /* NumberEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F598AFE9ECEBE9D1CE5C308 /* NumberEntryView.swift */; };
@@ -110,6 +111,7 @@
 		37E1F812E63DCA86C4966EEE /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		3883628571952010C9F9B667 /* TierConsistencyTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TierConsistencyTests.swift; sourceTree = "<group>"; };
 		473EB31945A7063B399BD147 /* WatchWorkoutSessionManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchWorkoutSessionManager.swift; sourceTree = "<group>"; };
+		4ADF606A8539CC86944E51AB /* SetPrefillTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SetPrefillTests.swift; sourceTree = "<group>"; };
 		4F8269C3E626F9E0F867A286 /* ProgressiveOverloadEngineTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ProgressiveOverloadEngineTests.swift; sourceTree = "<group>"; };
 		50574B785553CFAF12535276 /* AuthValidationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AuthValidationTests.swift; sourceTree = "<group>"; };
 		568B93ED9CB6F96BE8E258E3 /* ExerciseMuscleDiagramTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ExerciseMuscleDiagramTests.swift; sourceTree = "<group>"; };
@@ -316,6 +318,7 @@
 				C84C61FE8D97D6A6F27FDF87 /* TrainingNudgeTests.swift */,
 				E2971609F94FDA4AAE995734 /* GoalBaselineTests.swift */,
 				F679CA7346950355AE957485 /* WorkoutSkipCursorTests.swift */,
+				4ADF606A8539CC86944E51AB /* SetPrefillTests.swift */,
 			);
 			path = XomfitTests;
 			sourceTree = "<group>";
@@ -803,6 +806,7 @@
 				CD06CC05B68AFF64FE066C6F /* ExerciseEditingTests.swift in Sources */,
 				284A5F0B50AD134023D0B30C /* EstimatedMaxInverseTests.swift in Sources */,
 				33BF9460FA3689B72A976DE6 /* TierConsistencyTests.swift in Sources */,
+				2B583FB10F98F05BD2264B97 /* SetPrefillTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
