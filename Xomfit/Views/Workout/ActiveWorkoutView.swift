@@ -280,10 +280,11 @@ struct ActiveWorkoutView: View {
         // Post-workout recap. Presented from here rather than the finish sheet
         // because the finish sheet dismisses itself on save; and it owns the
         // teardown, so the workout stays alive until the lifter taps Done.
-        .sheet(item: $viewModel.lastSummary) { summary in
+        // onDismiss covers swipe-down too, which would otherwise strand the
+        // lifter on an empty, already-saved workout.
+        .sheet(item: $viewModel.lastSummary, onDismiss: { dismiss() }) { summary in
             WorkoutSummarySheet(summary: summary) {
                 viewModel.lastSummary = nil
-                dismiss()
             }
         }
         // Exercise-transition card — same reasoning as the rest bar. Finishing

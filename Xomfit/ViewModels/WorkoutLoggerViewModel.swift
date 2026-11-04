@@ -311,6 +311,13 @@ final class WorkoutLoggerViewModel {
     }
 
     func discardWorkout() {
+        endSession()
+        isPresented = false
+    }
+
+    /// Clears session state but leaves the cover up. Finishing uses this so the
+    /// summary sheet, which is presented from the cover, survives until Done (#513).
+    func endSession() {
         // End the Live Activity for the in-memory session AND any stale activity
         // started in a previous launch (#399). Use the global activities list so
         // discards from a restored-but-rejected session also clean up.
@@ -330,7 +337,6 @@ final class WorkoutLoggerViewModel {
         workoutName = ""
         exercises = []
         isActive = false
-        isPresented = false
         isSaving = false
         errorMessage = nil
         newPR = nil
@@ -2680,7 +2686,7 @@ final class WorkoutLoggerViewModel {
 
             // Only discard local state after successful save
             isSaving = false
-            discardWorkout()
+            endSession()
         } catch {
             errorMessage = error.localizedDescription
             isSaving = false
