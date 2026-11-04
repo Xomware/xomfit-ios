@@ -269,6 +269,7 @@ final class WorkoutLoggerViewModel {
         errorMessage = nil
         activeUserId = userId
         workoutId = UUID().uuidString
+        cachedHistory = nil
         startSessionTicker()
         newPR = nil
         activeCelebration = nil
@@ -379,30 +380,14 @@ final class WorkoutLoggerViewModel {
 
         var builtExercises: [WorkoutExercise] = []
         for templateExercise in template.exercises {
-            let lastSet = lastSetForExercise(templateExercise.exercise.id)
-            let prefillWeight = lastSet?.weight ?? 0
-            let prefillReps = lastSet?.reps ?? 0
-
-            var sets: [WorkoutSet] = []
-            for _ in 0..<templateExercise.targetSets {
-                sets.append(WorkoutSet(
-                    id: UUID().uuidString,
-                    exerciseId: templateExercise.exercise.id,
-                    weight: prefillWeight,
-                    reps: prefillReps,
-                    rpe: nil,
-                    isPersonalRecord: false,
-                    completedAt: Date.distantPast
-                ))
-            }
-
             var we = WorkoutExercise(
                 id: UUID().uuidString,
                 exercise: templateExercise.exercise,
-                sets: sets,
+                sets: [],
                 notes: templateExercise.notes
             )
             we.selectedLaterality = templateExercise.exercise.defaultLaterality
+            we.sets = prefilledSets(for: we, count: templateExercise.targetSets)
             we.restSeconds = templateExercise.restSeconds
             // Carry the template's superset grouping into the live workout (#344).
             we.supersetGroupId = templateExercise.supersetGroupId
@@ -524,51 +509,66 @@ final class WorkoutLoggerViewModel {
     // MARK: - Exercise Management
 
     func addExercise(_ exercise: Exercise) {
-        // Look up last workout's weight/reps for this exercise
-        let lastSet = lastSetForExercise(exercise.id)
-        let prefillWeight = lastSet?.weight ?? 0
-        let prefillReps = lastSet?.reps ?? 0
-
-        let defaultSetCount = 3
-        var sets: [WorkoutSet] = []
-        for _ in 0..<defaultSetCount {
-            sets.append(WorkoutSet(
-                id: UUID().uuidString,
-                exerciseId: exercise.id,
-                weight: prefillWeight,
-                reps: prefillReps,
-                rpe: nil,
-                isPersonalRecord: false,
-                completedAt: Date.distantPast
-            ))
-        }
-
         var workoutExercise = WorkoutExercise(
             id: UUID().uuidString,
             exercise: exercise,
-            sets: sets,
+            sets: [],
             notes: nil
         )
         workoutExercise.selectedLaterality = exercise.defaultLaterality
+        workoutExercise.sets = prefilledSets(for: workoutExercise, count: 3)
         exercises.append(workoutExercise)
         updateLiveActivity()
         saveActiveSession(force: true)
     }
 
-    /// Find the most recent set for an exercise from workout history.
-    /// Public for use by `SetRowView` PR-aware suggestions (#250).
-    func lastSetForExercise(_ exerciseId: String) -> WorkoutSet? {
-        guard !activeUserId.isEmpty else { return nil }
-        let workouts = WorkoutService.shared.fetchWorkoutsFromCache(userId: activeUserId)
-        for workout in workouts {
-            if let workoutExercise = workout.exercises.first(where: { $0.exercise.id == exerciseId }),
-               let bestSet = workoutExercise.sets
-                .filter({ $0.completedAt != Date.distantPast && !$0.isDropSet })
-                .max(by: { $0.weight < $1.weight }) {
-                return bestSet
-            }
+    /// New sets carrying last session's numbers for this exact variant, set by
+    /// set. This used to stamp the heaviest set from last time onto every row,
+    /// keyed by exercise id alone, so a pyramid came back as all top sets and a
+    /// rope pushdown inherited the straight-bar weight.
+    private func prefilledSets(for exercise: WorkoutExercise, count: Int) -> [WorkoutSet] {
+        let key = ExerciseVariant.key(for: exercise)
+        return (0..<count).map { ordinal in
+            let values = history.prefill(variantKey: key, ordinal: ordinal)
+            return WorkoutSet(
+                id: UUID().uuidString,
+                exerciseId: exercise.exercise.id,
+                weight: values.weight,
+                reps: values.reps,
+                isPersonalRecord: false,
+                completedAt: Date.distantPast
+            )
         }
-        return nil
+    }
+
+    /// Applies a change to what an exercise is (variant or the exercise itself)
+    /// and re-prefills the pending sets that still hold the old prefill, so
+    /// picking "Rope" after adding a pushdown swaps in rope history. Sets the
+    /// lifter has typed into or completed are left alone.
+    private func changeIdentity(exerciseIndex: Int, _ change: (inout WorkoutExercise) -> Void) {
+        guard exercises.indices.contains(exerciseIndex) else { return }
+        let oldKey = ExerciseVariant.key(for: exercises[exerciseIndex])
+        change(&exercises[exerciseIndex])
+        let newKey = ExerciseVariant.key(for: exercises[exerciseIndex])
+        guard newKey != oldKey else { return }
+
+        var ordinal = 0
+        for idx in exercises[exerciseIndex].sets.indices {
+            let set = exercises[exerciseIndex].sets[idx]
+            guard !set.isDropSet else { continue }
+            defer { ordinal += 1 }
+            let old = history.prefill(variantKey: oldKey, ordinal: ordinal)
+            guard set.isPending, set.weight == old.weight, set.reps == old.reps else { continue }
+            let new = history.prefill(variantKey: newKey, ordinal: ordinal)
+            exercises[exerciseIndex].sets[idx].weight = new.weight
+            exercises[exerciseIndex].sets[idx].reps = new.reps
+        }
+    }
+
+    func set(exerciseIndex: Int, setIndex: Int) -> WorkoutSet? {
+        guard exercises.indices.contains(exerciseIndex),
+              exercises[exerciseIndex].sets.indices.contains(setIndex) else { return nil }
+        return exercises[exerciseIndex].sets[setIndex]
     }
 
     /// Returns the "Last" hint value for a specific set row inside the active
@@ -604,85 +604,48 @@ final class WorkoutLoggerViewModel {
                 }
             }
         }
-        // No in-session prior set logged yet — fall back to the historical
-        // "best last-time" lookup so the row still has a useful suggestion.
-        return lastSetForExercise(exercise.exercise.id)
+        // No in-session prior set logged yet — fall back to the best set from
+        // the last session of this variant.
+        let previous = history.previousSets[ExerciseVariant.key(for: exercise)] ?? []
+        return previous.max { $0.weight < $1.weight }
     }
 
-    /// Find the highest-weight set ever performed for an exercise from cached workout history.
-    /// Tie-breaks on reps so `145×6` beats `145×5`. Used by SetRowView for PR hint + new-PR badge (#250).
+    /// Heaviest set ever performed for an exercise, tie-broken on reps so
+    /// `145×6` beats `145×5`. Drives the PR hint + new-PR badge (#250).
     func personalRecordForExercise(_ exerciseId: String) -> WorkoutSet? {
-        guard !activeUserId.isEmpty else { return nil }
-        let workouts = WorkoutService.shared.fetchWorkoutsFromCache(userId: activeUserId)
-        let allSets = workouts
-            .flatMap { $0.exercises }
-            .filter { $0.exercise.id == exerciseId }
-            .flatMap { $0.sets }
-            .filter { $0.weight > 0 && $0.reps > 0 }
-        guard !allSets.isEmpty else { return nil }
-        return allSets.max { lhs, rhs in
-            if lhs.weight != rhs.weight { return lhs.weight < rhs.weight }
-            return lhs.reps < rhs.reps
-        }
+        history.personalRecords[exerciseId]
     }
 
     // MARK: - Previous performance
 
-    /// Cached per-exercise sets from the most recent prior workout containing
-    /// that exercise. Built once per session rather than per row — the set table
-    /// asks for this on every render, and walking the full cached history for
-    /// each of ~25 rows on every keystroke is not free.
-    private var previousSessionCache: [String: [WorkoutSet]] = [:]
-    private var previousSessionCacheBuilt = false
+    /// Built lazily, once per session. Not observed: it is derived from the
+    /// workout cache, and assigning it mid-render must not invalidate the view.
+    /// It used to be built once per app launch and never reset, so after
+    /// finishing a workout the next session's "previous" column still showed
+    /// the session before it.
+    @ObservationIgnored private var cachedHistory: ExerciseHistory?
 
-    /// What the lifter did for this exercise last time, in set order.
-    ///
-    /// This is the reference column every serious tracker shows and this app has
-    /// never had: without it there is nothing on screen telling you whether
-    /// today's weight is progress, and the lifter is left to remember.
-    ///
-    /// Looks back to the most recent *previous* workout that actually contained
-    /// the exercise, not simply the last workout — skipping leg day should not
-    /// blank out the reference on your next squat session.
-    func previousSets(forExercise exerciseId: String) -> [WorkoutSet] {
-        if !previousSessionCacheBuilt { buildPreviousSessionCache() }
-        return previousSessionCache[exerciseId] ?? []
-    }
-
-    /// The matching set from last time, by position.
-    func previousSet(forExercise exerciseId: String, setIndex: Int) -> WorkoutSet? {
-        let sets = previousSets(forExercise: exerciseId)
-        guard sets.indices.contains(setIndex) else { return nil }
-        return sets[setIndex]
-    }
-
-    private func buildPreviousSessionCache() {
-        previousSessionCacheBuilt = true
-        guard !activeUserId.isEmpty else { return }
-
+    private var history: ExerciseHistory {
+        if let cachedHistory { return cachedHistory }
         // Exclude the in-progress workout, otherwise the "previous" column would
         // mirror what the lifter is typing right now.
-        let history = WorkoutService.shared
+        let workouts = activeUserId.isEmpty ? [] : WorkoutService.shared
             .fetchWorkoutsFromCache(userId: activeUserId)
             .filter { $0.id != workoutId }
-            .sorted { $0.startTime > $1.startTime }
-
-        for workout in history {
-            for loggedExercise in workout.exercises {
-                let id = loggedExercise.exercise.id
-                // First write wins: history is newest-first, so the first time an
-                // exercise appears is its most recent session.
-                guard previousSessionCache[id] == nil else { continue }
-                let performed = loggedExercise.sets.filter { $0.weight > 0 || $0.reps > 0 }
-                if !performed.isEmpty { previousSessionCache[id] = performed }
-            }
-        }
+        let built = ExerciseHistory(workouts: workouts)
+        cachedHistory = built
+        return built
     }
 
-    /// Invalidates the cache — call when history changes underneath a live session.
-    func invalidatePreviousSessionCache() {
-        previousSessionCache.removeAll()
-        previousSessionCacheBuilt = false
+    /// The working set in the same position last session, for the reference
+    /// column every serious tracker shows. Drop sets are skipped on both sides,
+    /// so a drop set last time doesn't shift every later set by one.
+    func previousSet(exerciseIndex: Int, setIndex: Int) -> WorkoutSet? {
+        guard let set = set(exerciseIndex: exerciseIndex, setIndex: setIndex), !set.isDropSet else { return nil }
+        let exercise = exercises[exerciseIndex]
+        let ordinal = exercise.sets[..<setIndex].filter { !$0.isDropSet }.count
+        let previous = history.previousSets[ExerciseVariant.key(for: exercise)] ?? []
+        return previous.indices.contains(ordinal) ? previous[ordinal] : nil
     }
 
     func removeExercise(at index: Int) {
@@ -711,7 +674,7 @@ final class WorkoutLoggerViewModel {
     /// logged work is worse than a workout listing a swapped exercise.
     func replaceExercise(at index: Int, with exercise: Exercise) {
         guard exercises.indices.contains(index) else { return }
-        exercises[index].exercise = exercise
+        changeIdentity(exerciseIndex: index) { $0.exercise = exercise }
         updateLiveActivity()
         saveActiveSession(force: true)
     }
@@ -746,23 +709,23 @@ final class WorkoutLoggerViewModel {
     // MARK: - Exercise Config (Grip / Attachment / Position)
 
     func setGrip(exerciseIndex: Int, grip: GripType) {
-        guard exercises.indices.contains(exerciseIndex) else { return }
-        exercises[exerciseIndex].selectedGrip = exercises[exerciseIndex].selectedGrip == grip ? nil : grip
+        changeIdentity(exerciseIndex: exerciseIndex) { $0.selectedGrip = $0.selectedGrip == grip ? nil : grip }
     }
 
     func setAttachment(exerciseIndex: Int, attachment: CableAttachment) {
-        guard exercises.indices.contains(exerciseIndex) else { return }
-        exercises[exerciseIndex].selectedAttachment = exercises[exerciseIndex].selectedAttachment == attachment ? nil : attachment
+        changeIdentity(exerciseIndex: exerciseIndex) {
+            $0.selectedAttachment = $0.selectedAttachment == attachment ? nil : attachment
+        }
     }
 
     func setPosition(exerciseIndex: Int, position: ExercisePosition) {
-        guard exercises.indices.contains(exerciseIndex) else { return }
-        exercises[exerciseIndex].selectedPosition = exercises[exerciseIndex].selectedPosition == position ? nil : position
+        changeIdentity(exerciseIndex: exerciseIndex) {
+            $0.selectedPosition = $0.selectedPosition == position ? nil : position
+        }
     }
 
     func setLaterality(exerciseIndex: Int, laterality: Laterality) {
-        guard exercises.indices.contains(exerciseIndex) else { return }
-        exercises[exerciseIndex].selectedLaterality = laterality
+        changeIdentity(exerciseIndex: exerciseIndex) { $0.selectedLaterality = laterality }
     }
 
     /// Update or clear the per-exercise note. Trims whitespace; treats empty strings as nil.
@@ -981,7 +944,7 @@ final class WorkoutLoggerViewModel {
     /// Only prefills sets that are:
     /// - Incomplete (completedAt == distantPast)
     /// - Not drop sets (drop sets inherit from parent, not progression)
-    /// - Have weight/reps at 0 or matching the "last" prefill (avoid overwriting user edits)
+    /// - Empty (weight and reps both 0)
     private func prefillNextSetWithProgression(
         exerciseIndex: Int,
         completedSetIndex: Int,
@@ -1001,16 +964,11 @@ final class WorkoutLoggerViewModel {
 
         guard let nextIdx = nextSetIndex else { return }
 
+        // Only fill a set that holds nothing. A set carrying last session's
+        // numbers usually equals the one just completed, and treating that as
+        // "untouched" overwrote the remembered weight with +1 rep or +5 lbs.
         let nextSet = sets[nextIdx]
-
-        // Only prefill if the set appears untouched (zeros or already matching suggestion).
-        // This avoids overwriting intentional user edits mid-workout.
-        let isUntouched = (nextSet.weight == 0 && nextSet.reps == 0)
-            || (nextSet.weight == completedWeight && nextSet.reps == completedReps)
-            || (nextSet.weight == completedWeight && nextSet.reps == completedReps + 1)
-            || (nextSet.weight == completedWeight + 5 && nextSet.reps == 8)
-
-        guard isUntouched || nextSet.weight == 0 else { return }
+        guard nextSet.weight == 0, nextSet.reps == 0 else { return }
 
         // Double-progression logic:
         // - Rep target range is typically 8-12 for hypertrophy
@@ -2399,6 +2357,7 @@ final class WorkoutLoggerViewModel {
         location = snapshot.location
         rating = snapshot.rating
         activeUserId = snapshot.activeUserId
+        cachedHistory = nil
 
         // Reset volatile state — pause + rest timer don't survive a cold launch
         // (the rest timer's wall-clock anchor is irrecoverable across kills).
