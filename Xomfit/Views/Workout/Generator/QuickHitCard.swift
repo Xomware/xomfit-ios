@@ -27,8 +27,11 @@ struct QuickHitCard: View {
                         onHit(region)
                     } label: {
                         VStack(spacing: Theme.Spacing.xs) {
+                            // SF Symbols for the four regions differ in height;
+                            // a shared frame keeps the labels on one baseline.
                             Image(systemName: region.icon)
                                 .font(.title3)
+                                .frame(height: 32)
                             Text("Hit \(region.displayName)")
                                 .font(Theme.fontCaption.weight(.semibold))
                                 .lineLimit(1)
