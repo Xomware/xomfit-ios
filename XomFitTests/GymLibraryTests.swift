@@ -29,7 +29,7 @@ final class GymLibraryTests: XCTestCase {
         reloaded.load(userId: "u1")
         XCTAssertEqual(reloaded.settings(for: leg).seat, "4")
         XCTAssertEqual(reloaded.settings(for: leg).notes, "feet high")
-        XCTAssertEqual(reloaded.settings(for: leg).summary, "Seat 4 · Handles neutral")
+        XCTAssertEqual(reloaded.settings(for: leg).summary, "Seat 4 · Handles neutral · feet high")
     }
 
     func testSettingsAreScopedPerUser() {

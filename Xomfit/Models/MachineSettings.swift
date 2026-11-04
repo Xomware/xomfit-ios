@@ -8,12 +8,11 @@ struct MachineSettings: Codable, Equatable {
     var handles = ""
     var notes = ""
 
-    /// "Seat 4 · Pad 2 · Handles neutral", or nil when nothing is set.
+    /// "Seat 4 · Handles neutral · feet high", or nil when nothing is set.
     var summary: String? {
         let parts = [("Seat", seat), ("Pad", pad), ("Handles", handles)]
             .filter { !$0.1.isEmpty }
-            .map { "\($0.0) \($0.1)" }
-        let line = parts.isEmpty ? notes : parts.joined(separator: " · ")
-        return line.isEmpty ? nil : line
+            .map { "\($0.0) \($0.1)" } + (notes.isEmpty ? [] : [notes])
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }
 }
