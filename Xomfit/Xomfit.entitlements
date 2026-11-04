@@ -24,6 +24,14 @@
 	     tick Background Delivery under HealthKit for the App ID in the portal. -->
 	<key>com.apple.developer.healthkit.background-delivery</key>
 	<true/>
+	<!-- Without this, `.timeSensitive` on the rest-done alert is ignored
+	     (timeSensitiveSetting reads .notSupported) and a Focus mode holds the
+	     alert back -- which is why it only showed up in-app (#514). No App
+	     Review approval needed; automatic signing adds it to the profile. If a
+	     TestFlight archive fails signing on it, enable Time Sensitive
+	     Notifications for the App ID in the portal. -->
+	<key>com.apple.developer.usernotifications.time-sensitive</key>
+	<true/>
 	<key>com.apple.security.application-groups</key>
 	<array>
 		<string>group.com.xomware.xomfit</string>
