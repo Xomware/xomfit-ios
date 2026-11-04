@@ -1566,8 +1566,8 @@ final class WorkoutLoggerViewModel {
     /// already played.
     ///
     /// Tracking the *second* rather than a bare `didFire` flag matters because
-    /// the tick isn't the only thing that moves `restTimeRemaining`:
-    /// `recalculateRestTimer` snaps it to wall-clock on foreground, and
+    /// `restTimeRemaining` doesn't move one second at a time: the first tick
+    /// after a suspension jumps by however long the app was away, and
     /// `extendRestTimer` pushes it back up. Keying off the second makes both
     /// safe — a jump from 5 to 1 fires once for 1 rather than five times or not
     /// at all, and +30s naturally re-arms the countdown.
