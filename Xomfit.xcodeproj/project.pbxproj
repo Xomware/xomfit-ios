@@ -37,6 +37,7 @@
 		AA03D0010000000000000002 /* WatchRestHaptics.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA03D0010000000000000001 /* WatchRestHaptics.swift */; };
 		AC63B77329F22ECBEC449710 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1F5C89119347DF10938D0467 /* Foundation.framework */; };
 		B2F201D886D61139D367C906 /* GoalBaselineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2971609F94FDA4AAE995734 /* GoalBaselineTests.swift */; };
+		B88106339BDDE527B6F2E7E0 /* GymLibraryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B8A97CE4A2CE2648228B1A /* GymLibraryTests.swift */; };
 		BBBE2A7245E89C33ED8D85D8 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 37E1F812E63DCA86C4966EEE /* Foundation.framework */; };
 		CD06CC05B68AFF64FE066C6F /* ExerciseEditingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FAE60DD4EABA26C99B0237B /* ExerciseEditingTests.swift */; };
 		D7E81C3DC92EC92262FDBC0D /* WorkoutSkipCursorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F679CA7346950355AE957485 /* WorkoutSkipCursorTests.swift */; };
@@ -121,6 +122,7 @@
 		730E45C30DECC5AA5563EAB4 /* WorkoutInsightsSeamTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkoutInsightsSeamTests.swift; sourceTree = "<group>"; };
 		7A54992A7EDE7FAD21BF67DA /* WatchPlanWireTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchPlanWireTests.swift; sourceTree = "<group>"; };
 		827732DA0E95EA020F612BD9 /* ExerciseInstructionCoverageTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ExerciseInstructionCoverageTests.swift; sourceTree = "<group>"; };
+		88B8A97CE4A2CE2648228B1A /* GymLibraryTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GymLibraryTests.swift; sourceTree = "<group>"; };
 		8C8932635DA9D7B3E27AD4A2 /* ContentView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		8FAE60DD4EABA26C99B0237B /* ExerciseEditingTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ExerciseEditingTests.swift; sourceTree = "<group>"; };
 		9F598AFE9ECEBE9D1CE5C308 /* NumberEntryView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NumberEntryView.swift; sourceTree = "<group>"; };
@@ -322,6 +324,7 @@
 				F679CA7346950355AE957485 /* WorkoutSkipCursorTests.swift */,
 				4ADF606A8539CC86944E51AB /* SetPrefillTests.swift */,
 				371C60FE1A1B658763543895 /* RestTimerWallClockTests.swift */,
+				88B8A97CE4A2CE2648228B1A /* GymLibraryTests.swift */,
 			);
 			path = XomfitTests;
 			sourceTree = "<group>";
@@ -811,6 +814,7 @@
 				33BF9460FA3689B72A976DE6 /* TierConsistencyTests.swift in Sources */,
 				2B583FB10F98F05BD2264B97 /* SetPrefillTests.swift in Sources */,
 				2E0814631D3573245276EA81 /* RestTimerWallClockTests.swift in Sources */,
+				B88106339BDDE527B6F2E7E0 /* GymLibraryTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

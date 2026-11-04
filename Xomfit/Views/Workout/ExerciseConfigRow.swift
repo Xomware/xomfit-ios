@@ -21,6 +21,7 @@ struct ExerciseConfigRow: View {
 
     @State private var showNotesSheet = false
     @State private var showRestSheet = false
+    @State private var settingsMachine: Machine?
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.tight) {
@@ -33,6 +34,9 @@ struct ExerciseConfigRow: View {
                         ) { onMachineChanged(machine.id) }
                     }
                 }
+            }
+            if let machine = exercise.selectedMachine {
+                machineSetupPill(machine)
             }
             if let grips = exercise.selectedMachine?.grips ?? exercise.exercise.supportedGrips {
                 configSection(label: "Grip") {
@@ -80,6 +84,10 @@ struct ExerciseConfigRow: View {
                 extrasRow
             }
         }
+        .sheet(item: $settingsMachine) { machine in
+            MachineSettingsSheet(machine: machine)
+                .presentationDetents([.medium, .large])
+        }
         .sheet(isPresented: $showNotesSheet) {
             if let onNotesChanged {
                 ExerciseNotesSheet(
@@ -106,6 +114,32 @@ struct ExerciseConfigRow: View {
 
     private var machineOptions: [Machine] {
         MachineCatalog.machines(for: exercise.exercise.id)
+    }
+
+    private func machineSetupPill(_ machine: Machine) -> some View {
+        let summary = GymLibrary.shared.settings(for: machine.id).summary
+        return Button {
+            Haptics.selection()
+            settingsMachine = machine
+        } label: {
+            HStack(spacing: Theme.Spacing.tight) {
+                Image(systemName: summary == nil ? "plus" : "slider.horizontal.3")
+                    .font(.caption2.weight(.semibold))
+                Text(summary ?? "Add machine setup")
+                    .font(.caption2.weight(.semibold))
+                    .lineLimit(1)
+            }
+            .foregroundStyle(summary == nil ? Theme.textSecondary : Theme.accent)
+            .padding(.horizontal, Theme.Spacing.sm)
+            .padding(.vertical, Theme.Spacing.tight)
+            .background(Theme.surfaceSecondary)
+            .clipShape(.capsule)
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(summary.map { "Machine setup: \($0)" } ?? "Add machine setup")
+        .accessibilityHint("Edits seat, pad and handle settings for \(machine.displayName)")
     }
 
     // MARK: - Extras Row (Notes + Rest)

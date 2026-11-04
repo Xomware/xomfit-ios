@@ -59,6 +59,10 @@ struct XomFitApp: App {
                         .environment(authService)
                         .environment(workoutSession)
                         .environment(generatorPreseed)
+                        .task(id: authService.currentUser?.id) {
+                            guard let id = authService.currentUser?.id else { return }
+                            GymLibrary.shared.load(userId: id.uuidString.lowercased())
+                        }
                         .task {
                             #if DEBUG
                             // Skip permission prompts under auth-bypass so agents can
