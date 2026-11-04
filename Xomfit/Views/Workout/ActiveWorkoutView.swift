@@ -2131,6 +2131,8 @@ private struct FinishWorkoutSheet: View {
     @State private var showManualTrackSheet = false
     /// Controls the expanded state of the detailed ratings section.
     @State private var showDetailedRatings = false
+    @State private var didAutoExpandRatings = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         NavigationStack {
@@ -2382,6 +2384,12 @@ private struct FinishWorkoutSheet: View {
 
     @ViewBuilder
     private var detailedRatingsSection: some View {
+        let filled = detailedRatings.filledCount
+        let total = WorkoutRatings.Category.allCases.count
+        // Once the lifter has rated anything, the collapsed row is easy to read
+        // as "done". Calling out what's left is the nudge.
+        let isNudging = (rating > 0 || filled > 0) && filled < total
+
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
             Button {
                 withAnimation(.xomChill) {
@@ -2391,19 +2399,20 @@ private struct FinishWorkoutSheet: View {
                 HStack(spacing: Theme.Spacing.sm) {
                     Image(systemName: showDetailedRatings ? "chevron.down" : "chevron.right")
                         .font(Theme.fontCaption.weight(.semibold))
-                        .foregroundStyle(Theme.textSecondary)
+                        .foregroundStyle(isNudging ? Theme.accent : Theme.textSecondary)
                         .frame(width: 12)
                     Text("More Ratings")
                         .font(.subheadline.weight(.medium))
-                        .foregroundStyle(Theme.textSecondary)
-                    if detailedRatings.hasAnyRating {
-                        let count = countFilledRatings()
-                        Text("\(count)/6")
-                            .font(.caption.weight(.bold).monospacedDigit())
-                            .foregroundStyle(Theme.accent)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 1)
-                            .background(Theme.accent.opacity(0.15), in: Capsule())
+                        .foregroundStyle(isNudging ? Theme.textPrimary : Theme.textSecondary)
+                    if isNudging {
+                        ratingsBadge("\(total - filled) more")
+                            .phaseAnimator(
+                                pulsesBadge ? [1.0, 0.45] : [1.0],
+                                content: { badge, opacity in badge.opacity(opacity) },
+                                animation: { _ in .easeInOut(duration: 0.9) }
+                            )
+                    } else if filled == total {
+                        ratingsBadge("\(filled)/\(total)")
                     }
                     Spacer()
                 }
@@ -2411,7 +2420,7 @@ private struct FinishWorkoutSheet: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("More ratings")
+            .accessibilityLabel(isNudging ? "More ratings, \(total - filled) left" : "More ratings")
             .accessibilityHint(showDetailedRatings ? "Tap to collapse" : "Tap to expand additional rating categories")
 
             if showDetailedRatings {
@@ -2431,21 +2440,32 @@ private struct FinishWorkoutSheet: View {
                 .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
                 .overlay(
                     RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall)
-                        .stroke(Theme.textSecondary.opacity(0.2), lineWidth: 1)
+                        .stroke(isNudging ? Theme.accent.opacity(0.4) : Theme.textSecondary.opacity(0.2), lineWidth: 1)
                 )
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
+        // The overall stars are the one rating everybody gives, so that tap is
+        // the moment to show the rest. Once only: collapsing it again is an answer.
+        .onChange(of: rating) { old, new in
+            guard old == 0, new > 0, !didAutoExpandRatings else { return }
+            didAutoExpandRatings = true
+            withAnimation(.xomChill) { showDetailedRatings = true }
+        }
     }
 
-    private func countFilledRatings() -> Int {
-        var count = 0
-        for category in WorkoutRatings.Category.allCases {
-            if detailedRatings.value(for: category) != nil {
-                count += 1
-            }
-        }
-        return count
+    /// Pulse only while collapsed; expanded, the empty stars already say it.
+    private var pulsesBadge: Bool {
+        !showDetailedRatings && !reduceMotion
+    }
+
+    private func ratingsBadge(_ text: String) -> some View {
+        Text(text)
+            .font(.caption.weight(.bold).monospacedDigit())
+            .foregroundStyle(Theme.accent)
+            .padding(.horizontal, Theme.Spacing.sm)
+            .padding(.vertical, 2)
+            .background(Theme.accent.opacity(0.15), in: Capsule())
     }
 
     // MARK: - Soundtrack section (#387.2)
