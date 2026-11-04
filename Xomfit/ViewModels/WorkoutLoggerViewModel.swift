@@ -238,13 +238,17 @@ final class WorkoutLoggerViewModel {
     /// Starts the once-a-second clock, replacing any previous one.
     private func startSessionTicker() {
         sessionTicker?.invalidate()
-        sessionTicker = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+        let ticker = Timer(timeInterval: 1, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 guard let self else { return }
                 self.tickRestTimer()
                 self.tickLiveActivity()
             }
         }
+        // `.common` so the countdown keeps moving while a list is being scrolled;
+        // the default mode stalls for as long as the finger is down.
+        RunLoop.main.add(ticker, forMode: .common)
+        sessionTicker = ticker
     }
 
     private func stopSessionTicker() {
@@ -1542,8 +1546,12 @@ final class WorkoutLoggerViewModel {
 
     // MARK: - Rest Timer
 
-    /// Timestamp when the rest timer was started — used to survive background suspension.
-    private var restTimerStartDate: Date?
+    /// When the current rest ends. The countdown is derived from this rather
+    /// than decremented per tick, because ticks stop while the app is suspended
+    /// or the main run loop is busy — counting them is how the timer used to
+    /// fall behind and resume from a stale value. Persisted, so a relaunch
+    /// picks the rest back up.
+    private(set) var restEndDate: Date?
 
     /// Drives the rest countdown and the watch pushes once a second.
     ///
@@ -1558,8 +1566,8 @@ final class WorkoutLoggerViewModel {
     /// already played.
     ///
     /// Tracking the *second* rather than a bare `didFire` flag matters because
-    /// the tick isn't the only thing that moves `restTimeRemaining`:
-    /// `recalculateRestTimer` snaps it to wall-clock on foreground, and
+    /// `restTimeRemaining` doesn't move one second at a time: the first tick
+    /// after a suspension jumps by however long the app was away, and
     /// `extendRestTimer` pushes it back up. Keying off the second makes both
     /// safe — a jump from 5 to 1 fires once for 1 rather than five times or not
     /// at all, and +30s naturally re-arms the countdown.
@@ -1586,7 +1594,7 @@ final class WorkoutLoggerViewModel {
         // there. Starting minimized meant that screen could never appear on its
         // own.
         isRestTimerMinimized = !focusMode
-        restTimerStartDate = Date()
+        restEndDate = Date().addingTimeInterval(duration)
         lastRestHapticSecond = nil
         updateLiveActivity()
 
@@ -1598,29 +1606,21 @@ final class WorkoutLoggerViewModel {
             workoutId: workoutId,
             duration: duration
         )
+        saveActiveSession(force: true)
     }
 
-    /// Called when the app returns to foreground. Recalculates rest timer based on wall-clock time elapsed.
-    /// Skipped while paused — the countdown is frozen.
-    func recalculateRestTimer() {
-        guard isRestTimerActive, !isPaused, let startDate = restTimerStartDate else { return }
-        let elapsed = Date().timeIntervalSince(startDate)
-        restTimeRemaining = restDuration - elapsed
-        fireRestCountdownHapticIfNeeded()
-    }
-
-    func tickRestTimer() {
-        guard isRestTimerActive, !isPaused else { return }
-        restTimeRemaining -= 1
+    /// Skipped while paused — the countdown is frozen and `restEndDate` moves on resume.
+    func tickRestTimer(now: Date = Date()) {
+        guard isRestTimerActive, !isPaused, let restEndDate else { return }
+        restTimeRemaining = restEndDate.timeIntervalSince(now)
         fireRestCountdownHapticIfNeeded()
     }
 
     /// Ticks the wrist/phone for each of the final `restHapticLeadInSeconds`, then
     /// plays the three-second alarm once at zero.
     ///
-    /// Called from both `tickRestTimer` and `recalculateRestTimer` so returning
-    /// from the background mid-countdown still gets the alarm rather than
-    /// silently skipping it.
+    /// The first tick after returning from the background can jump straight
+    /// past zero, and still gets the alarm rather than silently skipping it.
     private func fireRestCountdownHapticIfNeeded() {
         guard isRestTimerActive, !isPaused else { return }
         // Only the phone's own buzz is gated here. The wrist decides for itself
@@ -1649,6 +1649,7 @@ final class WorkoutLoggerViewModel {
     func skipRestTimer() {
         restTimeRemaining = 0
         isRestTimerActive = false
+        restEndDate = nil
         lastRestHapticSecond = nil
         // Reset minimize state so the next rest period always starts fullscreen.
         isRestTimerMinimized = false
@@ -1657,20 +1658,27 @@ final class WorkoutLoggerViewModel {
         // when none is pending — also clears delivered notifications if the user
         // skipped after the timer naturally fired in the background.
         NotificationService.shared.cancelRestTimerNotification(workoutId: workoutId)
+        saveActiveSession(force: true)
     }
 
     func extendRestTimer(_ seconds: Double = 30) {
+        guard isRestTimerActive, let end = restEndDate else { return }
+        restEndDate = end.addingTimeInterval(seconds)
         restTimeRemaining += seconds
         restDuration += seconds
         // Move the background alerts with it. They used to stay where they
         // were, so +30s announced "rest's up" thirty seconds early and then
-        // said nothing at the actual end.
-        NotificationService.shared.rescheduleRestTimerNotification(
-            workoutId: workoutId, remaining: restTimeRemaining
-        )
+        // said nothing at the actual end. Paused has nothing pending; resume
+        // schedules it.
+        if !isPaused {
+            NotificationService.shared.rescheduleRestTimerNotification(
+                workoutId: workoutId, remaining: restTimeRemaining
+            )
+        }
         // +30s from an already-elapsed timer must be able to alarm again.
         lastRestHapticSecond = nil
         updateLiveActivity()
+        saveActiveSession(force: true)
     }
 
     // MARK: - Pause / Resume
@@ -1684,18 +1692,23 @@ final class WorkoutLoggerViewModel {
                 let pausedFor = Date().timeIntervalSince(pausedAt)
                 totalPausedDuration += pausedFor
 
-                // Roll the rest timer's start anchor forward by the paused duration so
-                // recalculateRestTimer() and Live Activity restEndDate math stay correct.
-                if let start = restTimerStartDate {
-                    restTimerStartDate = start.addingTimeInterval(pausedFor)
+                if let end = restEndDate {
+                    restEndDate = end.addingTimeInterval(pausedFor)
                 }
             }
             pausedAt = nil
             isPaused = false
+            if isRestTimerActive, restTimeRemaining > 0 {
+                NotificationService.shared.rescheduleRestTimerNotification(
+                    workoutId: workoutId, remaining: restTimeRemaining
+                )
+            }
         } else {
             // Pause
             pausedAt = Date()
             isPaused = true
+            // A paused rest must not announce itself as done.
+            NotificationService.shared.cancelRestTimerNotification(workoutId: workoutId)
         }
         updateLiveActivity()
         saveActiveSession(force: true)
@@ -2200,13 +2213,15 @@ final class WorkoutLoggerViewModel {
         var featuredTrackId: UUID?
         var shareFullSoundtrack: Bool
         var detailedRatings: WorkoutRatings
+        var restEndDate: Date?
+        var restDuration: Double
 
         enum CodingKeys: String, CodingKey {
             case schemaVersion, workoutId, workoutName, exercises, startTime, savedAt
             case totalPausedDuration, defaultRestDuration, focusExerciseIndex, focusSetIndex
             case kind, durationGoalMinutes, roundsGoal, location, rating, activeUserId
             case capturedTracks, manualTracks, removedTrackIDs, featuredTrackId, shareFullSoundtrack
-            case detailedRatings
+            case detailedRatings, restEndDate, restDuration
         }
 
         init(
@@ -2231,7 +2246,9 @@ final class WorkoutLoggerViewModel {
             removedTrackIDs: [UUID] = [],
             featuredTrackId: UUID? = nil,
             shareFullSoundtrack: Bool = true,
-            detailedRatings: WorkoutRatings = .empty
+            detailedRatings: WorkoutRatings = .empty,
+            restEndDate: Date? = nil,
+            restDuration: Double = 0
         ) {
             self.schemaVersion = schemaVersion
             self.workoutId = workoutId
@@ -2255,6 +2272,8 @@ final class WorkoutLoggerViewModel {
             self.featuredTrackId = featuredTrackId
             self.shareFullSoundtrack = shareFullSoundtrack
             self.detailedRatings = detailedRatings
+            self.restEndDate = restEndDate
+            self.restDuration = restDuration
         }
 
         init(from decoder: Decoder) throws {
@@ -2281,6 +2300,8 @@ final class WorkoutLoggerViewModel {
             featuredTrackId = try c.decodeIfPresent(UUID.self, forKey: .featuredTrackId)
             shareFullSoundtrack = try c.decodeIfPresent(Bool.self, forKey: .shareFullSoundtrack) ?? true
             detailedRatings = try c.decodeIfPresent(WorkoutRatings.self, forKey: .detailedRatings) ?? .empty
+            restEndDate = try c.decodeIfPresent(Date.self, forKey: .restEndDate)
+            restDuration = try c.decodeIfPresent(Double.self, forKey: .restDuration) ?? 0
         }
     }
 
@@ -2329,7 +2350,11 @@ final class WorkoutLoggerViewModel {
             removedTrackIDs: Array(removedTrackIDs),
             featuredTrackId: featuredTrackId,
             shareFullSoundtrack: shareFullSoundtrack,
-            detailedRatings: detailedRatings
+            detailedRatings: detailedRatings,
+            // Pause isn't persisted, so neither is a paused rest: its end date
+            // is stale until resume moves it.
+            restEndDate: isPaused ? nil : restEndDate,
+            restDuration: restDuration
         )
 
         do {
@@ -2407,14 +2432,20 @@ final class WorkoutLoggerViewModel {
         activeUserId = snapshot.activeUserId
         cachedHistory = nil
 
-        // Reset volatile state — pause + rest timer don't survive a cold launch
-        // (the rest timer's wall-clock anchor is irrecoverable across kills).
+        // Pause doesn't survive a cold launch. The rest timer does: iOS kills
+        // backgrounded apps mid-rest all the time, and the rest notification
+        // is still pending from before the kill, so only the countdown needs
+        // rebuilding.
         isPaused = false
         pausedAt = nil
-        isRestTimerActive = false
         isRestTimerMinimized = false
+        restEndDate = snapshot.restEndDate
+        restDuration = snapshot.restDuration
+        isRestTimerActive = snapshot.restEndDate != nil
         restTimeRemaining = 0
-        restDuration = 0
+        tickRestTimer()
+        // Already alarmed via the notification while the app was dead.
+        lastRestHapticSecond = isRestTimerActive && restTimeRemaining <= 0 ? 0 : nil
         showExerciseTransition = false
         activeCelebration = nil
 
@@ -2432,6 +2463,9 @@ final class WorkoutLoggerViewModel {
 
         isActive = true
         isPresented = true
+        // Without this a restored workout never ticks: the rest countdown and
+        // the watch pushes stay frozen until a new workout starts.
+        startSessionTicker()
         // Start a fresh Live Activity for the resumed session — the previous
         // one (if any) is killed below so we don't stack two.
         Self.endAllOrphanLiveActivities()

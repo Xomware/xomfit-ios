@@ -13,6 +13,7 @@
 		2652623F55494AE501D17728 /* AuthServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7B33E534C5D4F6F4A221677 /* AuthServiceTests.swift */; };
 		284A5F0B50AD134023D0B30C /* EstimatedMaxInverseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF919491E135D95E05E0CC27 /* EstimatedMaxInverseTests.swift */; };
 		2B583FB10F98F05BD2264B97 /* SetPrefillTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4ADF606A8539CC86944E51AB /* SetPrefillTests.swift */; };
+		2E0814631D3573245276EA81 /* RestTimerWallClockTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 371C60FE1A1B658763543895 /* RestTimerWallClockTests.swift */; };
 		33BF9460FA3689B72A976DE6 /* TierConsistencyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3883628571952010C9F9B667 /* TierConsistencyTests.swift */; };
 		3AD31D27EAD82F60EE882599 /* AnimationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 325D34C169BA7253ADECB318 /* AnimationTests.swift */; };
 		4361874E4BAC7BF8E4D6AAAD /* NumberEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F598AFE9ECEBE9D1CE5C308 /* NumberEntryView.swift */; };
@@ -108,6 +109,7 @@
 		21257445D3A360054D42C415 /* WatchWorkoutState.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchWorkoutState.swift; sourceTree = "<group>"; };
 		30C92F27893E848084361AD6 /* XomfitWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = XomfitWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		325D34C169BA7253ADECB318 /* AnimationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AnimationTests.swift; sourceTree = "<group>"; };
+		371C60FE1A1B658763543895 /* RestTimerWallClockTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RestTimerWallClockTests.swift; sourceTree = "<group>"; };
 		37E1F812E63DCA86C4966EEE /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		3883628571952010C9F9B667 /* TierConsistencyTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TierConsistencyTests.swift; sourceTree = "<group>"; };
 		473EB31945A7063B399BD147 /* WatchWorkoutSessionManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchWorkoutSessionManager.swift; sourceTree = "<group>"; };
@@ -319,6 +321,7 @@
 				E2971609F94FDA4AAE995734 /* GoalBaselineTests.swift */,
 				F679CA7346950355AE957485 /* WorkoutSkipCursorTests.swift */,
 				4ADF606A8539CC86944E51AB /* SetPrefillTests.swift */,
+				371C60FE1A1B658763543895 /* RestTimerWallClockTests.swift */,
 			);
 			path = XomfitTests;
 			sourceTree = "<group>";
@@ -807,6 +810,7 @@
 				284A5F0B50AD134023D0B30C /* EstimatedMaxInverseTests.swift in Sources */,
 				33BF9460FA3689B72A976DE6 /* TierConsistencyTests.swift in Sources */,
 				2B583FB10F98F05BD2264B97 /* SetPrefillTests.swift in Sources */,
+				2E0814631D3573245276EA81 /* RestTimerWallClockTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
