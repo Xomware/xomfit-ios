@@ -45,6 +45,7 @@ struct ActiveWorkoutView: View {
     @State private var showFirstTutorial = false
     /// Single-shot rest timer onboarding toast.
     @State private var restTimerToast: Toast?
+    @State private var undoRemoveToast: Toast?
 
     /// Height of an inline navigation bar, used to keep the celebration banner
     /// clear of the back button.
@@ -147,6 +148,15 @@ struct ActiveWorkoutView: View {
                                         // Source geometry for the zoom push.
                                         .matchedTransitionSource(id: exIdx, in: zoomNamespace)
                                     }
+
+                                    // The header `+` is easy to miss once you've
+                                    // scrolled into the plan; the end of the list is
+                                    // where you look when you want one more lift.
+                                    XomButton("Add Exercise", variant: .secondary, icon: "plus") {
+                                        Haptics.selection()
+                                        showExercisePicker = true
+                                    }
+                                    .accessibilityHint("Opens the exercise picker to add a new exercise to this workout")
                                 }
                                 .padding(Theme.Spacing.md)
                             }
@@ -414,6 +424,21 @@ struct ActiveWorkoutView: View {
         // First-run rest timer toast (#310). Uses the existing toast pattern
         // shared with launch streak/PR badges in MainTabView.
         .toast($restTimerToast)
+        .toast($undoRemoveToast) {
+            withAnimation(.xomChill) { viewModel.undoRemoveExercise() }
+        }
+        .onChange(of: viewModel.lastRemovedExercise?.exercise.id) { _, id in
+            guard id != nil, let removed = viewModel.lastRemovedExercise else { return }
+            undoRemoveToast = Toast(
+                style: .info,
+                message: "Removed \(removed.exercise.exercise.name). Tap to undo.",
+                duration: 4
+            )
+        }
+        // Undo is only offered while the toast is up.
+        .onChange(of: undoRemoveToast) { _, toast in
+            if toast == nil { viewModel.lastRemovedExercise = nil }
+        }
         .onAppear {
             // Show the active-workout tutorial overlay only on the user's
             // very first active workout. Defer slightly so it lands after
@@ -1164,6 +1189,7 @@ private struct ExerciseCard: View {
     @State private var showDetails = false
     @State private var showSupersetToggleConfirm = false
     @State private var showRemoveExerciseConfirm = false
+    @State private var showSwapPicker = false
     @State private var isCollapsed = false
     /// Reveals the per-exercise config row (grip / attachment / position /
     /// laterality / notes / rest override).
@@ -1253,8 +1279,35 @@ private struct ExerciseCard: View {
 
                         Divider()
 
+                        Button {
+                            showSwapPicker = true
+                        } label: {
+                            Label("Swap exercise", systemImage: "arrow.triangle.2.circlepath")
+                        }
+
+                        Button {
+                            withAnimation(.xomChill) { viewModel.moveExercise(from: exerciseIndex, direction: -1) }
+                        } label: {
+                            Label("Move up", systemImage: "arrow.up")
+                        }
+                        .disabled(exerciseIndex == 0)
+
+                        Button {
+                            withAnimation(.xomChill) { viewModel.moveExercise(from: exerciseIndex, direction: 1) }
+                        } label: {
+                            Label("Move down", systemImage: "arrow.down")
+                        }
+                        .disabled(exerciseIndex >= viewModel.exercises.count - 1)
+
+                        // Nothing logged means nothing to lose, and the undo
+                        // toast covers a mis-tap — so only logged work asks first.
                         Button(role: .destructive) {
-                            showRemoveExerciseConfirm = true
+                            if viewModel.hasLoggedSets(at: exerciseIndex) {
+                                showRemoveExerciseConfirm = true
+                            } else {
+                                Haptics.warning()
+                                withAnimation(.xomChill) { viewModel.removeExercise(at: exerciseIndex) }
+                            }
                         } label: {
                             Label("Remove exercise", systemImage: "trash")
                         }
@@ -1394,6 +1447,11 @@ private struct ExerciseCard: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("This will delete \(exercise.exercise.name) and all its sets from this workout.")
+        }
+        .sheet(isPresented: $showSwapPicker) {
+            ExercisePickerView { picked in
+                viewModel.replaceExercise(at: exerciseIndex, with: picked)
+            }
         }
         .sheet(isPresented: $showDetails) {
             ExerciseDetailSheet(exercise: exercise.exercise)
@@ -2073,6 +2131,8 @@ private struct FinishWorkoutSheet: View {
     @State private var showManualTrackSheet = false
     /// Controls the expanded state of the detailed ratings section.
     @State private var showDetailedRatings = false
+    @State private var didAutoExpandRatings = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         NavigationStack {
@@ -2324,6 +2384,12 @@ private struct FinishWorkoutSheet: View {
 
     @ViewBuilder
     private var detailedRatingsSection: some View {
+        let filled = detailedRatings.filledCount
+        let total = WorkoutRatings.Category.allCases.count
+        // Once the lifter has rated anything, the collapsed row is easy to read
+        // as "done". Calling out what's left is the nudge.
+        let isNudging = (rating > 0 || filled > 0) && filled < total
+
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
             Button {
                 withAnimation(.xomChill) {
@@ -2333,19 +2399,20 @@ private struct FinishWorkoutSheet: View {
                 HStack(spacing: Theme.Spacing.sm) {
                     Image(systemName: showDetailedRatings ? "chevron.down" : "chevron.right")
                         .font(Theme.fontCaption.weight(.semibold))
-                        .foregroundStyle(Theme.textSecondary)
+                        .foregroundStyle(isNudging ? Theme.accent : Theme.textSecondary)
                         .frame(width: 12)
                     Text("More Ratings")
                         .font(.subheadline.weight(.medium))
-                        .foregroundStyle(Theme.textSecondary)
-                    if detailedRatings.hasAnyRating {
-                        let count = countFilledRatings()
-                        Text("\(count)/6")
-                            .font(.caption.weight(.bold).monospacedDigit())
-                            .foregroundStyle(Theme.accent)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 1)
-                            .background(Theme.accent.opacity(0.15), in: Capsule())
+                        .foregroundStyle(isNudging ? Theme.textPrimary : Theme.textSecondary)
+                    if isNudging {
+                        ratingsBadge("\(total - filled) more")
+                            .phaseAnimator(
+                                pulsesBadge ? [1.0, 0.45] : [1.0],
+                                content: { badge, opacity in badge.opacity(opacity) },
+                                animation: { _ in .easeInOut(duration: 0.9) }
+                            )
+                    } else if filled == total {
+                        ratingsBadge("\(filled)/\(total)")
                     }
                     Spacer()
                 }
@@ -2353,7 +2420,7 @@ private struct FinishWorkoutSheet: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("More ratings")
+            .accessibilityLabel(isNudging ? "More ratings, \(total - filled) left" : "More ratings")
             .accessibilityHint(showDetailedRatings ? "Tap to collapse" : "Tap to expand additional rating categories")
 
             if showDetailedRatings {
@@ -2373,21 +2440,32 @@ private struct FinishWorkoutSheet: View {
                 .clipShape(.rect(cornerRadius: Theme.cornerRadiusSmall))
                 .overlay(
                     RoundedRectangle(cornerRadius: Theme.cornerRadiusSmall)
-                        .stroke(Theme.textSecondary.opacity(0.2), lineWidth: 1)
+                        .stroke(isNudging ? Theme.accent.opacity(0.4) : Theme.textSecondary.opacity(0.2), lineWidth: 1)
                 )
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
+        // The overall stars are the one rating everybody gives, so that tap is
+        // the moment to show the rest. Once only: collapsing it again is an answer.
+        .onChange(of: rating) { old, new in
+            guard old == 0, new > 0, !didAutoExpandRatings else { return }
+            didAutoExpandRatings = true
+            withAnimation(.xomChill) { showDetailedRatings = true }
+        }
     }
 
-    private func countFilledRatings() -> Int {
-        var count = 0
-        for category in WorkoutRatings.Category.allCases {
-            if detailedRatings.value(for: category) != nil {
-                count += 1
-            }
-        }
-        return count
+    /// Pulse only while collapsed; expanded, the empty stars already say it.
+    private var pulsesBadge: Bool {
+        !showDetailedRatings && !reduceMotion
+    }
+
+    private func ratingsBadge(_ text: String) -> some View {
+        Text(text)
+            .font(.caption.weight(.bold).monospacedDigit())
+            .foregroundStyle(Theme.accent)
+            .padding(.horizontal, Theme.Spacing.sm)
+            .padding(.vertical, 2)
+            .background(Theme.accent.opacity(0.15), in: Capsule())
     }
 
     // MARK: - Soundtrack section (#387.2)

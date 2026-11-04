@@ -648,17 +648,62 @@ final class WorkoutLoggerViewModel {
         return previous.indices.contains(ordinal) ? previous[ordinal] : nil
     }
 
+    /// What the last removal took out, so the undo toast can put it back.
+    struct RemovedExercise {
+        let exercise: WorkoutExercise
+        let index: Int
+        let wasFocused: Bool
+        let focusSetIndex: Int
+    }
+
+    var lastRemovedExercise: RemovedExercise?
+
+    /// True when any set of the exercise was actually performed. Removing one of
+    /// these throws away logged work, so the UI confirms first.
+    func hasLoggedSets(at index: Int) -> Bool {
+        guard exercises.indices.contains(index) else { return false }
+        return exercises[index].sets.contains(where: \.isCompleted)
+    }
+
     func removeExercise(at index: Int) {
         guard exercises.indices.contains(index) else { return }
-        exercises.remove(at: index)
+        let removed = exercises.remove(at: index)
+        lastRemovedExercise = RemovedExercise(
+            exercise: removed,
+            index: index,
+            wasFocused: index == focusExerciseIndex,
+            focusSetIndex: focusSetIndex
+        )
 
-        // Keep the cursor somewhere real. Removing the focused exercise left
-        // `focusExerciseIndex` pointing at whatever slid into that slot, or one
-        // past the end when it was the last one.
-        if focusExerciseIndex >= exercises.count {
-            focusExerciseIndex = max(exercises.count - 1, 0)
+        // The cursor tracks an exercise, not a slot. Removing one above it
+        // shifts it up by one; removing the focused one lands on whatever slid
+        // into its place, at that exercise's first set still owed.
+        if index < focusExerciseIndex {
+            focusExerciseIndex -= 1
+        } else if index == focusExerciseIndex {
+            focusExerciseIndex = min(index, max(exercises.count - 1, 0))
+            focusSetIndex = exercises.indices.contains(focusExerciseIndex)
+                ? exercises[focusExerciseIndex].sets.firstIndex { $0.isPending } ?? 0
+                : 0
         }
-        focusSetIndex = 0
+
+        updateLiveActivity()
+        saveActiveSession(force: true)
+    }
+
+    func undoRemoveExercise() {
+        guard let removed = lastRemovedExercise else { return }
+        lastRemovedExercise = nil
+        // Clamped because other edits may have shortened the list since.
+        let index = min(removed.index, exercises.count)
+        exercises.insert(removed.exercise, at: index)
+
+        if removed.wasFocused {
+            focusExerciseIndex = index
+            focusSetIndex = removed.focusSetIndex
+        } else if index <= focusExerciseIndex, exercises.count > 1 {
+            focusExerciseIndex += 1
+        }
 
         updateLiveActivity()
         saveActiveSession(force: true)
@@ -679,11 +724,14 @@ final class WorkoutLoggerViewModel {
         saveActiveSession(force: true)
     }
 
+    /// Moves one exercise a single slot up (-1) or down (+1).
     func moveExercise(from source: Int, direction: Int) {
         let destination = source + direction
         guard exercises.indices.contains(source),
               exercises.indices.contains(destination) else { return }
-        exercises.swapAt(source, destination)
+        // `move(toOffset:)` counts the destination before removal, so moving
+        // down has to target one past the neighbour.
+        moveExercises(from: IndexSet(integer: source), to: direction > 0 ? destination + 1 : destination)
     }
 
     func moveExercises(from source: IndexSet, to destination: Int) {

@@ -9,6 +9,9 @@ struct Toast: Equatable {
         case info
     }
 
+    /// Distinguishes a replacement toast from the one it replaced, so each gets
+    /// its own dismiss timer, including when the message is identical.
+    let id = UUID()
     let style: Style
     let message: String
     var duration: Double = 3.0
@@ -78,12 +81,15 @@ struct ToastModifier: ViewModifier {
                     ToastView(toast: toast)
                         .padding(.top, Theme.Spacing.sm)
                         .transition(.move(edge: .top).combined(with: .opacity))
-                        .onAppear {
-                            Task {
-                                try? await Task.sleep(for: .seconds(toast.duration))
-                                withAnimation(.xomConfident) {
-                                    self.toast = nil
-                                }
+                        // Keyed to the toast, not the view. The view stays
+                        // mounted when one toast replaces another, so an
+                        // `onAppear` timer only ever started for the first and
+                        // then dismissed its replacement early.
+                        .task(id: toast.id) {
+                            try? await Task.sleep(for: .seconds(toast.duration))
+                            guard !Task.isCancelled, self.toast?.id == toast.id else { return }
+                            withAnimation(.xomConfident) {
+                                self.toast = nil
                             }
                         }
                         .onTapGesture {

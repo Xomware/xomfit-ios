@@ -231,9 +231,16 @@ struct WorkoutFocusView: View {
 
                     Divider()
 
+                    // Same rule as list mode: only logged work asks first,
+                    // everything else relies on the undo toast.
                     Button(role: .destructive) {
-                        Haptics.light()
-                        showRemoveConfirm = true
+                        if viewModel.hasLoggedSets(at: viewModel.focusExerciseIndex) {
+                            Haptics.light()
+                            showRemoveConfirm = true
+                        } else {
+                            Haptics.warning()
+                            removeFocusedExercise()
+                        }
                     } label: {
                         Label("Remove This Exercise", systemImage: "trash")
                     }
@@ -289,13 +296,7 @@ struct WorkoutFocusView: View {
             titleVisibility: .visible
         ) {
             Button("Remove", role: .destructive) {
-                let index = viewModel.focusExerciseIndex
-                viewModel.removeExercise(at: index)
-                // Nothing left to focus on, so go back to the list rather than
-                // showing an empty exercise screen.
-                if viewModel.exercises.isEmpty {
-                    viewModel.focusMode = false
-                }
+                removeFocusedExercise()
             }
             Button("Cancel", role: .cancel) {}
         } message: {
@@ -956,6 +957,15 @@ struct WorkoutFocusView: View {
               let set = viewModel.set(exerciseIndex: target.exercise, setIndex: target.set) else { return }
         repsEditTarget = nil
         viewModel.updateSet(exerciseIndex: target.exercise, setIndex: target.set, weight: set.weight, reps: reps)
+    }
+
+    private func removeFocusedExercise() {
+        viewModel.removeExercise(at: viewModel.focusExerciseIndex)
+        // Nothing left to focus on, so go back to the list rather than
+        // showing an empty exercise screen.
+        if viewModel.exercises.isEmpty {
+            viewModel.focusMode = false
+        }
     }
 
     private func dismissKeyboard() {
