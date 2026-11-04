@@ -69,11 +69,6 @@ struct SetRowView: View {
     @State private var showWeightActions: Bool = false
     /// Plate calculator sheet, opened from the weight field action sheet.
     @State private var showPlateCalculator: Bool = false
-    /// Set true right before a *programmatic* `weightText` change (external
-    /// weight update or unit switch) so the resulting `onChange(of: weightText)`
-    /// doesn't re-store the value — otherwise kg rounding would drift the stored
-    /// lbs on every reformat. Only genuine user typing stores. (#470)
-    @State private var suppressNextWeightStore: Bool = false
 
     /// Display weight unit (lbs/kg). Storage is always lbs — this only controls
     /// what the user sees/enters. Persisted app-wide via AppStorage.
@@ -174,6 +169,10 @@ struct SetRowView: View {
         _repsText   = State(initialValue: r > 0 ? "\(r)" : "")
     }
 
+    private func displayWeight(_ lbs: Double) -> String {
+        lbs > 0 ? lbs.formattedWeight(unit: weightUnit) : ""
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.tighter) {
             mainRow
@@ -217,25 +216,20 @@ struct SetRowView: View {
         .onChange(of: isRepsFocused) { _, focused in
             if focused { onBecomeActive?() }
         }
+        // Overwrite the text only when it means a different number. Comparing
+        // strings instead rewrote "1." to "1" mid-entry, and in kg turned a
+        // typed "1" into "1.0" (1 / 0.4536 * 0.4536 is not exactly 1), so the
+        // next digit landed after the ".0".
         .onChange(of: workoutSet.weight) { _, newWeight in
-            let formatted = newWeight > 0 ? newWeight.formattedWeight(unit: weightUnit) : ""
-            if weightText != formatted {
-                suppressNextWeightStore = true
-                weightText = formatted
-            }
+            guard parseWeightInput(weightText, unit: weightUnit) != newWeight else { return }
+            weightText = displayWeight(newWeight)
         }
         .onChange(of: weightUnitRaw) { _, _ in
-            // Re-render the field in the newly selected unit from the canonical
-            // stored lbs value (not from the displayed text, to avoid drift).
-            let formatted = workoutSet.weight > 0 ? workoutSet.weight.formattedWeight(unit: weightUnit) : ""
-            if weightText != formatted {
-                suppressNextWeightStore = true
-                weightText = formatted
-            }
+            weightText = displayWeight(workoutSet.weight)
         }
         .onChange(of: workoutSet.reps) { _, newReps in
-            let formatted = newReps > 0 ? "\(newReps)" : ""
-            if repsText != formatted { repsText = formatted }
+            guard parseRepsInput(repsText) != newReps else { return }
+            repsText = newReps > 0 ? "\(newReps)" : ""
         }
         .confirmationDialog("Weight", isPresented: $showWeightActions, titleVisibility: .hidden) {
             Button("Plate Calculator") {
@@ -254,9 +248,7 @@ struct SetRowView: View {
             Button("Cancel", role: .cancel) {}
         }
         .sheet(isPresented: $showPlateCalculator) {
-            // weightText is in the display unit; the plate calculator works in
-            // lbs, so convert the entered value back before seeding it. (#470)
-            PlateCalculatorView(initialTargetWeight: Double(weightText).map { $0 / weightUnit.multiplierFromLbs })
+            PlateCalculatorView(initialTargetWeight: workoutSet.weight > 0 ? workoutSet.weight : nil)
                 .presentationDetents([.large])
         }
     }
@@ -317,10 +309,6 @@ struct SetRowView: View {
                     guard let previousSet else { return }
                     Haptics.light()
                     onBecomeActive?()
-                    suppressNextWeightStore = true
-                    weightText = previousSet.weight > 0
-                        ? previousSet.weight.formattedWeight(unit: weightUnit) : ""
-                    repsText = previousSet.reps > 0 ? "\(previousSet.reps)" : ""
                     onWeightChange(previousSet.weight)
                     onRepsChange(previousSet.reps)
                 } label: {
@@ -355,27 +343,26 @@ struct SetRowView: View {
                     keyboard: .decimalPad,
                     focus: $isWeightFocused,
                     onEdit: { newValue in
-                        // Ignore programmatic reformats (external update / unit
-                        // switch) — only persist genuine user edits. (#470)
-                        if suppressNextWeightStore {
-                            suppressNextWeightStore = false
-                            return
-                        }
-                        if let entered = Double(newValue) {
-                            // Convert the entered display-unit value back to lbs
-                            // for storage (÷ multiplier; no-op for lbs).
-                            onWeightChange(entered / weightUnit.multiplierFromLbs)
-                        }
+                        // Text equal to the stored value's display form is a
+                        // programmatic reformat (external update, unit switch).
+                        // Re-storing it would let kg rounding drift the stored
+                        // lbs. (#470) An empty field stores 0 — before, clearing
+                        // left the old weight stored behind a blank field.
+                        guard newValue != displayWeight(workoutSet.weight),
+                              let lbs = parseWeightInput(newValue, unit: weightUnit) else { return }
+                        onWeightChange(lbs)
                     }
                 )
-                // Long-press surfaces the weight actions without breaking text input.
+                // Disabled while editing: long-press inside a focused field is
+                // how iOS moves the cursor and offers Paste, and this used to
+                // fire first and close the keyboard mid-edit.
                 .simultaneousGesture(
                     LongPressGesture(minimumDuration: 0.45)
                         .onEnded { _ in
                             Haptics.medium()
-                            isWeightFocused = false
                             showWeightActions = true
-                        }
+                        },
+                    isEnabled: !isWeightFocused
                 )
                 .accessibilityAction(named: Text("Weight options")) {
                     showWeightActions = true
@@ -392,7 +379,8 @@ struct SetRowView: View {
                     keyboard: .numberPad,
                     focus: $isRepsFocused,
                     onEdit: { newValue in
-                        if let r = Int(newValue) { onRepsChange(r) }
+                        guard let reps = parseRepsInput(newValue), reps != workoutSet.reps else { return }
+                        onRepsChange(reps)
                     }
                 )
 
