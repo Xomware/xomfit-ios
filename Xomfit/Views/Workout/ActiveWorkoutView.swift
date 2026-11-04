@@ -45,6 +45,7 @@ struct ActiveWorkoutView: View {
     @State private var showFirstTutorial = false
     /// Single-shot rest timer onboarding toast.
     @State private var restTimerToast: Toast?
+    @State private var undoRemoveToast: Toast?
 
     /// Height of an inline navigation bar, used to keep the celebration banner
     /// clear of the back button.
@@ -147,6 +148,15 @@ struct ActiveWorkoutView: View {
                                         // Source geometry for the zoom push.
                                         .matchedTransitionSource(id: exIdx, in: zoomNamespace)
                                     }
+
+                                    // The header `+` is easy to miss once you've
+                                    // scrolled into the plan; the end of the list is
+                                    // where you look when you want one more lift.
+                                    XomButton("Add Exercise", variant: .secondary, icon: "plus") {
+                                        Haptics.selection()
+                                        showExercisePicker = true
+                                    }
+                                    .accessibilityHint("Opens the exercise picker to add a new exercise to this workout")
                                 }
                                 .padding(Theme.Spacing.md)
                             }
@@ -414,6 +424,21 @@ struct ActiveWorkoutView: View {
         // First-run rest timer toast (#310). Uses the existing toast pattern
         // shared with launch streak/PR badges in MainTabView.
         .toast($restTimerToast)
+        .toast($undoRemoveToast) {
+            withAnimation(.xomChill) { viewModel.undoRemoveExercise() }
+        }
+        .onChange(of: viewModel.lastRemovedExercise?.exercise.id) { _, id in
+            guard id != nil, let removed = viewModel.lastRemovedExercise else { return }
+            undoRemoveToast = Toast(
+                style: .info,
+                message: "Removed \(removed.exercise.exercise.name). Tap to undo.",
+                duration: 4
+            )
+        }
+        // Undo is only offered while the toast is up.
+        .onChange(of: undoRemoveToast) { _, toast in
+            if toast == nil { viewModel.lastRemovedExercise = nil }
+        }
         .onAppear {
             // Show the active-workout tutorial overlay only on the user's
             // very first active workout. Defer slightly so it lands after
@@ -1164,6 +1189,7 @@ private struct ExerciseCard: View {
     @State private var showDetails = false
     @State private var showSupersetToggleConfirm = false
     @State private var showRemoveExerciseConfirm = false
+    @State private var showSwapPicker = false
     @State private var isCollapsed = false
     /// Reveals the per-exercise config row (grip / attachment / position /
     /// laterality / notes / rest override).
@@ -1253,8 +1279,35 @@ private struct ExerciseCard: View {
 
                         Divider()
 
+                        Button {
+                            showSwapPicker = true
+                        } label: {
+                            Label("Swap exercise", systemImage: "arrow.triangle.2.circlepath")
+                        }
+
+                        Button {
+                            withAnimation(.xomChill) { viewModel.moveExercise(from: exerciseIndex, direction: -1) }
+                        } label: {
+                            Label("Move up", systemImage: "arrow.up")
+                        }
+                        .disabled(exerciseIndex == 0)
+
+                        Button {
+                            withAnimation(.xomChill) { viewModel.moveExercise(from: exerciseIndex, direction: 1) }
+                        } label: {
+                            Label("Move down", systemImage: "arrow.down")
+                        }
+                        .disabled(exerciseIndex >= viewModel.exercises.count - 1)
+
+                        // Nothing logged means nothing to lose, and the undo
+                        // toast covers a mis-tap — so only logged work asks first.
                         Button(role: .destructive) {
-                            showRemoveExerciseConfirm = true
+                            if viewModel.hasLoggedSets(at: exerciseIndex) {
+                                showRemoveExerciseConfirm = true
+                            } else {
+                                Haptics.warning()
+                                withAnimation(.xomChill) { viewModel.removeExercise(at: exerciseIndex) }
+                            }
                         } label: {
                             Label("Remove exercise", systemImage: "trash")
                         }
@@ -1394,6 +1447,11 @@ private struct ExerciseCard: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("This will delete \(exercise.exercise.name) and all its sets from this workout.")
+        }
+        .sheet(isPresented: $showSwapPicker) {
+            ExercisePickerView { picked in
+                viewModel.replaceExercise(at: exerciseIndex, with: picked)
+            }
         }
         .sheet(isPresented: $showDetails) {
             ExerciseDetailSheet(exercise: exercise.exercise)
