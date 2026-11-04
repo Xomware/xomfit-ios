@@ -29,6 +29,10 @@ struct WorkoutRatings: Codable, Equatable {
         moodAfter != nil
     }
 
+    var filledCount: Int {
+        Category.allCases.filter { value(for: $0) != nil }.count
+    }
+
     /// Category metadata for UI rendering
     enum Category: CaseIterable, Identifiable {
         case fatigue

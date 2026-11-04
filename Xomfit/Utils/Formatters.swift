@@ -20,6 +20,27 @@ extension Double {
     }
 }
 
+// MARK: - Weight / reps input parsing
+
+/// Parses a weight typed in `unit` into stored lbs. Empty text is a cleared
+/// field and parses to 0. Accepts a comma separator because `.decimalPad`
+/// shows the locale's separator, and `Double("62,5")` is nil.
+func parseWeightInput(_ text: String, unit: WeightUnit) -> Double? {
+    let trimmed = text.trimmingCharacters(in: .whitespaces)
+    if trimmed.isEmpty { return 0 }
+    guard let value = Double(trimmed.replacingOccurrences(of: ",", with: ".")),
+          value.isFinite, value >= 0 else { return nil }
+    return value / unit.multiplierFromLbs
+}
+
+/// Parses typed reps. Empty text is a cleared field and parses to 0.
+func parseRepsInput(_ text: String) -> Int? {
+    let trimmed = text.trimmingCharacters(in: .whitespaces)
+    if trimmed.isEmpty { return 0 }
+    guard let value = Int(trimmed), value >= 0 else { return nil }
+    return value
+}
+
 // MARK: - AppStorage helpers
 
 /// Reads the user's saved weight unit from UserDefaults. Falls back to `.lbs`

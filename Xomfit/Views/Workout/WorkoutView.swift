@@ -10,6 +10,7 @@ struct WorkoutView: View {
     @State private var showBuilder = false
     @State private var showLogPastWorkout = false
     @State private var showGenerator = false
+    @State private var generatorOpensPreview = false
     @State private var previewTemplate: WorkoutTemplate?
 
     /// Owns generator config/preview state across the sheet lifetime.
@@ -89,6 +90,7 @@ struct WorkoutView: View {
             WorkoutGeneratorConfigView(
                 viewModel: generatorViewModel,
                 userId: userId,
+                opensPreview: generatorOpensPreview,
                 onStart: { template in
                     afterDismiss = {
                         requestStart(
@@ -164,11 +166,19 @@ struct WorkoutView: View {
                             }
                             secondaryAction(icon: "dice.fill", label: "Generate") {
                                 generatorViewModel.reset()
+                                generatorOpensPreview = false
                                 showGenerator = true
                             }
                             secondaryAction(icon: "calendar.badge.clock", label: "Log Past") {
                                 showLogPastWorkout = true
                             }
+                        }
+                        .padding(.horizontal, Theme.Spacing.md)
+
+                        QuickHitCard(gymName: GymLibrary.shared.activeGym?.name) { region in
+                            generatorViewModel.hit(region, userId: userId)
+                            generatorOpensPreview = true
+                            showGenerator = true
                         }
                         .padding(.horizontal, Theme.Spacing.md)
 
@@ -221,6 +231,7 @@ struct WorkoutView: View {
         guard let muscle = generatorPreseed.pending else { return }
         generatorViewModel.reset()
         generatorViewModel.preseed(muscle: muscle)
+        generatorOpensPreview = false
         showGenerator = true
         generatorPreseed.pending = nil
     }

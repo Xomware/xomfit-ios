@@ -8,6 +8,8 @@ struct ExerciseConfigRow: View {
     let onAttachmentChanged: (CableAttachment) -> Void
     let onPositionChanged: (ExercisePosition) -> Void
     var onLateralityChanged: ((Laterality) -> Void)? = nil
+    /// Toggles the selected machine by `MachineCatalog` id. When omitted, the machine row is hidden.
+    var onMachineChanged: ((String) -> Void)? = nil
     /// Optional notes handler. Pass nil/empty to clear. When omitted, the notes pill is hidden.
     var onNotesChanged: ((String?) -> Void)? = nil
     /// Optional per-exercise rest override handler. Pass nil to clear (use global). When omitted,
@@ -19,10 +21,24 @@ struct ExerciseConfigRow: View {
 
     @State private var showNotesSheet = false
     @State private var showRestSheet = false
+    @State private var settingsMachine: Machine?
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.tight) {
-            if let grips = exercise.exercise.supportedGrips {
+            if let onMachineChanged, !machineOptions.isEmpty {
+                configSection(label: "Machine") {
+                    ForEach(machineOptions) { machine in
+                        configPill(
+                            label: machine.displayName,
+                            isSelected: exercise.selectedMachineId == machine.id
+                        ) { onMachineChanged(machine.id) }
+                    }
+                }
+            }
+            if let machine = exercise.selectedMachine {
+                machineSetupPill(machine)
+            }
+            if let grips = exercise.selectedMachine?.grips ?? exercise.exercise.supportedGrips {
                 configSection(label: "Grip") {
                     ForEach(grips) { grip in
                         configPill(
@@ -42,7 +58,7 @@ struct ExerciseConfigRow: View {
                     }
                 }
             }
-            if let positions = exercise.exercise.supportedPositions {
+            if let positions = exercise.selectedMachine?.positions ?? exercise.exercise.supportedPositions {
                 configSection(label: "Position") {
                     ForEach(positions) { position in
                         configPill(
@@ -68,6 +84,10 @@ struct ExerciseConfigRow: View {
                 extrasRow
             }
         }
+        .sheet(item: $settingsMachine) { machine in
+            MachineSettingsSheet(machine: machine)
+                .presentationDetents([.medium, .large])
+        }
         .sheet(isPresented: $showNotesSheet) {
             if let onNotesChanged {
                 ExerciseNotesSheet(
@@ -90,6 +110,36 @@ struct ExerciseConfigRow: View {
                 .presentationDetents([.medium])
             }
         }
+    }
+
+    private var machineOptions: [Machine] {
+        GymLibrary.shared.machineOptions(for: exercise.exercise.id)
+    }
+
+    private func machineSetupPill(_ machine: Machine) -> some View {
+        let summary = GymLibrary.shared.settings(for: machine.id).summary
+        return Button {
+            Haptics.selection()
+            settingsMachine = machine
+        } label: {
+            HStack(spacing: Theme.Spacing.tight) {
+                Image(systemName: summary == nil ? "plus" : "slider.horizontal.3")
+                    .font(.caption2.weight(.semibold))
+                Text(summary ?? "Add machine setup")
+                    .font(.caption2.weight(.semibold))
+                    .lineLimit(1)
+            }
+            .foregroundStyle(summary == nil ? Theme.textSecondary : Theme.accent)
+            .padding(.horizontal, Theme.Spacing.sm)
+            .padding(.vertical, Theme.Spacing.tight)
+            .background(Theme.surfaceSecondary)
+            .clipShape(.capsule)
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(summary.map { "Machine setup: \($0)" } ?? "Add machine setup")
+        .accessibilityHint("Edits seat, pad and handle settings for \(machine.displayName)")
     }
 
     // MARK: - Extras Row (Notes + Rest)

@@ -24,6 +24,9 @@ struct ExerciseJumperSheet: View {
     var onReorder: (() -> Void)? = nil
 
     @Environment(\.dismiss) private var dismiss
+    @State private var pendingRemovalIndex: Int?
+    @State private var showRemoveConfirm = false
+    @State private var swipeResetCount = 0
 
     var body: some View {
         NavigationStack {
@@ -37,13 +40,43 @@ struct ExerciseJumperSheet: View {
                                 .swipeToDelete(
                                     accessibilityActionName: "Remove \(exercise.exercise.name) from workout"
                                 ) {
-                                    Haptics.warning()
-                                    viewModel.removeExercise(at: idx)
+                                    if viewModel.hasLoggedSets(at: idx) {
+                                        pendingRemovalIndex = idx
+                                        showRemoveConfirm = true
+                                    } else {
+                                        Haptics.warning()
+                                        viewModel.removeExercise(at: idx)
+                                    }
                                 }
+                                // The swipe row slides itself off-screen before
+                                // calling back; a cancelled confirm rebuilds it.
+                                .id("\(exercise.id)-\(swipeResetCount)")
                         }
                     }
                     .padding(Theme.Spacing.md)
                 }
+            }
+            .confirmationDialog(
+                "Remove Exercise?",
+                isPresented: $showRemoveConfirm,
+                titleVisibility: .visible
+            ) {
+                Button("Remove", role: .destructive) {
+                    guard let idx = pendingRemovalIndex else { return }
+                    Haptics.warning()
+                    viewModel.removeExercise(at: idx)
+                    pendingRemovalIndex = nil
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("Its logged sets will be removed from this workout.")
+            }
+            // Covers Cancel and tapping outside alike: anything that closes the
+            // dialog without removing puts the swiped row back.
+            .onChange(of: showRemoveConfirm) { _, isShown in
+                guard !isShown, pendingRemovalIndex != nil else { return }
+                pendingRemovalIndex = nil
+                swipeResetCount += 1
             }
             .navigationTitle("Switch Exercise")
             .navigationBarTitleDisplayMode(.inline)

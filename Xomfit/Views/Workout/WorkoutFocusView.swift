@@ -9,6 +9,10 @@ struct WorkoutFocusView: View {
     @State private var repsText = ""
     @FocusState private var weightFieldFocused: Bool
     @FocusState private var repsFieldFocused: Bool
+    @State private var weightEditTarget: (exercise: Int, set: Int)?
+    @State private var repsEditTarget: (exercise: Int, set: Int)?
+    @AppStorage("weightUnit") private var weightUnitRaw: String = WeightUnit.lbs.rawValue
+    private var weightUnit: WeightUnit { WeightUnit(rawValue: weightUnitRaw) ?? .lbs }
     @State private var showExercisePicker = false
     @State private var showSupersetPicker = false
     @State private var showReorderSheet = false
@@ -107,6 +111,7 @@ struct WorkoutFocusView: View {
                                 onAttachmentChanged: { att in viewModel.setAttachment(exerciseIndex: viewModel.focusExerciseIndex, attachment: att) },
                                 onPositionChanged: { pos in viewModel.setPosition(exerciseIndex: viewModel.focusExerciseIndex, position: pos) },
                                 onLateralityChanged: { lat in viewModel.setLaterality(exerciseIndex: viewModel.focusExerciseIndex, laterality: lat) },
+                                onMachineChanged: { id in viewModel.setMachine(exerciseIndex: viewModel.focusExerciseIndex, machineId: id) },
                                 onNotesChanged: { notes in viewModel.setNotes(exerciseIndex: viewModel.focusExerciseIndex, notes: notes) },
                                 onRestSecondsChanged: { secs in viewModel.setRestSeconds(exerciseIndex: viewModel.focusExerciseIndex, seconds: secs) },
                                 defaultRestSeconds: Int(viewModel.defaultRestDuration)
@@ -227,9 +232,16 @@ struct WorkoutFocusView: View {
 
                     Divider()
 
+                    // Same rule as list mode: only logged work asks first,
+                    // everything else relies on the undo toast.
                     Button(role: .destructive) {
-                        Haptics.light()
-                        showRemoveConfirm = true
+                        if viewModel.hasLoggedSets(at: viewModel.focusExerciseIndex) {
+                            Haptics.light()
+                            showRemoveConfirm = true
+                        } else {
+                            Haptics.warning()
+                            removeFocusedExercise()
+                        }
                     } label: {
                         Label("Remove This Exercise", systemImage: "trash")
                     }
@@ -285,13 +297,7 @@ struct WorkoutFocusView: View {
             titleVisibility: .visible
         ) {
             Button("Remove", role: .destructive) {
-                let index = viewModel.focusExerciseIndex
-                viewModel.removeExercise(at: index)
-                // Nothing left to focus on, so go back to the list rather than
-                // showing an empty exercise screen.
-                if viewModel.exercises.isEmpty {
-                    viewModel.focusMode = false
-                }
+                removeFocusedExercise()
             }
             Button("Cancel", role: .cancel) {}
         } message: {
@@ -347,9 +353,7 @@ struct WorkoutFocusView: View {
             if ProcessInfo.processInfo.environment["XOMFIT_AUTO_FOCUS_WEIGHT"] == "1" {
                 Task { @MainActor in
                     try? await Task.sleep(for: .milliseconds(600))
-                    let w = viewModel.focusSet?.weight ?? 0
-                    weightText = w > 0 ? w.formattedWeight : ""
-                    isEditingWeight = true
+                    beginEditingWeight()
                     // Defer the focus assignment one frame so the TextField
                     // is in the view hierarchy before @FocusState binds.
                     try? await Task.sleep(for: .milliseconds(200))
@@ -682,26 +686,25 @@ struct WorkoutFocusView: View {
                     .frame(maxWidth: 200)
             } else {
                 Button {
-                    weightText = currentSet.weight > 0 ? currentSet.weight.formattedWeight : ""
-                    isEditingWeight = true
+                    beginEditingWeight()
                     weightFieldFocused = true
                 } label: {
-                    Text(currentSet.weight.formattedWeight)
+                    Text(currentSet.weight.formattedWeight(unit: weightUnit))
                         .font(.system(size: 48, weight: .bold, design: .monospaced))
                         .foregroundStyle(Theme.textPrimary)
                         .contentTransition(.numericText())
                         .animation(.xomSnappy, value: currentSet.weight)
                 }
-                .accessibilityLabel("Weight: \(currentSet.weight.formattedWeight) pounds. Tap to edit.")
+                .accessibilityLabel("Weight: \(currentSet.weight.formattedWeight(unit: weightUnit)) \(weightUnit.accessibilityName). Tap to edit.")
             }
 
             // Per-side indicator
             if currentSet.weightMode == .perSide {
-                Text("lbs x2 (per side)")
+                Text("\(weightUnit.displayName) x2 (per side)")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(Theme.accent)
             } else {
-                Text("lbs")
+                Text(weightUnit.displayName)
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(Theme.textSecondary)
             }
@@ -734,8 +737,7 @@ struct WorkoutFocusView: View {
                     .frame(maxWidth: 200)
             } else {
                 Button {
-                    repsText = currentSet.reps > 0 ? "\(currentSet.reps)" : ""
-                    isEditingReps = true
+                    beginEditingReps()
                     repsFieldFocused = true
                 } label: {
                     Text("\(currentSet.reps)")
@@ -917,26 +919,54 @@ struct WorkoutFocusView: View {
 
     // MARK: - Helpers
 
+    // The edit target is captured when editing starts because the cursor can
+    // move before the commit: tapping another set pill doesn't resign the
+    // keyboard, and completing a set from the watch advances the cursor. The
+    // commit used to read the cursor, so the typed number landed on whichever
+    // set was focused by then.
+
+    private func beginEditingWeight() {
+        let w = viewModel.focusSet?.weight ?? 0
+        weightText = w > 0 ? w.formattedWeight(unit: weightUnit) : ""
+        weightEditTarget = (viewModel.focusExerciseIndex, viewModel.focusSetIndex)
+        isEditingWeight = true
+    }
+
+    private func beginEditingReps() {
+        let r = viewModel.focusSet?.reps ?? 0
+        repsText = r > 0 ? "\(r)" : ""
+        repsEditTarget = (viewModel.focusExerciseIndex, viewModel.focusSetIndex)
+        isEditingReps = true
+    }
+
     private func commitWeight() {
         isEditingWeight = false
-        guard let value = Double(weightText) else { return }
-        viewModel.updateSet(
-            exerciseIndex: viewModel.focusExerciseIndex,
-            setIndex: viewModel.focusSetIndex,
-            weight: value,
-            reps: viewModel.focusSet?.reps ?? 0
-        )
+        guard let target = weightEditTarget,
+              let lbs = parseWeightInput(weightText, unit: weightUnit),
+              let set = viewModel.set(exerciseIndex: target.exercise, setIndex: target.set) else { return }
+        weightEditTarget = nil
+        // Unchanged text must not re-store: a kg value round-trips through
+        // one-decimal display and would drift the stored lbs.
+        guard weightText != (set.weight > 0 ? set.weight.formattedWeight(unit: weightUnit) : "") else { return }
+        viewModel.updateSet(exerciseIndex: target.exercise, setIndex: target.set, weight: lbs, reps: set.reps)
     }
 
     private func commitReps() {
         isEditingReps = false
-        guard let value = Int(repsText) else { return }
-        viewModel.updateSet(
-            exerciseIndex: viewModel.focusExerciseIndex,
-            setIndex: viewModel.focusSetIndex,
-            weight: viewModel.focusSet?.weight ?? 0,
-            reps: value
-        )
+        guard let target = repsEditTarget,
+              let reps = parseRepsInput(repsText),
+              let set = viewModel.set(exerciseIndex: target.exercise, setIndex: target.set) else { return }
+        repsEditTarget = nil
+        viewModel.updateSet(exerciseIndex: target.exercise, setIndex: target.set, weight: set.weight, reps: reps)
+    }
+
+    private func removeFocusedExercise() {
+        viewModel.removeExercise(at: viewModel.focusExerciseIndex)
+        // Nothing left to focus on, so go back to the list rather than
+        // showing an empty exercise screen.
+        if viewModel.exercises.isEmpty {
+            viewModel.focusMode = false
+        }
     }
 
     private func dismissKeyboard() {
