@@ -395,6 +395,7 @@ final class WorkoutLoggerViewModel {
             we.restSeconds = templateExercise.restSeconds
             // Carry the template's superset grouping into the live workout (#344).
             we.supersetGroupId = templateExercise.supersetGroupId
+            we.selectedMachineId = templateExercise.machineId
             builtExercises.append(we)
         }
         exercises = builtExercises
@@ -774,6 +775,11 @@ final class WorkoutLoggerViewModel {
         changeIdentity(exerciseIndex: exerciseIndex) {
             $0.selectedPosition = $0.selectedPosition == position ? nil : position
         }
+    }
+
+    func setMachine(exerciseIndex: Int, machineId: String) {
+        guard exercises.indices.contains(exerciseIndex) else { return }
+        exercises[exerciseIndex].selectedMachineId = exercises[exerciseIndex].selectedMachineId == machineId ? nil : machineId
     }
 
     func setLaterality(exerciseIndex: Int, laterality: Laterality) {

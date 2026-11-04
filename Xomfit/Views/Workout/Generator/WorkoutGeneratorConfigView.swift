@@ -18,7 +18,23 @@ struct WorkoutGeneratorConfigView: View {
     let onSaved: () -> Void
 
     @Environment(\.dismiss) private var dismiss
-    @State private var showPreview = false
+    @State private var showPreview: Bool
+
+    /// `opensPreview` lands straight on an already-generated preview (the
+    /// one-tap "Hit" flow); Back still reaches the config to tweak it.
+    init(
+        viewModel: WorkoutGeneratorViewModel,
+        userId: String,
+        opensPreview: Bool = false,
+        onStart: @escaping (WorkoutTemplate) -> Void,
+        onSaved: @escaping () -> Void
+    ) {
+        self.viewModel = viewModel
+        self.userId = userId
+        self.onStart = onStart
+        self.onSaved = onSaved
+        _showPreview = State(initialValue: opensPreview)
+    }
 
     private let gridColumns = [GridItem(.adaptive(minimum: 96), spacing: Theme.Spacing.sm)]
 
@@ -30,6 +46,7 @@ struct WorkoutGeneratorConfigView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
                         header
+                        gymSection
                         splitSection
                         muscleSection
                         timeSection
@@ -84,6 +101,37 @@ struct WorkoutGeneratorConfigView: View {
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    // MARK: - Gym
+
+    private var gymSection: some View {
+        NavigationLink {
+            GymListView()
+        } label: {
+            HStack(spacing: Theme.Spacing.sm) {
+                Image(systemName: "building.2.fill")
+                    .foregroundStyle(Theme.accent)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(GymLibrary.shared.activeGym?.name ?? "Anywhere")
+                        .font(Theme.fontBodyEmphasized)
+                        .foregroundStyle(Theme.textPrimary)
+                    Text("Only uses equipment this gym has")
+                        .font(Theme.fontCaption)
+                        .foregroundStyle(Theme.textSecondary)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Theme.textSecondary)
+            }
+            .padding(Theme.Spacing.md)
+            .background(Theme.surface)
+            .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Gym: \(GymLibrary.shared.activeGym?.name ?? "Anywhere")")
+        .accessibilityHint("Choose which gym's equipment to build from")
     }
 
     // MARK: - Split chips

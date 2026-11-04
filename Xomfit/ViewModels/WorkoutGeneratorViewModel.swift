@@ -34,6 +34,9 @@ final class WorkoutGeneratorViewModel {
     /// instant/offline, so this is essentially always false — kept only so the
     /// view can disable the button during the synchronous build, never a spinner.
     private(set) var isGenerating = false
+    /// Gym the current preview was built for. Captured at generate time so a
+    /// reroll draws from the same equipment even if the active gym changes.
+    private(set) var gym: GymProfile?
 
     // MARK: - Dependencies
 
@@ -80,6 +83,13 @@ final class WorkoutGeneratorViewModel {
         selectedMuscles = [muscle]
     }
 
+    /// One-tap "Hit Legs": reset to defaults, select the region, build the preview.
+    func hit(_ region: TrainingRegion, userId: String) {
+        reset()
+        selectedMuscles = Set(region.muscles)
+        generate(userId: userId)
+    }
+
     // MARK: - Generate
 
     /// Build a fresh preview. Rolls a new seed each tap (stable within the preview
@@ -90,6 +100,7 @@ final class WorkoutGeneratorViewModel {
         defer { isGenerating = false }
 
         seed = UInt64.random(in: UInt64.min...UInt64.max)
+        gym = GymLibrary.shared.activeGym
         let familiarity = familiarityMap(userId: userId)
 
         previewTemplate = generator.generate(
@@ -97,7 +108,8 @@ final class WorkoutGeneratorViewModel {
             timeBudgetMinutes: timeBudgetMinutes,
             targetSets: targetSets,
             familiarity: familiarity,
-            seed: seed
+            seed: seed,
+            gym: gym
         )
     }
 
@@ -111,7 +123,8 @@ final class WorkoutGeneratorViewModel {
             in: template,
             targets: orderedTargets,
             familiarity: familiarity,
-            seed: seed
+            seed: seed,
+            gym: gym
         )
     }
 
@@ -130,6 +143,7 @@ final class WorkoutGeneratorViewModel {
         timeBudgetMinutes = 45
         targetSets = 3
         seed = 0
+        gym = nil
         previewTemplate = nil
     }
 

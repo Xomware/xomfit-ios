@@ -22,6 +22,8 @@ struct WorkoutTemplate: Codable, Identifiable {
         /// Mirrors `WorkoutExercise.supersetGroupId` so the live workout inherits the
         /// grouping. Optional + default keeps existing templates decodable as-is (#344).
         var supersetGroupId: UUID? = nil
+        /// `MachineCatalog` id to log this on, carried into `WorkoutExercise.selectedMachineId`.
+        var machineId: String? = nil
     }
 
     enum TemplateCategory: String, Codable, CaseIterable {

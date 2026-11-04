@@ -3,7 +3,7 @@ import Foundation
 /// Complete exercise database for XomFit
 /// Organized by muscle group with form tips
 struct ExerciseDatabase {
-    static let all: [Exercise] = chest + back + shoulders + legs + arms + core + unilateral + machineAndCableExtras + bodyweightExtras + mobility + additionalExercises
+    static let all: [Exercise] = chest + back + shoulders + legs + arms + core + unilateral + machineAndCableExtras + bodyweightExtras + mobility + additionalExercises + plateLoadedMachines
 
     /// O(1) lookup by exercise id. Replaces `all.first(where: { $0.id == ... })` callsites
     /// which were O(n) per lookup and frequently used inside view-rendered loops (#321).
@@ -1020,6 +1020,38 @@ struct ExerciseDatabase {
                  description: "Pushdown against a band — the cable movement, anywhere.",
                  tips: ["Anchor high and keep elbows pinned", "Full lockout at the bottom", "Resist on the way up"],
                  recommendedStretchIds: ["st-overhead-tricep"]),
+    ]
+
+    // MARK: - Plate-loaded machine movements
+    //
+    // Lifts that only exist on a dedicated machine, added so branded machines
+    // (see `MachineCatalog`) have an exercise to map to.
+    static let plateLoadedMachines: [Exercise] = [
+        Exercise(id: "ex-pendulum-squat", name: "Pendulum Squat", muscleGroups: [.quads, .glutes], equipment: .machine, category: .compound,
+                 description: "Squat on a pendulum arc. Deep knee flexion with the back fully supported.",
+                 tips: ["Set the platform so heels stay down at the bottom", "Sink as deep as the pad allows", "Drive through the whole foot"],
+                 recommendedStretchIds: ["st-quad-pull", "st-deep-squat-hold"]),
+        Exercise(id: "ex-power-squat", name: "Power Squat Machine", muscleGroups: [.quads, .glutes], equipment: .machine, category: .compound,
+                 description: "Lever-arm squat under shoulder pads. Heavy quad work without balancing a bar.",
+                 tips: ["Feet slightly forward of the hips", "Keep the back against the pad", "Control the bottom, no bouncing"],
+                 recommendedStretchIds: ["st-quad-pull", "st-hip-flexor-lunge"]),
+        Exercise(id: "ex-vertical-leg-press", name: "Vertical Leg Press", muscleGroups: [.quads, .glutes, .hamstrings], equipment: .machine, category: .compound,
+                 description: "Leg press with the sled travelling straight up and down.",
+                 tips: ["Lower until the knees reach the chest", "Keep the hips on the pad", "Do not lock the knees at the top"],
+                 recommendedStretchIds: ["st-quad-pull", "st-hamstring-stretch"]),
+        Exercise(id: "ex-machine-glute-bridge", name: "Glute Bridge Machine", muscleGroups: [.glutes, .hamstrings], equipment: .machine, category: .compound,
+                 description: "Hip bridge against a lap pad. Glute loading without setting up a barbell.",
+                 tips: ["Upper back on the rear pad", "Tuck the chin and ribs down", "Pause and squeeze at the top"],
+                 recommendedStretchIds: ["st-hip-flexor-lunge", "st-figure-four"]),
+        Exercise(id: "ex-viking-press", name: "Viking Press", muscleGroups: [.shoulders, .triceps], equipment: .machine, category: .compound,
+                 description: "Standing lever press overhead with angled handles.",
+                 tips: ["Brace and squeeze the glutes", "Press up and slightly back", "Train one arm at a time to fix imbalances"],
+                 supportsUnilateral: true,
+                 recommendedStretchIds: ["st-lat-overhead", "st-cross-body-shoulder"]),
+        Exercise(id: "ex-machine-incline-fly", name: "Incline Machine Fly", muscleGroups: [.chest, .shoulders], equipment: .machine, category: .isolation,
+                 description: "Fly on an incline bench with lever arms. Upper-chest stretch and squeeze.",
+                 tips: ["Shoulder blades pinned to the bench", "Soft elbows throughout", "Let the stretch happen under control"],
+                 recommendedStretchIds: ["st-doorway-chest"]),
     ]
 
     // MARK: - Search

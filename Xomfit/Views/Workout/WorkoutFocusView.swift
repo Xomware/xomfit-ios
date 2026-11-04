@@ -111,6 +111,7 @@ struct WorkoutFocusView: View {
                                 onAttachmentChanged: { att in viewModel.setAttachment(exerciseIndex: viewModel.focusExerciseIndex, attachment: att) },
                                 onPositionChanged: { pos in viewModel.setPosition(exerciseIndex: viewModel.focusExerciseIndex, position: pos) },
                                 onLateralityChanged: { lat in viewModel.setLaterality(exerciseIndex: viewModel.focusExerciseIndex, laterality: lat) },
+                                onMachineChanged: { id in viewModel.setMachine(exerciseIndex: viewModel.focusExerciseIndex, machineId: id) },
                                 onNotesChanged: { notes in viewModel.setNotes(exerciseIndex: viewModel.focusExerciseIndex, notes: notes) },
                                 onRestSecondsChanged: { secs in viewModel.setRestSeconds(exerciseIndex: viewModel.focusExerciseIndex, seconds: secs) },
                                 defaultRestSeconds: Int(viewModel.defaultRestDuration)
