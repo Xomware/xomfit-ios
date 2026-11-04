@@ -113,7 +113,7 @@ struct ExerciseConfigRow: View {
     }
 
     private var machineOptions: [Machine] {
-        MachineCatalog.machines(for: exercise.exercise.id)
+        GymLibrary.shared.machineOptions(for: exercise.exercise.id)
     }
 
     private func machineSetupPill(_ machine: Machine) -> some View {

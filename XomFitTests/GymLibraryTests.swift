@@ -52,6 +52,41 @@ final class GymLibraryTests: XCTestCase {
         XCTAssertTrue(library.machineSettings.isEmpty)
     }
 
+    func testFirstGymBecomesActiveAndPersists() {
+        let library = GymLibrary(defaults: defaults)
+        library.load(userId: "u1")
+        let carbon = GymProfile(name: "Carbon Performance", machineIds: [leg])
+        library.saveGym(carbon)
+        library.saveGym(GymProfile(name: "Home", equipment: [.dumbbell]))
+
+        let reloaded = GymLibrary(defaults: defaults)
+        reloaded.load(userId: "u1")
+        XCTAssertEqual(reloaded.gyms.map(\.name), ["Carbon Performance", "Home"])
+        XCTAssertEqual(reloaded.activeGym?.id, carbon.id)
+        XCTAssertEqual(reloaded.activeGym?.machineIds, [leg])
+    }
+
+    func testDeletingActiveGymClearsIt() {
+        let library = GymLibrary(defaults: defaults)
+        library.load(userId: "u1")
+        let gym = GymProfile(name: "Carbon")
+        library.saveGym(gym)
+        library.deleteGym(id: gym.id)
+        XCTAssertNil(library.activeGym)
+        XCTAssertTrue(library.gyms.isEmpty)
+    }
+
+    func testMachineOptionsPreferActiveGymsMachines() {
+        let library = GymLibrary(defaults: defaults)
+        library.load(userId: "u1")
+        XCTAssertGreaterThan(library.machineOptions(for: "ex-leg-press").count, 1)
+
+        library.saveGym(GymProfile(name: "Carbon", machineIds: [leg]))
+        XCTAssertEqual(library.machineOptions(for: "ex-leg-press").map(\.id), [leg])
+        // Nothing at this gym for the lift → fall back to the catalog.
+        XCTAssertFalse(library.machineOptions(for: "ex-hack-squat").isEmpty)
+    }
+
     func testCatalogMapsOnlyToRealExercises() {
         for machine in MachineCatalog.all {
             for id in machine.exerciseIds {
