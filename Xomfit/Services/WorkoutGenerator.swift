@@ -56,22 +56,25 @@ struct WorkoutGenerator {
     ///   - targetSets: working sets per exercise.
     ///   - familiarity: `exerciseId → logged-set count` (from the history walk).
     ///   - seed: fixed seed for reproducible output / reroll continuity.
+    ///   - gym: when set, only exercises this gym can host, each assigned one of its machines.
     func generate(
         targets: [MuscleGroup],
         timeBudgetMinutes: Int,
         targetSets: Int,
         familiarity: [String: Int],
-        seed: UInt64
+        seed: UInt64,
+        gym: GymProfile? = nil
     ) -> WorkoutTemplate {
         let targetSet = Set(targets)
-        let pool = Self.pool(for: targetSet)
+        let pool = Self.pool(for: targetSet, gym: gym)
 
         // No exercises match the selection → empty (but valid) template.
         guard !pool.isEmpty else {
             return Self.assemble(
                 picks: [],
                 targets: targets,
-                targetSets: targetSets
+                targetSets: targetSets,
+                gym: gym
             )
         }
 
@@ -112,7 +115,7 @@ struct WorkoutGenerator {
 
         // Rules 6 & 7 — rep schemes + template assembly.
         let picks = ordered.map { ($0, Self.repScheme(for: $0.category, using: &rng)) }
-        return Self.assemble(picks: picks, targets: targets, targetSets: targetSets)
+        return Self.assemble(picks: picks, targets: targets, targetSets: targetSets, gym: gym)
     }
 
     // MARK: - Reroll
@@ -128,12 +131,13 @@ struct WorkoutGenerator {
         in template: WorkoutTemplate,
         targets: [MuscleGroup],
         familiarity: [String: Int],
-        seed: UInt64
+        seed: UInt64,
+        gym: GymProfile? = nil
     ) -> WorkoutTemplate {
         guard template.exercises.indices.contains(slot) else { return template }
 
         let targetSet = Set(targets)
-        let pool = Self.pool(for: targetSet)
+        let pool = Self.pool(for: targetSet, gym: gym)
         let current = template.exercises[slot]
 
         // Anchor the rerolled slot to one of the current exercise's target groups
@@ -164,7 +168,8 @@ struct WorkoutGenerator {
             exercise: replacement,
             targetSets: current.targetSets,
             targetReps: Self.repScheme(for: replacement.category, using: &rng),
-            notes: nil
+            notes: nil,
+            machineId: gym?.machines(for: replacement.id).first?.id
         )
 
         var exercises = template.exercises
@@ -184,11 +189,14 @@ struct WorkoutGenerator {
 
     /// Rule 1 — pool = full catalog filtered to exercises that target one of the
     /// selected muscles and are `.compound` or `.isolation` (cardio/stretch excluded).
-    static func pool(for targets: Set<MuscleGroup>) -> [Exercise] {
+    /// With a gym, also restricted to exercises its equipment or machines cover.
+    static func pool(for targets: Set<MuscleGroup>, gym: GymProfile? = nil) -> [Exercise] {
         guard !targets.isEmpty else { return [] }
+        let machineExerciseIds = gym?.machineExerciseIds ?? []
         return ExerciseDatabase.all.filter { ex in
             (ex.category == .compound || ex.category == .isolation) &&
-            !ex.muscleGroups.filter(targets.contains).isEmpty
+            !ex.muscleGroups.filter(targets.contains).isEmpty &&
+            (gym.map { $0.equipment.contains(ex.equipment) || machineExerciseIds.contains(ex.id) } ?? true)
         }
     }
 
@@ -298,7 +306,8 @@ struct WorkoutGenerator {
     static func assemble(
         picks: [(Exercise, String)],
         targets: [MuscleGroup],
-        targetSets: Int
+        targetSets: Int,
+        gym: GymProfile?
     ) -> WorkoutTemplate {
         let templateExercises = picks.map { (exercise, reps) in
             WorkoutTemplate.TemplateExercise(
@@ -306,7 +315,8 @@ struct WorkoutGenerator {
                 exercise: exercise,
                 targetSets: targetSets,
                 targetReps: reps,
-                notes: nil
+                notes: nil,
+                machineId: gym?.machines(for: exercise.id).first?.id
             )
         }
         let count = templateExercises.count

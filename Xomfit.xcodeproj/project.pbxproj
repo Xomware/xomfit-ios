@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		06ACBBC7B67A972F6F39A214 /* WorkoutGeneratorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 138F935F3800CBB4B66CD6CC /* WorkoutGeneratorTests.swift */; };
+		08302129E16A89B555C615D5 /* WorkoutGeneratorGymTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D796DFE7275099589DADC0E /* WorkoutGeneratorGymTests.swift */; };
 		0F2396BE1C58B7C7F99F5BC6 /* WorkoutInsightsSeamTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 730E45C30DECC5AA5563EAB4 /* WorkoutInsightsSeamTests.swift */; };
 		175D9C785D217A06EBCC6054 /* XomfitWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F3CBFE99B6D75BC1136FCB9 /* XomfitWatchApp.swift */; };
 		2652623F55494AE501D17728 /* AuthServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7B33E534C5D4F6F4A221677 /* AuthServiceTests.swift */; };
@@ -125,6 +126,7 @@
 		88B8A97CE4A2CE2648228B1A /* GymLibraryTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GymLibraryTests.swift; sourceTree = "<group>"; };
 		8C8932635DA9D7B3E27AD4A2 /* ContentView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		8FAE60DD4EABA26C99B0237B /* ExerciseEditingTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ExerciseEditingTests.swift; sourceTree = "<group>"; };
+		9D796DFE7275099589DADC0E /* WorkoutGeneratorGymTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkoutGeneratorGymTests.swift; sourceTree = "<group>"; };
 		9F598AFE9ECEBE9D1CE5C308 /* NumberEntryView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NumberEntryView.swift; sourceTree = "<group>"; };
 		AA01B0010000000000000005 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		AA03D0010000000000000001 /* WatchRestHaptics.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchRestHaptics.swift; sourceTree = "<group>"; };
@@ -325,6 +327,7 @@
 				4ADF606A8539CC86944E51AB /* SetPrefillTests.swift */,
 				371C60FE1A1B658763543895 /* RestTimerWallClockTests.swift */,
 				88B8A97CE4A2CE2648228B1A /* GymLibraryTests.swift */,
+				9D796DFE7275099589DADC0E /* WorkoutGeneratorGymTests.swift */,
 			);
 			path = XomfitTests;
 			sourceTree = "<group>";
@@ -815,6 +818,7 @@
 				2B583FB10F98F05BD2264B97 /* SetPrefillTests.swift in Sources */,
 				2E0814631D3573245276EA81 /* RestTimerWallClockTests.swift in Sources */,
 				B88106339BDDE527B6F2E7E0 /* GymLibraryTests.swift in Sources */,
+				08302129E16A89B555C615D5 /* WorkoutGeneratorGymTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

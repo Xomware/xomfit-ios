@@ -54,7 +54,7 @@ struct WorkoutGeneratorPreviewView: View {
             HStack(spacing: Theme.Spacing.sm) {
                 Image(systemName: "bolt.fill")
                     .foregroundStyle(Theme.accent)
-                Text("Generated instantly · offline")
+                Text(viewModel.gym.map { "Built for \($0.name)" } ?? "Generated instantly · offline")
                     .font(Theme.fontCaption.weight(.semibold))
                     .foregroundStyle(Theme.accent)
             }
@@ -79,6 +79,11 @@ struct WorkoutGeneratorPreviewView: View {
                 Text("\(exercise.targetSets) × \(exercise.targetReps)  ·  \(muscleTag(exercise.exercise))")
                     .font(Theme.fontCaption)
                     .foregroundStyle(Theme.textSecondary)
+                if let machine = exercise.machineId.flatMap({ MachineCatalog.byId[$0] }) {
+                    Text(machine.displayName)
+                        .font(Theme.fontCaption.weight(.semibold))
+                        .foregroundStyle(Theme.accent)
+                }
             }
 
             Spacer()
@@ -126,7 +131,10 @@ struct WorkoutGeneratorPreviewView: View {
             Text("No exercises matched")
                 .font(Theme.fontHeadline)
                 .foregroundStyle(Theme.textPrimary)
-            Text("Try selecting more muscle groups.")
+            Text(viewModel.gym == nil
+                 ? "Try selecting more muscle groups."
+                 : "This gym has no equipment for that. Add equipment to the gym or pick other muscles.")
+                .multilineTextAlignment(.center)
                 .font(Theme.fontFootnote)
                 .foregroundStyle(Theme.textSecondary)
         }

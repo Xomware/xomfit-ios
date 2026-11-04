@@ -395,6 +395,7 @@ final class WorkoutLoggerViewModel {
             we.restSeconds = templateExercise.restSeconds
             // Carry the template's superset grouping into the live workout (#344).
             we.supersetGroupId = templateExercise.supersetGroupId
+            we.selectedMachineId = templateExercise.machineId
             builtExercises.append(we)
         }
         exercises = builtExercises

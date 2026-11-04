@@ -18,7 +18,23 @@ struct WorkoutGeneratorConfigView: View {
     let onSaved: () -> Void
 
     @Environment(\.dismiss) private var dismiss
-    @State private var showPreview = false
+    @State private var showPreview: Bool
+
+    /// `opensPreview` lands straight on an already-generated preview (the
+    /// one-tap "Hit" flow); Back still reaches the config to tweak it.
+    init(
+        viewModel: WorkoutGeneratorViewModel,
+        userId: String,
+        opensPreview: Bool = false,
+        onStart: @escaping (WorkoutTemplate) -> Void,
+        onSaved: @escaping () -> Void
+    ) {
+        self.viewModel = viewModel
+        self.userId = userId
+        self.onStart = onStart
+        self.onSaved = onSaved
+        _showPreview = State(initialValue: opensPreview)
+    }
 
     private let gridColumns = [GridItem(.adaptive(minimum: 96), spacing: Theme.Spacing.sm)]
 
