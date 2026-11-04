@@ -358,7 +358,7 @@ struct ActiveWorkoutView: View {
         }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {
-                viewModel.recalculateRestTimer()
+                viewModel.tickRestTimer()
             }
         }
         .sheet(isPresented: $showExercisePicker) {

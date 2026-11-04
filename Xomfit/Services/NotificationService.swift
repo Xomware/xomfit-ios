@@ -8,7 +8,7 @@ import Supabase
 // Local notifications scheduled by this app (fire in-process, no APNs server):
 //   * Rest-timer completion  -> id "rest-{workoutId}"
 //       Scheduled when WorkoutLoggerViewModel.startRestTimer(for:) fires.
-//       Cancelled when skipRestTimer() is called or the rest naturally ends.
+//       Cancelled on skipRestTimer(), pause (re-armed on resume), and workout end.
 //       Trigger: rest duration (seconds, UNTimeIntervalNotificationTrigger).
 //       Gated by `restTimerLocalEnabled` user toggle.
 //   * Warmup completion      -> id "warmup-completion"
