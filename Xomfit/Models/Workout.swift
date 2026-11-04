@@ -187,6 +187,10 @@ struct WorkoutExercise: Codable, Identifiable {
     var selectedPosition: ExercisePosition? = nil
     /// Laterality selection for this exercise instance. Defaults to bilateral.
     var selectedLaterality: Laterality = .bilateral
+    /// `MachineCatalog` id of the specific machine used. Local only: there is no
+    /// backend column, so it is not part of `ExerciseVariant.key` — a key built
+    /// from it could never be rebuilt from a workout fetched back from Supabase.
+    var selectedMachineId: String? = nil
     /// When non-nil, this exercise is part of a superset group.
     /// All exercises sharing the same UUID are performed back-to-back (1 set of A → 1 set of B → rest → ...).
     var supersetGroupId: UUID? = nil
@@ -197,6 +201,8 @@ struct WorkoutExercise: Codable, Identifiable {
     var bestSet: WorkoutSet? {
         sets.max(by: { $0.volume < $1.volume })
     }
+
+    var selectedMachine: Machine? { selectedMachineId.flatMap { MachineCatalog.byId[$0] } }
 
     /// Total volume for this exercise. Doubles the multiplier when performing unilaterally or alternating.
     var totalVolume: Double {

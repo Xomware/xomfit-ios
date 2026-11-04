@@ -1346,6 +1346,7 @@ private struct ExerciseCard: View {
                         onAttachmentChanged: { att in viewModel.setAttachment(exerciseIndex: exerciseIndex, attachment: att) },
                         onPositionChanged: { pos in viewModel.setPosition(exerciseIndex: exerciseIndex, position: pos) },
                         onLateralityChanged: { lat in viewModel.setLaterality(exerciseIndex: exerciseIndex, laterality: lat) },
+                        onMachineChanged: { id in viewModel.setMachine(exerciseIndex: exerciseIndex, machineId: id) },
                         onNotesChanged: { notes in viewModel.setNotes(exerciseIndex: exerciseIndex, notes: notes) },
                         onRestSecondsChanged: { secs in viewModel.setRestSeconds(exerciseIndex: exerciseIndex, seconds: secs) },
                         defaultRestSeconds: Int(viewModel.defaultRestDuration)

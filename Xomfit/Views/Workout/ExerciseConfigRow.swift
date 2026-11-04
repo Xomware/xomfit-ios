@@ -8,6 +8,8 @@ struct ExerciseConfigRow: View {
     let onAttachmentChanged: (CableAttachment) -> Void
     let onPositionChanged: (ExercisePosition) -> Void
     var onLateralityChanged: ((Laterality) -> Void)? = nil
+    /// Toggles the selected machine by `MachineCatalog` id. When omitted, the machine row is hidden.
+    var onMachineChanged: ((String) -> Void)? = nil
     /// Optional notes handler. Pass nil/empty to clear. When omitted, the notes pill is hidden.
     var onNotesChanged: ((String?) -> Void)? = nil
     /// Optional per-exercise rest override handler. Pass nil to clear (use global). When omitted,
@@ -22,7 +24,17 @@ struct ExerciseConfigRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.tight) {
-            if let grips = exercise.exercise.supportedGrips {
+            if let onMachineChanged, !machineOptions.isEmpty {
+                configSection(label: "Machine") {
+                    ForEach(machineOptions) { machine in
+                        configPill(
+                            label: machine.displayName,
+                            isSelected: exercise.selectedMachineId == machine.id
+                        ) { onMachineChanged(machine.id) }
+                    }
+                }
+            }
+            if let grips = exercise.selectedMachine?.grips ?? exercise.exercise.supportedGrips {
                 configSection(label: "Grip") {
                     ForEach(grips) { grip in
                         configPill(
@@ -42,7 +54,7 @@ struct ExerciseConfigRow: View {
                     }
                 }
             }
-            if let positions = exercise.exercise.supportedPositions {
+            if let positions = exercise.selectedMachine?.positions ?? exercise.exercise.supportedPositions {
                 configSection(label: "Position") {
                     ForEach(positions) { position in
                         configPill(
@@ -90,6 +102,10 @@ struct ExerciseConfigRow: View {
                 .presentationDetents([.medium])
             }
         }
+    }
+
+    private var machineOptions: [Machine] {
+        MachineCatalog.machines(for: exercise.exercise.id)
     }
 
     // MARK: - Extras Row (Notes + Rest)

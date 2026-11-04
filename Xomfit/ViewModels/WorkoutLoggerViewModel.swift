@@ -776,6 +776,11 @@ final class WorkoutLoggerViewModel {
         }
     }
 
+    func setMachine(exerciseIndex: Int, machineId: String) {
+        guard exercises.indices.contains(exerciseIndex) else { return }
+        exercises[exerciseIndex].selectedMachineId = exercises[exerciseIndex].selectedMachineId == machineId ? nil : machineId
+    }
+
     func setLaterality(exerciseIndex: Int, laterality: Laterality) {
         changeIdentity(exerciseIndex: exerciseIndex) { $0.selectedLaterality = laterality }
     }
