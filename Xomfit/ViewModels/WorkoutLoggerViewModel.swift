@@ -238,8 +238,10 @@ final class WorkoutLoggerViewModel {
     /// Starts the once-a-second clock, replacing any previous one.
     private func startSessionTicker() {
         sessionTicker?.invalidate()
+        // Added to the main run loop below, so the block always fires on the
+        // main thread and can run synchronously instead of hopping via a Task.
         let ticker = Timer(timeInterval: 1, repeats: true) { [weak self] _ in
-            Task { @MainActor in
+            MainActor.assumeIsolated {
                 guard let self else { return }
                 self.tickRestTimer()
                 self.tickLiveActivity()

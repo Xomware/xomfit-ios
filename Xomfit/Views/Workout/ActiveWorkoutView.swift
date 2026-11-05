@@ -97,6 +97,10 @@ struct ActiveWorkoutView: View {
         pendingScrollIndex = viewModel.focusExerciseIndex
     }
 
+    private func undoRemove() {
+        withAnimation(.xomChill) { viewModel.undoRemoveExercise() }
+    }
+
     @ViewBuilder
     private var setsRepsBody: some View {
         @Bindable var viewModel = viewModel
@@ -128,56 +132,61 @@ struct ActiveWorkoutView: View {
                     // shrinks back out. The old approach swapped two unrelated
                     // view trees behind a scale+opacity cross-fade, which is
                     // what made switching feel like a hard cut.
-                    if viewModel.exercises.isEmpty {
-                        emptyState
-                    } else {
-                        ScrollViewReader { proxy in
-                            ScrollView {
-                                LazyVStack(spacing: Theme.Spacing.md) {
-                                    ForEach(viewModel.exercises.indices, id: \.self) { exIdx in
-                                        // No card-level `.swipeToDelete` here. A swipe
-                                        // recognizer on every full-height card fought the
-                                        // ScrollView's vertical pan and made the list feel
-                                        // stuck. Removal lives in the card's overflow menu.
-                                        ExerciseCard(
-                                            exerciseIndex: exIdx,
-                                            viewModel: viewModel,
-                                            onEnterFocus: { enterFocus(on: exIdx) }
-                                        )
-                                        .id(exIdx)
-                                        // Source geometry for the zoom push.
-                                        .matchedTransitionSource(id: exIdx, in: zoomNamespace)
-                                    }
+                    // Toast hangs off the list, not the screen, so it lands
+                    // under the header instead of over Discard / Finish.
+                    Group {
+                        if viewModel.exercises.isEmpty {
+                            emptyState
+                        } else {
+                            ScrollViewReader { proxy in
+                                ScrollView {
+                                    LazyVStack(spacing: Theme.Spacing.md) {
+                                        ForEach(viewModel.exercises.indices, id: \.self) { exIdx in
+                                            // No card-level `.swipeToDelete` here. A swipe
+                                            // recognizer on every full-height card fought the
+                                            // ScrollView's vertical pan and made the list feel
+                                            // stuck. Removal lives in the card's overflow menu.
+                                            ExerciseCard(
+                                                exerciseIndex: exIdx,
+                                                viewModel: viewModel,
+                                                onEnterFocus: { enterFocus(on: exIdx) }
+                                            )
+                                            .id(exIdx)
+                                            // Source geometry for the zoom push.
+                                            .matchedTransitionSource(id: exIdx, in: zoomNamespace)
+                                        }
 
-                                    // The header `+` is easy to miss once you've
-                                    // scrolled into the plan; the end of the list is
-                                    // where you look when you want one more lift.
-                                    XomButton("Add Exercise", variant: .secondary, icon: "plus") {
-                                        Haptics.selection()
-                                        showExercisePicker = true
+                                        // The header `+` is easy to miss once you've
+                                        // scrolled into the plan; the end of the list is
+                                        // where you look when you want one more lift.
+                                        XomButton("Add Exercise", variant: .secondary, icon: "plus") {
+                                            Haptics.selection()
+                                            showExercisePicker = true
+                                        }
+                                        .accessibilityHint("Opens the exercise picker to add a new exercise to this workout")
                                     }
-                                    .accessibilityHint("Opens the exercise picker to add a new exercise to this workout")
+                                    .padding(Theme.Spacing.md)
                                 }
-                                .padding(Theme.Spacing.md)
-                            }
-                            // Bottom inset that clears the soundtrack capture
-                            // pill and the rest bar — the Add Exercise FAB is
-                            // gone (#402); add-exercise lives in the top header
-                            // now. Keeping a generous inset so the last set rows
-                            // don't kiss the home indicator.
-                            .contentMargins(.top, Theme.Spacing.xs, for: .scrollContent)
-                            .contentMargins(.bottom, Theme.Spacing.lg, for: .scrollContent)
-                            .scrollDismissesKeyboard(.interactively)
-                            .onChange(of: pendingScrollIndex) { _, newValue in
-                                guard let idx = newValue else { return }
-                                withAnimation(.xomChill) {
-                                    proxy.scrollTo(idx, anchor: .top)
+                                // Bottom inset that clears the soundtrack capture
+                                // pill and the rest bar — the Add Exercise FAB is
+                                // gone (#402); add-exercise lives in the top header
+                                // now. Keeping a generous inset so the last set rows
+                                // don't kiss the home indicator.
+                                .contentMargins(.top, Theme.Spacing.xs, for: .scrollContent)
+                                .contentMargins(.bottom, Theme.Spacing.lg, for: .scrollContent)
+                                .scrollDismissesKeyboard(.interactively)
+                                .onChange(of: pendingScrollIndex) { _, newValue in
+                                    guard let idx = newValue else { return }
+                                    withAnimation(.xomChill) {
+                                        proxy.scrollTo(idx, anchor: .top)
+                                    }
+                                    // Clear after the scroll has been kicked off.
+                                    pendingScrollIndex = nil
                                 }
-                                // Clear after the scroll has been kicked off.
-                                pendingScrollIndex = nil
                             }
                         }
                     }
+                    .toast($undoRemoveToast, onTap: undoRemove)
                 }
                 .animation(.xomChill, value: viewModel.isRestTimerActive)
                 .animation(.xomChill, value: viewModel.showExerciseTransition)
@@ -220,7 +229,11 @@ struct ActiveWorkoutView: View {
             // this screen and shrinks back — and interactive back-swipe comes
             // free, which the old inline branch could never offer.
             .navigationDestination(isPresented: $viewModel.focusMode) {
+                // Attached per screen rather than on the stack: a stack-level
+                // overlay draws over the pushed screen's navigation bar, which
+                // hid focus mode's options and pause buttons for 4s.
                 WorkoutFocusView(viewModel: viewModel)
+                    .toast($undoRemoveToast, onTap: undoRemove)
                     .navigationTransition(.zoom(sourceID: viewModel.focusExerciseIndex, in: zoomNamespace))
                     .environment(authService)
             }
@@ -424,9 +437,6 @@ struct ActiveWorkoutView: View {
         // First-run rest timer toast (#310). Uses the existing toast pattern
         // shared with launch streak/PR badges in MainTabView.
         .toast($restTimerToast)
-        .toast($undoRemoveToast) {
-            withAnimation(.xomChill) { viewModel.undoRemoveExercise() }
-        }
         .onChange(of: viewModel.lastRemovedExercise?.exercise.id) { _, id in
             guard id != nil, let removed = viewModel.lastRemovedExercise else { return }
             undoRemoveToast = Toast(
@@ -1352,6 +1362,8 @@ private struct ExerciseCard: View {
                         defaultRestSeconds: Int(viewModel.defaultRestDuration)
                     )
                     .transition(.opacity.combined(with: .move(edge: .top)))
+                } else if let machine = exercise.selectedMachine {
+                    MachineSummaryButton(machine: machine)
                 }
 
                 // Column header only where the numbers are actually being
