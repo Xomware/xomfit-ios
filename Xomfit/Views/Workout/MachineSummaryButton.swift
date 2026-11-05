@@ -11,6 +11,9 @@ struct MachineSummaryButton: View {
     @State private var isEditing = false
 
     var body: some View {
+        // Brand + name is how lifters refer to the machine; series names are
+        // catalog filing, and no two Arsenal machines share a name.
+        let title = "\(machine.brand) \(machine.name)"
         let summary = GymLibrary.shared.settings(for: machine.id).summary
         Button {
             Haptics.selection()
@@ -18,7 +21,7 @@ struct MachineSummaryButton: View {
         } label: {
             HStack(spacing: Theme.Spacing.tight) {
                 Image(systemName: summary == nil ? "plus" : "slider.horizontal.3")
-                Text("\(machine.displayName) · \(summary ?? "Add setup")")
+                Text("\(title) · \(summary ?? "Add setup")")
                     .lineLimit(1)
             }
             .font(.caption.weight(.semibold))
@@ -31,7 +34,7 @@ struct MachineSummaryButton: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(PressableCardStyle())
-        .accessibilityLabel("\(machine.displayName). \(summary.map { "Setup: \($0)" } ?? "No setup saved")")
+        .accessibilityLabel("\(title). \(summary.map { "Setup: \($0)" } ?? "No setup saved")")
         .accessibilityHint("Edits seat, pad and handle settings")
         .sheet(isPresented: $isEditing) {
             MachineSettingsSheet(machine: machine)
