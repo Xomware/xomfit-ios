@@ -121,7 +121,6 @@ struct GarminDeviceView: View {
         case true: return "checkmark.circle.fill"
         case false: return "arrow.down.circle.fill"
         case nil: return "questionmark.circle"
-        default: return "questionmark.circle"
         }
     }
 
@@ -130,7 +129,6 @@ struct GarminDeviceView: View {
         case true: return "Installed."
         case false: return "Not installed — the watch can't receive workouts without it."
         case nil: return "Unknown until the watch connects."
-        default: return "Unknown."
         }
     }
 

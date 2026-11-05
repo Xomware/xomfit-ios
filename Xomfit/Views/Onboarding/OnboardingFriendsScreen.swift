@@ -290,7 +290,7 @@ struct OnboardingFriendsScreen: View {
     private func sendRequest(to targetId: String) {
         // Optimistic
         let placeholder = FriendshipRelation.outgoingPending(friendshipId: "pending")
-        _ = withAnimation(.xomConfident) {
+        withAnimation(.xomConfident) {
             relations[targetId] = placeholder
         }
         Task {
@@ -303,7 +303,7 @@ struct OnboardingFriendsScreen: View {
             } catch FriendError.alreadyExists(let existing) {
                 relations[targetId] = existing
             } catch {
-                _ = withAnimation {
+                withAnimation {
                     relations[targetId] = FriendshipRelation.none
                 }
                 errorMessage = error.localizedDescription

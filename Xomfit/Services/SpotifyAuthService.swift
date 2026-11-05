@@ -325,12 +325,9 @@ extension SpotifyAuthService: ASWebAuthenticationPresentationContextProviding {
                 ?? UIApplication.shared.connectedScenes
                     .compactMap { $0 as? UIWindowScene }
                     .first
-            if let key = scene?.keyWindow { return key }
-            // Fallback: construct a transient window in the resolved scene rather than calling
-            // the now-deprecated `ASPresentationAnchor()` initializer. Practically unreachable —
-            // logged in case we ever hit it during sign-in.
-            if let scene { return UIWindow(windowScene: scene) }
-            return UIWindow()
+            // Sign-in is started from on-screen UI, so a window scene always exists here.
+            guard let scene else { preconditionFailure("Spotify sign-in presented with no window scene") }
+            return scene.keyWindow ?? UIWindow(windowScene: scene)
         }
     }
 }

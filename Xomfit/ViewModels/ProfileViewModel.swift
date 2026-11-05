@@ -306,9 +306,9 @@ final class ProfileViewModel {
 
         // Load remaining data in parallel
         async let workoutsTask = WorkoutService.shared.fetchWorkouts(userId: userId)
-        async let prsTask = loadPRs(userId: userId)
-        async let feedTask = loadFeed(userId: userId)
-        async let friendsTask = loadFriends(userId: userId)
+        async let prsTask: Void = loadPRs(userId: userId)
+        async let feedTask: Void = loadFeed(userId: userId)
+        async let friendsTask: Void = loadFriends(userId: userId)
 
         let fetchedWorkouts = await workoutsTask
         workouts = fetchedWorkouts

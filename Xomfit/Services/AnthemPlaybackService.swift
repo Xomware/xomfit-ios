@@ -36,10 +36,7 @@ final class AnthemPlaybackService {
     private let maxDuration: TimeInterval = 30
 
     private var player: AVPlayer?
-    /// Made `nonisolated(unsafe)` so the deinit can clear the observer without
-    /// hopping back onto the main actor. Mutation is still confined to
-    /// `play()` / `stop()` which both run on `@MainActor`.
-    nonisolated(unsafe) private var endObserver: NSObjectProtocol?
+    private var endObserver: NSObjectProtocol?
     private var autoStopTask: Task<Void, Never>?
 
     /// In-memory cache mapping `title|artist` to a resolved preview URL so we
@@ -193,16 +190,6 @@ final class AnthemPlaybackService {
         // activate when it begins playback.
         let session = AVAudioSession.sharedInstance()
         try? session.setCategory(.ambient, mode: .default, options: [.mixWithOthers])
-    }
-
-    // MARK: - Cleanup
-
-    deinit {
-        // `endObserver` is captured here for cleanup; AVPlayer references will
-        // drop naturally when the actor instance is released.
-        if let endObserver {
-            NotificationCenter.default.removeObserver(endObserver)
-        }
     }
 }
 
