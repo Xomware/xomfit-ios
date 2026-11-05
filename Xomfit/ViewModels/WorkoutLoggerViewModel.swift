@@ -251,11 +251,13 @@ final class WorkoutLoggerViewModel {
         // the default mode stalls for as long as the finger is down.
         RunLoop.main.add(ticker, forMode: .common)
         sessionTicker = ticker
+        keepAlive.start()
     }
 
     private func stopSessionTicker() {
         sessionTicker?.invalidate()
         sessionTicker = nil
+        keepAlive.end()
     }
 
     func startWorkout(name: String, userId: String = "") {
@@ -1569,6 +1571,11 @@ final class WorkoutLoggerViewModel {
     /// outlives any one view, so its clock has to as well.
     private var sessionTicker: Timer?
 
+    /// Keeps the app running once the phone locks, so the ticker above keeps
+    /// firing and Garmin messages keep arriving (#519). Started and ended with
+    /// the ticker, since keeping the ticker alive is its whole job.
+    var keepAlive: WorkoutKeepAlive = PhoneWorkoutSession.shared
+
     /// Whole second the countdown haptic last fired for, or nil when nothing has
     /// fired for the current rest period. `0` means the end-of-rest alarm has
     /// already played.
@@ -1706,6 +1713,7 @@ final class WorkoutLoggerViewModel {
             }
             pausedAt = nil
             isPaused = false
+            keepAlive.resume()
             if isRestTimerActive, restTimeRemaining > 0 {
                 NotificationService.shared.rescheduleRestTimerNotification(
                     workoutId: workoutId, remaining: restTimeRemaining
@@ -1715,6 +1723,7 @@ final class WorkoutLoggerViewModel {
             // Pause
             pausedAt = Date()
             isPaused = true
+            keepAlive.pause()
             // A paused rest must not announce itself as done.
             NotificationService.shared.cancelRestTimerNotification(workoutId: workoutId)
         }
