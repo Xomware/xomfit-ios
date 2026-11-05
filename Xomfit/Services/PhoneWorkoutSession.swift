@@ -34,11 +34,15 @@ final class PhoneWorkoutSession: NSObject, WorkoutKeepAlive {
     private var wanted = false
 
     func start() {
+        // The app ships at iOS 18; the iPhone workout session arrived in 26.
+        // Older phones keep today's behaviour and never see the Health prompt.
+        guard #available(iOS 26.0, *) else { return }
         guard HKHealthStore.isHealthDataAvailable(), session == nil else { return }
         wanted = true
         Task { await begin() }
     }
 
+    @available(iOS 26.0, *)
     private func begin() async {
         let type = HKObjectType.workoutType()
         // Asks once. HealthKit never shows the sheet again for a type the user
