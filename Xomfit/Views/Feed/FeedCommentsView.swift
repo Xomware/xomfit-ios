@@ -133,12 +133,12 @@ struct FeedCommentsView: View {
     private var replyContextBar: some View {
         if let replyingTo {
             HStack(spacing: Theme.Spacing.xs) {
-                Text("Replying to ")
-                    .font(Theme.fontSmall)
-                    .foregroundStyle(Theme.textSecondary)
-                + Text("@\(displayHandle(for: replyingTo))")
+                let handle = Text("@\(displayHandle(for: replyingTo))")
                     .font(Theme.fontSmall.weight(.semibold))
                     .foregroundStyle(Theme.accent)
+                Text("Replying to \(handle)")
+                    .font(Theme.fontSmall)
+                    .foregroundStyle(Theme.textSecondary)
 
                 Spacer()
 

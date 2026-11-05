@@ -341,7 +341,6 @@ struct TemplateDetailView: View {
     private func loadMatchingWorkouts() {
         Task {
             let allWorkouts = await WorkoutService.shared.fetchWorkouts(userId: userId)
-            let templateExerciseIds = Set(draft.exercises.map { $0.exercise.id })
 
             // Find workouts that have the same exercises (by name match since IDs may differ)
             let templateExerciseNames = Set(draft.exercises.map { $0.exercise.name.lowercased() })
@@ -462,7 +461,7 @@ struct TemplateDetailView: View {
     private func removeExerciseById(_ id: String) {
         guard let index = draft.exercises.firstIndex(where: { $0.id == id }) else { return }
         withAnimation(.xomConfident) {
-            draft.exercises.remove(at: index)
+            _ = draft.exercises.remove(at: index)
         }
         markDirty()
     }

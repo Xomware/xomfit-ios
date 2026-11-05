@@ -1,6 +1,7 @@
 import XCTest
 @testable import Xomfit
 
+@MainActor
 final class StrengthStandardsTests: XCTestCase {
 
     private let service = StrengthLevelService.shared

@@ -251,7 +251,7 @@ final class WorkoutLoggerViewModel {
         // the default mode stalls for as long as the finger is down.
         RunLoop.main.add(ticker, forMode: .common)
         sessionTicker = ticker
-        keepAlive.start()
+        keepAlive.start(workoutStartedAt: startTime)
     }
 
     private func stopSessionTicker() {
@@ -2186,7 +2186,7 @@ final class WorkoutLoggerViewModel {
     // pause toggle, …) — small writes, no async hop. The restore alert in
     // `XomfitApp` reads `peekSavedWorkoutId() != nil` to decide whether to ask.
 
-    private static let savedSessionKey = "xomfit_active_session_v1"
+    nonisolated private static let savedSessionKey = "xomfit_active_session_v1"
 
     /// Bumped on every schema breakage so we don't try to decode a v1 blob into v2.
     private static let savedSessionSchemaVersion = 1
@@ -2413,6 +2413,19 @@ final class WorkoutLoggerViewModel {
     /// almost certainly belongs to a session the user abandoned days ago.
     static let staleSessionAge: TimeInterval = 60 * 60 * 12  // 12h
 
+    /// Hands the keep-alive the session iOS kept running through a crash (#528),
+    /// with the start of the only workout that could still take it over: a saved
+    /// one `restoreActiveSession` would accept.
+    func recoverKeepAlive() {
+        var resumable: Date?
+        if !isActive, let snapshot = Self.peekSavedSession(),
+           snapshot.schemaVersion == Self.savedSessionSchemaVersion,
+           Date().timeIntervalSince(snapshot.savedAt) <= Self.staleSessionAge {
+            resumable = snapshot.startTime
+        }
+        keepAlive.recover(resumableWorkoutStartedAt: resumable)
+    }
+
     /// Restore an in-flight workout snapshot. Drops it (and ends any lingering
     /// Live Activity / scheduled notifications) when older than `staleSessionAge`.
     /// Returns `true` when the workout was successfully restored.
@@ -2513,6 +2526,7 @@ final class WorkoutLoggerViewModel {
                 NotificationService.shared.cancelRestTimerNotification(workoutId: savedId)
             }
             endAllOrphanLiveActivities()
+            PhoneWorkoutSession.shared.dropRecovered()
         }
     }
 
@@ -2691,69 +2705,64 @@ final class WorkoutLoggerViewModel {
 
         lastSummary = buildSummary(for: workout, historyBefore: historyBefore)
 
+        // Save workout to Supabase (queues for retry on failure).
+        let persisted = await WorkoutService.shared.saveWorkout(workout)
+        print("[WorkoutLogger] finishWorkout — saveWorkout persisted=\(persisted) workoutId=\(workout.id)")
+
+        // Always attempt to post to feed regardless of whether the workout
+        // save was immediate or queued. Feed post is independent: if the
+        // save was queued the post may also fail (offline), but both paths
+        // are retried (SyncManager for the workout; the do/catch below
+        // surfaces the feed error so the user knows to refresh). (#386)
         do {
-            // Save workout to Supabase (queues for retry on failure).
-            let persisted = await WorkoutService.shared.saveWorkout(workout)
-            print("[WorkoutLogger] finishWorkout — saveWorkout persisted=\(persisted) workoutId=\(workout.id)")
-
-            // Always attempt to post to feed regardless of whether the workout
-            // save was immediate or queued. Feed post is independent: if the
-            // save was queued the post may also fail (offline), but both paths
-            // are retried (SyncManager for the workout; the do/catch below
-            // surfaces the feed error so the user knows to refresh). (#386)
-            do {
-                try await FeedService.shared.postWorkoutToFeed(workout: workout, userId: userId, caption: workout.notes, photoURLs: photoURLs)
-                print("[WorkoutLogger] finishWorkout — feed post succeeded")
-            } catch {
-                print("[WorkoutLogger] finishWorkout — feed post FAILED, queuing retry: \(error)")
-                // Non-fatal: workout is saved (or queued). Queue the feed post
-                // for retry so a transient/offline failure at finish time still
-                // lands the card — previously this was swallowed and the post
-                // was lost forever, so the workout never appeared. (#386)
-                if let payload = try? JSONEncoder().encode(workout),
-                   let payloadString = String(data: payload, encoding: .utf8) {
-                    SyncManager.shared.enqueue(
-                        SyncOperation(
-                            type: .postFeedItem,
-                            entityId: workout.id,
-                            userId: userId,
-                            payload: payloadString
-                        )
-                    )
-                }
-            }
-
-            // Update widget data
-            let allWorkouts = await WorkoutService.shared.fetchWorkouts(userId: userId)
-            let weekStart = Calendar.current.date(from: Calendar.current.dateComponents([.yearForWeekOfYear, .weekOfYear], from: Date())) ?? Date()
-            let weekWorkouts = allWorkouts.filter { $0.startTime >= weekStart }
-            let weeklyVolume = weekWorkouts.reduce(0.0) { $0 + $1.totalVolume }
-            let streak = WorkoutInsights.currentStreak(workouts: allWorkouts)
-            let latestPR = allWorkouts.flatMap { $0.exercises.flatMap { $0.sets } }
-                .filter { $0.isPersonalRecord }
-                .max(by: { $0.completedAt < $1.completedAt })
-            let prText: String? = if let pr = latestPR,
-                let ex = allWorkouts.flatMap({ $0.exercises }).first(where: { $0.sets.contains(where: { $0.id == pr.id }) }) {
-                "\(ex.exercise.name) \(Int(pr.weight)) lbs"
-            } else {
-                nil
-            }
-            WidgetDataService.shared.updateAfterWorkout(
-                streak: streak,
-                weeklyVolume: weeklyVolume,
-                weeklyWorkouts: weekWorkouts.count,
-                lastWorkoutName: workout.name,
-                lastWorkoutDate: workout.startTime,
-                recentPR: prText
-            )
-
-            // Only discard local state after successful save
-            isSaving = false
-            endSession()
+            try await FeedService.shared.postWorkoutToFeed(workout: workout, userId: userId, caption: workout.notes, photoURLs: photoURLs)
+            print("[WorkoutLogger] finishWorkout — feed post succeeded")
         } catch {
-            errorMessage = error.localizedDescription
-            isSaving = false
+            print("[WorkoutLogger] finishWorkout — feed post FAILED, queuing retry: \(error)")
+            // Non-fatal: workout is saved (or queued). Queue the feed post
+            // for retry so a transient/offline failure at finish time still
+            // lands the card — previously this was swallowed and the post
+            // was lost forever, so the workout never appeared. (#386)
+            if let payload = try? JSONEncoder().encode(workout),
+               let payloadString = String(data: payload, encoding: .utf8) {
+                SyncManager.shared.enqueue(
+                    SyncOperation(
+                        type: .postFeedItem,
+                        entityId: workout.id,
+                        userId: userId,
+                        payload: payloadString
+                    )
+                )
+            }
         }
+
+        // Update widget data
+        let allWorkouts = await WorkoutService.shared.fetchWorkouts(userId: userId)
+        let weekStart = Calendar.current.date(from: Calendar.current.dateComponents([.yearForWeekOfYear, .weekOfYear], from: Date())) ?? Date()
+        let weekWorkouts = allWorkouts.filter { $0.startTime >= weekStart }
+        let weeklyVolume = weekWorkouts.reduce(0.0) { $0 + $1.totalVolume }
+        let streak = WorkoutInsights.currentStreak(workouts: allWorkouts)
+        let latestPR = allWorkouts.flatMap { $0.exercises.flatMap { $0.sets } }
+            .filter { $0.isPersonalRecord }
+            .max(by: { $0.completedAt < $1.completedAt })
+        let prText: String? = if let pr = latestPR,
+            let ex = allWorkouts.flatMap({ $0.exercises }).first(where: { $0.sets.contains(where: { $0.id == pr.id }) }) {
+            "\(ex.exercise.name) \(Int(pr.weight)) lbs"
+        } else {
+            nil
+        }
+        WidgetDataService.shared.updateAfterWorkout(
+            streak: streak,
+            weeklyVolume: weeklyVolume,
+            weeklyWorkouts: weekWorkouts.count,
+            lastWorkoutName: workout.name,
+            lastWorkoutDate: workout.startTime,
+            recentPR: prText
+        )
+
+        // Only discard local state after successful save
+        isSaving = false
+        endSession()
     }
 
 }
