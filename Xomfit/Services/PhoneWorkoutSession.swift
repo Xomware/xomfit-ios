@@ -5,7 +5,10 @@ import HealthKit
 /// tests drive the lifecycle without touching HealthKit.
 @MainActor
 protocol WorkoutKeepAlive: AnyObject {
-    func start()
+    /// Picks up a session iOS kept running through a crash. `nil` means there is
+    /// no workout it could belong to, so it gets ended.
+    func recover(resumableWorkoutStartedAt: Date?)
+    func start(workoutStartedAt: Date)
     func pause()
     func resume()
     func end()
@@ -23,6 +26,10 @@ protocol WorkoutKeepAlive: AnyObject {
 ///
 /// Without workout share permission the session cannot be created; the workout
 /// then runs exactly as before, just without background runtime.
+///
+/// A session outlives a crash: iOS keeps it running and hands it back through
+/// `recoverActiveWorkoutSession` on the next launch (#528). It is either adopted
+/// by the restored workout or ended, never left running beside a new one.
 @MainActor
 final class PhoneWorkoutSession: NSObject, WorkoutKeepAlive {
     static let shared = PhoneWorkoutSession()
@@ -32,18 +39,79 @@ final class PhoneWorkoutSession: NSObject, WorkoutKeepAlive {
     /// Cleared by `end()`. `start()` awaits the permission sheet, and a workout
     /// discarded while the sheet is up must not get a session afterwards.
     private var wanted = false
+    private var paused = false
+    private var workoutStart = Date.distantPast
+    /// In flight from launch until iOS answers. `begin()` and `dropRecovered()`
+    /// wait on it, so neither acts before the old session is known.
+    private var recovery: Task<Void, Never>?
+    /// A crash survivor waiting on the restore prompt.
+    private var recovered: HKWorkoutSession?
 
-    func start() {
+    /// A recovered session belongs to a workout only if it started during it.
+    /// One from before was left by an earlier workout and must not be reused.
+    nonisolated static func adopts(sessionStartedAt: Date?, workoutStartedAt: Date?) -> Bool {
+        guard let sessionStartedAt, let workoutStartedAt else { return false }
+        return sessionStartedAt >= workoutStartedAt
+    }
+
+    func recover(resumableWorkoutStartedAt: Date?) {
+        guard #available(iOS 26.0, *) else { return }
+        guard HKHealthStore.isHealthDataAvailable(), recovery == nil else { return }
+        recovery = Task { await reclaim(resumableWorkoutStartedAt: resumableWorkoutStartedAt) }
+    }
+
+    @available(iOS 26.0, *)
+    private func reclaim(resumableWorkoutStartedAt: Date?) async {
+        let found: HKWorkoutSession?
+        do {
+            found = try await store.recoverActiveWorkoutSession()
+        } catch {
+            print("[PhoneWorkoutSession] recovery failed: \(error.localizedDescription)")
+            return
+        }
+        guard let found else { return }
+        found.delegate = self
+        guard Self.adopts(sessionStartedAt: found.startDate, workoutStartedAt: resumableWorkoutStartedAt) else {
+            found.end()
+            return
+        }
+        recovered = found
+    }
+
+    /// Ends the recovered session once the restore is declined.
+    func dropRecovered() {
+        Task {
+            await recovery?.value
+            recovered?.end()
+            recovered = nil
+        }
+    }
+
+    func start(workoutStartedAt: Date) {
         // The app ships at iOS 18; the iPhone workout session arrived in 26.
         // Older phones keep today's behaviour and never see the Health prompt.
         guard #available(iOS 26.0, *) else { return }
         guard HKHealthStore.isHealthDataAvailable(), session == nil else { return }
         wanted = true
+        paused = false
+        workoutStart = workoutStartedAt
         Task { await begin() }
     }
 
     @available(iOS 26.0, *)
     private func begin() async {
+        await recovery?.value
+        guard wanted, session == nil else { return }
+        if let recovered {
+            self.recovered = nil
+            let live = recovered.state == .running || recovered.state == .paused
+            if live, Self.adopts(sessionStartedAt: recovered.startDate, workoutStartedAt: workoutStart) {
+                adopt(recovered)
+                return
+            }
+            recovered.end()
+        }
+
         let type = HKObjectType.workoutType()
         // Asks once. HealthKit never shows the sheet again for a type the user
         // has answered, so a denial cannot turn into a prompt on every workout.
@@ -68,16 +136,28 @@ final class PhoneWorkoutSession: NSObject, WorkoutKeepAlive {
             session.delegate = self
             session.startActivity(with: .now)
             self.session = session
+            if paused { session.pause() }
         } catch {
             print("[PhoneWorkoutSession] could not start: \(error.localizedDescription)")
         }
     }
 
+    @available(iOS 26.0, *)
+    private func adopt(_ recovered: HKWorkoutSession) {
+        session = recovered
+        // A restored workout comes back unpaused, but the lifter may have paused
+        // while recovery was in flight. The session follows the workout.
+        if paused, recovered.state == .running { recovered.pause() }
+        if !paused, recovered.state == .paused { recovered.resume() }
+    }
+
     func pause() {
+        paused = true
         session?.pause()
     }
 
     func resume() {
+        paused = false
         session?.resume()
     }
 
@@ -85,11 +165,14 @@ final class PhoneWorkoutSession: NSObject, WorkoutKeepAlive {
         wanted = false
         session?.end()
         session = nil
+        recovered?.end()
+        recovered = nil
     }
 
     /// Drops a session the system ended on its own — another app's workout
     /// taking over, for one — so the next `start()` can make a fresh one.
     private func release(_ ended: ObjectIdentifier) {
+        if let recovered, ObjectIdentifier(recovered) == ended { self.recovered = nil }
         guard let session, ObjectIdentifier(session) == ended else { return }
         self.session = nil
     }

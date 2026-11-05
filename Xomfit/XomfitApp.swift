@@ -239,6 +239,9 @@ struct XomFitApp: App {
                 }
             }
             .preferredColorScheme(.dark)
+            // Outside the auth branches so it runs first, before the restore
+            // prompt or any workout can start. Repeat calls are ignored.
+            .task { workoutSession.recoverKeepAlive() }
             .onOpenURL { url in
                 // Garmin first, and in this handler rather than a nested one.
                 //
