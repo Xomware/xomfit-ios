@@ -275,6 +275,64 @@ final class HealthKitTests: XCTestCase {
         XCTAssertFalse(GarminSyncService.shared.isWatchReady)
     }
 
+    /// The keys the watch's `WorkoutState.fromMessage` reads. A renamed key is
+    /// not an error on either side — the watch just shows a blank where the
+    /// number should be.
+    func testGarminPayloadCarriesTheSetScreenFields() {
+        let now = Date()
+        let state = WatchWorkoutState(
+            workoutName: "Push",
+            currentExercise: "Bench Press",
+            setNumber: 3,
+            totalSets: 4,
+            isResting: true,
+            restEndDate: now.addingTimeInterval(83),
+            isPaused: false,
+            elapsedSeconds: 1462
+        )
+        var detail = WatchWorkoutDetail.empty
+        detail.reps = 8
+        detail.weight = 185
+        detail.prevReps = 8
+        detail.prevWeight = 180
+        detail.restTotal = 120
+
+        let message = GarminSyncService.message(state: state, detail: detail, now: now)
+
+        XCTAssertEqual(message["exercise"] as? String, "Bench Press")
+        XCTAssertEqual(message["set"] as? Int, 3)
+        XCTAssertEqual(message["totalSets"] as? Int, 4)
+        XCTAssertEqual(message["rest"] as? Int, 83)
+        XCTAssertEqual(message["restTotal"] as? Int, 120)
+        XCTAssertEqual(message["reps"] as? Int, 8)
+        XCTAssertEqual(message["weight"] as? Int, 185)
+        XCTAssertEqual(message["prevReps"] as? Int, 8)
+        XCTAssertEqual(message["prevWeight"] as? Int, 180)
+    }
+
+    /// Absent values are left out, not sent as null: the watch reads a missing
+    /// key as "not said", and a rest length outside rest would draw a ring.
+    func testGarminPayloadOmitsWhatTheWatchShouldNotShow() {
+        let state = WatchWorkoutState(
+            workoutName: "Push",
+            currentExercise: "Bench Press",
+            setNumber: 1,
+            totalSets: 4,
+            isResting: false,
+            isPaused: false,
+            elapsedSeconds: 30
+        )
+        var detail = WatchWorkoutDetail.empty
+        detail.restTotal = 120
+
+        let message = GarminSyncService.message(state: state, detail: detail, now: Date())
+
+        XCTAssertNil(message["rest"])
+        XCTAssertNil(message["restTotal"])
+        XCTAssertNil(message["prevReps"])
+        XCTAssertNil(message["prevWeight"])
+    }
+
     /// Every method on `IQDeviceEventDelegate` and `IQAppMessageDelegate` is
     /// `@optional`, so a misspelled delegate method is not a compile error and
     /// not even a warning — it is simply never called.

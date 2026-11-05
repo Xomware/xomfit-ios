@@ -238,8 +238,10 @@ final class WorkoutLoggerViewModel {
     /// Starts the once-a-second clock, replacing any previous one.
     private func startSessionTicker() {
         sessionTicker?.invalidate()
+        // Added to the main run loop below, so the block always fires on the
+        // main thread and can run synchronously instead of hopping via a Task.
         let ticker = Timer(timeInterval: 1, repeats: true) { [weak self] _ in
-            Task { @MainActor in
+            MainActor.assumeIsolated {
                 guard let self else { return }
                 self.tickRestTimer()
                 self.tickLiveActivity()
@@ -249,11 +251,13 @@ final class WorkoutLoggerViewModel {
         // the default mode stalls for as long as the finger is down.
         RunLoop.main.add(ticker, forMode: .common)
         sessionTicker = ticker
+        keepAlive.start()
     }
 
     private func stopSessionTicker() {
         sessionTicker?.invalidate()
         sessionTicker = nil
+        keepAlive.end()
     }
 
     func startWorkout(name: String, userId: String = "") {
@@ -1567,6 +1571,11 @@ final class WorkoutLoggerViewModel {
     /// outlives any one view, so its clock has to as well.
     private var sessionTicker: Timer?
 
+    /// Keeps the app running once the phone locks, so the ticker above keeps
+    /// firing and Garmin messages keep arriving (#519). Started and ended with
+    /// the ticker, since keeping the ticker alive is its whole job.
+    var keepAlive: WorkoutKeepAlive = PhoneWorkoutSession.shared
+
     /// Whole second the countdown haptic last fired for, or nil when nothing has
     /// fired for the current rest period. `0` means the end-of-rest alarm has
     /// already played.
@@ -1704,6 +1713,7 @@ final class WorkoutLoggerViewModel {
             }
             pausedAt = nil
             isPaused = false
+            keepAlive.resume()
             if isRestTimerActive, restTimeRemaining > 0 {
                 NotificationService.shared.rescheduleRestTimerNotification(
                     workoutId: workoutId, remaining: restTimeRemaining
@@ -1713,6 +1723,7 @@ final class WorkoutLoggerViewModel {
             // Pause
             pausedAt = Date()
             isPaused = true
+            keepAlive.pause()
             // A paused rest must not announce itself as done.
             NotificationService.shared.cancelRestTimerNotification(workoutId: workoutId)
         }
@@ -2049,9 +2060,14 @@ final class WorkoutLoggerViewModel {
         let primaryMuscle = muscles.first?.displayName
         let supporting = muscles.dropFirst().map(\.displayName)
 
+        let previous = previousSet(exerciseIndex: focusExerciseIndex, setIndex: focusSetIndex)
+
         return WatchWorkoutDetail(
             reps: set.map { $0.reps },
             weight: set.map { Int($0.weight.rounded()) },
+            prevReps: previous.map { $0.reps },
+            prevWeight: previous.map { Int($0.weight.rounded()) },
+            restTotal: isRestTimerActive ? Int(restDuration.rounded()) : nil,
             upNext: upcoming,
             tips: cues,
             primaryMuscle: primaryMuscle,

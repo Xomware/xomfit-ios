@@ -40,6 +40,7 @@
 		B2F201D886D61139D367C906 /* GoalBaselineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2971609F94FDA4AAE995734 /* GoalBaselineTests.swift */; };
 		B88106339BDDE527B6F2E7E0 /* GymLibraryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88B8A97CE4A2CE2648228B1A /* GymLibraryTests.swift */; };
 		BBBE2A7245E89C33ED8D85D8 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 37E1F812E63DCA86C4966EEE /* Foundation.framework */; };
+		BBDFA6A607F588651EC2CC3F /* WorkoutKeepAliveTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E4ABE5C72239A461BA02212 /* WorkoutKeepAliveTests.swift */; };
 		CD06CC05B68AFF64FE066C6F /* ExerciseEditingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FAE60DD4EABA26C99B0237B /* ExerciseEditingTests.swift */; };
 		D7E81C3DC92EC92262FDBC0D /* WorkoutSkipCursorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F679CA7346950355AE957485 /* WorkoutSkipCursorTests.swift */; };
 		E276BDE8A780ED0925F68800 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C8932635DA9D7B3E27AD4A2 /* ContentView.swift */; };
@@ -125,6 +126,7 @@
 		827732DA0E95EA020F612BD9 /* ExerciseInstructionCoverageTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ExerciseInstructionCoverageTests.swift; sourceTree = "<group>"; };
 		88B8A97CE4A2CE2648228B1A /* GymLibraryTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GymLibraryTests.swift; sourceTree = "<group>"; };
 		8C8932635DA9D7B3E27AD4A2 /* ContentView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		8E4ABE5C72239A461BA02212 /* WorkoutKeepAliveTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkoutKeepAliveTests.swift; sourceTree = "<group>"; };
 		8FAE60DD4EABA26C99B0237B /* ExerciseEditingTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ExerciseEditingTests.swift; sourceTree = "<group>"; };
 		9D796DFE7275099589DADC0E /* WorkoutGeneratorGymTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkoutGeneratorGymTests.swift; sourceTree = "<group>"; };
 		9F598AFE9ECEBE9D1CE5C308 /* NumberEntryView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NumberEntryView.swift; sourceTree = "<group>"; };
@@ -328,6 +330,7 @@
 				371C60FE1A1B658763543895 /* RestTimerWallClockTests.swift */,
 				88B8A97CE4A2CE2648228B1A /* GymLibraryTests.swift */,
 				9D796DFE7275099589DADC0E /* WorkoutGeneratorGymTests.swift */,
+				8E4ABE5C72239A461BA02212 /* WorkoutKeepAliveTests.swift */,
 			);
 			path = XomfitTests;
 			sourceTree = "<group>";
@@ -819,6 +822,7 @@
 				2E0814631D3573245276EA81 /* RestTimerWallClockTests.swift in Sources */,
 				B88106339BDDE527B6F2E7E0 /* GymLibraryTests.swift in Sources */,
 				08302129E16A89B555C615D5 /* WorkoutGeneratorGymTests.swift in Sources */,
+				BBDFA6A607F588651EC2CC3F /* WorkoutKeepAliveTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1102,7 +1106,7 @@
 				INFOPLIST_KEY_NSAppleMusicUsageDescription = "XomFit captures the songs that played during your workout so you can see your soundtrack later.";
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "XomFit uses Bluetooth to mirror your workout to a Garmin watch and receive completed sets back.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "XomFit reads your workouts, heart rate and calories from Health so runs, rides and rows recorded on your watch show up alongside your lifting.";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "XomFit saves your completed workouts to Health so they count toward your activity rings.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "XomFit runs a workout session while you lift so your watch and rest timer keep working when your phone is locked.";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -1144,7 +1148,7 @@
 				INFOPLIST_KEY_NSAppleMusicUsageDescription = "XomFit captures the songs that played during your workout so you can see your soundtrack later.";
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "XomFit uses Bluetooth to mirror your workout to a Garmin watch and receive completed sets back.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "XomFit reads your workouts, heart rate and calories from Health so runs, rides and rows recorded on your watch show up alongside your lifting.";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "XomFit saves your completed workouts to Health so they count toward your activity rings.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "XomFit runs a workout session while you lift so your watch and rest timer keep working when your phone is locked.";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;

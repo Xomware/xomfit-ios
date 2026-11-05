@@ -108,8 +108,9 @@ final class GuidedStretchRunnerViewModel {
         guard !isFinished, !isRunning else { return }
         isRunning = true
         timer?.invalidate()
+        // Scheduled from the main actor, so it fires on the main run loop.
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
-            Task { @MainActor in
+            MainActor.assumeIsolated {
                 self?.tick()
             }
         }

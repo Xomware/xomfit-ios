@@ -21,7 +21,7 @@ enum MachineCatalog {
         all.filter { $0.exerciseIds.contains(exerciseId) }
     }
 
-    private static let arsenal = "Arsenal Strength"
+    private static let arsenal = "Arsenal"
     private static let rowGrips: [GripType] = [.overhand, .neutral, .underhand]
 
     private static let arsenalReloaded: [Machine] = [
