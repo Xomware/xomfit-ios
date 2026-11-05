@@ -251,7 +251,7 @@ final class WorkoutLoggerViewModel {
         // the default mode stalls for as long as the finger is down.
         RunLoop.main.add(ticker, forMode: .common)
         sessionTicker = ticker
-        keepAlive.start()
+        keepAlive.start(workoutStartedAt: startTime)
     }
 
     private func stopSessionTicker() {
@@ -2413,6 +2413,19 @@ final class WorkoutLoggerViewModel {
     /// almost certainly belongs to a session the user abandoned days ago.
     static let staleSessionAge: TimeInterval = 60 * 60 * 12  // 12h
 
+    /// Hands the keep-alive the session iOS kept running through a crash (#528),
+    /// with the start of the only workout that could still take it over: a saved
+    /// one `restoreActiveSession` would accept.
+    func recoverKeepAlive() {
+        var resumable: Date?
+        if !isActive, let snapshot = Self.peekSavedSession(),
+           snapshot.schemaVersion == Self.savedSessionSchemaVersion,
+           Date().timeIntervalSince(snapshot.savedAt) <= Self.staleSessionAge {
+            resumable = snapshot.startTime
+        }
+        keepAlive.recover(resumableWorkoutStartedAt: resumable)
+    }
+
     /// Restore an in-flight workout snapshot. Drops it (and ends any lingering
     /// Live Activity / scheduled notifications) when older than `staleSessionAge`.
     /// Returns `true` when the workout was successfully restored.
@@ -2513,6 +2526,7 @@ final class WorkoutLoggerViewModel {
                 NotificationService.shared.cancelRestTimerNotification(workoutId: savedId)
             }
             endAllOrphanLiveActivities()
+            PhoneWorkoutSession.shared.dropRecovered()
         }
     }
 
