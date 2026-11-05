@@ -239,6 +239,21 @@ final class GarminSyncService: NSObject {
     func send(state: WatchWorkoutState, detail: WatchWorkoutDetail = .empty) {
         guard let app, isWatchReady else { return }
 
+        let message = Self.message(state: state, detail: detail, now: Date())
+        ConnectIQ.sharedInstance().sendMessage(
+            message,
+            to: app,
+            progress: nil,
+            completion: { _ in }
+        )
+    }
+
+    /// The dictionary the watch's `WorkoutState.fromMessage` reads.
+    ///
+    /// Optional keys are left out rather than sent as null: the watch reads a
+    /// missing key as "the phone did not say", which is also how a watch build
+    /// older than a key ignores it.
+    static func message(state: WatchWorkoutState, detail: WatchWorkoutDetail, now: Date) -> [String: Any] {
         var message: [String: Any] = [
             "exercise": state.currentExercise,
             "set": state.setNumber,
@@ -248,35 +263,32 @@ final class GarminSyncService: NSObject {
         ]
         // The watch counts down in whole seconds and treats negatives as
         // overtime, matching how the phone already models rest.
-        if let rest = restSeconds(from: state) {
-            message["rest"] = rest
+        if state.isResting, let end = state.restEndDate {
+            message["rest"] = Int(end.timeIntervalSince(now).rounded())
+            // The ring's denominator. Without it the watch guessed from the
+            // largest countdown it had seen, so opening mid-rest drew a full ring.
+            if let total = detail.restTotal { message["restTotal"] = total }
         }
         if let reps = detail.reps { message["reps"] = reps }
         if let weight = detail.weight { message["weight"] = weight }
+        if let reps = detail.prevReps { message["prevReps"] = reps }
+        if let weight = detail.prevWeight { message["prevWeight"] = weight }
         if !detail.tips.isEmpty { message["tips"] = detail.tips }
         if let primary = detail.primaryMuscle { message["musclePrimary"] = primary }
         if let supporting = detail.supportingMuscles { message["muscleSupport"] = supporting }
         if let index = detail.currentIndex { message["currentIndex"] = index }
         if !detail.plan.isEmpty {
-            // Capped for the same reason as upNext: the device mailbox is small
-            // and the watch shows four rows at a time.
-            message["plan"] = detail.plan.prefix(Self.planLimit).map {
+            // Capped for the same reason as upNext: the device mailbox is small.
+            message["plan"] = detail.plan.prefix(planLimit).map {
                 ["name": $0.name, "done": $0.done, "total": $0.total] as [String: Any]
             }
         }
         if !detail.upNext.isEmpty {
             // Capped before it leaves the phone. The device mailbox is small and
-            // the watch only draws a handful — sending twenty names would cost
-            // bandwidth to display four.
-            message["upNext"] = Array(detail.upNext.prefix(Self.upNextLimit))
+            // the watch only draws a handful.
+            message["upNext"] = Array(detail.upNext.prefix(upNextLimit))
         }
-
-        ConnectIQ.sharedInstance().sendMessage(
-            message,
-            to: app,
-            progress: nil,
-            completion: { _ in }
-        )
+        return message
     }
 
     /// Tells the watch the workout is over.
@@ -304,13 +316,6 @@ final class GarminSyncService: NSObject {
     /// How many plan rows travel. Longer sessions than this exist; the watch
     /// scrolls, but the payload has to stop somewhere.
     private static let planLimit = 12
-
-    /// Converts the absolute rest end date the phone tracks into the countdown
-    /// the watch shows. Nil when not resting.
-    private func restSeconds(from state: WatchWorkoutState) -> Int? {
-        guard state.isResting, let end = state.restEndDate else { return nil }
-        return Int(end.timeIntervalSinceNow.rounded())
-    }
 
     // MARK: - Devices
 
@@ -545,6 +550,11 @@ extension GarminSyncService: IQAppMessageDelegate {
 struct WatchWorkoutDetail {
     var reps: Int?
     var weight: Int?
+    /// The same set last session, so the watch can show the number to beat.
+    var prevReps: Int? = nil
+    var prevWeight: Int? = nil
+    /// Full length of the running rest, in seconds.
+    var restTotal: Int? = nil
     var upNext: [String]
     /// Short form cues for the current lift. Phrases, not sentences: a round
     /// screen cannot show a sentence and a lifter mid-set will not read one.

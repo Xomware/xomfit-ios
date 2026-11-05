@@ -2060,9 +2060,14 @@ final class WorkoutLoggerViewModel {
         let primaryMuscle = muscles.first?.displayName
         let supporting = muscles.dropFirst().map(\.displayName)
 
+        let previous = previousSet(exerciseIndex: focusExerciseIndex, setIndex: focusSetIndex)
+
         return WatchWorkoutDetail(
             reps: set.map { $0.reps },
             weight: set.map { Int($0.weight.rounded()) },
+            prevReps: previous.map { $0.reps },
+            prevWeight: previous.map { Int($0.weight.rounded()) },
+            restTotal: isRestTimerActive ? Int(restDuration.rounded()) : nil,
             upNext: upcoming,
             tips: cues,
             primaryMuscle: primaryMuscle,
