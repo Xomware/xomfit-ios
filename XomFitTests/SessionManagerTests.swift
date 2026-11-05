@@ -12,7 +12,7 @@ final class SessionManagerTests: XCTestCase {
     @MainActor
     func testSessionManager_sessionError_isNilInitially() {
         // SessionManager sets sessionError = nil on init
-        var sessionError: String? = nil
+        let sessionError: String? = nil
         XCTAssertNil(sessionError)
     }
 
@@ -35,7 +35,7 @@ final class SessionManagerTests: XCTestCase {
 
     @MainActor
     func testSessionManager_shouldShowSplash_defaultTrue() {
-        var shouldShowSplash = true
+        let shouldShowSplash = true
         XCTAssertTrue(shouldShowSplash)
     }
 

@@ -145,7 +145,7 @@ final class FriendsViewModel {
         do {
             try await FriendsService.shared.cancelFriendRequest(friendshipId: friendshipId)
             outgoingRequests.removeAll { $0.id == friendshipId }
-            searchRelations[otherUserId] = .none
+            searchRelations[otherUserId] = nil
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -179,7 +179,7 @@ final class FriendsViewModel {
         do {
             try await FriendsService.shared.declineFriendRequest(friendshipId: friendshipId)
             incomingRequests.removeAll { $0.id == friendshipId }
-            searchRelations[otherUserId] = .none
+            searchRelations[otherUserId] = nil
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -189,7 +189,7 @@ final class FriendsViewModel {
         do {
             try await FriendsService.shared.removeFriend(friendshipId: friendshipId)
             friends.removeAll { $0.id == friendshipId }
-            searchRelations[otherUserId] = .none
+            searchRelations[otherUserId] = nil
         } catch {
             errorMessage = error.localizedDescription
         }
