@@ -1106,7 +1106,7 @@
 				INFOPLIST_KEY_NSAppleMusicUsageDescription = "XomFit captures the songs that played during your workout so you can see your soundtrack later.";
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "XomFit uses Bluetooth to mirror your workout to a Garmin watch and receive completed sets back.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "XomFit reads your workouts, heart rate and calories from Health so runs, rides and rows recorded on your watch show up alongside your lifting.";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "XomFit saves your completed workouts to Health so they count toward your activity rings.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "XomFit runs a workout session while you lift so your watch and rest timer keep working when your phone is locked.";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -1148,7 +1148,7 @@
 				INFOPLIST_KEY_NSAppleMusicUsageDescription = "XomFit captures the songs that played during your workout so you can see your soundtrack later.";
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "XomFit uses Bluetooth to mirror your workout to a Garmin watch and receive completed sets back.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "XomFit reads your workouts, heart rate and calories from Health so runs, rides and rows recorded on your watch show up alongside your lifting.";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "XomFit saves your completed workouts to Health so they count toward your activity rings.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "XomFit runs a workout session while you lift so your watch and rest timer keep working when your phone is locked.";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
