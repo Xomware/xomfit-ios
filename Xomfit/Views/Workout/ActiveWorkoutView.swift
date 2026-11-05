@@ -97,6 +97,10 @@ struct ActiveWorkoutView: View {
         pendingScrollIndex = viewModel.focusExerciseIndex
     }
 
+    private func undoRemove() {
+        withAnimation(.xomChill) { viewModel.undoRemoveExercise() }
+    }
+
     @ViewBuilder
     private var setsRepsBody: some View {
         @Bindable var viewModel = viewModel
@@ -205,6 +209,7 @@ struct ActiveWorkoutView: View {
                         .padding(.bottom, Theme.Spacing.sm)
                 }
             }
+            .toast($undoRemoveToast, onTap: undoRemove)
             .toolbar(.hidden, for: .navigationBar)
             .toolbar {
                 ToolbarItemGroup(placement: .keyboard) {
@@ -220,7 +225,11 @@ struct ActiveWorkoutView: View {
             // this screen and shrinks back — and interactive back-swipe comes
             // free, which the old inline branch could never offer.
             .navigationDestination(isPresented: $viewModel.focusMode) {
+                // Attached per screen rather than on the stack: a stack-level
+                // overlay draws over the pushed screen's navigation bar, which
+                // hid focus mode's options and pause buttons for 4s.
                 WorkoutFocusView(viewModel: viewModel)
+                    .toast($undoRemoveToast, onTap: undoRemove)
                     .navigationTransition(.zoom(sourceID: viewModel.focusExerciseIndex, in: zoomNamespace))
                     .environment(authService)
             }
@@ -424,9 +433,6 @@ struct ActiveWorkoutView: View {
         // First-run rest timer toast (#310). Uses the existing toast pattern
         // shared with launch streak/PR badges in MainTabView.
         .toast($restTimerToast)
-        .toast($undoRemoveToast) {
-            withAnimation(.xomChill) { viewModel.undoRemoveExercise() }
-        }
         .onChange(of: viewModel.lastRemovedExercise?.exercise.id) { _, id in
             guard id != nil, let removed = viewModel.lastRemovedExercise else { return }
             undoRemoveToast = Toast(
@@ -1352,6 +1358,8 @@ private struct ExerciseCard: View {
                         defaultRestSeconds: Int(viewModel.defaultRestDuration)
                     )
                     .transition(.opacity.combined(with: .move(edge: .top)))
+                } else if let machine = exercise.selectedMachine {
+                    MachineSummaryButton(machine: machine)
                 }
 
                 // Column header only where the numbers are actually being
