@@ -309,11 +309,19 @@ jobs:
               if group["attributes"].get("isInternalGroup"):
                   print(f"Group {name!r} is internal — auto-receives all builds, skipping manual assignment")
                   continue
-              r = requests.post(
-                  f"{base}/betaGroups/{group_id}/relationships/builds",
-                  headers={**headers, "Content-Type": "application/json"},
-                  json={"data": [{"type": "builds", "id": build_id}]},
-              )
+              # ASC can list a build as VALID before the relationships endpoint
+              # accepts it, answering 404 "no resource of type 'builds'" for the
+              # id it just returned (v2.20.3, run 43268478441).
+              for attempt in range(10):
+                  r = requests.post(
+                      f"{base}/betaGroups/{group_id}/relationships/builds",
+                      headers={**headers, "Content-Type": "application/json"},
+                      json={"data": [{"type": "builds", "id": build_id}]},
+                  )
+                  if r.status_code != 404:
+                      break
+                  print(f"Build not assignable to {name} yet, retry {attempt + 1}/10")
+                  time.sleep(30)
               if r.status_code >= 400:
                   print(f"!! Failed to assign to {name}: {r.status_code} {r.text}", file=sys.stderr)
                   sys.exit(1)
