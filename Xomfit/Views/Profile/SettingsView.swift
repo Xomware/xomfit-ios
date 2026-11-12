@@ -534,6 +534,25 @@ struct SettingsView: View {
             .tint(Theme.textTertiary)
 
             NavigationLink {
+                GymListView()
+                    .hideTabBar()
+            } label: {
+                HStack(spacing: Theme.Spacing.md) {
+                    Image(systemName: "building.2.fill")
+                        .frame(width: Theme.Spacing.lg)
+                        .foregroundStyle(Theme.accent)
+                    Text("Gyms")
+                        .foregroundStyle(Theme.textPrimary)
+                    Spacer()
+                    Text(GymLibrary.shared.activeGym?.name ?? "Anywhere")
+                        .font(Theme.fontCaption)
+                        .foregroundStyle(Theme.textTertiary)
+                        .lineLimit(1)
+                }
+            }
+            .tint(Theme.textTertiary)
+
+            NavigationLink {
                 ReportsListView()
                     .hideTabBar()
             } label: {
