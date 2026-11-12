@@ -1201,9 +1201,20 @@ private struct ExerciseCard: View {
     @State private var showRemoveExerciseConfirm = false
     @State private var showSwapPicker = false
     @State private var isCollapsed = false
-    /// Reveals the per-exercise config row (grip / attachment / position /
-    /// laterality / notes / rest override).
-    @State private var showConfig = false
+    /// The lifter's explicit show/hide of the per-exercise config row (grip /
+    /// attachment / position / laterality / machine / notes / rest override).
+    /// nil until they touch it — see `isConfigShown` for the default.
+    @State private var showConfig: Bool?
+
+    /// Open by default when the exercise has machines to pick from: behind the
+    /// menu, lifters never found the machine picker at all (2.20.2).
+    private var isConfigShown: Bool {
+        guard let showConfig else {
+            return viewModel.exercises.indices.contains(exerciseIndex)
+                && !GymLibrary.shared.machineOptions(for: viewModel.exercises[exerciseIndex].exercise.id).isEmpty
+        }
+        return showConfig
+    }
 
     private var isInSuperset: Bool {
         viewModel.exercises.indices.contains(exerciseIndex)
@@ -1263,10 +1274,10 @@ private struct ExerciseCard: View {
 
                     Menu {
                         Button {
-                            withAnimation(.xomConfident) { showConfig.toggle() }
+                            withAnimation(.xomConfident) { showConfig = !isConfigShown }
                         } label: {
                             Label(
-                                showConfig ? "Hide setup" : "Grip, attachment & setup",
+                                isConfigShown ? "Hide setup" : "Grip, attachment & setup",
                                 systemImage: "slider.horizontal.3"
                             )
                         }
@@ -1349,7 +1360,7 @@ private struct ExerciseCard: View {
                 // exercise, not per set — but the config row occupied permanent
                 // height on every card. It's behind a disclosure now, and its
                 // current selections already surface as chips in the header.
-                if showConfig {
+                if isConfigShown {
                     ExerciseConfigRow(
                         exercise: exercise,
                         onGripChanged: { grip in viewModel.setGrip(exerciseIndex: exerciseIndex, grip: grip) },
