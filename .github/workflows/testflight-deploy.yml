@@ -256,9 +256,12 @@ jobs:
               )
 
           base = "https://api.appstoreconnect.apple.com/v1"
-          headers = {"Authorization": f"Bearer {make_token()}"}
 
-          r = requests.get(f"{base}/apps", headers=headers, params={"filter[bundleId]": bundle_id})
+          def auth():
+              # The waits below outlast one token's 20 minutes.
+              return {"Authorization": f"Bearer {make_token()}", "Content-Type": "application/json"}
+
+          r = requests.get(f"{base}/apps", headers=auth(), params={"filter[bundleId]": bundle_id})
           r.raise_for_status()
           apps = r.json()["data"]
           if not apps:
@@ -267,11 +270,12 @@ jobs:
           app_id = apps[0]["id"]
           print(f"App ID: {app_id}")
 
+          # Processing has taken over 10 minutes (v2.20.3, run 43289677642 attempt 3).
           build_id = None
-          for attempt in range(30):
+          for attempt in range(90):
               r = requests.get(
                   f"{base}/builds",
-                  headers=headers,
+                  headers=auth(),
                   params={
                       "filter[app]": app_id,
                       "filter[version]": build_num,
@@ -281,22 +285,26 @@ jobs:
               )
               r.raise_for_status()
               data = r.json()["data"]
-              if data:
+              state = data[0]["attributes"].get("processingState") if data else None
+              if state == "VALID":
                   build_id = data[0]["id"]
-                  state = data[0]["attributes"].get("processingState", "?")
                   print(f"Build {build_num} found: id={build_id} state={state}")
                   break
-              print(f"Build {build_num} not yet visible, retry {attempt + 1}/30")
+              if state in ("FAILED", "INVALID"):
+                  print(f"Build {build_num} processing {state}", file=sys.stderr)
+                  sys.exit(1)
+              print(f"Build {build_num} state={state}, retry {attempt + 1}/90")
               time.sleep(20)
 
           if not build_id:
-              print("Build never appeared in ASC API", file=sys.stderr)
+              print("Build never finished processing in ASC", file=sys.stderr)
               sys.exit(1)
 
+          external = False
           for name in groups:
               r = requests.get(
                   f"{base}/betaGroups",
-                  headers=headers,
+                  headers=auth(),
                   params={"filter[app]": app_id, "filter[name]": name},
               )
               r.raise_for_status()
@@ -315,7 +323,7 @@ jobs:
               for attempt in range(10):
                   r = requests.post(
                       f"{base}/betaGroups/{group_id}/relationships/builds",
-                      headers={**headers, "Content-Type": "application/json"},
+                      headers=auth(),
                       json={"data": [{"type": "builds", "id": build_id}]},
                   )
                   if r.status_code != 404:
@@ -326,6 +334,21 @@ jobs:
                   print(f"!! Failed to assign to {name}: {r.status_code} {r.text}", file=sys.stderr)
                   sys.exit(1)
               print(f"Assigned build to group {name!r} ({group_id})")
+              external = True
+
+          # External testers only get a build once beta review passes. Without this,
+          # 2.20.2 sat in Beta Friends at READY_FOR_BETA_SUBMISSION and never shipped.
+          if external:
+              r = requests.post(
+                  f"{base}/betaAppReviewSubmissions",
+                  headers=auth(),
+                  json={"data": {"type": "betaAppReviewSubmissions", "relationships": {"build": {"data": {"type": "builds", "id": build_id}}}}},
+              )
+              # 409: already submitted, or the version's review already passed.
+              if r.status_code >= 400 and r.status_code != 409:
+                  print(f"!! Beta review submission failed: {r.status_code} {r.text}", file=sys.stderr)
+                  sys.exit(1)
+              print(f"Beta review submission: {r.status_code}")
           PY
 
       - name: Cleanup API key
